@@ -1,0 +1,570 @@
+# Architecture Decisions — Valpo Verde
+
+## Propósito
+
+Registro de decisiones arquitectónicas del proyecto, **versionable y revisable**.
+Cada ADR documenta su contexto, la decisión tomada, sus consecuencias y si
+puede cambiar. El "qué aplica hoy" a nivel de reglas se mantiene en
+`docs/project-rules.md`; el procedimiento para cambiar cualquier decisión, en
+`docs/workflow.md`.
+
+Estados permitidos:
+- propuesta
+- vigente
+- pendiente
+- reemplazada
+- descartada
+
+Si una decisión nueva contradice una ADR vigente, aplicar el procedimiento de
+reemplazo de `docs/workflow.md` §4 / `docs/project-rules.md` (Propósito):
+
+1. no borrar la ADR anterior;
+2. marcar la versión anterior como `reemplazada`;
+3. crear una nueva versión;
+4. indicar qué versión reemplaza;
+5. documentar el motivo;
+6. identificar las capas afectadas.
+
+## Formato ADR simplificado
+
+```
+## ADR-XXX — Título
+Estado: propuesta | vigente | pendiente | reemplazada | descartada
+Versión: X.X
+Fecha: 2026-08
+
+### Contexto
+...
+
+### Decisión
+...
+
+### Consecuencias
+...
+
+### Puede cambiar
+Sí/No
+
+### Reglas relacionadas
+PR-...
+```
+
+---
+
+## ADR-001 — Frontend y backend separados
+Estado: vigente
+Versión: 1.1
+Fecha: 2026-08
+
+### Contexto
+El proyecto tendrá un frontend navegable independiente y un backend API.
+
+Existen dos artefactos de frontend distintos que no deben confundirse:
+
+- `marybaxmann/Valpo-Verde-Conecta` — prototipo frontend navegable y
+  referencia funcional v2 (ver PR-001).
+- `valpo-verde-frontend` — nombre previsto para el frontend productivo futuro.
+
+El prototipo actual puede reutilizarse, evolucionar, reemplazarse o servir de
+base, pero no debe asumirse que ya constituye necesariamente el repositorio
+productivo definitivo.
+
+### Decisión
+Mantener dos repositorios/proyectos independientes para el sistema productivo:
+
+- `valpo-verde-frontend` (frontend productivo futuro)
+- `valpo-verde-backend`
+
+No utilizar monorepo por ahora.
+
+### Consecuencias
+- despliegue independiente;
+- responsabilidades separadas;
+- comunicación mediante API;
+- configuración independiente por entorno.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-017
+
+---
+
+## ADR-002 — Arquitectura backend por capas
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-08
+
+### Contexto
+Se requiere separar HTTP, negocio y persistencia.
+
+### Decisión
+Usar:
+
+```
+routes
+→ controllers
+→ services
+→ repositories
+```
+
+La lógica metodológica se mantiene adicionalmente aislada en:
+
+```
+services/rules/
+```
+
+### Consecuencias
+- controllers no contienen reglas metodológicas;
+- repositories no contienen lógica de negocio;
+- services coordinan casos de uso;
+- rules concentra cálculos técnicos.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-008
+PR-011
+PR-017
+
+---
+
+## ADR-003 — PostgreSQL/Supabase como fuente de datos
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-08
+
+### Contexto
+La plataforma requiere persistencia relacional, historial, geolocalización y almacenamiento de metadatos.
+
+### Decisión
+Utilizar Supabase/PostgreSQL como fuente principal de datos persistentes.
+
+PostgreSQL es fuente de verdad del estado almacenado.
+El backend es fuente de verdad de reglas de negocio y cálculos.
+
+### Consecuencias
+- evitar lógica metodológica en frontend;
+- evitar duplicar estado calculado innecesariamente;
+- mantener constraints e integridad en BD cuando corresponda.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-008
+PR-017
+
+---
+
+## ADR-004 — Autenticación mediante Supabase Auth
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-08
+
+### Contexto
+La plataforma requiere autenticación sin mantener contraseñas propias.
+
+### Decisión
+El frontend realiza autenticación con Supabase Auth.
+
+El backend recibe Bearer JWT y valida la identidad.
+
+No implementar endpoint Express `POST /api/auth/login`.
+
+La service role key solo existe en backend.
+
+### Consecuencias
+- contraseñas no viven en tablas propias;
+- proyectos no almacenan contraseñas;
+- backend autoriza solicitudes a partir de identidad validada.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-018
+
+---
+
+## ADR-005 — Modelo multiproyecto (v1.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 1.0
+Fecha: 2026-08
+Reemplazada por: ADR-005 v2.0
+Motivo del reemplazo: el diseño físico del modelo multiproyecto quedó aprobado por la autora; esta versión solo lo adoptaba a nivel conceptual y dejaba la estructura física por diseñar.
+
+### Contexto
+La plataforma debe poder gestionar inventarios para distintas instituciones o municipalidades.
+
+El esquema actual aún no implementa esta capa.
+
+### Decisión
+Adoptar conceptualmente una arquitectura multiproyecto.
+
+Objetivo:
+
+```
+Project
+├── Members
+├── Trees
+├── Inspections
+├── Incidents
+├── Maintenance
+└── ...
+```
+
+Entidades a evaluar para una migración futura:
+
+- `projects`;
+- `project_members`;
+- `trees.project_id`.
+
+La estructura física definitiva todavía debe diseñarse antes de modificar el schema.
+
+### Consecuencias
+La autorización futura debe considerar:
+
+```
+rol
++
+pertenencia al proyecto
+```
+
+No basta comprobar solamente `role`.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-003
+PR-004
+PR-005
+
+---
+
+## ADR-005 — Modelo multiproyecto (v2.0)
+Estado: vigente
+Versión: 2.0
+Fecha: 2026-08
+Reemplaza: ADR-005 v1.0
+Motivo: diseño físico del modelo multiproyecto aprobado por la autora.
+Capas afectadas: base de datos, backend, permisos, documentación (el impacto en frontend queda anotado; es un repositorio separado).
+
+### Contexto
+El modelo multiproyecto ya estaba adoptado a nivel conceptual (v1.0). La autora aprobó su diseño físico: tablas, columnas, claves foráneas y ruta de migración por etapas.
+
+### Decisión
+
+**Modelo físico aprobado.**
+
+Tablas nuevas:
+
+- `projects` — un proyecto = gestión/inventario de arbolado de una institución. Sin eliminación física como flujo normal; el cierre se representa con `status = 'cerrado'`.
+- `project_members` — representa **solo pertenencia** de un usuario a un proyecto. No lleva rol propio.
+
+El rol (`admin`, `usuario_municipal`) sigue siendo **global** y vive en `user_profiles`.
+
+Columnas de scope:
+
+- `trees.project_id`, `incidents.project_id`, `public_spaces.project_id` — se agregan **NULLABLE** en la migración de estructura (`002`) y su objetivo final es `NOT NULL` (migración `004`).
+- `incidents` lleva `project_id` **directo** porque `incidents.tree_id` puede ser `NULL`. Si `tree_id` tiene valor, el árbol debe pertenecer al mismo `project_id` (coherencia forzada por la BD).
+- `maintenance`, `infrastructure_conflicts`, `photos` e `inspections` **no** llevan `project_id` propio: derivan el proyecto a través de `tree_id` (todas tienen `tree_id NOT NULL`).
+
+Catálogos:
+
+- `species` es **global**.
+- `public_spaces` es **scoped por proyecto**: `UNIQUE(project_id, nombre)`; el mismo nombre de espacio puede existir en proyectos distintos; un árbol no puede apuntar a un `public_space` de otro proyecto.
+
+Identificación:
+
+- `tree_code` mantiene la **secuencia global** (`A-000001`, …).
+
+Autorización (se aplica en backend en esta fase; RLS después):
+
+- `admin` → acceso **transversal** a todos los proyectos; puede crear proyectos y gestionar miembros.
+- `usuario_municipal` → accede solo a proyectos donde exista una fila en `project_members`.
+
+Claves foráneas:
+
+- Las FK relevantes usan `ON DELETE RESTRICT` (preservación de historial).
+- Las referencias de auditoría nullable (`created_by`, `added_by`) usan `ON DELETE SET NULL`.
+- El offboarding de un usuario debe eliminar primero sus membresías; no hay `CASCADE` automático.
+
+CRS/SRID: **no** se agrega columna a `projects` todavía (ADR-010 sigue `propuesta`).
+
+RLS: **diferida**; se diseñará después de estabilizar membresía y autorización en backend.
+
+**Despliegue por etapas:**
+
+```
+002 estructura multiproyecto (columnas project_id NULLABLE)
+→ backend con scoping rol + proyecto
+→ 003 backfill (solo si existen datos; mapeo explícito de la autora)
+→ 004 SET NOT NULL de los tres project_id
+→ RLS (posterior)
+```
+
+`002` no crea proyecto legacy ni backfill automático. Si hay filas previas en `trees` / `incidents` / `public_spaces`, `004` queda bloqueada hasta que `003` (mapeo definido por la autora) las resuelva.
+
+### Consecuencias
+- La autorización en backend deja de comprobar solo `role`: pasa a `role` global + pertenencia (`project_members`) para `usuario_municipal`.
+- Toda consulta de árbol y derivados (inspecciones, mantenimiento, incidencias, infraestructura, fotos) debe filtrar por proyecto (directo en `incidents`, derivado vía `tree_id` en el resto).
+- Durante la ventana `002 → 004`, filas con `project_id` NULL quedan fuera del scope de `usuario_municipal` hasta el backfill.
+- `schema.sql` consolidado se actualiza con cada migración aprobada.
+
+### Puede cambiar
+Sí, pero cualquier cambio debe preservar historial y trazabilidad y respetar el despliegue por etapas.
+
+### Reglas relacionadas
+PR-003
+PR-004
+PR-005
+PR-006
+
+---
+
+## ADR-006 — Alcance de roles
+Estado: vigente
+Versión: 1.1
+Fecha: 2026-08
+
+### Contexto
+El prototipo v2 separa captura municipal de evaluación técnica.
+
+La definición funcional detallada de permisos vive en PR-003 y PR-004; este ADR no la reemplaza.
+
+### Decisión
+Identificadores internos:
+
+- `admin`
+- `usuario_municipal`
+
+`usuario_municipal`:
+- captura básica;
+- consulta;
+- incidencias según permisos definidos.
+
+`admin`:
+- gestión;
+- evaluación técnica;
+- operaciones técnicas.
+
+El usuario municipal no es inspector técnico.
+
+### Consecuencias
+Los permisos deben aplicarse en backend y posteriormente en RLS.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-003
+PR-004
+
+---
+
+## ADR-007 — Evaluaciones como inspecciones históricas
+Estado: vigente
+Versión: 1.1
+Fecha: 2026-08
+
+### Contexto
+Las evaluaciones técnicas pueden repetirse con el tiempo.
+
+### Decisión
+Cada evaluación constituye una nueva inspección.
+
+Estados:
+
+- `borrador`;
+- `completada`.
+
+Las inspecciones completadas son inmutables.
+
+No se sobrescribe una inspección histórica para representar una evaluación nueva.
+
+ADR-007 es la decisión específica sobre ciclo de vida e inmutabilidad de inspecciones. La preservación histórica general de árboles y registros vive en ADR-012.
+
+### Consecuencias
+- preservación de historial;
+- comparación futura entre evaluaciones;
+- `rule_version` asociado;
+- una nueva evaluación crea una nueva inspección.
+
+### Puede cambiar
+Sí, pero cualquier cambio debe preservar trazabilidad histórica.
+
+### Reglas relacionadas
+PR-009
+
+---
+
+## ADR-008 — Separación de datos observados y calculados
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-08
+
+### Contexto
+La metodología recibe observaciones y mediciones y produce severidades, puntajes y resultados.
+
+### Decisión
+Mantener conceptualmente:
+
+```
+observación
+→ cálculo
+→ evaluación agregada
+→ decisión
+```
+
+Los resultados calculados no se modifican manualmente.
+
+### Consecuencias
+La BD y backend deben evitar mezclar observación original con resultado derivado.
+
+Una excepción futura requeriría mecanismo explícito y trazable.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-008
+PR-004
+
+---
+
+## ADR-009 — Motor metodológico determinístico
+Estado: vigente
+Versión: 1.1
+Fecha: 2026-08
+
+### Contexto
+Los diagramas técnicos definen reglas explícitas de evaluación.
+
+### Decisión
+La metodología actualmente definida se implementa mediante un motor determinístico y versionado en `services/rules/`.
+
+La IA no forma parte actualmente del cálculo metodológico.
+
+Cualquier futura incorporación de IA deberá documentarse como una nueva decisión antes de implementarse.
+
+### Consecuencias
+- resultados explicables;
+- reproducibilidad;
+- tests por regla;
+- posibilidad de mantener versiones metodológicas.
+
+### Puede cambiar
+Sí, pero no sin una nueva decisión metodológica explícita.
+
+### Reglas relacionadas
+PR-002
+PR-008
+PR-011
+
+---
+
+## ADR-010 — Geolocalización canónica
+Estado: propuesta
+Versión: 1.0
+Fecha: 2026-08
+
+### Contexto
+La interfaz actual contempla captura de UTM Este/Norte.
+
+PostGIS está preparado para `geography(Point,4326)`.
+
+La plataforma será multiproyecto y no debe asumir una única zona UTM global.
+
+### Decisión propuesta
+Mantener como estrategia actual:
+
+```
+captura según CRS del proyecto
+→ transformación en backend
+→ ubicación canónica WGS84
+→ geography(Point,4326)
+```
+
+El proyecto deberá poder definir posteriormente su CRS/SRID de captura.
+
+No modificar schema todavía.
+
+### Consecuencias
+- UI y almacenamiento no tienen que usar el mismo CRS;
+- requiere transformación;
+- permite interoperabilidad geográfica.
+
+### Puede cambiar
+Sí. Esta ADR es deliberadamente propuesta y revisable.
+
+### Reglas relacionadas
+PR-005
+PR-006
+PR-015
+
+---
+
+## ADR-011 — Fotografías en Supabase Storage
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-08
+
+### Contexto
+Los árboles requieren evidencia fotográfica sin almacenar binarios directamente en PostgreSQL.
+
+### Decisión
+Guardar archivos físicos en Supabase Storage.
+
+PostgreSQL mantiene metadatos.
+
+Relación actual:
+
+```
+Tree
+→ Photos
+```
+
+Máximo actual: 20 fotografías por árbol.
+
+### Consecuencias
+- backend debe validar límite;
+- frontend muestra contador;
+- relaciones adicionales con inspecciones/incidencias quedan pendientes.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-010
+
+---
+
+## ADR-012 — Árboles e inspecciones preservan historial
+Estado: vigente
+Versión: 1.1
+Fecha: 2026-08
+
+### Contexto
+El sistema requiere trazabilidad municipal y técnica.
+
+### Decisión
+ADR-012 es la decisión general de preservación histórica de árboles y registros.
+
+Evitar eliminación física de árboles como operación normal.
+
+Los cambios de condición deben representarse mediante estado/ciclo de vida.
+
+En lo relativo a inspecciones, esta ADR remite a ADR-007 (ciclo de vida e inmutabilidad) y no duplica su detalle.
+
+### Consecuencias
+Las futuras relaciones y foreign keys deben priorizar preservación histórica.
+
+### Puede cambiar
+Sí, pero cualquier reemplazo debe mantener trazabilidad.
+
+### Reglas relacionadas
+PR-009
