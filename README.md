@@ -41,6 +41,12 @@ npm install
 npm run dev
 ```
 
+`SUPABASE_SERVICE_ROLE_KEY` es la clave `service_role` de Settings → API
+en el dashboard de Supabase — **no** la cadena de conexión de PostgreSQL
+("Connection string"). Usar esta última ahí rompe toda la autenticación
+(`GET /api/auth/me` y cualquier endpoint protegido responden 401 aunque
+el JWT del cliente sea válido), sin que el backend lo detecte al arrancar.
+
 ## Estado actual (Etapa 4, primera iteración)
 
 Implementado:
@@ -48,6 +54,12 @@ Implementado:
 - Validación de JWT de Supabase Auth (`middlewares/auth.middleware.ts`).
 - `GET /api/auth/me` — devuelve el perfil de aplicación del usuario autenticado.
 - Manejo de errores centralizado (`middlewares/error.middleware.ts`).
+- Modelo multiproyecto — `GET/POST /api/projects`, `GET /api/projects/:id`,
+  `GET/POST /api/projects/:id/members`, `DELETE /api/projects/:id/members/:userId`,
+  con autorización por rol + pertenencia (`admin` transversal;
+  `usuario_municipal` solo vía `project_members`). Validado manualmente
+  end-to-end (Postman) contra el backend local y un proyecto Supabase de
+  pruebas — no producción.
 
 Deliberadamente NO implementado todavía (fuera de alcance de esta iteración):
 - `POST /api/auth/login` — el login ocurre en el frontend directamente

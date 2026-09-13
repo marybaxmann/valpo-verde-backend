@@ -36,12 +36,24 @@ pendiente correspondiente quede resuelto en su documento de origen.
 
 ## Backend
 
-- Implementar backend con scoping rol + pertenencia a proyecto: filtrar
-  repositorios por `project_id`, exponer `/projects` y
-  `/projects/:id/members`, aplicar `admin` (acceso transversal) vs.
-  `usuario_municipal` (solo proyectos con fila en `project_members`).
-  Paso intermedio del despliegue por etapas de ADR-005 v2.0, no
-  implementado todavía.
+- ~~Implementar backend con scoping rol + pertenencia a proyecto~~ —
+  **hecho y validado.** `/api/projects` y `/api/projects/:id/members`
+  implementados (commit `49cdb73`), con `admin` de acceso transversal y
+  `usuario_municipal` limitado a proyectos con fila en `project_members`
+  — paso intermedio del despliegue por etapas de ADR-005 v2.0. Validación
+  manual end-to-end aprobada (Postman, backend local + proyecto Supabase
+  de pruebas, no producción): alta y listado de proyectos por rol,
+  `usuario_municipal` sin membresía ve lista vacía y con membresía ve
+  solo su proyecto, gestión de miembros admin-only (403 para
+  `usuario_municipal`), `npx tsc --noEmit` sin errores.
+
+  **Incidencia resuelta durante la validación:** `GET /api/projects/:id/members`
+  devolvía 500 por ambigüedad de PostgREST entre las dos FK de
+  `project_members` hacia `user_profiles` (`user_id` y `added_by`;
+  ver `database/schema.sql`). Corregido en
+  `src/repositories/projectMember.repository.ts` desambiguando el embed
+  con `user:user_profiles!project_members_user_id_fkey(nombre)`
+  (commit `4227c6c`).
 - Endpoints de árboles, inspecciones, incidencias, mantenimiento,
   infraestructura, dashboard (ver README.md "Estado actual").
 - `services/rules/` — motor de reglas metodológico, no creado todavía.
