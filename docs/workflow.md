@@ -229,6 +229,36 @@ No modificar la base de datos solo para replicar exactamente la forma visual de 
 
 La interfaz y el modelo físico de datos pueden diferir.
 
+### Nota operativa — probar migraciones localmente sin Supabase real
+
+Esta nota describe cómo probar `schema.sql`/migraciones contra un
+PostgreSQL local (por ejemplo con Docker) cuando no se dispone de un
+proyecto Supabase real a mano. **No aplica al entorno Supabase real**:
+ahí no se crea ni se necesita el stub siguiente, porque `auth.users` ya
+existe de forma nativa.
+
+`user_profiles.id` referencia `auth.users(id)`, una tabla que en Supabase
+real gestiona el servicio de Auth. Para aplicar `001_init.sql` (o
+`schema.sql` completo) contra un Postgres local vacío, crear antes un
+stub mínimo:
+
+```sql
+CREATE SCHEMA auth;
+CREATE TABLE auth.users (id uuid PRIMARY KEY);
+```
+
+Diferencias relevantes entre `psql` local y el SQL Editor de Supabase, si
+se prueba ahí en lugar de local:
+
+- sin metacomandos `\i` / `\c`;
+- `CREATE EXTENSION` limitado a una allowlist (`postgis` y `pgcrypto` sí
+  están permitidas);
+- sin superusuario;
+- cada ejecución ("Run") es un lote transaccional propio.
+
+Esta nota es información operativa de entorno, no una decisión de
+arquitectura ni una regla de negocio.
+
 ---
 
 ## 9. Estados pendientes

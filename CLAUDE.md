@@ -14,7 +14,8 @@ Condicional:
 
 4. `docs/architecture-decisions.md` (ADR) — si la tarea afecta arquitectura, datos, autenticación, permisos, infraestructura técnica o decisiones transversales;
 5. `docs/methodology/00-index.md` y el documento metodológico específico — si la tarea afecta evaluación técnica / metodológica;
-6. el código / `database/schema.sql` actual — según la tarea, después de comprender las decisiones documentadas.
+6. el código / `database/schema.sql` actual — según la tarea, después de comprender las decisiones documentadas;
+7. `docs/roadmap.md` — si la tarea puede depender de un pendiente ya detectado (migraciones sin validar, metodología sin cerrar, backend sin implementar). Es un índice de tareas, no una fuente de reglas: ante cualquier diferencia con `project-rules.md`, `architecture-decisions.md` o `docs/methodology/`, esos documentos mandan.
 
 Ninguna decisión es permanente.
 

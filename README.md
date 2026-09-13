@@ -25,7 +25,11 @@ src/
 database/
 ├── schema.sql          Referencia consolidada del esquema
 └── migrations/
-    └── 001_init.sql     Primera migración (estado aprobado en Etapa 3)
+    ├── 001_init.sql                         Primera migración (estado aprobado en Etapa 3)
+    └── 002_multiproject_structure.sql        Estructura multiproyecto — ejecutada y validada en un
+                                               proyecto Supabase de prueba/desechable (no en producción):
+                                               escenario limpio 001→002 y escenario con datos legacy
+                                               (ESCENARIO B: pass=25, fail=0, OK)
 ```
 
 ## Configuración local
@@ -54,8 +58,10 @@ Deliberadamente NO implementado todavía (fuera de alcance de esta iteración):
 - Lógica de riesgo (probabilidad de impacto, consecuencias, matriz final):
   pendiente de metodología.
 - Row Level Security en Supabase: pendiente de cerrar permisos exactos
-  de los roles `admin` y `usuario`.
+  de los roles `admin` y `usuario_municipal`.
 - Cualquier funcionalidad de mapas/geolocalización.
+- Framework de tests: aún no elegido ni instalado (decisión diferida,
+  no un olvido).
 
 ## Variables de entorno
 
