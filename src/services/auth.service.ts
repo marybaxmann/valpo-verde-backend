@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../config/supabase";
+import { getAuthUserByToken } from "../repositories/auth.repository";
 import {
   findUserProfileById,
   extractRoleName,
@@ -17,13 +17,13 @@ import { AuthenticatedUser } from "../types/auth";
 export async function resolveAuthenticatedUser(
   token: string
 ): Promise<AuthenticatedUser> {
-  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  const authUser = await getAuthUserByToken(token);
 
-  if (error || !data?.user) {
+  if (!authUser) {
     throw new AppError("Token inválido o expirado", 401);
   }
 
-  const profile = await findUserProfileById(data.user.id);
+  const profile = await findUserProfileById(authUser.id);
 
   if (!profile) {
     // El usuario existe en Supabase Auth pero no tiene fila en
@@ -37,8 +37,8 @@ export async function resolveAuthenticatedUser(
   }
 
   return {
-    id: data.user.id,
-    email: data.user.email,
+    id: authUser.id,
+    email: authUser.email,
     nombre: profile.nombre,
     role: extractRoleName(profile.role),
     activo: profile.activo,

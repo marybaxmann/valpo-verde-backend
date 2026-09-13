@@ -120,6 +120,11 @@ services/rules/
 - repositories no contienen lógica de negocio;
 - services coordinan casos de uso;
 - rules concentra cálculos técnicos.
+- Aclaración: el acceso a proveedores externos de datos/identidad —
+  incluido Supabase Auth, no solo Postgres— se encapsula mediante
+  repositories/adapters. Ningún service accede directamente al SDK de
+  Supabase (`supabaseAdmin`); lo hace siempre a través de la capa de
+  repositories.
 
 ### Puede cambiar
 Sí.
