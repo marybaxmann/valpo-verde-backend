@@ -72,7 +72,7 @@ export async function listMembersByProject(
 ): Promise<ProjectMemberWithUserRow[]> {
   const { data, error } = await supabaseAdmin
     .from("project_members")
-    .select(`${MEMBER_COLUMNS}, user:user_profiles(nombre)`)
+    .select(`${MEMBER_COLUMNS}, user:user_profiles!project_members_user_id_fkey(nombre)`)
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
 
