@@ -1,7 +1,8 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (Etapa 3, revisión 3 — posterior a la migración 002: estructura multiproyecto)
+--   (Etapa 3, revisión 4 — posterior a la migración 004: NOT NULL final
+--   de project_id + retiro de las FK transitorias)
 --
 -- Este archivo es la referencia consolidada del esquema completo.
 -- El historial versionado de cambios vive en database/migrations/
@@ -19,16 +20,15 @@
 --      marcada explícitamente con un comentario "-- PENDIENTE:".
 --   4. RLS: fuera de este archivo hasta definir permisos exactos de
 --      admin/usuario (se implementará en una migración separada).
---   5. Multiproyecto (migración 002): trees / incidents / public_spaces se
---      agrupan por project_id. Esas columnas se agregan NULLABLE en 002 y
---      su objetivo NOT NULL se alcanza en 004 (previo backfill 003). La
---      coherencia "mismo proyecto" entre árbol, espacio público e
---      incidencia la fuerzan FK compuestas con MATCH SIMPLE (solo exigen
---      coherencia cuando la tupla completa tiene valor). Durante la ventana
---      002 -> 004 conviven, en trees y en incidents, la FK compuesta y una
---      FK simple *_transitoria (ON DELETE RESTRICT) que preserva la
---      integridad referencial del referente con project_id NULL; las FK
---      simples *_transitoria se retiran en 004.
+--   5. Multiproyecto (migraciones 002-004, completo): trees / incidents /
+--      public_spaces se agrupan por project_id, NOT NULL en las tres
+--      (alcanzado en 004, previo backfill 003). La coherencia "mismo
+--      proyecto" entre árbol, espacio público e incidencia la fuerzan las
+--      FK compuestas con MATCH SIMPLE (trees_project_public_space_fkey,
+--      incidents_tree_project_fkey), ahora la única fuente de esa garantía.
+--      Las FK simples *_transitoria que coexistieron durante la ventana
+--      002 -> 004 (mientras project_id todavía podía ser NULL) ya fueron
+--      retiradas en 004.
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -165,7 +165,7 @@ CREATE TABLE species (
 
 CREATE TABLE public_spaces (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID,                             -- multiproyecto (002): NULLABLE hasta backfill (003) y SET NOT NULL (004)
+  project_id UUID NOT NULL,                    -- multiproyecto (002/004): NOT NULL final desde 004
   nombre     TEXT NOT NULL,                    -- 'Parque Italia', 'Plaza Victoria', ...
   tipo       TEXT,                             -- 'plaza', 'parque', ... (texto libre, no ENUM: extensible)
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -197,9 +197,9 @@ CREATE TABLE trees (
 
   species_id            UUID REFERENCES species(id),
 
-  project_id            UUID,                                -- multiproyecto (002): NULLABLE hasta backfill (003) y SET NOT NULL (004)
+  project_id            UUID NOT NULL,                        -- multiproyecto (002/004): NOT NULL final desde 004
 
-  public_space_id        UUID,                                -- catálogo estructurado de plaza/parque; ver FK simple transitoria + FK compuesta al pie de la tabla
+  public_space_id        UUID,                                -- catálogo estructurado de plaza/parque; ver FK compuesta al pie de la tabla
   direccion              TEXT,
   comuna                  TEXT,
   lugar_referencia          TEXT,                                -- texto descriptivo libre, NO representa la plaza/parque
@@ -222,23 +222,21 @@ CREATE TABLE trees (
   created_at                                      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at                                        TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-  -- Modelo multiproyecto (migración 002). project_id NULLABLE hasta
-  -- backfill (003) y SET NOT NULL (004).
+  -- Modelo multiproyecto (migraciones 002/004). project_id NOT NULL final
+  -- desde 004.
   CONSTRAINT trees_project_id_fkey
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT,
   -- Destino de FK compuestas scoped (p. ej. incidents.(tree_id, project_id)
   -- -> trees(id, project_id)). project_id como columna líder: sirve además
   -- de índice de scoping de trees por proyecto (no hay idx_trees_project).
   CONSTRAINT trees_project_id_id_key UNIQUE (project_id, id),
-  -- FK simple TRANSITORIA (heredada de 001, re-creada en 002 con ON DELETE
-  -- RESTRICT). Garantiza que public_space_id apunte a un espacio EXISTENTE
-  -- aunque project_id sea NULL. Coexiste con la FK compuesta y se RETIRA en
-  -- 004 tras backfill + SET NOT NULL de project_id.
-  CONSTRAINT trees_public_space_id_fkey_transitoria
-    FOREIGN KEY (public_space_id) REFERENCES public_spaces (id) ON DELETE RESTRICT,
   -- FK COMPUESTA (permanente): fuerza que árbol y espacio público sean del
-  -- mismo proyecto cuando project_id y public_space_id tienen ambos valor.
-  -- MATCH SIMPLE => sin exigencia si alguna de las dos columnas es NULL.
+  -- mismo proyecto cuando project_id y public_space_id tienen ambos valor
+  -- (project_id siempre lo tiene desde 004; public_space_id sigue nullable
+  -- por sí mismo). MATCH SIMPLE => sin exigencia si public_space_id es NULL.
+  -- Única fuente de esta garantía desde 004: la FK simple transitoria que
+  -- coexistió durante la ventana 002 -> 004
+  -- (trees_public_space_id_fkey_transitoria) ya fue retirada en 004.
   CONSTRAINT trees_project_public_space_fkey
     FOREIGN KEY (project_id, public_space_id)
     REFERENCES public_spaces (project_id, id) MATCH SIMPLE ON DELETE RESTRICT
@@ -457,8 +455,8 @@ CREATE TRIGGER trg_infra_conflicts_updated_at
 
 CREATE TABLE incidents (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tree_id          UUID,                        -- nullable: puede reportarse sin árbol identificado aún; ver FK simple transitoria + FK compuesta al pie de la tabla
-  project_id        UUID,                        -- multiproyecto (002): DIRECTO (tree_id es nullable). NULLABLE hasta backfill (003) y SET NOT NULL (004)
+  tree_id          UUID,                        -- nullable: puede reportarse sin árbol identificado aún; ver FK compuesta al pie de la tabla
+  project_id        UUID NOT NULL,                -- multiproyecto (002/004): DIRECTO (tree_id es nullable). NOT NULL final desde 004
   tipo              TEXT NOT NULL,               -- 'ramas_peligrosas', 'arbol_inclinado', ...
   descripcion         TEXT,
   estado                TEXT NOT NULL DEFAULT 'pendiente',
@@ -473,19 +471,17 @@ CREATE TABLE incidents (
   created_at                            TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at                              TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-  -- Modelo multiproyecto (migración 002). project_id NULLABLE hasta
-  -- backfill (003) y SET NOT NULL (004).
+  -- Modelo multiproyecto (migraciones 002/004). project_id NOT NULL final
+  -- desde 004.
   CONSTRAINT incidents_project_id_fkey
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT,
-  -- FK simple TRANSITORIA (heredada de 001, re-creada en 002 con ON DELETE
-  -- RESTRICT). Garantiza que tree_id (cuando no es NULL) apunte a un árbol
-  -- EXISTENTE aunque project_id sea NULL. Coexiste con la FK compuesta y se
-  -- RETIRA en 004 tras backfill + SET NOT NULL de project_id.
-  CONSTRAINT incidents_tree_id_fkey_transitoria
-    FOREIGN KEY (tree_id) REFERENCES trees (id) ON DELETE RESTRICT,
   -- FK COMPUESTA (permanente): con tree_id y project_id ambos con valor,
-  -- obliga a que el árbol pertenezca al mismo proyecto que la incidencia.
-  -- MATCH SIMPLE => sin exigencia si tree_id o project_id es NULL.
+  -- obliga a que el árbol pertenezca al mismo proyecto que la incidencia
+  -- (project_id siempre lo tiene desde 004; tree_id sigue nullable por sí
+  -- mismo). MATCH SIMPLE => sin exigencia si tree_id es NULL. Única fuente
+  -- de esta garantía desde 004: la FK simple transitoria que coexistió
+  -- durante la ventana 002 -> 004 (incidents_tree_id_fkey_transitoria) ya
+  -- fue retirada en 004.
   CONSTRAINT incidents_tree_project_fkey
     FOREIGN KEY (tree_id, project_id)
     REFERENCES trees (id, project_id) MATCH SIMPLE ON DELETE RESTRICT
@@ -563,24 +559,15 @@ CREATE INDEX idx_photos_tree ON photos (tree_id);
 --     services/, no todavía mediante trigger de base de datos
 --   - origen_reporte de incidents: catálogo de valores aún no cerrado,
 --     se valida en Zod (backend) mientras tanto
---   - Multiproyecto (migración 002): trees.project_id, public_spaces.project_id
---     e incidents.project_id se agregaron NULLABLE y siguen NULLABLE de forma
---     TEMPORAL hasta:
---       * 003 -> backfill con el mapeo explícito de la autora (solo si hay
---         filas previas en trees / incidents / public_spaces);
---       * 004 -> SET NOT NULL de los tres project_id + DROP de las FK simples
---         trees_public_space_id_fkey_transitoria e
---         incidents_tree_id_fkey_transitoria (bloqueada hasta que 003 exista
---         y se aplique).
---     Mientras project_id sea NULL en una fila, las FK compuestas
---     (trees_project_public_space_fkey, incidents_tree_project_fkey) NO
---     exigen coherencia de proyecto (MATCH SIMPLE); la integridad del
---     referente la sostienen entretanto las FK simples *_transitoria.
---   - Unicidad temporal de public_spaces con project_id NULL: dos espacios
---     con el mismo nombre y project_id NULL serían admitidos hasta el
---     backfill de 003 (NULLs distintos en el índice único). No se resuelve
---     en 002 por diseño.
+--   - Multiproyecto (migraciones 002-004): completo. trees.project_id,
+--     public_spaces.project_id e incidents.project_id son NOT NULL desde
+--     004 (previo backfill 003 con el mapeo explícito de la autora). Las FK
+--     simples transitorias (trees_public_space_id_fkey_transitoria,
+--     incidents_tree_id_fkey_transitoria) fueron retiradas en 004; las FK
+--     compuestas (trees_project_public_space_fkey,
+--     incidents_tree_project_fkey) son ahora la única fuente de la garantía
+--     de coherencia de proyecto + existencia del referente.
 --   - Autorización rol global + pertenencia (project_members): se aplica en
---     backend en esta fase; RLS es posterior (después de 004)
+--     backend; RLS sigue pendiente de diseño (posterior a 004, ya aplicada)
 --   - CRS/SRID por proyecto: sin columna en projects (ADR-010 'propuesta')
 -- =====================================================================
