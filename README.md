@@ -47,6 +47,19 @@ en el dashboard de Supabase — **no** la cadena de conexión de PostgreSQL
 (`GET /api/auth/me` y cualquier endpoint protegido responden 401 aunque
 el JWT del cliente sea válido), sin que el backend lo detecte al arrancar.
 
+## Entornos Supabase
+
+El proyecto Supabase `valpo-verde-conecta` es el entorno de
+**desarrollo/pruebas** de Valpo Verde (ADR-013). Su dashboard puede
+mostrar `main` / `PRODUCTION` — es una etiqueta de la plataforma
+Supabase, no una afirmación de que sea el entorno productivo real. Ahí
+se realizan, de forma controlada, migraciones, fixtures, pruebas RLS,
+Postman y E2E.
+
+El entorno productivo real será un proyecto Supabase **separado**,
+creado más adelante, al que solo se aplicarán migraciones ya validadas
+en este entorno de desarrollo/pruebas.
+
 ## Estado actual (Etapa 4, primera iteración)
 
 Implementado:

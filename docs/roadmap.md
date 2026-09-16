@@ -15,24 +15,62 @@ pendiente correspondiente quede resuelto en su documento de origen.
 
 ## Base de datos y migraciones
 
-- **Aplicar `database/migrations/002_multiproject_structure.sql` al
-  entorno/proyecto Supabase objetivo (producción).** Fue diseñada y
-  revisada estáticamente por el subagente `qa`, y luego ejecutada y
-  validada de punta a punta en un proyecto Supabase de prueba/desechable
-  (no en producción): escenario limpio `001 → 002` y escenario con datos
-  legacy, con resultado Escenario B `25 PASS / 0 FAIL`. **Aún no ha sido
-  aplicada al entorno/proyecto objetivo real.** Ver nota operativa de
+**Nota de entornos:** el proyecto Supabase usado en todas las
+validaciones de esta sección es `valpo-verde-conecta` — su dashboard
+muestra `main` / `PRODUCTION`, pero es oficialmente el entorno de
+desarrollo/pruebas del proyecto (ver ADR-013), no el productivo real. El
+entorno productivo real es un proyecto Supabase separado, todavía no
+creado.
+
+- ~~Aplicar `database/migrations/002_multiproject_structure.sql`~~ —
+  **hecho y validado en `valpo-verde-conecta` (desarrollo/pruebas,
+  ADR-013).** Revisada estáticamente por `qa`, ejecutada y validada de
+  punta a punta: escenario limpio `001 → 002` y escenario con datos
+  legacy, resultado Escenario B `25 PASS / 0 FAIL`.
+
+  **`002`, `003`, `004` y `005` están validadas en `valpo-verde-conecta`
+  (desarrollo/pruebas), pero NINGUNA ha sido aplicada todavía al entorno
+  productivo real.** Ese entorno es un proyecto Supabase **separado**,
+  que todavía no existe (ADR-013) — no se marca como desplegada en
+  producción ninguna migración. Cuando ese proyecto se cree, se le
+  aplicarán únicamente migraciones ya validadas en desarrollo/pruebas,
+  repitiendo en ese momento los diagnósticos/precondiciones que
+  correspondan a cada una (p. ej. el diagnóstico de datos legacy antes de
+  `003`, la verificación de ownership/`auth.uid()`/`BYPASSRLS` antes de
+  `005`) — no se asume que el resultado vaya a ser automáticamente el
+  mismo solo porque ya pasó en desarrollo/pruebas. Ver nota operativa de
   testing local en `docs/workflow.md` §8.
-- **Migración `003` (backfill)** — bloqueada: requiere que la autora del
-  proyecto defina explícitamente el/los proyecto(s) de destino para filas
-  legacy en `trees`, `incidents`, `public_spaces`. No crear un "proyecto
-  legacy" automático (decisión explícita, ver ADR-005 v2.0 / PR-005 v3.0).
-- **Migración `004`** — bloqueada por `003`. Debe fijar `NOT NULL` en los
-  tres `project_id` y retirar las FK simples `*_transitoria` que hoy
-  coexisten con las FK compuestas `MATCH SIMPLE` (ver comentarios en
-  `database/schema.sql`).
-- **RLS (Row Level Security)** — diferida hasta estabilizar membresía y
-  autorización en backend (ADR-005 v2.0). No diseñada todavía.
+- ~~Migración `003` (backfill)~~ — **hecho y validado en
+  `valpo-verde-conecta`** (commit `4ea63fa`). El diagnóstico previo en
+  este entorno confirmó 0 filas legacy (`project_id NULL` = 0 en
+  `public_spaces`/`trees`/`incidents`; integridad relacional 5a-5d = 0
+  filas), por lo que se aplicó con las 3 tablas de mapeo (`TEMP ... ON
+  COMMIT DROP`) vacías — no se creó ningún "proyecto legacy" ni se
+  infirió mapeo alguno (ADR-005 v2.0 / PR-005 v3.0).
+- ~~Migración `004`~~ — **hecho y validado en `valpo-verde-conecta`**
+  (commit `1f4da03`): `SET NOT NULL` en las tres `project_id`
+  (`public_spaces`, `trees`, `incidents`), retiro de las FK simples
+  `trees_public_space_id_fkey_transitoria` /
+  `incidents_tree_id_fkey_transitoria`; FK compuestas
+  `trees_project_public_space_fkey` / `incidents_tree_project_fkey`
+  intactas. `database/schema.sql` ya sincronizado con el estado post-004.
+- ~~RLS (Row Level Security)~~ — **diseñada, implementada (`005`) y
+  validada en `valpo-verde-conecta`.** RLS como segunda barrera,
+  coexistiendo con (no reemplazando) la autorización de backend: 4
+  funciones `SECURITY DEFINER` (`get_user_role`, `is_project_member`,
+  `is_admin`, `is_municipal_member`), RLS habilitado en las 6 tablas de
+  esta primera fase (`user_profiles`, `project_members`, `projects`,
+  `public_spaces`, `trees`, `incidents`), 15 policies en total, todas
+  con `TO authenticated` explícito (ninguna aplicada a `PUBLIC` por
+  omisión). Los 7 tests SQL (H1-H7: admin transversal, municipal
+  miembro, municipal no miembro, usuario sin perfil, usuario inactivo
+  con acceso de solo lectura a su propio perfil pero sin acceso
+  operacional, acceso cruzado entre proyectos bloqueado, control
+  negativo de `service_role`) quedaron aprobados. Confirmado en este
+  entorno: `service_role` tiene `BYPASSRLS`; `authenticated`/`anon` no
+  lo tienen. Cutover del backend de `service_role` a JWT de usuario por
+  repository: pendiente, es trabajo coordinado y separado (ver sección
+  Backend).
 
 ## Backend
 

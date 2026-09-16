@@ -229,6 +229,21 @@ No modificar la base de datos solo para replicar exactamente la forma visual de 
 
 La interfaz y el modelo físico de datos pueden diferir.
 
+### Nota operativa — entornos Supabase (desarrollo/pruebas vs. producción)
+
+El proyecto Supabase usado hoy para migraciones, fixtures, pruebas de RLS
+y validaciones Postman/E2E es el entorno de **desarrollo/pruebas** del
+proyecto (ver ADR-013). Su propio dashboard de Supabase puede mostrar una
+etiqueta `main` / `PRODUCTION` — esa etiqueta es de la plataforma
+Supabase (identifica una rama de proyecto), no una afirmación sobre el
+rol que este proyecto cumple para Valpo Verde. No debe interpretarse como
+que ese proyecto es el entorno productivo real.
+
+El entorno productivo real es un proyecto Supabase **separado**, todavía
+no creado. A él solo se aplicarán migraciones que ya hayan sido validadas
+en el entorno de desarrollo/pruebas — el mismo criterio que ya rige el
+despliegue de `002`-`005` (nunca aplicar directo a producción).
+
 ### Nota operativa — probar migraciones localmente sin Supabase real
 
 Esta nota describe cómo probar `schema.sql`/migraciones contra un

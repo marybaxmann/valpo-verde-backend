@@ -573,3 +573,53 @@ Sí, pero cualquier reemplazo debe mantener trazabilidad.
 
 ### Reglas relacionadas
 PR-009
+
+---
+
+## ADR-013 — Entornos Supabase: desarrollo/pruebas vs. producción
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-09
+
+### Contexto
+El proyecto Supabase usado hasta ahora para todas las migraciones
+multiproyecto (`002`-`005`), fixtures, pruebas de RLS y validaciones
+manuales Postman/E2E es `valpo-verde-conecta`. Su propio dashboard de
+Supabase muestra la etiqueta `main` / `PRODUCTION`, lo que puede inducir
+a interpretar erróneamente que es el entorno productivo real del
+proyecto.
+
+### Decisión
+Se declara formalmente que `valpo-verde-conecta` es el entorno de
+**desarrollo/pruebas** de Valpo Verde, independientemente de la etiqueta
+que su propio dashboard de Supabase muestre. Esa etiqueta es de la
+plataforma Supabase (identifica una rama/branch del proyecto), no una
+afirmación sobre el rol que cumple para Valpo Verde.
+
+Ahí se realizan, de forma controlada, migraciones, fixtures, pruebas
+RLS, Postman y E2E.
+
+El entorno productivo real de Valpo Verde será un proyecto Supabase
+**separado**, creado más adelante. A ese proyecto solo se aplicarán
+migraciones que ya hayan sido validadas de punta a punta en el entorno
+de desarrollo/pruebas — el mismo criterio de despliegue por etapas que
+ya rige `002`-`005` (ADR-005 v2.0): nunca aplicar directo a producción.
+
+No se define aquí ningún nombre, URL ni credencial del futuro entorno
+productivo: no existen todavía y no deben inventarse.
+
+### Consecuencias
+- Toda referencia, presente o futura, a "Supabase de pruebas" en código,
+  migraciones o documentación se refiere a `valpo-verde-conecta`, sin
+  importar la etiqueta de su dashboard.
+- Ninguna migración ni dato de prueba de este proyecto debe tratarse
+  como productivo solo porque el dashboard diga `PRODUCTION`.
+- Cuando se cree el proyecto productivo real, esta ADR se actualizará
+  (nueva versión) con su identificación, siguiendo el procedimiento de
+  reemplazo de `docs/workflow.md` §4.
+
+### Puede cambiar
+Sí — se actualizará en cuanto exista el proyecto productivo real.
+
+### Reglas relacionadas
+PR-005 v3.0
