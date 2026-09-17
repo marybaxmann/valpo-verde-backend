@@ -63,30 +63,50 @@ en este entorno de desarrollo/pruebas.
 ## Estado actual (Etapa 4, primera iteración)
 
 Implementado:
-- Conexión a Supabase (`config/supabase.ts`) con service role key.
-- Validación de JWT de Supabase Auth (`middlewares/auth.middleware.ts`).
+- Conexión a Supabase (`config/supabase.ts`): `supabaseAdmin` (`service_role`,
+  operaciones internas privilegiadas) y `createUserScopedClient(accessToken)`
+  (cliente por-request con el JWT del usuario, para que RLS se evalúe como
+  ese usuario — ver ADR-014).
+- Validación de JWT de Supabase Auth (`middlewares/auth.middleware.ts`),
+  que adjunta tanto `req.user` como `req.accessToken`.
 - `GET /api/auth/me` — devuelve el perfil de aplicación del usuario autenticado.
 - Manejo de errores centralizado (`middlewares/error.middleware.ts`).
 - Modelo multiproyecto — `GET/POST /api/projects`, `GET /api/projects/:id`,
   `GET/POST /api/projects/:id/members`, `DELETE /api/projects/:id/members/:userId`,
   con autorización por rol + pertenencia (`admin` transversal;
-  `usuario_municipal` solo vía `project_members`). Validado manualmente
-  end-to-end (Postman) contra el backend local y un proyecto Supabase de
-  pruebas — no producción.
+  `usuario_municipal` solo vía `project_members`) **en dos capas**: backend
+  (`authorization.service.ts`) y RLS en Supabase/Postgres (migración `005`,
+  ver ADR-014) — RLS no reemplaza la autorización de backend, coexisten.
+  Validado end-to-end tanto con mocks (Postman/manual) como con JWTs reales
+  contra `valpo-verde-conecta` (desarrollo/pruebas, no producción).
 
 Deliberadamente NO implementado todavía (fuera de alcance de esta iteración):
 - `POST /api/auth/login` — el login ocurre en el frontend directamente
   contra Supabase Auth; este backend solo valida el token resultante.
 - Endpoints de árboles, inspecciones, incidencias, mantenimiento,
-  infraestructura, dashboard.
+  infraestructura, dashboard — y, junto con ellos, extender RLS a esas
+  tablas (la primera fase de RLS cubre solo las 6 tablas de proyectos/
+  membresías, las únicas con endpoints hoy).
 - Motor de reglas de evaluación (`services/rules/`).
 - Lógica de riesgo (probabilidad de impacto, consecuencias, matriz final):
   pendiente de metodología.
-- Row Level Security en Supabase: pendiente de cerrar permisos exactos
-  de los roles `admin` y `usuario_municipal`.
 - Cualquier funcionalidad de mapas/geolocalización.
 - Framework de tests: aún no elegido ni instalado (decisión diferida,
   no un olvido).
+
+## Contrato para frontend
+
+`valpo-verde-frontend` (repositorio separado, ADR-001) consume esta API
+bajo este contrato (PR-018 v2.0 / ADR-014):
+
+- Obtiene su sesión/JWT mediante Supabase Auth directamente (no contra
+  este backend).
+- Envía `Authorization: Bearer <JWT>` en cada request a la API.
+- NUNCA usa ni contiene `SUPABASE_SERVICE_ROLE_KEY` — puede usar la
+  `anon`/publishable key para su propia sesión de Supabase Auth.
+- El backend determina `req.user` (identidad + rol global) y aplica los
+  permisos; el frontend no decide seguridad, solo adapta la UI según el
+  rol que el backend confirme (p. ej. vía `GET /api/auth/me`).
 
 ## Variables de entorno
 

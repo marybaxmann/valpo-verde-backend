@@ -252,7 +252,7 @@ PR-005
 
 ## ADR-005 — Modelo multiproyecto (v2.0)
 Estado: vigente
-Versión: 2.0
+Versión: 2.1
 Fecha: 2026-08
 Reemplaza: ADR-005 v1.0
 Motivo: diseño físico del modelo multiproyecto aprobado por la autora.
@@ -300,7 +300,7 @@ Claves foráneas:
 
 CRS/SRID: **no** se agrega columna a `projects` todavía (ADR-010 sigue `propuesta`).
 
-RLS: **diferida**; se diseñará después de estabilizar membresía y autorización en backend.
+RLS: diseñada e implementada — ver Actualización 2.1 más abajo y ADR-014.
 
 **Despliegue por etapas:**
 
@@ -313,6 +313,8 @@ RLS: **diferida**; se diseñará después de estabilizar membresía y autorizaci
 ```
 
 `002` no crea proyecto legacy ni backfill automático. Si hay filas previas en `trees` / `incidents` / `public_spaces`, `004` queda bloqueada hasta que `003` (mapeo definido por la autora) las resuelva.
+
+Actualización 2.1 (cierre RLS, aclaración menor — no cambia el modelo físico ni el resto de esta decisión): las 5 etapas de este despliegue quedaron completadas y validadas en `valpo-verde-conecta` (desarrollo/pruebas, ADR-013): `002`, `003`, `004` y RLS (migración `005`). El backend además migró de `service_role` a un cliente Supabase alcanzado al JWT del usuario para las operaciones en nombre del usuario autenticado, de modo que RLS actúe como segunda barrera real. Detalle completo de esa decisión (arquitectura de autenticación, principio de dos capas, resultados de validación, contrato de frontend) en ADR-014. Ninguna de estas migraciones se ha aplicado todavía al entorno productivo real (ADR-013).
 
 ### Consecuencias
 - La autorización en backend deja de comprobar solo `role`: pasa a `role` global + pertenencia (`project_members`) para `usuario_municipal`.
@@ -623,3 +625,73 @@ Sí — se actualizará en cuanto exista el proyecto productivo real.
 
 ### Reglas relacionadas
 PR-005 v3.0
+
+---
+
+## ADR-014 — RLS como segunda barrera + cutover del backend a JWT de usuario
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-09
+
+### Contexto
+ADR-005 v2.0 dejaba RLS como paso "posterior" del despliegue multiproyecto, sin cerrar cómo lograr que aportara protección real. El backend usaba un único cliente Supabase con `service_role` para todas sus consultas (`src/config/supabase.ts`) — y `service_role` tiene el atributo `BYPASSRLS`: cualquier policy de RLS que se creara sería bypassada siempre por esa única vía de acceso. Se evaluaron dos alternativas: (1) mantener el statu quo (RLS documentada pero sin efecto real mientras el backend siga en `service_role`), o (2) que las operaciones realizadas en nombre de un usuario autenticado usen el JWT de ese usuario contra Supabase, para que RLS se evalúe como ese usuario y actúe como una segunda barrera independiente del backend.
+
+### Decisión
+Se adopta la alternativa 2. Arquitectura de autenticación resultante:
+
+```
+Request
+→ Authorization: Bearer <JWT>
+→ auth.middleware.ts
+→ resolveAuthenticatedUser(token)
+→ req.user + req.accessToken
+→ controller
+→ service (autorización de backend: assertAdmin / assertProjectAccess)
+→ repository
+→ createUserScopedClient(accessToken)
+→ Supabase como rol "authenticated"
+→ RLS (policies de la migración 005)
+```
+
+`req.accessToken` (JWT crudo, ya validado) se adjunta en `auth.middleware.ts` junto a `req.user`, y se propaga explícitamente controller → service → repository. `createUserScopedClient(accessToken)` (`src/config/supabase.ts`) crea un cliente Supabase **nuevo por llamada** (nunca un singleton) con la `anon key` + `Authorization: Bearer <accessToken>`.
+
+**Excepción, sin cambios:** `auth.repository.ts` (`getAuthUserByToken`) y `userProfile.repository.ts` (`findUserProfileById`) siguen usando `supabaseAdmin`/`service_role`. La primera es la propia validación de identidad, anterior a que exista un "usuario autenticado" sobre el cual aplicar su JWT; la segunda resuelve tanto el propio perfil como el de un usuario destino consultado por un admin, y queda como operación interna privilegiada por ahora.
+
+**Principio de dos capas — RLS NO reemplaza la autorización de backend:**
+
+| Capa | Dónde vive | Qué hace |
+|---|---|---|
+| 1 — Backend | `authorization.service.ts` (`assertAdmin`, `assertProjectAccess`) y validaciones de rol/membership en cada service | Autorización funcional: qué puede hacer cada rol, mensajes de error propios (403/404/409), primera línea de defensa |
+| 2 — Supabase/Postgres | Migración `005`, 4 funciones `SECURITY DEFINER` (`get_user_role`, `is_project_member`, `is_admin`, `is_municipal_member`), RLS en 6 tablas (`user_profiles`, `project_members`, `projects`, `public_spaces`, `trees`, `incidents`), 15 policies `TO authenticated` | Defensa en profundidad a nivel de fila, independiente del backend: protege incluso si un endpoint futuro olvidara invocar la Capa 1 |
+
+Ambas capas coexisten deliberadamente. `service_role` sigue reservado para `auth`/perfil y cualquier operación interna privilegiada que realmente lo requiera — nunca para operaciones ordinarias en nombre de un usuario.
+
+**Contrato para el frontend** (repositorio separado, `valpo-verde-frontend`, ver ADR-001):
+- Obtiene su sesión/JWT mediante Supabase Auth directamente (PR-018) — no contra este backend.
+- Envía `Authorization: Bearer <JWT>` en cada request a la API.
+- NUNCA usa ni contiene `SUPABASE_SERVICE_ROLE_KEY` — puede usar la `anon`/publishable key para su propia sesión de Supabase Auth.
+- El backend es quien determina `req.user` (identidad + rol global) y aplica los permisos; el frontend no decide seguridad, solo adapta la UI según el rol que el backend confirme (p. ej. vía `GET /api/auth/me`).
+
+### Consecuencias
+- `src/config/env.ts` requiere ahora también `SUPABASE_ANON_KEY` (además de `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`).
+- `project.repository.ts` y `projectMember.repository.ts` (las 8 funciones existentes a la fecha) reciben `accessToken` como primer parámetro y usan `createUserScopedClient` en vez de `supabaseAdmin`.
+- Todo repository/endpoint futuro que actúe en nombre de un usuario autenticado (árboles, inspecciones, incidencias, etc.) debe seguir este mismo patrón antes o al mismo tiempo que exista su policy RLS correspondiente — cortar a JWT sin la policy vigente en el mismo entorno produce fallos silenciosos (listas vacías / 403 en vez de datos), no errores explícitos.
+
+**Resultados de validación (`valpo-verde-conecta`, desarrollo/pruebas):**
+- Tests SQL H1-H7 (admin transversal, municipal miembro, municipal no miembro, usuario sin perfil, usuario inactivo con lectura de su propio perfil pero sin acceso operacional, acceso cruzado entre proyectos bloqueado, control negativo de `service_role`): **7/7 PASS**.
+- `service_role` confirmado con `BYPASSRLS`; `authenticated`/`anon` confirmados sin ese atributo.
+- Suite automatizada: 5 test suites / 33 tests PASS; `npx tsc --noEmit` y `npx tsc -p tsconfig.jest.json` sin errores.
+- Validación E2E real contra `valpo-verde-conecta`, con JWTs reales de un usuario admin y uno municipal (casos E1-E7: alta/listado de proyectos, creación de proyecto y membresía por admin, bloqueo de municipal sin membership, acceso tras agregar membership, 403 en endpoint admin-only con JWT municipal, remoción de membership y pérdida de acceso): **7/7 PASS**, sin ningún error 500 ni de PostgREST.
+- Cambios commiteados y en `main` (commit `737ea25`, sobre la documentación de entornos de `263e6ff` y las policies de `131b999`).
+- Ninguna migración de esta cadena (`002`-`005`) se ha aplicado todavía al entorno productivo real (ADR-013).
+
+### Puede cambiar
+Sí. Un cambio futuro (p. ej. extender el cutover a JWT a otros repositories, o separar `findUserProfileById` en una variante self-lookup por JWT) debe documentarse como nueva actualización de esta ADR, preservando el principio de dos capas.
+
+### Reglas relacionadas
+PR-003 v4.0
+PR-004 v4.0
+PR-018
+ADR-002
+ADR-005 v2.1
+ADR-013

@@ -561,7 +561,7 @@ Afecta:
 
 ## PR-018 — Autenticación
 Estado: vigente
-Versión: 1.0
+Versión: 2.0
 
 Login mediante Supabase Auth desde frontend.
 
@@ -570,6 +570,24 @@ No implementar `POST /api/auth/login` en Express.
 Backend valida JWT recibido.
 
 `SUPABASE_SERVICE_ROLE_KEY` solo existe en backend.
+
+Actualización 2.0 (cierre RLS/cutover, ver ADR-014): la autorización
+tiene dos capas — backend (`assertAdmin`, `assertProjectAccess`,
+validaciones de rol/membership) y RLS en Supabase/Postgres (migración
+`005`). RLS no reemplaza la autorización de backend; ambas coexisten.
+Para operaciones realizadas en nombre de un usuario autenticado, el
+backend consulta Supabase con el JWT de ese usuario (`req.accessToken`
+→ `createUserScopedClient`), no con `service_role`. `service_role`
+queda reservado a `auth`/perfil y operaciones internas privilegiadas.
+
+Contrato del frontend (repositorio separado, `valpo-verde-frontend`):
+- obtiene su sesión/JWT mediante Supabase Auth directamente;
+- envía `Authorization: Bearer <JWT>` al backend en cada request;
+- NUNCA usa ni contiene `SUPABASE_SERVICE_ROLE_KEY`; puede usar la
+  `anon`/publishable key para su propia sesión de Supabase Auth;
+- el backend determina `req.user` y los permisos; el frontend no
+  decide seguridad, solo adapta la UI según el rol confirmado (p. ej.
+  vía `GET /api/auth/me`).
 
 Afecta:
 - frontend

@@ -54,6 +54,7 @@ Ninguna decisión es permanente.
 - Frontend React/Vite/TypeScript → API REST → Backend Node/Express/TypeScript → PostgreSQL/Supabase.
 - Backend por capas: `routes → controllers → services → repositories`. Lógica metodológica en `services/rules/`.
 - Frontend y backend son proyectos independientes. PostgreSQL = verdad de los datos persistidos; backend = verdad de reglas de negocio y cálculos.
+- Autorización en dos capas — backend (`authorization.service.ts`) y RLS en Supabase/Postgres — que coexisten; RLS no reemplaza la de backend (ADR-014, PR-018 v2.0).
 
 ---
 

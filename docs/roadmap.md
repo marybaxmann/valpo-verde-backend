@@ -68,9 +68,16 @@ creado.
   operacional, acceso cruzado entre proyectos bloqueado, control
   negativo de `service_role`) quedaron aprobados. Confirmado en este
   entorno: `service_role` tiene `BYPASSRLS`; `authenticated`/`anon` no
-  lo tienen. Cutover del backend de `service_role` a JWT de usuario por
-  repository: pendiente, es trabajo coordinado y separado (ver sección
-  Backend).
+  lo tienen.
+
+  ~~Cutover del backend de `service_role` a JWT de usuario por
+  repository~~ — **hecho y validado** (commit `737ea25`, ver ADR-014).
+  `project.repository.ts` y `projectMember.repository.ts` migrados a
+  `createUserScopedClient(accessToken)`; `auth.repository.ts` y
+  `userProfile.repository.ts` sin cambios (`service_role`). Suite
+  automatizada: 5 suites / 33 tests PASS, TypeScript limpio. Validación
+  E2E real con JWTs de un admin y un municipal reales (casos E1-E7):
+  `7/7 PASS`, sin ningún 500 ni error de PostgREST.
 
 ## Backend
 
@@ -97,6 +104,26 @@ creado.
 - `services/rules/` — motor de reglas metodológico, no creado todavía.
   Depende de que las secciones metodológicas correspondientes estén
   `vigente` (ver más abajo).
+
+## Frontend productivo (próximo bloque, no iniciado)
+
+`valpo-verde-frontend` (ADR-001) — repositorio separado, todavía no
+creado. Nada de esta sección está implementado; se lista aquí solo como
+orden de trabajo previsto, no como progreso:
+
+- Autenticación real contra Supabase Auth (login/logout, obtención y
+  renovación de sesión) — contrato ya fijado en PR-018 v2.0/ADR-014: el
+  frontend nunca usa `service_role`, solo `anon`/publishable key para su
+  propia sesión.
+- Consumo de `GET /api/auth/me` para resolver identidad + rol y adaptar
+  la UI (el frontend no decide permisos, solo los refleja).
+- Consumo de `/api/projects` y `/api/projects/:id` (alta, listado,
+  detalle) respetando el acceso transversal de `admin` y el scoping por
+  membership de `usuario_municipal`.
+- Consumo de `/api/projects/:id/members` (admin-only).
+- Recién después: consumo de las futuras APIs de árboles/inventario
+  (dependen de que esos endpoints existan en el backend — ver sección
+  Backend, todavía no implementados).
 
 ## Metodología
 
