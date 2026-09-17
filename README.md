@@ -79,6 +79,8 @@ Implementado:
   ver ADR-014) — RLS no reemplaza la autorización de backend, coexisten.
   Validado end-to-end tanto con mocks (Postman/manual) como con JWTs reales
   contra `valpo-verde-conecta` (desarrollo/pruebas, no producción).
+- Framework de tests: Jest + ts-jest + Supertest, configurados
+  (`jest.config.js`, `tsconfig.jest.json`). 5 suites / 33 tests PASS.
 
 Deliberadamente NO implementado todavía (fuera de alcance de esta iteración):
 - `POST /api/auth/login` — el login ocurre en el frontend directamente
@@ -91,8 +93,6 @@ Deliberadamente NO implementado todavía (fuera de alcance de esta iteración):
 - Lógica de riesgo (probabilidad de impacto, consecuencias, matriz final):
   pendiente de metodología.
 - Cualquier funcionalidad de mapas/geolocalización.
-- Framework de tests: aún no elegido ni instalado (decisión diferida,
-  no un olvido).
 
 ## Contrato para frontend
 

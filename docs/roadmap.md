@@ -150,5 +150,7 @@ orden de trabajo previsto, no como progreso:
 
 ## Infraestructura de desarrollo
 
-- Elegir e instalar un framework de tests (aún no elegido; ver
-  README.md "Estado actual").
+- ~~Elegir e instalar un framework de tests~~ — **hecho.** Jest + ts-jest
+  + Supertest instalados y configurados (`jest.config.js`,
+  `tsconfig.jest.json`); 5 suites / 33 tests PASS (ver README.md "Estado
+  actual" y `docs/checkpoint-2026-09-16.md` sección 9).
