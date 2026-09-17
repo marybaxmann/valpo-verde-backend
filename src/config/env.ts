@@ -11,6 +11,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
   SUPABASE_URL: z.string().url({ message: "SUPABASE_URL debe ser una URL válida" }),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY es obligatoria"),
+  SUPABASE_ANON_KEY: z.string().min(1, "SUPABASE_ANON_KEY es obligatoria"),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -28,6 +28,7 @@ export async function authMiddleware(
     }
 
     req.user = await resolveAuthenticatedUser(token);
+    req.accessToken = token;
     next();
   } catch (err) {
     next(err);

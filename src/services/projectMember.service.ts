@@ -17,8 +17,11 @@ import { assertAdmin } from "./authorization.service";
  * membresías; PR-004 v4.0: admin gestiona miembros).
  */
 
-async function assertProjectExists(projectId: string): Promise<void> {
-  const project = await findProjectById(projectId);
+async function assertProjectExists(
+  projectId: string,
+  accessToken: string
+): Promise<void> {
+  const project = await findProjectById(accessToken, projectId);
   if (!project) {
     throw new AppError("Proyecto no encontrado", 404);
   }
@@ -29,12 +32,13 @@ async function assertProjectExists(projectId: string): Promise<void> {
  */
 export async function listProjectMembers(
   user: AuthenticatedUser,
-  projectId: string
+  projectId: string,
+  accessToken: string
 ): Promise<ProjectMemberWithUserRow[]> {
   assertAdmin(user);
-  await assertProjectExists(projectId);
+  await assertProjectExists(projectId, accessToken);
 
-  return listMembersByProject(projectId);
+  return listMembersByProject(accessToken, projectId);
 }
 
 /**
@@ -49,10 +53,11 @@ export async function listProjectMembers(
 export async function addProjectMember(
   user: AuthenticatedUser,
   projectId: string,
-  targetUserId: string
+  targetUserId: string,
+  accessToken: string
 ) {
   assertAdmin(user);
-  await assertProjectExists(projectId);
+  await assertProjectExists(projectId, accessToken);
 
   const targetProfile = await findUserProfileById(targetUserId);
   if (!targetProfile) {
@@ -60,7 +65,7 @@ export async function addProjectMember(
   }
 
   try {
-    return await createMembership(projectId, targetUserId, user.id);
+    return await createMembership(accessToken, projectId, targetUserId, user.id);
   } catch (err) {
     if (err instanceof DuplicateMembershipError) {
       throw new AppError("El usuario ya es miembro de este proyecto", 409);
@@ -75,12 +80,13 @@ export async function addProjectMember(
 export async function removeProjectMember(
   user: AuthenticatedUser,
   projectId: string,
-  targetUserId: string
+  targetUserId: string,
+  accessToken: string
 ): Promise<void> {
   assertAdmin(user);
-  await assertProjectExists(projectId);
+  await assertProjectExists(projectId, accessToken);
 
-  const deleted = await deleteMembership(projectId, targetUserId);
+  const deleted = await deleteMembership(accessToken, projectId, targetUserId);
   if (!deleted) {
     throw new AppError("Membresía no encontrada", 404);
   }

@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../config/supabase";
+import { createUserScopedClient } from "../config/supabase";
 
 /**
  * Fila de `project_members` (ver database/schema.sql — PR-005 v3.0 /
@@ -46,10 +46,12 @@ export class DuplicateMembershipError extends Error {
  * (PR-003 v4.0): se usa bajo demanda, no se precalcula en el middleware.
  */
 export async function findMembership(
+  accessToken: string,
   projectId: string,
   userId: string
 ): Promise<ProjectMemberRow | null> {
-  const { data, error } = await supabaseAdmin
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
     .from("project_members")
     .select(MEMBER_COLUMNS)
     .eq("project_id", projectId)
@@ -68,9 +70,11 @@ export async function findMembership(
  * aplica en authorization.service, no aquí), con el nombre del usuario.
  */
 export async function listMembersByProject(
+  accessToken: string,
   projectId: string
 ): Promise<ProjectMemberWithUserRow[]> {
-  const { data, error } = await supabaseAdmin
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
     .from("project_members")
     .select(`${MEMBER_COLUMNS}, user:user_profiles!project_members_user_id_fkey(nombre)`)
     .eq("project_id", projectId)
@@ -88,11 +92,13 @@ export async function listMembersByProject(
  * fila para (projectId, userId) — el service la traduce a AppError 409.
  */
 export async function createMembership(
+  accessToken: string,
   projectId: string,
   userId: string,
   addedBy: string
 ): Promise<ProjectMemberRow> {
-  const { data, error } = await supabaseAdmin
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
     .from("project_members")
     .insert({ project_id: projectId, user_id: userId, added_by: addedBy })
     .select(MEMBER_COLUMNS)
@@ -118,10 +124,12 @@ export async function createMembership(
  * eso se traduce en un 404.
  */
 export async function deleteMembership(
+  accessToken: string,
   projectId: string,
   userId: string
 ): Promise<boolean> {
-  const { data, error } = await supabaseAdmin
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
     .from("project_members")
     .delete()
     .eq("project_id", projectId)

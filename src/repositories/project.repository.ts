@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../config/supabase";
+import { createUserScopedClient } from "../config/supabase";
 
 /**
  * Fila de la tabla `projects` (ver database/schema.sql — PR-005 v3.0 /
@@ -23,8 +23,11 @@ const PROJECT_COLUMNS =
  * PR-004 v4.0) — la restricción de rol se aplica en authorization.service,
  * no aquí.
  */
-export async function findAllProjects(): Promise<ProjectRow[]> {
-  const { data, error } = await supabaseAdmin
+export async function findAllProjects(
+  accessToken: string
+): Promise<ProjectRow[]> {
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
     .from("projects")
     .select(PROJECT_COLUMNS)
     .order("created_at", { ascending: false });
@@ -43,9 +46,11 @@ export async function findAllProjects(): Promise<ProjectRow[]> {
  * `UNIQUE(project_id, user_id)`, cada proyecto aparece a lo sumo una vez.
  */
 export async function findProjectsForMember(
+  accessToken: string,
   userId: string
 ): Promise<ProjectRow[]> {
-  const { data, error } = await supabaseAdmin
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
     .from("projects")
     .select(`${PROJECT_COLUMNS}, project_members!inner(user_id)`)
     .eq("project_members.user_id", userId)
@@ -64,9 +69,11 @@ export async function findProjectsForMember(
  * patrón que auth.repository.ts / userProfile.repository.ts.
  */
 export async function findProjectById(
+  accessToken: string,
   id: string
 ): Promise<ProjectRow | null> {
-  const { data, error } = await supabaseAdmin
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
     .from("projects")
     .select(PROJECT_COLUMNS)
     .eq("id", id)
@@ -91,9 +98,11 @@ export interface CreateProjectInput {
  * (resuelto en project.service.ts), nunca del body del cliente.
  */
 export async function createProject(
+  accessToken: string,
   input: CreateProjectInput
 ): Promise<ProjectRow> {
-  const { data, error } = await supabaseAdmin
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
     .from("projects")
     .insert({
       name: input.name,

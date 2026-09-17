@@ -28,7 +28,11 @@ export async function listMembers(
       );
     }
 
-    const data = await listProjectMembers(req.user!, parsedParams.data.id);
+    const data = await listProjectMembers(
+      req.user!,
+      parsedParams.data.id,
+      req.accessToken!
+    );
     res.json({ data });
   } catch (err) {
     next(err);
@@ -63,7 +67,8 @@ export async function addMember(
     const data = await addProjectMember(
       req.user!,
       parsedParams.data.id,
-      parsedBody.data.user_id
+      parsedBody.data.user_id,
+      req.accessToken!
     );
     res.status(201).json({ data });
   } catch (err) {
@@ -91,7 +96,8 @@ export async function removeMember(
     await removeProjectMember(
       req.user!,
       parsedParams.data.id,
-      parsedParams.data.userId
+      parsedParams.data.userId,
+      req.accessToken!
     );
     res.status(204).send();
   } catch (err) {

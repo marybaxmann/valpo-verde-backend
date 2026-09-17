@@ -59,13 +59,14 @@ export function assertAdmin(user: AuthenticatedUser): void {
  */
 export async function assertProjectAccess(
   user: AuthenticatedUser,
-  projectId: string
+  projectId: string,
+  accessToken: string
 ): Promise<void> {
   if (isAdmin(user)) {
     return;
   }
 
-  const membership = await findMembership(projectId, user.id);
+  const membership = await findMembership(accessToken, projectId, user.id);
 
   if (!membership) {
     throw new AppError("No tiene acceso a este proyecto", 403);

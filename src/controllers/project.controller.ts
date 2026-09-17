@@ -19,7 +19,7 @@ export async function listProjects(
   next: NextFunction
 ): Promise<void> {
   try {
-    const data = await listProjectsForUser(req.user!);
+    const data = await listProjectsForUser(req.user!, req.accessToken!);
     res.json({ data });
   } catch (err) {
     next(err);
@@ -40,7 +40,7 @@ export async function createProject(
       throw new AppError(parsed.error.issues[0]?.message ?? "Datos inválidos", 400);
     }
 
-    const data = await createProjectForUser(req.user!, parsed.data);
+    const data = await createProjectForUser(req.user!, parsed.data, req.accessToken!);
     res.status(201).json({ data });
   } catch (err) {
     next(err);
@@ -64,7 +64,11 @@ export async function getProjectById(
       );
     }
 
-    const data = await getProjectByIdForUser(req.user!, parsedParams.data.id);
+    const data = await getProjectByIdForUser(
+      req.user!,
+      parsedParams.data.id,
+      req.accessToken!
+    );
     res.json({ data });
   } catch (err) {
     next(err);

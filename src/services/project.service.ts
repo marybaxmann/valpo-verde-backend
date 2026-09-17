@@ -17,13 +17,14 @@ import { CreateProjectBody } from "../schemas/project.schema";
  *   `project_members`.
  */
 export async function listProjectsForUser(
-  user: AuthenticatedUser
+  user: AuthenticatedUser,
+  accessToken: string
 ): Promise<ProjectRow[]> {
   if (isAdmin(user)) {
-    return findAllProjects();
+    return findAllProjects(accessToken);
   }
 
-  return findProjectsForMember(user.id);
+  return findProjectsForMember(accessToken, user.id);
 }
 
 /**
@@ -33,11 +34,12 @@ export async function listProjectsForUser(
  */
 export async function createProjectForUser(
   user: AuthenticatedUser,
-  body: CreateProjectBody
+  body: CreateProjectBody,
+  accessToken: string
 ): Promise<ProjectRow> {
   assertAdmin(user);
 
-  return createProject({
+  return createProject(accessToken, {
     name: body.name,
     institution_name: body.institution_name,
     responsible_professional: body.responsible_professional ?? null,
@@ -60,11 +62,12 @@ export async function createProjectForUser(
  */
 export async function getProjectByIdForUser(
   user: AuthenticatedUser,
-  projectId: string
+  projectId: string,
+  accessToken: string
 ): Promise<ProjectRow> {
-  await assertProjectAccess(user, projectId);
+  await assertProjectAccess(user, projectId, accessToken);
 
-  const project = await findProjectById(projectId);
+  const project = await findProjectById(accessToken, projectId);
 
   if (!project) {
     throw new AppError("Proyecto no encontrado", 404);
