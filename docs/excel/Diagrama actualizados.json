@@ -1,0 +1,3179 @@
+{
+  "version": "32.1.0",
+  "pages": [
+    {
+      "id": "Bd4KwkhQo-bAZawyJdXR",
+      "name": "EV. Radicular",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-50",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-1",
+          "target": "8eo-B84_Vo8y9gTrLgY2-65"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-1",
+          "type": "node",
+          "parent": "1",
+          "label": "INICIO"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-68",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-65",
+          "target": "E_qOVctSMlr8QKbE58U8-3"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-78",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-65",
+          "target": "8eo-B84_Vo8y9gTrLgY2-73"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-49",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-65",
+          "target": "8eo-B84_Vo8y9gTrLgY2-67"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-65",
+          "type": "node",
+          "parent": "1",
+          "label": "Realizar Evaluación de Raíces y cuello"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-88",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-67",
+          "target": "E_qOVctSMlr8QKbE58U8-2"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-91",
+          "type": "edge",
+          "parent": "1",
+          "target": "E_qOVctSMlr8QKbE58U8-7"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-67",
+          "type": "node",
+          "parent": "1",
+          "label": "¿Existen raíces expuestas?"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-214",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-73",
+          "target": "8eo-B84_Vo8y9gTrLgY2-173"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-73",
+          "type": "node",
+          "parent": "1",
+          "label": "¿Existe Cavidad/Pudrición Basal?"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-100",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-73",
+          "target": "8eo-B84_Vo8y9gTrLgY2-275"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-177",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-173",
+          "target": "8eo-B84_Vo8y9gTrLgY2-176"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-179",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-173",
+          "target": "8eo-B84_Vo8y9gTrLgY2-178"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-173",
+          "type": "node",
+          "parent": "1",
+          "label": "¿Presenta Síntoma externo?"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-181",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-176",
+          "target": "8eo-B84_Vo8y9gTrLgY2-180"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-176",
+          "type": "node",
+          "parent": "1",
+          "label": "Calcular relación ​\nt/R= Espesor de pared residual (t) /\nradio del tronco (R)​",
+          "html": "<span role=\"math\" aria-label=\"\\boxed{\\text{Calcular relación }t/R}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mord\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\"><span class=\"boxpad\"><span class=\"mord\"><span class=\"mord\"><span class=\"mord text\"><span class=\"mord\">Calcular relació</span><span class=\"mord\">n </span></span></span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\"></span></span></span></span></span></span></span></span></span><br><span role=\"math\" aria-label=\"t/R=\\frac{\\text{espesor de pared residual }(t)}&lt;br/&gt;{\\text{radio del tronco }(R)}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\"></span><span class=\"mord mathnormal\">t</span><span class=\"mord\">/</span><span class=\"mord mathnormal\">R</span><span class=\"mspace\"></span><span class=\"mrel\">= E</span></span></span></span></span></span><span class=\"mord text\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">spesor de pared residual </span><span class=\"mopen\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">(</span><span class=\"mord mathnormal\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">t</span><span class=\"mclose\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">) /</span><div><div><span role=\"math\" aria-label=\"t/R=\\frac{\\text{espesor de pared residual }(t)}&lt;br/&gt;{\\text{radio del tronco }(R)}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mspace\"></span></span><span class=\"base\"><span class=\"strut\"></span><span class=\"mord\"><span class=\"mopen nulldelimiter\"></span><span class=\"mfrac\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\"><span class=\"pstrut\"></span><span class=\"mord\"><span class=\"mord text\"><span class=\"mord\">radio del tronco </span></span><span class=\"mopen\">(</span><span class=\"mord mathnormal\">R</span><span class=\"mclose\">)</span></span></span></span></span></span></span></span></span></span></span></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">​</span></div></div>"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-194",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-178",
+          "target": "8eo-B84_Vo8y9gTrLgY2-190"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-178",
+          "type": "node",
+          "parent": "1",
+          "label": "Calcular pérdida estimada de resistencia \n​\nSL= [[d^3 + (Cc/C) (D^3-d^3)] / D^3]​×100\ndonde:​\nD: diámetro del tronco\n\nd: diámetro de la cavidad\n\nCc: longitud de la abertura\n\nC: circunferencia del tronco",
+          "html": "<span role=\"math\" aria-label=\"\\boxed{\\text{Calcular pérdida estimada de resistencia }(SL)}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mord\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\"><span class=\"boxpad\"><span class=\"mord\"><span class=\"mord\"><span class=\"mord text\"><span class=\"mord\">Calcular pé</span><span class=\"mord\">rdida estimada de resistencia&nbsp;</span></span></span></span></span></span></span></span></span></span></span></span></span></span><div><span role=\"math\" aria-label=\"\\boxed{\\text{Calcular pérdida estimada de resistencia }(SL)}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mord\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\"></span></span></span></span></span></span></span></span></span><br><span role=\"math\" aria-label=\"SL=&lt;br/&gt;\\frac{d^3+r(D^3-d^3)}&lt;br/&gt;{D^3}\\times100\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\"></span><span class=\"mord mathnormal\">S</span><span class=\"mord mathnormal\">L</span><span class=\"mspace\"></span><span class=\"mrel\">=&nbsp;</span></span></span></span></span></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">[</span><span role=\"math\" aria-label=\"SL=&lt;br/&gt;\\frac{d^3+r(D^3-d^3)}&lt;br/&gt;{D^3}\\times100\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mrel\">[d^3 + (Cc/C) (D^3-d^3)] /&nbsp;</span></span></span></span></span></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">D^3</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">]</span><span class=\"base\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><span class=\"mord\"><span class=\"mfrac\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\"></span></span></span></span><span class=\"mclose nulldelimiter\"></span></span><span class=\"mspace\"></span><span class=\"mbin\">×</span><span class=\"mspace\"></span></span><span class=\"base\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><span class=\"strut\"></span><span class=\"mord\">100</span></span></div><div><p>donde:<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">​</span></p><p><strong>D:</strong> diámetro del tronco<br><br><strong>d:</strong> diámetro de la cavidad<br><br><strong>Cc:</strong> longitud de la abertura<br><br><strong>C:</strong> circunferencia del tronco</p></div>"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-183",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-180",
+          "target": "8eo-B84_Vo8y9gTrLgY2-260"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-186",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-180",
+          "target": "8eo-B84_Vo8y9gTrLgY2-257"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-180",
+          "type": "node",
+          "parent": "1",
+          "label": "¿t/R ≤ 0,30?"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-188",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-190",
+          "target": "8eo-B84_Vo8y9gTrLgY2-197"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-189",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-190",
+          "target": "8eo-B84_Vo8y9gTrLgY2-263"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-190",
+          "type": "node",
+          "parent": "1",
+          "label": "¿SL ≥ 33 %?"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-197",
+          "type": "node",
+          "parent": "1",
+          "label": "¿SL ≥20 %?&nbsp; &nbsp;"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-203",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-197",
+          "target": "8eo-B84_Vo8y9gTrLgY2-266"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-204",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-197",
+          "target": "8eo-B84_Vo8y9gTrLgY2-265"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-215",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-216",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-235",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-7",
+          "target": "8eo-B84_Vo8y9gTrLgY2-241"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-244",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-241",
+          "target": "8eo-B84_Vo8y9gTrLgY2-243"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-250",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-241",
+          "target": "8eo-B84_Vo8y9gTrLgY2-247"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-241",
+          "type": "node",
+          "parent": "1",
+          "label": "0° ≤ θ &lt; 15°"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-246",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-24",
+          "target": "8eo-B84_Vo8y9gTrLgY2-253"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-254",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-243",
+          "target": "8eo-B84_Vo8y9gTrLgY2-252"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-25",
+          "type": "edge",
+          "parent": "1",
+          "source": "8eo-B84_Vo8y9gTrLgY2-243",
+          "target": "E_qOVctSMlr8QKbE58U8-24"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-243",
+          "type": "node",
+          "parent": "1",
+          "label": "15° ≤ θ ≤ 30°"
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-247",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Despreciable\""
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-252",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Leve\""
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-253",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Moderada\""
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-257",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-260",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-263",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-265",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-266",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "8eo-B84_Vo8y9gTrLgY2-275",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-1",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-2",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-5",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-6",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-7",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-8",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-9",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-12",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-13",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-15",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-16",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-21",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "76tKoXNOyTuaM9AiHcqh-22",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "pBhNdtYxMFFbfERQ8Fr_-1",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-57",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-2",
+          "target": "E_qOVctSMlr8QKbE58U8-56"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-2",
+          "type": "node",
+          "parent": "1",
+          "label": "Sin necrosis y sin raíces cortadas"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-3",
+          "type": "node",
+          "parent": "1",
+          "label": "Levantamiento_del _plato_radicular",
+          "html": "<br><br>Levantamiento_del _plato_radicular"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-3",
+          "target": "E_qOVctSMlr8QKbE58U8-22"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-6",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-7",
+          "type": "node",
+          "parent": "1",
+          "label": "angulo_inclinacion",
+          "html": "<div>angulo_inclinacion</div>"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-8",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-22",
+          "target": "E_qOVctSMlr8QKbE58U8-36"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-22",
+          "type": "node",
+          "parent": "1",
+          "label": "angulo_inclinacion",
+          "html": "<div>angulo_inclinacion</div>"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-27",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-24",
+          "target": "E_qOVctSMlr8QKbE58U8-26"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-24",
+          "type": "node",
+          "parent": "1",
+          "label": "30–45°"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-29",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-26",
+          "target": "E_qOVctSMlr8QKbE58U8-28"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-26",
+          "type": "node",
+          "parent": "1",
+          "label": "&gt;45°&nbsp;"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-28",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Severa\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-30",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-31",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-32",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-33",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-42",
+          "target": "E_qOVctSMlr8QKbE58U8-38"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-34",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-36",
+          "target": "E_qOVctSMlr8QKbE58U8-37"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-35",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-36",
+          "target": "E_qOVctSMlr8QKbE58U8-42"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-36",
+          "type": "node",
+          "parent": "1",
+          "label": "15° ≤ θ ≤ 30°"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-37",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Moderada\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-38",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Moderada\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-39",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-40",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-41",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-42",
+          "target": "E_qOVctSMlr8QKbE58U8-44"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-42",
+          "type": "node",
+          "parent": "1",
+          "label": "30–45°"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-43",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-44",
+          "target": "E_qOVctSMlr8QKbE58U8-45"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-44",
+          "type": "node",
+          "parent": "1",
+          "label": "&gt;45°&nbsp;"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-45",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Severa\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-46",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-47",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-48",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-50",
+          "type": "edge",
+          "parent": "1",
+          "target": "E_qOVctSMlr8QKbE58U8-51"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-51",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-52",
+          "type": "node",
+          "parent": "1",
+          "label": "No"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-53",
+          "type": "edge",
+          "parent": "1",
+          "target": "E_qOVctSMlr8QKbE58U8-54"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-54",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Leve\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-55",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-59",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-56",
+          "target": "E_qOVctSMlr8QKbE58U8-58"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-56",
+          "type": "node",
+          "parent": "1",
+          "label": "Necrosis solamente"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-61",
+          "type": "edge",
+          "parent": "1",
+          "source": "E_qOVctSMlr8QKbE58U8-58",
+          "target": "E_qOVctSMlr8QKbE58U8-60"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-58",
+          "type": "node",
+          "parent": "1",
+          "label": "Raíces cortadas solamente"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-60",
+          "type": "node",
+          "parent": "1",
+          "label": "Necrosis + raíces cortadas"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-62",
+          "type": "edge",
+          "parent": "1",
+          "target": "E_qOVctSMlr8QKbE58U8-63"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-63",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Moderada\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-64",
+          "type": "edge",
+          "parent": "1",
+          "target": "E_qOVctSMlr8QKbE58U8-65"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-65",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Severa\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-66",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-67",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-68",
+          "type": "edge",
+          "parent": "1",
+          "target": "E_qOVctSMlr8QKbE58U8-69"
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-69",
+          "type": "node",
+          "parent": "1",
+          "label": "Se categoriza como \"Moderada\""
+        },
+        {
+          "id": "E_qOVctSMlr8QKbE58U8-70",
+          "type": "node",
+          "parent": "1",
+          "label": "Sí"
+        }
+      ]
+    },
+    {
+      "id": "AicnE_NFw5jITRsTbHSv",
+      "name": "EV. Tronco",
+      "cells": [
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-1",
+          "type": "layer"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-2",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-3",
+          "target": "nb58sKb4wgGQd_JWTDj_-7"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-3",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "INICIO"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-5",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-7",
+          "target": "nb58sKb4wgGQd_JWTDj_-12"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-6",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-7",
+          "target": "nb58sKb4wgGQd_JWTDj_-14"
+        },
+        {
+          "id": "P7_VOjxZhdfjCe_scX_d-0",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-7",
+          "target": "nb58sKb4wgGQd_JWTDj_-10"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-37",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-7",
+          "target": "9Q9Vff2jXk8t5KeQnmLR-16"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-31",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-7",
+          "target": "ZUagRfxs0JK9XAkTiiQy-25"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-52",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-7",
+          "target": "P7_VOjxZhdfjCe_scX_d-21"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-7",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Realizar Evaluación de Tronco"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-0",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-10",
+          "target": "nb58sKb4wgGQd_JWTDj_-59"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-10",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "¿Presenta Heridas?"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-11",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-12",
+          "target": "9Q9Vff2jXk8t5KeQnmLR-10"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-12",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "¿Presenta Exudaciones?"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-13",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-14",
+          "target": "nb58sKb4wgGQd_JWTDj_-31"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-14",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "¿Existe Cavidad/Pudrición ?"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-18",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-19",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "target": "rMhwXkmN4lGrLbiQcEsU-32"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-21",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-24",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-14",
+          "target": "nb58sKb4wgGQd_JWTDj_-87"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-29",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-31",
+          "target": "nb58sKb4wgGQd_JWTDj_-33"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-30",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-31",
+          "target": "nb58sKb4wgGQd_JWTDj_-35"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-31",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "cavidad_externa_tronco"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-32",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-33",
+          "target": "nb58sKb4wgGQd_JWTDj_-38"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-33",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Calcular relación ​\nt/R= Espesor de pared residual (t) /\nradio del tronco (R)​",
+          "html": "<span role=\"math\" aria-label=\"\\boxed{\\text{Calcular relación }t/R}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mord\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\"><span class=\"boxpad\"><span class=\"mord\"><span class=\"mord\"><span class=\"mord text\"><span class=\"mord\">Calcular relació</span><span class=\"mord\">n </span></span></span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\"></span></span></span></span></span></span></span></span></span><br><span role=\"math\" aria-label=\"t/R=\\frac{\\text{espesor de pared residual }(t)}&lt;br/&gt;{\\text{radio del tronco }(R)}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\"></span><span class=\"mord mathnormal\">t</span><span class=\"mord\">/</span><span class=\"mord mathnormal\">R</span><span class=\"mspace\"></span><span class=\"mrel\">= E</span></span></span></span></span></span><span class=\"mord text\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">spesor de pared residual </span><span class=\"mopen\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">(</span><span class=\"mord mathnormal\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">t</span><span class=\"mclose\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">) /</span><div><div><span role=\"math\" aria-label=\"t/R=\\frac{\\text{espesor de pared residual }(t)}&lt;br/&gt;{\\text{radio del tronco }(R)}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mspace\"></span></span><span class=\"base\"><span class=\"strut\"></span><span class=\"mord\"><span class=\"mopen nulldelimiter\"></span><span class=\"mfrac\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\"><span class=\"pstrut\"></span><span class=\"mord\"><span class=\"mord text\"><span class=\"mord\">radio del tronco </span></span><span class=\"mopen\">(</span><span class=\"mord mathnormal\">R</span><span class=\"mclose\">)</span></span></span></span></span></span></span></span></span></span></span></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">​</span></div></div>"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-34",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-35",
+          "target": "nb58sKb4wgGQd_JWTDj_-45"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-35",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Calcular pérdida estimada de resistencia \n​\nSL= [[d^3 + (Cc/C) (D^3-d^3)] / D^3]​×100\ndonde:​\nD: diámetro del tronco\n\nd: diámetro de la cavidad\n\nCc: longitud de la abertura\n\nC: circunferencia del tronco",
+          "html": "<span role=\"math\" aria-label=\"\\boxed{\\text{Calcular pérdida estimada de resistencia }(SL)}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mord\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\"><span class=\"boxpad\"><span class=\"mord\"><span class=\"mord\"><span class=\"mord text\"><span class=\"mord\">Calcular pé</span><span class=\"mord\">rdida estimada de resistencia&nbsp;</span></span></span></span></span></span></span></span></span></span></span></span></span></span><div><span role=\"math\" aria-label=\"\\boxed{\\text{Calcular pérdida estimada de resistencia }(SL)}\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mord\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\"></span></span></span></span></span></span></span></span></span><br><span role=\"math\" aria-label=\"SL=&lt;br/&gt;\\frac{d^3+r(D^3-d^3)}&lt;br/&gt;{D^3}\\times100\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\"></span><span class=\"mord mathnormal\">S</span><span class=\"mord mathnormal\">L</span><span class=\"mspace\"></span><span class=\"mrel\">=&nbsp;</span></span></span></span></span></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">[</span><span role=\"math\" aria-label=\"SL=&lt;br/&gt;\\frac{d^3+r(D^3-d^3)}&lt;br/&gt;{D^3}\\times100\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"mrel\">[d^3 + (Cc/C) (D^3-d^3)] /&nbsp;</span></span></span></span></span></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">D^3</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">]</span><span class=\"base\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><span class=\"mord\"><span class=\"mfrac\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\"></span></span></span></span><span class=\"mclose nulldelimiter\"></span></span><span class=\"mspace\"></span><span class=\"mbin\">×</span><span class=\"mspace\"></span></span><span class=\"base\" style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><span class=\"strut\"></span><span class=\"mord\">100</span></span></div><div><p>donde:<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">​</span></p><p><strong>D:</strong> diámetro del tronco<br><br><strong>d:</strong> diámetro de la cavidad<br><br><strong>Cc:</strong> longitud de la abertura<br><br><strong>C:</strong> circunferencia del tronco</p></div>"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-36",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-38",
+          "target": "nb58sKb4wgGQd_JWTDj_-81"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-37",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-38",
+          "target": "nb58sKb4wgGQd_JWTDj_-80"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-38",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "¿t/R < 0,30?",
+          "html": "¿<span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">t/R &lt; 0,30</span><span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">?</span><div><br/></div>"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-43",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-45",
+          "target": "nb58sKb4wgGQd_JWTDj_-50"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-44",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-45",
+          "target": "nb58sKb4wgGQd_JWTDj_-82"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-45",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "¿SL ≥ 33 %?"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-50",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "¿SL ≥20 %?&nbsp; &nbsp;"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-51",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-50",
+          "target": "nb58sKb4wgGQd_JWTDj_-84"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-52",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-50",
+          "target": "nb58sKb4wgGQd_JWTDj_-83"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-57",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-58",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-59",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-1",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "nb58sKb4wgGQd_JWTDj_-10",
+          "target": "ZUagRfxs0JK9XAkTiiQy-0"
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-80",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-81",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-82",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-83",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-84",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "nb58sKb4wgGQd_JWTDj_-87",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "P7_VOjxZhdfjCe_scX_d-19",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "P7_VOjxZhdfjCe_scX_d-21",
+          "target": "rMhwXkmN4lGrLbiQcEsU-12"
+        },
+        {
+          "id": "P7_VOjxZhdfjCe_scX_d-20",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "P7_VOjxZhdfjCe_scX_d-21",
+          "target": "P7_VOjxZhdfjCe_scX_d-26"
+        },
+        {
+          "id": "P7_VOjxZhdfjCe_scX_d-21",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "¿Presenta Grietas?"
+        },
+        {
+          "id": "P7_VOjxZhdfjCe_scX_d-26",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "rMhwXkmN4lGrLbiQcEsU-22",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "rMhwXkmN4lGrLbiQcEsU-12",
+          "target": "ZUagRfxs0JK9XAkTiiQy-35"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-45",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "rMhwXkmN4lGrLbiQcEsU-12",
+          "target": "ZUagRfxs0JK9XAkTiiQy-40"
+        },
+        {
+          "id": "rMhwXkmN4lGrLbiQcEsU-12",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "afectacion\nfisura grieta",
+          "html": "<pre dir=\"ltr\"><code>afectacion<br>fisura grieta</code></pre>"
+        },
+        {
+          "id": "rMhwXkmN4lGrLbiQcEsU-32",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-10",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-13",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-15",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "9Q9Vff2jXk8t5KeQnmLR-16",
+          "target": "9Q9Vff2jXk8t5KeQnmLR-20"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-16",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "¿Presenta troncos codominantes?",
+          "html": "¿Presenta troncos codominantes<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">?</span>"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-17",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "9Q9Vff2jXk8t5KeQnmLR-16",
+          "target": "9Q9Vff2jXk8t5KeQnmLR-23"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-18",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-20",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-21",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-22",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-30",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "9Q9Vff2jXk8t5KeQnmLR-23",
+          "target": "9Q9Vff2jXk8t5KeQnmLR-25"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-32",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "9Q9Vff2jXk8t5KeQnmLR-23",
+          "target": "9Q9Vff2jXk8t5KeQnmLR-22"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-23",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "&nbsp;¿grieta union codominante?"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-24",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "9Q9Vff2jXk8t5KeQnmLR-25",
+          "target": "9Q9Vff2jXk8t5KeQnmLR-36"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-25",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "&nbsp;¿corteza_incluida?"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-26",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "9Q9Vff2jXk8t5KeQnmLR-25",
+          "target": "9Q9Vff2jXk8t5KeQnmLR-35"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-27",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-29",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-31",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-35",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "9Q9Vff2jXk8t5KeQnmLR-36",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-0",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-1",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-2",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-3",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-5",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-6",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-9",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-10",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-11",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-12",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-13",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "wiw3y8aotYQv3Ug2qnj2-21",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-10",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-0",
+          "target": "ZUagRfxs0JK9XAkTiiQy-7"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-11",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-0",
+          "target": "ZUagRfxs0JK9XAkTiiQy-8"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-12",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-0",
+          "target": "ZUagRfxs0JK9XAkTiiQy-9"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-0",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "condición_\nheridas\n_tronco",
+          "html": "<pre dir=\"ltr\"><code>condición_<br>heridas<br>_tronco</code></pre>"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-23",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-7",
+          "target": "ZUagRfxs0JK9XAkTiiQy-21"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-7",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-22",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-8",
+          "target": "ZUagRfxs0JK9XAkTiiQy-21"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-8",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-20",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-9",
+          "target": "ZUagRfxs0JK9XAkTiiQy-21"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-9",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-14",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Abierta"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-16",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "En proceso de cierre"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-18",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Cerrada",
+          "html": "<span style=\"color: rgb(0, 0, 0); font-family: Helvetica; font-size: 12px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: left; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;\">Cerrada</span>"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-21",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "crecimiento_de_respuesta",
+          "html": "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"181\" style=\"border-collapse:<br/> collapse;width:136pt\"><tbody><tr height=\"38\" style=\"mso-height-source:userset;height:28.8pt\"><br/>  <td height=\"38\" class=\"xl66\" width=\"181\" style=\"height:28.8pt;width:136pt\">crecimiento_de_respuesta</td></tr></tbody></table>"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-24",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-25",
+          "target": "ZUagRfxs0JK9XAkTiiQy-29"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-25",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Corteza muerta o ausente ?"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-26",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "target": "ZUagRfxs0JK9XAkTiiQy-34"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-27",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "No"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-29",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-30",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Sí"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-34",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-35",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-37",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Penetra en madera",
+          "html": "<pre dir=\"ltr\"><code>Penetra en madera</code></pre>"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-38",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Solo corteza",
+          "html": "<pre dir=\"ltr\"><code>Solo corteza</code></pre>"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-46",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-40",
+          "target": "ZUagRfxs0JK9XAkTiiQy-44"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-51",
+          "type": "edge",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "source": "ZUagRfxs0JK9XAkTiiQy-40",
+          "target": "ZUagRfxs0JK9XAkTiiQy-50"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-40",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "direccion_grieta"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-44",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-47",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Longitudinal",
+          "html": "<pre dir=\"ltr\"><code>Longitudinal</code></pre>"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-49",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Transversal",
+          "html": "<pre dir=\"ltr\"><code>Transversal</code></pre>"
+        },
+        {
+          "id": "ZUagRfxs0JK9XAkTiiQy-50",
+          "type": "node",
+          "parent": "nb58sKb4wgGQd_JWTDj_-1",
+          "label": "Se categoriza como \"SEVERA\""
+        }
+      ]
+    },
+    {
+      "id": "FFqgj7A_DRuSWb3mLYfN",
+      "name": "EV. Copas y Ramas",
+      "cells": [
+        {
+          "id": "417TsOENlO_jat38NVP3-1",
+          "type": "layer"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-2",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-3",
+          "target": "417TsOENlO_jat38NVP3-8"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-3",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "INICIO"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-5",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-8",
+          "target": "417TsOENlO_jat38NVP3-15"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-6",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-8",
+          "target": "417TsOENlO_jat38NVP3-11"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-7",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-8",
+          "target": "417TsOENlO_jat38NVP3-71"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-8",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-8",
+          "target": "tic0IdHkUj0em8Q9zTFZ-2"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-8",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Realizar Evaluación de Copas y Ramas"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-9",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "9i0PpKDTADdKPHoR6N_1-11"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-10",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-11",
+          "target": "417TsOENlO_jat38NVP3-60"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-11",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "¿Presenta Ramas Quebradas?"
+        },
+        {
+          "id": "qWJtRGYPqDZEzn_ICviU-89",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-15",
+          "target": "qWJtRGYPqDZEzn_ICviU-85"
+        },
+        {
+          "id": "qWJtRGYPqDZEzn_ICviU-90",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-15",
+          "target": "tic0IdHkUj0em8Q9zTFZ-9"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-15",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "¿ramas_secas?",
+          "html": "¿ramas_secas?<div><br></div>"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-60",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-69",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-71",
+          "target": "tic0IdHkUj0em8Q9zTFZ-75"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-70",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-71",
+          "target": "417TsOENlO_jat38NVP3-76"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-71",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "¿Presenta Defoliación?"
+        },
+        {
+          "id": "417TsOENlO_jat38NVP3-76",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "qWJtRGYPqDZEzn_ICviU-85",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "qWJtRGYPqDZEzn_ICviU-88",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-28",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-2",
+          "target": "tic0IdHkUj0em8Q9zTFZ-7"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-2",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "¿Presenta un Desequilibrio de Copa?"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-3",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-2",
+          "target": "tic0IdHkUj0em8Q9zTFZ-130"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-7",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-12",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-9",
+          "target": "qWJtRGYPqDZEzn_ICviU-88"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-2",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-9",
+          "target": "9i0PpKDTADdKPHoR6N_1-1"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-9",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "ramas_secas_pct_copa   < 10 %",
+          "html": "ramas_secas_pct_copa<span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp; &nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); text-decoration-line: inherit;\">&lt; 10 %</span>"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-25",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-26",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-72",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"DESPRECIABLE\""
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-73",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-75",
+          "target": "tic0IdHkUj0em8Q9zTFZ-72"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-74",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-75",
+          "target": "tic0IdHkUj0em8Q9zTFZ-78"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-75",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "0 % ≤ Defoliación ≤ 10 %"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-76",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-78",
+          "target": "tic0IdHkUj0em8Q9zTFZ-80"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-77",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-78",
+          "target": "tic0IdHkUj0em8Q9zTFZ-81"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-78",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "10 % &lt; Defoliación ≤ 25 %"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-79",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-80",
+          "target": "tic0IdHkUj0em8Q9zTFZ-82"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-90",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-80",
+          "target": "tic0IdHkUj0em8Q9zTFZ-89"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-80",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "25 % &lt; Defoliación ≤ 60 %"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-81",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-82",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-83",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-84",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-85",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-86",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-87",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-89",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Defoliación &gt; 60 %&nbsp;"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-91",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "tic0IdHkUj0em8Q9zTFZ-89",
+          "target": "tic0IdHkUj0em8Q9zTFZ-92"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-92",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-93",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-94",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "tic0IdHkUj0em8Q9zTFZ-130",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-0",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-1",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-2",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-5",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-6",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-23",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-24",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "D8sUl-iXFaKgaBzCgkRF-26",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-0",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-3",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "9i0PpKDTADdKPHoR6N_1-1",
+          "target": "tic0IdHkUj0em8Q9zTFZ-25"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-5",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "9i0PpKDTADdKPHoR6N_1-1",
+          "target": "9i0PpKDTADdKPHoR6N_1-4"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-1",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "ramas_secas_pct_copa   10–50 %",
+          "html": "ramas_secas_pct_copa<span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp; &nbsp;</span><span style=\"background-color: transparent;\">10–50 %</span>"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-6",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "9i0PpKDTADdKPHoR6N_1-4",
+          "target": "tic0IdHkUj0em8Q9zTFZ-26"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-4",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "ramas_secas_pct_copa   > 50 %",
+          "html": "ramas_secas_pct_copa<span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp; &nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&gt; 50 %</span>"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-7",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-8",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Sí"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-9",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-10",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "No"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-12",
+          "type": "edge",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "source": "417TsOENlO_jat38NVP3-11",
+          "target": "9i0PpKDTADdKPHoR6N_1-11"
+        },
+        {
+          "id": "9i0PpKDTADdKPHoR6N_1-11",
+          "type": "node",
+          "parent": "417TsOENlO_jat38NVP3-1",
+          "label": "Se categoriza como \"LEVE\""
+        }
+      ]
+    },
+    {
+      "id": "DN6-z-TvMe66guugd7ll",
+      "name": "EV. Infraestructura",
+      "cells": [
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-1",
+          "type": "layer"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-2",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-3",
+          "target": "epIjwo0jwbNqGFr-sizR-9"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-3",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "INICIO"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-21",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-9",
+          "target": "epIjwo0jwbNqGFr-sizR-17"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-55",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-9",
+          "target": "epIjwo0jwbNqGFr-sizR-29"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-56",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-9",
+          "target": "epIjwo0jwbNqGFr-sizR-14"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-36",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-9",
+          "target": "epIjwo0jwbNqGFr-sizR-45"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-50",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-9",
+          "target": "PUC_YeQpAD_FYC7czJdH-164"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-83",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-9",
+          "target": "RWn6CCED4s4Ue6WRTyef-53"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-9",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Evaluar interacción con infraestructura"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-3",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-14",
+          "target": "RWn6CCED4s4Ue6WRTyef-2"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-5",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-14",
+          "target": "RWn6CCED4s4Ue6WRTyef-4"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-14",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿existe_alcorque?"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-16",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-17",
+          "target": "jvE4nJR2cXc07YffYUIn-4"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-1",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-17",
+          "target": "jvE4nJR2cXc07YffYUIn-0"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-17",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿existe_vereda?"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-29",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿existe_calzada?"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-41",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-4",
+          "target": "epIjwo0jwbNqGFr-sizR-54"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-33",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-45",
+          "target": "RWn6CCED4s4Ue6WRTyef-32"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-45",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿contacto_ interferencia_infraestructura _vertical?"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-47",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-45",
+          "target": "epIjwo0jwbNqGFr-sizR-51"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-48",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-51",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"Sin afectación\""
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-52",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-54",
+          "target": "PUC_YeQpAD_FYC7czJdH-39"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-26",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-54",
+          "target": "PUC_YeQpAD_FYC7czJdH-32"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-54",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿Existe daño o interferencia?"
+        },
+        {
+          "id": "epIjwo0jwbNqGFr-sizR-63",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-0",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-1",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-27",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-34",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-32",
+          "target": "PUC_YeQpAD_FYC7czJdH-35"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-32",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Registrar:\n• presenta_levantamiento_vereda\n• presenta_desplazamiento_horizontal_vereda\n• presenta_grieta_vereda\n• presenta_rotura_vereda\n• presenta_hundimiento_vereda",
+          "html": "<blockquote style=\"margin: 0 0 0 40px; border: none; padding: 0px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Registrar:<br></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">• presenta_levantamiento_vereda<br></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">• presenta_desplazamiento_horizontal_vereda<br></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">• presenta_grieta_vereda<br></span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">• presenta_rotura_vereda</span><pre dir=\"ltr\"><code>• presenta_hundimiento_vereda</code></pre></blockquote>"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-9",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-35",
+          "target": "jvE4nJR2cXc07YffYUIn-8"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-35",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Registrar mediciones aplicables:\n• desnivel_max_vereda_cm\n• numero_grietas_vereda\n• ancho_max_grieta_vereda_cm\n• longitud_max_grieta_vereda_cm\n• superficie_afectada_vereda_m2",
+          "html": "<pre dir=\"ltr\"><code>Registrar mediciones aplicables:<br/>• desnivel_max_vereda_cm<br/>• numero_grietas_vereda<br/>• ancho_max_grieta_vereda_cm<br/>• longitud_max_grieta_vereda_cm<br/>• superficie_afectada_vereda_m2</code></pre>"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-39",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"Sin afectación\""
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-89",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-29",
+          "target": "PUC_YeQpAD_FYC7czJdH-95"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-90",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "NO APLICA"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-91",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "epIjwo0jwbNqGFr-sizR-29",
+          "target": "PUC_YeQpAD_FYC7czJdH-90"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-92",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-94",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-95",
+          "target": "PUC_YeQpAD_FYC7czJdH-98"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-95",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿dano_interferencia_calzada?"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-96",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-97",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-25",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-98",
+          "target": "2VgmCbG8ybwxI_Mykgqj-24"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-98",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Registrar tipo(s) de daño:\n• levantamiento_calzada\n• grieta_fisuracion_calzada\n• hundimiento_calzada\n• rotura_calzada",
+          "html": "<blockquote style=\"margin: 0px 0px 0px 40px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; padding: 0px;\"><pre dir=\"ltr\"><code>Registrar tipo(s) de daño:<br/>• levantamiento_calzada<br/>• grieta_fisuracion_calzada<br/>• hundimiento_calzada<br/>• rotura_calzada</code></pre></blockquote>"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-116",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-17",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-117",
+          "target": "RWn6CCED4s4Ue6WRTyef-16"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-22",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-117",
+          "target": "RWn6CCED4s4Ue6WRTyef-21"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-117",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿suelo_sellado_impermeabilizado?",
+          "html": "¿suelo_sellado_impermeabilizado?<div><br></div>"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-137",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"Sin afectación\""
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-141",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-145",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-151",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-157",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-152",
+          "target": "PUC_YeQpAD_FYC7czJdH-156"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-152",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿dano_fisico_ observable_infraestructura _vertical?"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-153",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "target": "PUC_YeQpAD_FYC7czJdH-155"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-154",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-155",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"LEVE\"",
+          "html": "Se categoriza como \"LEVE<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">\"</span>"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-156",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿compromete _estabilidad_ funcionalidad?",
+          "html": "¿<code>compromete _estabilidad_ funcionalidad</code>?"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-158",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-156",
+          "target": "PUC_YeQpAD_FYC7czJdH-160"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-159",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-160",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-161",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-156",
+          "target": "PUC_YeQpAD_FYC7czJdH-162"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-162",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-163",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-38",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-164",
+          "target": "RWn6CCED4s4Ue6WRTyef-37"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-43",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-164",
+          "target": "RWn6CCED4s4Ue6WRTyef-42"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-164",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿red_aerea_presente?"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-166",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "PUC_YeQpAD_FYC7czJdH-164",
+          "target": "PUC_YeQpAD_FYC7czJdH-168"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-167",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-168",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "NO APLICA"
+        },
+        {
+          "id": "PUC_YeQpAD_FYC7czJdH-169",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "Akc0boAvqCzUIHbLDaIM-0",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-0",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "NO APLICA"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-2",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-4",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "materialidad_vereda",
+          "html": "<div style=\"text-align: left;\"><span style=\"background-color: transparent;\">materialidad_vereda</span></div>"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-12",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-8",
+          "target": "jvE4nJR2cXc07YffYUIn-11"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-5",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-8",
+          "target": "2VgmCbG8ybwxI_Mykgqj-8"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-8",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "desnivel_max_vereda_cm \n>5,0 cm",
+          "html": "<pre dir=\"ltr\"><code>desnivel_max_vereda_cm <br></code>&gt;5,0 cm</pre>"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-11",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "desnivel_max_vereda_cm ≥ 2,5 cm ó ancho_max_grieta_vereda_cm ≥ 1",
+          "html": "<span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">desnivel_max_vereda_cm </span><span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">≥ 2,5 cm ó&nbsp;</span><code style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ancho_max_grieta_vereda_cm&nbsp;</code><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); text-decoration-line: inherit;\">≥ 1</span><div><br></div>"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-14",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-11",
+          "target": "jvE4nJR2cXc07YffYUIn-15"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-11",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-15",
+          "target": "jvE4nJR2cXc07YffYUIn-22"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-15",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-16",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-12",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-19",
+          "target": "jvE4nJR2cXc07YffYUIn-22"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-19",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"LEVE\"",
+          "html": "Se categoriza como \"LEVE<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">\"</span>"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-14",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-22",
+          "target": "2VgmCbG8ybwxI_Mykgqj-13"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-22",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿reduce_circulacion_peatonal?"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-24",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-28",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-31",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-22",
+          "target": "jvE4nJR2cXc07YffYUIn-33"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-32",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "jvE4nJR2cXc07YffYUIn-33",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "MANTENER clasificación"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-7",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-10",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-8",
+          "target": "jvE4nJR2cXc07YffYUIn-22"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-8",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-9",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "jvE4nJR2cXc07YffYUIn-11",
+          "target": "jvE4nJR2cXc07YffYUIn-19"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-15",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-13",
+          "target": "jvE4nJR2cXc07YffYUIn-33"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-19",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-13",
+          "target": "2VgmCbG8ybwxI_Mykgqj-18"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-13",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "&nbsp;¿impide_paso_seguro?"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-16",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-18",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-20",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-22",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "target": "2VgmCbG8ybwxI_Mykgqj-23"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-23",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"Sin afectación\""
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-54",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-24",
+          "target": "2VgmCbG8ybwxI_Mykgqj-29"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-24",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Registrar mediciones aplicables:\n• desnivel_max_calzada_cm",
+          "html": "<blockquote style=\"margin: 0px 0px 0px 40px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; padding: 0px;\"><pre dir=\"ltr\">Registrar mediciones aplicables:<br>• desnivel_max_calzada_cm<br></pre></blockquote>"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-26",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-27",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-29",
+          "target": "2VgmCbG8ybwxI_Mykgqj-30"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-28",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-29",
+          "target": "2VgmCbG8ybwxI_Mykgqj-46"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-29",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "desnivel_max_calzada_cm \n>5,0 cm",
+          "html": "<pre dir=\"ltr\"><code>desnivel_max_calzada_cm <br></code>&gt;5,0 cm</pre>"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-30",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "desnivel_max_calzada_cm ≥ 2,5 cm",
+          "html": "<span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">desnivel_max_calzada_cm&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); text-decoration-line: inherit;\">≥ 2,5 cm&nbsp;</span>"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-31",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-30",
+          "target": "2VgmCbG8ybwxI_Mykgqj-33"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-32",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-33",
+          "target": "2VgmCbG8ybwxI_Mykgqj-38"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-33",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-34",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-35",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-36",
+          "target": "2VgmCbG8ybwxI_Mykgqj-38"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-36",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"LEVE\"",
+          "html": "Se categoriza como \"LEVE<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">\"</span>"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-37",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-38",
+          "target": "2VgmCbG8ybwxI_Mykgqj-52"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-38",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿afecta_circulacion_vehicular?"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-39",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-40",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-41",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-38",
+          "target": "2VgmCbG8ybwxI_Mykgqj-43"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-42",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-43",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "MANTENER clasificación"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-44",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-45",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-46",
+          "target": "2VgmCbG8ybwxI_Mykgqj-38"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-46",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-47",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "2VgmCbG8ybwxI_Mykgqj-30",
+          "target": "2VgmCbG8ybwxI_Mykgqj-36"
+        },
+        {
+          "id": "2VgmCbG8ybwxI_Mykgqj-52",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Mínimo MODERADA",
+          "html": "<div><pre dir=\"ltr\"><code>Mínimo MODERADA</code></pre></div><p></p>"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-9",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-2",
+          "target": "PUC_YeQpAD_FYC7czJdH-137"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-13",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-2",
+          "target": "PUC_YeQpAD_FYC7czJdH-117"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-2",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿existe_superficie_permeable?"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-7",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-4",
+          "target": "PUC_YeQpAD_FYC7czJdH-117"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-4",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Registrar:\n• forma_alcorque\n• largo_alcorque_m\n• ancho_alcorque_m\n• diametro_alcorque_m\n• superficie_alcorque_m2",
+          "html": "<pre dir=\"ltr\"><code>Registrar:<br/>• forma_alcorque<br/>• largo_alcorque_m<br/>• ancho_alcorque_m<br/>• diametro_alcorque_m<br/>• superficie_alcorque_m2</code></pre>"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-14",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-20",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-16",
+          "target": "RWn6CCED4s4Ue6WRTyef-19"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-16",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿obstaculos_crecimiento_radicular?",
+          "html": "¿<span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">obstaculos_crecimiento_radicular</span>?"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-18",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-19",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿indicios_compactacion_superficial?",
+          "html": "¿<span style=\"text-decoration-line: inherit; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">indicios_compactacion_superficial</span>?"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-21",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-23",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-24",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "target": "RWn6CCED4s4Ue6WRTyef-25"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-25",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-26",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-27",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "target": "RWn6CCED4s4Ue6WRTyef-28"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-28",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"MODERADA\""
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-29",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-31",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-34",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-32",
+          "target": "PUC_YeQpAD_FYC7czJdH-152"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-32",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Registrar:\n• tipo_infraestructura_vertical",
+          "html": "<div>Registrar:</div><div>• tipo_infraestructura_vertical</div>"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-35",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-37",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Registrar:• tipo_red_aerea\n• otro_tipo_red_aerea\n• distancia_copa_red_aerea_m",
+          "html": "<pre dir=\"ltr\"><div style=\"\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-family: Helvetica; white-space: normal;\">Registrar:</span></div><code><div style=\"\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-family: Helvetica; white-space: normal;\">• tipo_red_aerea</span></div><div style=\"\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-family: Helvetica; white-space: normal;\">• otro_tipo_red_aerea</span></div><div style=\"\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-family: Helvetica; white-space: normal;\">• distancia_copa_red_aerea_m</span></div></code></pre>"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-45",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-42",
+          "target": "RWn6CCED4s4Ue6WRTyef-44"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-48",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-42",
+          "target": "RWn6CCED4s4Ue6WRTyef-47"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-42",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿cumplimiento_distancia _seguridad_bt_mt"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-44",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"LEVE\"",
+          "html": "Se categoriza como \"LEVE<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">\"</span>"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-46",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-47",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-49",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-51",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-53",
+          "target": "RWn6CCED4s4Ue6WRTyef-58"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-52",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-53",
+          "target": "RWn6CCED4s4Ue6WRTyef-61"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-68",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-53",
+          "target": "RWn6CCED4s4Ue6WRTyef-66"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-53",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿red_subterranea_presente?"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-54",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-53",
+          "target": "RWn6CCED4s4Ue6WRTyef-56"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-55",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-56",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "NO APLICA"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-57",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-58",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Registrar:\n• tipo_red_subterranea\n• otro_tipo_red_subterranea\n• distancia_arbol_red_subterranea_m",
+          "html": "<pre dir=\"ltr\"><div style=\"\"><div>Registrar:</div><div>• tipo_red_subterranea</div><div>• otro_tipo_red_subterranea</div><div>• distancia_arbol_red_subterranea_m</div></div></pre>"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-59",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-61",
+          "target": "RWn6CCED4s4Ue6WRTyef-62"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-71",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-61",
+          "target": "RWn6CCED4s4Ue6WRTyef-70"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-81",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-61",
+          "target": "RWn6CCED4s4Ue6WRTyef-80"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-61",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿afectacion_fisica _red_subterranea?"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-62",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"Sin afectación\""
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-65",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-66",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "NO DETERMINADO"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-69",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No determinado"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-78",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-70",
+          "target": "RWn6CCED4s4Ue6WRTyef-76"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-70",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "¿compromete _funcionalidad _red_subterranea?"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-72",
+          "type": "edge",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "source": "RWn6CCED4s4Ue6WRTyef-70",
+          "target": "RWn6CCED4s4Ue6WRTyef-73"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-73",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"MODERADA\"",
+          "html": "Se categoriza como \"MODERADA<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">\"</span>"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-74",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-76",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"SEVERA\""
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-77",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-79",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Sí"
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-80",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "Se categoriza como \"LEVE\""
+        },
+        {
+          "id": "RWn6CCED4s4Ue6WRTyef-82",
+          "type": "node",
+          "parent": "epIjwo0jwbNqGFr-sizR-1",
+          "label": "No determinado"
+        }
+      ]
+    }
+  ]
+}
