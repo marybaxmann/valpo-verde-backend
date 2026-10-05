@@ -5,13 +5,22 @@ jest.mock("../../src/repositories/userProfile.repository");
 jest.mock("../../src/repositories/project.repository");
 jest.mock("../../src/repositories/projectMember.repository");
 jest.mock("../../src/repositories/tree.repository");
+jest.mock("../../src/repositories/treeMeasurement.repository");
 
 import app from "../../src/app";
 import { getAuthUserByToken } from "../../src/repositories/auth.repository";
 import { findUserProfileById } from "../../src/repositories/userProfile.repository";
 import { findProjectById } from "../../src/repositories/project.repository";
 import { findMembership } from "../../src/repositories/projectMember.repository";
-import { findTreesPage } from "../../src/repositories/tree.repository";
+import {
+  createTreeWithMeasurementRpc,
+  findTreeById,
+  findTreesPage,
+} from "../../src/repositories/tree.repository";
+import {
+  findLatestValidMeasurementsCandidates,
+  findMeasurementsByTreeId,
+} from "../../src/repositories/treeMeasurement.repository";
 import {
   FAKE_TOKEN,
   MUNICIPAL_ID,
@@ -25,6 +34,10 @@ const mockFindUserProfileById = findUserProfileById as unknown as jest.Mock;
 const mockFindProjectById = findProjectById as unknown as jest.Mock;
 const mockFindMembership = findMembership as unknown as jest.Mock;
 const mockFindTreesPage = findTreesPage as unknown as jest.Mock;
+const mockFindTreeById = findTreeById as unknown as jest.Mock;
+const mockCreateTreeWithMeasurementRpc = createTreeWithMeasurementRpc as unknown as jest.Mock;
+const mockFindLatestValidMeasurementsCandidates = findLatestValidMeasurementsCandidates as unknown as jest.Mock;
+const mockFindMeasurementsByTreeId = findMeasurementsByTreeId as unknown as jest.Mock;
 
 const authHeader = { Authorization: `Bearer ${FAKE_TOKEN}` };
 const PROJECT_ID = "33333333-3333-3333-3333-333333333333";
@@ -282,3 +295,356 @@ describe("GET /api/projects/:id/trees", () => {
     consoleSpy.mockRestore();
   });
 });
+
+const TREE_ID = "44444444-4444-4444-4444-444444444444";
+const SPECIES_ID = "55555555-5555-5555-5555-555555555555";
+
+function fakeTreeDetailRow(id: string = TREE_ID, overrides: Record<string, unknown> = {}) {
+  return {
+    id,
+    tree_code: `VAL-${id.slice(-4)}`,
+    legacy_id: null,
+    project_id: PROJECT_ID,
+    public_space_id: null,
+    direccion: "Calle Prat 123",
+    comuna: "Valparaíso",
+    lugar_referencia: "Frente a plaza",
+    ubicacion: postgisPoint(-71.62, -33.045),
+    estado_ciclo_vida: "activo",
+    created_by: "user-1",
+    created_at: "2026-10-05T12:00:00Z",
+    updated_at: "2026-10-05T12:00:00Z",
+    species: { id: SPECIES_ID, nombre_cientifico: "Quillaja saponaria", nombre_comun: "Quillay" },
+    public_spaces: null,
+    ...overrides,
+  };
+}
+
+function fakeMeasurementRow(id: string = "m-1", overrides: Record<string, unknown> = {}) {
+  return {
+    id,
+    tree_id: TREE_ID,
+    fecha_medicion: "2026-10-05",
+    configuracion_fustes: "monofuste_test",
+    numero_fustes: null,
+    dap_fustes_cm: null,
+    dap_cm: 20.5,
+    altura_total_m: 8.5,
+    diametro_copa_m: 4.2,
+    altura_primera_rama_m: 1.8,
+    clase_edad: "juvenil",
+    estado_medicion: "valida",
+    motivo_anulacion: null,
+    anulada_por: null,
+    anulada_en: null,
+    created_by: "user-1",
+    created_at: "2026-10-05T12:00:00Z",
+    ...overrides,
+  };
+}
+
+const validCreateTreePayload = {
+  species_id: SPECIES_ID,
+  public_space_id: null,
+  direccion: "Calle Prat 123",
+  comuna: "Valparaíso",
+  lugar_referencia: "Frente a plaza",
+  ubicacion: { lon: -71.62, lat: -33.045 },
+  medicion_inicial: {
+    fecha_medicion: "2026-10-05",
+    configuracion_fustes: "monofuste_test",
+    dap_cm: 20.5,
+    altura_total_m: 8.5,
+    diametro_copa_m: 4.2,
+    altura_primera_rama_m: 1.8,
+    clase_edad: "juvenil",
+  },
+};
+
+describe("POST /api/projects/:id/trees", () => {
+  it("sin Authorization -> 401", async () => {
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .send(validCreateTreePayload);
+
+    expect(res.status).toBe(401);
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+  });
+
+  it("projectId inválido -> 400", async () => {
+    authAsAdmin();
+
+    const res = await request(app)
+      .post("/api/projects/no-es-uuid/trees")
+      .set(authHeader)
+      .send(validCreateTreePayload);
+
+    expect(res.status).toBe(400);
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+  });
+
+  it("payload sin species_id -> 400", async () => {
+    authAsAdmin();
+
+    const invalidPayload = { ...validCreateTreePayload, species_id: undefined };
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(invalidPayload);
+
+    expect(res.status).toBe(400);
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+  });
+
+  it("payload con altura_primera_rama_m > altura_total_m -> 400", async () => {
+    authAsAdmin();
+
+    const invalidPayload = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        altura_total_m: 5.0,
+        altura_primera_rama_m: 8.0,
+      },
+    };
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(invalidPayload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("altura_primera_rama_m");
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+  });
+
+  it("usuario_municipal sin membresía -> 403", async () => {
+    authAsMunicipal();
+    mockFindMembership.mockResolvedValue(null);
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(validCreateTreePayload);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe("No tiene acceso a este proyecto");
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+  });
+
+  it("admin con proyecto inexistente -> 404", async () => {
+    authAsAdmin();
+    mockFindProjectById.mockResolvedValue(null);
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(validCreateTreePayload);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("Proyecto no encontrado");
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+  });
+
+  it("admin crea árbol + medición inicial -> 201 y delega al RPC", async () => {
+    authAsAdmin();
+    mockFindProjectById.mockResolvedValue(PROJECT);
+    mockCreateTreeWithMeasurementRpc.mockResolvedValue({
+      tree_id: TREE_ID,
+      measurement_id: "m-init-1",
+      tree_code: "VAL-4444",
+    });
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([
+      fakeMeasurementRow("m-init-1"),
+    ]);
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(validCreateTreePayload);
+
+    expect(res.status).toBe(201);
+    expect(mockCreateTreeWithMeasurementRpc).toHaveBeenCalledWith(FAKE_TOKEN, {
+      p_project_id: PROJECT_ID,
+      p_species_id: SPECIES_ID,
+      p_public_space_id: null,
+      p_direccion: "Calle Prat 123",
+      p_comuna: "Valparaíso",
+      p_lugar_referencia: "Frente a plaza",
+      p_lon: -71.62,
+      p_lat: -33.045,
+      p_medicion: {
+        fecha_medicion: "2026-10-05",
+        configuracion_fustes: "monofuste_test",
+        numero_fustes: null,
+        dap_fustes_cm: null,
+        dap_cm: 20.5,
+        altura_total_m: 8.5,
+        diametro_copa_m: 4.2,
+        altura_primera_rama_m: 1.8,
+        clase_edad: "juvenil",
+      },
+    });
+    expect(res.body.data.id).toBe(TREE_ID);
+    expect(res.body.data.medicion_actual_estado).toBe("ok");
+    expect(res.body.data.medicion_actual.id).toBe("m-init-1");
+  });
+
+  it("usuario_municipal miembro -> 201 exitoso", async () => {
+    authAsMunicipal();
+    mockFindMembership.mockResolvedValue({ id: "m1" });
+    mockFindProjectById.mockResolvedValue(PROJECT);
+    mockCreateTreeWithMeasurementRpc.mockResolvedValue({
+      tree_id: TREE_ID,
+      measurement_id: "m-init-1",
+      tree_code: "VAL-4444",
+    });
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([
+      fakeMeasurementRow("m-init-1"),
+    ]);
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(validCreateTreePayload);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.id).toBe(TREE_ID);
+  });
+});
+
+describe("GET /api/trees/:treeId", () => {
+  it("sin Authorization -> 401", async () => {
+    const res = await request(app).get(`/api/trees/${TREE_ID}`);
+    expect(res.status).toBe(401);
+  });
+
+  it("treeId inválido -> 400", async () => {
+    authAsAdmin();
+    const res = await request(app).get("/api/trees/no-es-uuid").set(authHeader);
+    expect(res.status).toBe(400);
+  });
+
+  it("árbol inexistente -> 404", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(null);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}`).set(authHeader);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("Árbol no encontrado");
+  });
+
+  it("usuario_municipal sin membresía del proyecto -> 403", async () => {
+    authAsMunicipal();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindMembership.mockResolvedValue(null);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}`).set(authHeader);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe("No tiene acceso a este proyecto");
+  });
+
+  it("árbol con 1 medición válida -> 200 con medicion_actual ok", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    const m1 = fakeMeasurementRow("m-1", { fecha_medicion: "2026-10-05" });
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([m1]);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe(TREE_ID);
+    expect(res.body.data.medicion_actual_estado).toBe("ok");
+    expect(res.body.data.medicion_actual.id).toBe("m-1");
+  });
+
+  it("árbol sin mediciones (legacy) -> 200 con medicion_actual null y estado sin_mediciones", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([]);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe(TREE_ID);
+    expect(res.body.data.medicion_actual).toBeNull();
+    expect(res.body.data.medicion_actual_estado).toBe("sin_mediciones");
+  });
+
+  it("árbol con 2 mediciones válidas con empate en fecha máxima -> 200 con medicion_actual null y error_empate_fecha_maxima", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    const m1 = fakeMeasurementRow("m-1", { fecha_medicion: "2026-10-05" });
+    const m2 = fakeMeasurementRow("m-2", { fecha_medicion: "2026-10-05" });
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([m1, m2]);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.medicion_actual).toBeNull();
+    expect(res.body.data.medicion_actual_estado).toBe("error_empate_fecha_maxima");
+  });
+});
+
+describe("GET /api/trees/:treeId/measurements", () => {
+  it("sin Authorization -> 401", async () => {
+    const res = await request(app).get(`/api/trees/${TREE_ID}/measurements`);
+    expect(res.status).toBe(401);
+  });
+
+  it("treeId inválido -> 400", async () => {
+    authAsAdmin();
+    const res = await request(app).get("/api/trees/no-es-uuid/measurements").set(authHeader);
+    expect(res.status).toBe(400);
+  });
+
+  it("árbol inexistente -> 404", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(null);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}/measurements`).set(authHeader);
+    expect(res.status).toBe(404);
+  });
+
+  it("usuario_municipal sin membresía -> 403", async () => {
+    authAsMunicipal();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindMembership.mockResolvedValue(null);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}/measurements`).set(authHeader);
+    expect(res.status).toBe(403);
+  });
+
+  it("admin consulta historial -> 200 y no incluye anuladas por defecto", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindMeasurementsByTreeId.mockResolvedValue([fakeMeasurementRow("m-1")]);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}/measurements`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(mockFindMeasurementsByTreeId).toHaveBeenCalledWith(FAKE_TOKEN, TREE_ID, false);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.meta.total).toBe(1);
+  });
+
+  it("query include_anuladas=true -> pasa true al repository", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindMeasurementsByTreeId.mockResolvedValue([
+      fakeMeasurementRow("m-1"),
+      fakeMeasurementRow("m-2", { estado_medicion: "anulada" }),
+    ]);
+
+    const res = await request(app)
+      .get(`/api/trees/${TREE_ID}/measurements?include_anuladas=true`)
+      .set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(mockFindMeasurementsByTreeId).toHaveBeenCalledWith(FAKE_TOKEN, TREE_ID, true);
+    expect(res.body.data).toHaveLength(2);
+    expect(res.body.meta.total).toBe(2);
+  });
+});
+
