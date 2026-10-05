@@ -3,3 +3,5 @@
  */
 export const TREE_PAGE_SIZE = 1000;
 export const findTreesPage = jest.fn();
+export const createTreeWithMeasurementRpc = jest.fn();
+export const findTreeById = jest.fn();
