@@ -34,8 +34,8 @@ hoja VERSION del Excel maestro.
 | CC-005 | Datos personales en la hoja USUARIOS | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-006 | Archivos fuente `.drawio` de los diagramas | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-007 | Inconsistencias documentales (README, roadmap, checkpoint, CLAUDE.md, workflow §13, frontend) | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
-| CC-008 | Columna `ambito` en DICCIONARIO_CAMPOS y ajuste de `workflow.md` §14.10 | 3 (+2) | FUENTE SINCRONIZADA | Auditoría de hojas del Excel maestro (CC-003); decisión G1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
-| CC-009 | Validación de `clase_edad` en ARBOLES | 1 | FUENTE SINCRONIZADA | Auditoría de hojas del Excel maestro (CC-003); resuelto junto con CC-020 | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-008 | Columna `ambito` en DICCIONARIO_CAMPOS y ajuste de `workflow.md` §14.10 | 3 (+2) | CERRADO (sin implementación) | Auditoría de hojas del Excel maestro (CC-003); decisión G1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-009 | Validación de `clase_edad` en ARBOLES | 1 | CERRADO (sin implementación) | Auditoría de hojas del Excel maestro (CC-003); resuelto junto con CC-020 | 2.0.0 (en preparación) | — | 2026-10-05 |
 | CC-010 | `nivel_riesgo` y `resultado_general` manuales en INSPECCIONES frente a `clasificacion_riesgo` (R04) | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-011 | `prioridad_reportada`, Prioridad de OT y `clasificacion_prioridad` (M05) | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-012 | Menús dependientes, rangos con nombre y validaciones técnicas de los anexos | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
@@ -46,7 +46,7 @@ hoja VERSION del Excel maestro.
 | CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | CERRADO (sin implementación) | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
-| CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | FUENTE SINCRONIZADA | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | PENDIENTE DE IMPLEMENTACIÓN | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -427,7 +427,7 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Auditoría de hojas del Excel maestro (CC-003). Retomado el 2026-10-05 para resolver la decisión G1 (implementación del inventario operativo antes de publicar el paquete 2.0.0), detectada al planificar CC-020. |
 | Tipo | 3 (+2 gobernanza de versionado) |
-| Estado | FUENTE SINCRONIZADA |
+| Estado | CERRADO (sin implementación) |
 | Regla / campo afectado | DICCIONARIO_CAMPOS (nueva columna N `ambito`); `docs/workflow.md` §14.4 (tipo 4), §14.7, §14.9, §14.10 y nueva §14.12; PR-002 (autoridad de DICCIONARIO_CAMPOS, v2.2); `docs/methodology/00-index.md` (estado de transición, punto 8). |
 | Versión anterior | DICCIONARIO_CAMPOS no distinguía campos metodológicos de campos operativos. §14.10 subía MINOR ante cualquier cambio de campos del DICCIONARIO. §14.4 y §14.7 exigían una versión publicada para toda implementación, con lo que ninguna especificación de inventario podía implementarse antes de publicar el paquete 2.0.0. |
 | Versión nueva | Columna `ambito` con valores `operativo` y `metodologico`, definidos en `docs/workflow.md` §14.12; un campo sin valor se trata como `metodologico`. Una especificación de ámbito `operativo` puede pasar a implementación desde `FUENTE SINCRONIZADA`, sin esperar la publicación, si no ejecuta reglas metodológicas ni fórmulas pendientes (§14.12, regla 3). Las reglas de evaluación, clasificación, probabilidad de falla, riesgo, afectación global, priorización e indicadores siguen exigiendo una versión publicada y su `rule_version` (§14.12, regla 4). Un cambio limitado a campos `operativo` corresponde a PATCH y no altera `rule_version` (§14.10). Referencias cruzadas operativo → metodológico se evalúan en el mismo CC (§14.12, regla 5). |
@@ -446,8 +446,8 @@ motivo)
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-05 |
 | Fecha de implementación | sin implementación (gobernanza y Excel metodológico) |
-| Commits / PR asociados | rama `cc-020-arbol-medicion`, repositorio backend. PR pendiente de revisión por la aprobadora. |
-| Observaciones | Coherencia verificada antes de modificar el workflow: PR-002 v2.1/v2.2 y PR-011 v2.0 restringen a una versión publicada la implementación de *reglas*, no de especificaciones operativas; §14.5 ya exigía para el tipo 4 "un CC metodológico previo en `FUENTE SINCRONIZADA` o posterior". Las únicas reglas que suponían publicación para toda implementación (§14.4 tipo 4, §14.7 último párrafo y §14.9 "Para pasar a PROBADO") se ajustaron de forma explícita y trazable. No se modificaron PR-011, ADR-009 ni los controles de `rule_version`. Al integrarse el PR: `CERRADO` (sin implementación). |
+| Commits / PR asociados | `6af04ec` — [CC-020] Separar identidad del árbol y medición dendrométrica (+CC-008, CC-009); `15c9994` — [CC-020] Corrección previa al merge (rama `cc-020-arbol-medicion`, repositorio backend). Integrados en `main` mediante PR #3 (merge `637db1a`). Cierre registrado en un commit documental posterior. |
+| Observaciones | Coherencia verificada antes de modificar el workflow: PR-002 v2.1/v2.2 y PR-011 v2.0 restringen a una versión publicada la implementación de *reglas*, no de especificaciones operativas; §14.5 ya exigía para el tipo 4 "un CC metodológico previo en `FUENTE SINCRONIZADA` o posterior". Las únicas reglas que suponían publicación para toda implementación (§14.4 tipo 4, §14.7 último párrafo y §14.9 "Para pasar a PROBADO") se ajustaron de forma explícita y trazable. No se modificaron PR-011, ADR-009 ni los controles de `rule_version`. Integrado mediante PR #3 (merge `637db1a`): `CERRADO` (sin implementación). Sin componente de software, como CC-001 y CC-004. |
 
 **Checklist de sincronización**
 
@@ -465,7 +465,7 @@ motivo)
 - [x] API / Zod — N/A.
 - [x] Frontend — N/A.
 - [x] Verificación §14.9 (implementación) — N/A.
-- [ ] Revisión final — pendiente de revisión del PR por la aprobadora.
+- [x] Revisión final — revisado y aprobado por marybaxmann en el PR #3 (merge `637db1a`, 2026-10-05).
 
 **Historial de estados**
 
@@ -475,6 +475,7 @@ motivo)
 | 2026-10-05 | EN REVISIÓN | — | Retomado para resolver G1 (plan de sincronización de CC-020). |
 | 2026-10-05 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión G1: distinción entre inventario operativo/estructural y reglas metodológicas. |
 | 2026-10-05 | FUENTE SINCRONIZADA | — | Excel, `workflow.md`, PR-002 v2.2 y `00-index.md` actualizados y verificados en la rama `cc-020-arbol-medicion`, repositorio backend. Pendiente de integración del PR. |
+| 2026-10-05 | CERRADO (sin implementación) | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`; commits `6af04ec`, `15c9994`). Sin implementación en BD, backend, API ni frontend. |
 
 ---
 
@@ -485,7 +486,7 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Auditoría de hojas del Excel maestro (CC-003). Resuelto junto con CC-020 (2026-10-05). |
 | Tipo | 1 |
-| Estado | FUENTE SINCRONIZADA |
+| Estado | CERRADO (sin implementación) |
 | Regla / campo afectado | Hoja ARBOLES (anexo) y campo `clase_edad` de DICCIONARIO_CAMPOS. |
 | Versión anterior | La validación de lista "Joven, Semimaduro, Maduro, Sobremaduro" está aplicada a la columna O (`dap_cm`) y no a la columna S (`clase_edad`); además tiene 4 valores, frente a 5 en DICCIONARIO_CAMPOS ("Tempranamente maduro"). |
 | Versión nueva | `clase_edad` pasa a MEDICIONES_DENDROMETRICAS (CC-020) como estimación opcional. La validación errónea se elimina del anexo ARBOLES, que ya no contiene dimensiones. El dominio de 5 valores queda solo en DICCIONARIO_CAMPOS (autoridad, CC-003). El anexo MEDICIONES_DENDROMETRICAS se crea sin menús de captura; su generación corresponde a CC-012. |
@@ -504,8 +505,8 @@ motivo)
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-05 |
 | Fecha de implementación | sin implementación (anexo del Excel) |
-| Commits / PR asociados | rama `cc-020-arbol-medicion`, repositorio backend. PR pendiente de revisión por la aprobadora. |
-| Observaciones | Al integrarse el PR: `CERRADO` (sin implementación). |
+| Commits / PR asociados | `6af04ec` — [CC-020] Separar identidad del árbol y medición dendrométrica (+CC-008, CC-009); `15c9994` — [CC-020] Corrección previa al merge (rama `cc-020-arbol-medicion`, repositorio backend). Integrados en `main` mediante PR #3 (merge `637db1a`). Cierre registrado en un commit documental posterior. |
+| Observaciones | Resuelto dentro de CC-020. Integrado mediante PR #3 (merge `637db1a`): `CERRADO` (sin implementación), como CC-004. |
 
 **Checklist de sincronización**
 
@@ -523,7 +524,7 @@ motivo)
 - [x] API / Zod — N/A.
 - [x] Frontend — N/A.
 - [x] Verificación §14.9 (implementación) — N/A.
-- [ ] Revisión final — pendiente de revisión del PR por la aprobadora.
+- [x] Revisión final — revisado y aprobado por marybaxmann en el PR #3 (merge `637db1a`, 2026-10-05).
 
 **Historial de estados**
 
@@ -532,6 +533,7 @@ motivo)
 | 2026-10-04 | DETECTADO | — | Auditoría de hojas del Excel maestro (CC-003). |
 | 2026-10-05 | APROBADO METODOLÓGICAMENTE | marybaxmann | Resolver junto con CC-020. |
 | 2026-10-05 | FUENTE SINCRONIZADA | — | Excel actualizado y verificado en la rama `cc-020-arbol-medicion`, repositorio backend. Pendiente de integración del PR. |
+| 2026-10-05 | CERRADO (sin implementación) | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`). Sin implementación. |
 
 ---
 
@@ -825,7 +827,7 @@ motivo)
 | Fecha | 2026-10-05 |
 | Origen | Auditoría árbol / medición previa a INV-1 (registro básico del árbol), 2026-10-05: plan de sincronización aprobado por `marybaxmann`. |
 | Tipo | 3 — modelo de datos (+1 corrección de inconsistencias: `altura_m` / `altura_total_m`; `nombre_comun` y `huso` frente a PR-006 y ADR-010) |
-| Estado | FUENTE SINCRONIZADA |
+| Estado | PENDIENTE DE IMPLEMENTACIÓN |
 | Regla / campo afectado | DICCIONARIO_CAMPOS (filas ARBOLES y nueva entidad MEDICIONES_DENDROMETRICAS; `zona_objetivo`); anexos ARBOLES y MEDICIONES_DENDROMETRICAS (nuevo); VERSION; PR-006; PR-003; PR-002 (composición); ADR-016 (nueva); `docs/methodology/modelo-arbol-medicion.md` (nuevo) y `00-index.md`; referencias a PR-006 en ADR-010 v2.0 y ADR-015. |
 | Versión anterior | ARBOLES y DICCIONARIO_CAMPOS trataban `multifustal`, `numero_fustes`, `dap_fustes_cm`, `dap_cm`, `altura_m`, `diametro_copa_m`, `altura_primera_rama_m` y `clase_edad` como atributos del árbol sin fecha propia, todos obligatorios. `dap_cm` contenía la fórmula: "Si multifustal = No: ingreso manual del DAP. Si multifustal = Sí y 2 ≤ numero_fustes ≤ 5: dap_cm = √(d₁² + d₂² + … + dₙ²). Si multifustal = Sí y numero_fustes > 5: dap_cm = √(d̄² × n), donde d̄ = (d₁ + d₂ + … + dₙ) / n" (antecedente; no vigente). `zona_objetivo` citaba `altura_total_m`, campo inexistente (el campo se llamaba `altura_m`). ARBOLES no tenía ubicación WGS84; UTM y `huso` (fijo "19S") eran obligatorios. PR-006 v6.0, PR-003 v4.0, PR-002 v2.1. |
 | Versión nueva | ÁRBOL (identidad relativamente estable) ≠ MEDICIÓN DENDROMÉTRICA (evento fechado); ARBOLES 1:N MEDICIONES_DENDROMETRICAS. **H-1:** la medición inicial exige configuración de fustes, DAP o diámetros por fuste según corresponda, `altura_total_m`, `diametro_copa_m` y `altura_primera_rama_m`; `clase_edad` es opcional; en ejemplares con más de un fuste se conservan los diámetros individuales y el DAP equivalente se calcula solo con regla aprobada (puede quedar pendiente sin impedir completar la medición). **H-2:** entidad MEDICIONES_DENDROMETRICAS, "registro fechado de las dimensiones y características dendrométricas observadas, medidas o estimadas de un ejemplar arbóreo". **H-3:** última medición válida = medición válida con la `fecha_medicion` más reciente; `fecha_registro` solo trazabilidad administrativa; anulación lógica (permanece en el historial con motivo, autor y fecha; no participa en el valor actual); corrección ≠ anulación ≠ nueva medición. Valor actual derivado, no editable. Ubicación canónica `ubicacion_wgs84` obligatoria para completar el alta; UTM y `huso` pasan a obligatoriedad Pendiente. `multifustal` se reemplaza por `configuracion_fustes` con categorías pendientes. ADR-016 v1.0, PR-006 v7.0, PR-003 v5.0, PR-002 v2.2. |
@@ -844,8 +846,8 @@ motivo)
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-05 |
 | Fecha de implementación | — (sin implementación de software todavía) |
-| Commits / PR asociados | rama `cc-020-arbol-medicion`, repositorio backend. PR pendiente de revisión por la aprobadora. |
-| Observaciones | **Siguen abiertas (no se cierran en este CC):** categorías definitivas de configuración de fustes y regla de DAP equivalente; política de especie no determinada, catálogo y nombres comunes; UTM, datum, huso y coordenada original (ADR-010 v2.0); relación MEDICIÓN ↔ INSPECCIÓN y efecto de corregir o anular una medición usada por una inspección completada (ADR-007); obligatoriedad de campos en mediciones posteriores; tratamiento de `clase_edad`; correspondencia `sector` / `ubicacion_descriptiva` con comuna, dirección y lugar de referencia; permisos de anulación y de corrección de mediciones por el Usuario municipal. **No modificado:** `database/`, `src/`, migraciones, RLS, frontend, ArcGIS/SIG. Referencia a PR-003 v4.0 en ADR-014 se conserva (describe el estado validado de RLS). Al integrarse el PR, y por tratarse de una especificación de ámbito `operativo` (`docs/workflow.md` §14.12), el CC puede pasar a `PENDIENTE DE IMPLEMENTACIÓN` sin esperar la publicación de 2.0.0. |
+| Commits / PR asociados | `6af04ec` — [CC-020] Separar identidad del árbol y medición dendrométrica (+CC-008, CC-009); `15c9994` — [CC-020] Corrección previa al merge (rama `cc-020-arbol-medicion`, repositorio backend). Integrados en `main` mediante PR #3 (merge `637db1a`). Cierre registrado en un commit documental posterior. |
+| Observaciones | **Siguen abiertas (no se cierran en este CC):** categorías definitivas de configuración de fustes y regla de DAP equivalente; política de especie no determinada, catálogo y nombres comunes; UTM, datum, huso y coordenada original (ADR-010 v2.0); relación MEDICIÓN ↔ INSPECCIÓN y efecto de corregir o anular una medición usada por una inspección completada (ADR-007); obligatoriedad de campos en mediciones posteriores; tratamiento de `clase_edad`; correspondencia `sector` / `ubicacion_descriptiva` con comuna, dirección y lugar de referencia; permisos de anulación y de corrección de mediciones por el Usuario municipal. **No modificado:** `database/`, `src/`, migraciones, RLS, frontend, ArcGIS/SIG. Referencia a PR-003 v4.0 en ADR-014 se conserva (describe el estado validado de RLS). Integrado mediante PR #3 (merge `637db1a`). Por tratarse de una especificación de ámbito `operativo` (`docs/workflow.md` §14.12), pasa a `PENDIENTE DE IMPLEMENTACIÓN` sin esperar la publicación de 2.0.0. Próximo paso: diseño técnico (INV-1A); la implementación no está autorizada todavía. |
 
 **Checklist de sincronización**
 
@@ -863,7 +865,7 @@ motivo)
 - [ ] API / Zod — pendiente.
 - [ ] Frontend — pendiente.
 - [ ] Verificación §14.9 (implementación) — pendiente.
-- [ ] Revisión final — pendiente.
+- [ ] Revisión final — pendiente (tras la implementación). Revisión de la fuente: aprobada por marybaxmann en el PR #3 (merge `637db1a`, 2026-10-05).
 
 **Historial de estados**
 
@@ -875,3 +877,4 @@ motivo)
 | 2026-10-05 | APROBADO METODOLÓGICAMENTE | marybaxmann | H-1, H-2, H-3 adoptadas; G1 resuelta vía CC-008; sincronización autorizada. |
 | 2026-10-05 | FUENTE SINCRONIZADA | — | Fuentes actualizadas y verificación §14.9 aprobada en la rama `cc-020-arbol-medicion`, repositorio backend. Pendiente de integración del PR. |
 | 2026-10-05 | FUENTE SINCRONIZADA | marybaxmann | Corrección menor previa al merge (revisión de la aprobadora): `configuracion_fustes`, `numero_fustes` y `dap_fustes_cm` sin altura de referencia fija ni categorías candidatas (criterio/altura de referencia PENDIENTE); `huso` sin zona fija "19S". Verificación repetida y aprobada. |
+| 2026-10-05 | PENDIENTE DE IMPLEMENTACIÓN | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`; commits `6af04ec`, `15c9994`). Especificación de ámbito `operativo` (§14.12). Siguiente: diseño técnico INV-1A; sin implementación de software todavía. |
