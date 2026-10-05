@@ -29,7 +29,7 @@ hoja VERSION del Excel maestro.
 |---|---|---|---|---|---|---|---|
 | CC-001 | Fuente de verdad metodológica (PR-002 v2.0) y control de cambios | 2 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — (sin versión publicada) | — | 2026-10-04 |
 | CC-002 | Hojas REGLAS_INDICADORES y VERSION; registro de la versión previa a 2.0.0 | 3 | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
-| CC-003 | Composición normativa del Excel maestro y autoridad de cada artefacto (PR-002 v2.1) | 2 (+5) | APROBADO METODOLÓGICAMENTE | Diagnóstico de documentación y control de cambios; auditoría de hojas del Excel maestro | — (sin versión publicada) | — | 2026-10-04 |
+| CC-003 | Composición normativa del Excel maestro y autoridad de cada artefacto (PR-002 v2.1) | 2 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios; auditoría de hojas del Excel maestro | — (sin versión publicada) | — | 2026-10-04 |
 | CC-004 | Relación entre LISTAS y DICCIONARIO_CAMPOS | 1 | DETECTADO | Diagnóstico de documentación y control de cambios | — | CC-003 | 2026-10-04 |
 | CC-005 | Datos personales en la hoja USUARIOS | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-006 | Archivos fuente `.drawio` de los diagramas | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
@@ -234,13 +234,13 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Diagnóstico de documentación y control de cambios; auditoría de las 13 hojas del Excel maestro (commit `3df0cd2`). |
 | Tipo | 2 — gobernanza metodológica: composición del paquete y autoridad (+5 documental) |
-| Estado | APROBADO METODOLÓGICAMENTE |
+| Estado | CERRADO (sin implementación) |
 | Regla / campo afectado | PR-002; `docs/methodology/00-index.md` (propósito y estado de transición); `docs/workflow.md` §14.2 (lista de artefactos sincronizados). |
 | Versión anterior | PR-002 v2.0: "hojas normativas MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION"; sin clasificación de las demás hojas ni reglas de autoridad entre artefactos. |
 | Versión nueva | PR-002 v2.1: composición del Excel maestro (núcleo normativo: DICCIONARIO_CAMPOS, REGLAS_INDICADORES, MATRICES_CALCULO; gobernanza: VERSION; catálogo controlado subordinado: LISTAS; módulo metodológico en propuesta: INDICES; anexos operativos no normativos: ARBOLES, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO, USUARIOS), autoridad por tipo de información, frontera DICCIONARIO / REGLAS / MATRICES, principio "cada pieza de lógica en un solo lugar" y relación con el modelo de datos. `workflow.md` §14.2 incluye LISTAS. |
 | Motivo | Sin una clasificación formal, las hojas operativas, LISTAS e INDICES funcionaban como fuentes paralelas de dominios, roles y resultados, y DICCIONARIO_CAMPOS repetía lógica de MATRICES_CALCULO. |
 | Fundamento / fuente | Decisiones de `marybaxmann` del 2026-10-04 (aprobación de la dirección de CC-003 y ajustes finales). |
-| Archivos afectados | `docs/project-rules.md` (solo PR-002), `docs/methodology/00-index.md`, `docs/workflow.md` (solo §14.2), `docs/registro-cambios.md`. |
+| Archivos afectados | `docs/project-rules.md` (PR-002; referencias operativas en PR-011 v2.0 y PR-016 v3.0), `docs/methodology/00-index.md`, `docs/workflow.md` (§14.2; referencias operativas en §2, §5 y §10), `CLAUDE.md`, `.claude/agents/rules-engine.md`, `.claude/agents/architect.md`, `docs/registro-cambios.md`. |
 | Impacto en diagramas | Ninguno. |
 | Impacto en Excel metodológico | Ninguno. Las contradicciones detectadas en las hojas se registran como CC separados. |
 | Impacto en BD | Ninguno. Aclaración normativa: DICCIONARIO_CAMPOS define el contrato funcional de los campos, no el esquema físico. |
@@ -253,8 +253,8 @@ motivo)
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-04 |
 | Fecha de implementación | sin implementación (cambio de gobernanza documental) |
-| Commits / PR asociados | pendiente (sin commit hasta revisión) |
-| Observaciones | No se corrige ninguna contradicción dentro de CC-003. Se amplía CC-004 y se abren CC-008 a CC-018 en estado DETECTADO. Otros documentos citan "PR-002 v2.0" (`CLAUDE.md`, `docs/workflow.md` §2/§5/§10, agentes `rules-engine` y `architect`, PR-011 v2.0, PR-016 v3.0); quedan fuera del alcance autorizado de CC-003. |
+| Commits / PR asociados | `99fcba0` — [CC-003] Definir composición y autoridad del paquete metodológico (rama `claude/valpo-verde-frontend-p2-kh1bcx`, repositorio backend). Cierre registrado en un commit documental posterior. |
+| Observaciones | No se corrige ninguna contradicción dentro de CC-003. Se amplía CC-004 y se abren CC-008 a CC-018 en estado DETECTADO. Referencias operativas a "PR-002 v2.0" cambiadas a "PR-002" (opción (a) aprobada por marybaxmann el 2026-10-04) en `CLAUDE.md`, `docs/workflow.md` §2/§5/§10, agentes `rules-engine` y `architect`, PR-011 v2.0 y PR-016 v3.0; se conservan las referencias históricas (campos "Reemplaza"/"Reemplazada por", motivos de reemplazo y fichas CC). Pendiente: `docs/methodology/00-index.md`, sección "Regla de precedencia", mantiene la referencia operativa "PR-002 v2.0"; no estaba incluida en la lista autorizada para el ajuste. |
 
 **Checklist de sincronización**
 
@@ -272,7 +272,7 @@ motivo)
 - [x] API / Zod — N/A.
 - [x] Frontend — N/A.
 - [x] Verificación §14.9 (implementación) — N/A.
-- [ ] Revisión final — pendiente de revisión por una aprobadora antes del commit.
+- [x] Revisión final — revisado y aprobado por marybaxmann (2026-10-04) antes del commit; documentos verificados tras el commit `99fcba0`.
 
 **Historial de estados**
 
@@ -281,6 +281,7 @@ motivo)
 | 2026-10-04 | DETECTADO | — | Falta de definición de las hojas normativas del Excel maestro. |
 | 2026-10-04 | EN REVISIÓN | — | Auditoría de las 13 hojas y propuesta de clasificación. |
 | 2026-10-04 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ficha final aprobada; implementación documental autorizada. Cambios escritos en la rama del repositorio backend, sin commit, pendientes de revisión. |
+| 2026-10-04 | CERRADO (sin implementación) | marybaxmann | Commit `99fcba0` publicado y verificado. Sin implementación en Excel, diagramas, BD, backend, API ni frontend. |
 
 ---
 
