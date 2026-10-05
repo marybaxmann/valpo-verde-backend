@@ -332,13 +332,14 @@ function fakeMeasurementRow(id: string = "m-1", overrides: Record<string, unknow
     altura_total_m: 8.5,
     diametro_copa_m: 4.2,
     altura_primera_rama_m: 1.8,
-    clase_edad: "juvenil",
+    clase_edad: "Joven",
     estado_medicion: "valida",
     motivo_anulacion: null,
-    anulada_por: null,
-    anulada_en: null,
+    anulado_por: null,
+    fecha_anulacion: null,
     created_by: "user-1",
     created_at: "2026-10-05T12:00:00Z",
+    updated_at: "2026-10-05T12:00:00Z",
     ...overrides,
   };
 }
@@ -357,7 +358,7 @@ const validCreateTreePayload = {
     altura_total_m: 8.5,
     diametro_copa_m: 4.2,
     altura_primera_rama_m: 1.8,
-    clase_edad: "juvenil",
+    clase_edad: "Joven",
   },
 };
 
@@ -482,7 +483,7 @@ describe("POST /api/projects/:id/trees", () => {
         altura_total_m: 8.5,
         diametro_copa_m: 4.2,
         altura_primera_rama_m: 1.8,
-        clase_edad: "juvenil",
+        clase_edad: "Joven",
       },
     });
     expect(res.body.data.id).toBe(TREE_ID);
@@ -511,6 +512,153 @@ describe("POST /api/projects/:id/trees", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.data.id).toBe(TREE_ID);
+  });
+
+  it("medición sin diámetros (dap_cm, numero_fustes, dap_fustes_cm null) -> 201 exitoso sin XOR forzado", async () => {
+    authAsAdmin();
+    mockFindProjectById.mockResolvedValue(PROJECT);
+    mockCreateTreeWithMeasurementRpc.mockResolvedValue({
+      tree_id: TREE_ID,
+      measurement_id: "m-init-2",
+      tree_code: "VAL-4444",
+    });
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([
+      fakeMeasurementRow("m-init-2", { dap_cm: null, numero_fustes: null, dap_fustes_cm: null }),
+    ]);
+
+    const payloadSinDiametros = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        dap_cm: null,
+        numero_fustes: null,
+        dap_fustes_cm: null,
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payloadSinDiametros);
+
+    expect(res.status).toBe(201);
+  });
+
+  it("numero_fustes registrado sin dap_fustes_cm -> 400 Bad Request", async () => {
+    authAsAdmin();
+
+    const payload = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        numero_fustes: 3,
+        dap_fustes_cm: null,
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("dap_fustes_cm es obligatorio");
+  });
+
+  it("dap_fustes_cm con valor 0 o negativo -> 400 Bad Request", async () => {
+    authAsAdmin();
+
+    const payload = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        numero_fustes: 2,
+        dap_fustes_cm: [15.0, 0],
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("dap_fustes_cm debe ser mayor a 0");
+  });
+
+  it("fecha_medicion con día de calendario gregoriano imposible (2026-02-31) -> 400", async () => {
+    authAsAdmin();
+
+    const payload = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        fecha_medicion: "2026-02-31",
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("calendario gregoriano");
+  });
+
+  it("fecha_medicion futura -> 400", async () => {
+    authAsAdmin();
+
+    const payload = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        fecha_medicion: "2099-01-01",
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("no puede ser una fecha futura");
+  });
+
+  it("clase_edad fuera del dominio aprobado -> 400 Bad Request", async () => {
+    authAsAdmin();
+
+    const payload = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        clase_edad: "categoria_no_aprobada" as any,
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("clase_edad");
+  });
+
+  it("error de RPC por especie no existente mapea a 400 predecible", async () => {
+    authAsAdmin();
+    mockFindProjectById.mockResolvedValue(PROJECT);
+    mockCreateTreeWithMeasurementRpc.mockRejectedValue(new Error("Especie no encontrada"));
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(validCreateTreePayload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Especie no encontrada");
   });
 });
 
@@ -585,6 +733,34 @@ describe("GET /api/trees/:treeId", () => {
     expect(res.body.data.medicion_actual).toBeNull();
     expect(res.body.data.medicion_actual_estado).toBe("error_empate_fecha_maxima");
   });
+
+  it("árbol con más de 2 mediciones válidas con empate en fecha máxima (ej. 3) -> error_empate_fecha_maxima", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    const m1 = fakeMeasurementRow("m-1", { fecha_medicion: "2026-10-05" });
+    const m2 = fakeMeasurementRow("m-2", { fecha_medicion: "2026-10-05" });
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([m1, m2]);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.medicion_actual).toBeNull();
+    expect(res.body.data.medicion_actual_estado).toBe("error_empate_fecha_maxima");
+  });
+
+  it("árbol con medición válida previa y medición anulada más reciente -> resuelve la válida", async () => {
+    authAsAdmin();
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    // La consulta a candidatos en repository solo filtra estado_medicion = 'valida'
+    const mValida = fakeMeasurementRow("m-valida", { fecha_medicion: "2026-10-01" });
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([mValida]);
+
+    const res = await request(app).get(`/api/trees/${TREE_ID}`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.medicion_actual_estado).toBe("ok");
+    expect(res.body.data.medicion_actual.id).toBe("m-valida");
+  });
 });
 
 describe("GET /api/trees/:treeId/measurements", () => {
@@ -645,6 +821,37 @@ describe("GET /api/trees/:treeId/measurements", () => {
     expect(mockFindMeasurementsByTreeId).toHaveBeenCalledWith(FAKE_TOKEN, TREE_ID, true);
     expect(res.body.data).toHaveLength(2);
     expect(res.body.meta.total).toBe(2);
+  });
+});
+
+describe("Endpoints prohibidos / no autorizados en INV-1B", () => {
+  it("POST /api/trees/:treeId/measurements (crear mediciones posteriores no autorizado) -> 404", async () => {
+    authAsAdmin();
+    const res = await request(app)
+      .post(`/api/trees/${TREE_ID}/measurements`)
+      .set(authHeader)
+      .send({ fecha_medicion: "2026-10-06" });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("PUT /api/trees/:treeId/measurements/:id (modificar medición no autorizado) -> 404", async () => {
+    authAsAdmin();
+    const res = await request(app)
+      .put(`/api/trees/${TREE_ID}/measurements/some-id`)
+      .set(authHeader)
+      .send({});
+
+    expect(res.status).toBe(404);
+  });
+
+  it("DELETE /api/trees/:treeId/measurements/:id (borrar medición no autorizado) -> 404", async () => {
+    authAsAdmin();
+    const res = await request(app)
+      .delete(`/api/trees/${TREE_ID}/measurements/some-id`)
+      .set(authHeader);
+
+    expect(res.status).toBe(404);
   });
 });
 

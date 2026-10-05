@@ -266,14 +266,9 @@ CREATE TABLE tree_measurements (
 
   fecha_medicion          DATE NOT NULL,
   configuracion_fustes    TEXT NOT NULL,
-  numero_fustes           INTEGER CHECK (numero_fustes IS NULL OR numero_fustes >= 2),
-  dap_fustes_cm           NUMERIC(6,2)[] CHECK (
-                            dap_fustes_cm IS NULL OR (
-                              array_length(dap_fustes_cm, 1) >= 2
-                              AND (numero_fustes IS NULL OR array_length(dap_fustes_cm, 1) = numero_fustes)
-                            )
-                          ),
-  dap_cm                  NUMERIC(6,2) CHECK (dap_cm IS NULL OR dap_cm > 0),
+  numero_fustes           INTEGER,
+  dap_fustes_cm           NUMERIC(6,2)[],
+  dap_cm                  NUMERIC(6,2),
 
   altura_total_m          NUMERIC(6,2) NOT NULL CHECK (altura_total_m >= 0),
   diametro_copa_m         NUMERIC(6,2) NOT NULL CHECK (diametro_copa_m >= 0),
@@ -293,6 +288,30 @@ CREATE TABLE tree_measurements (
 
   CONSTRAINT chk_tree_measurements_altura_rama
     CHECK (altura_primera_rama_m <= altura_total_m),
+
+  CONSTRAINT chk_tree_measurements_dap_cm
+    CHECK (dap_cm IS NULL OR dap_cm > 0),
+
+  CONSTRAINT chk_tree_measurements_fustes
+    CHECK (
+      (numero_fustes IS NULL OR (numero_fustes >= 2 AND dap_fustes_cm IS NOT NULL))
+      AND
+      (dap_fustes_cm IS NULL OR (
+        array_length(dap_fustes_cm, 1) >= 2
+        AND array_position(dap_fustes_cm, NULL) IS NULL
+        AND NOT (0 >= ANY(dap_fustes_cm))
+        AND (numero_fustes IS NULL OR array_length(dap_fustes_cm, 1) = numero_fustes)
+      ))
+    ),
+
+  CONSTRAINT chk_tree_measurements_clase_edad
+    CHECK (clase_edad IS NULL OR clase_edad IN (
+      'Joven',
+      'Semimaduro',
+      'Tempranamente maduro',
+      'Maduro',
+      'Sobremaduro'
+    )),
 
   CONSTRAINT chk_tree_measurements_anulacion
     CHECK (
@@ -327,17 +346,72 @@ CREATE OR REPLACE FUNCTION fn_create_tree_with_measurement(
 )
 RETURNS jsonb
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
+  v_auth_uid uuid := auth.uid();
   v_tree_id uuid;
   v_tree_code text;
   v_measurement_id uuid;
   v_fustes_array numeric[];
   v_created_at timestamptz := now();
-  v_auth_uid uuid := auth.uid();
+  v_fecha_medicion date;
 BEGIN
+  IF v_auth_uid IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.user_profiles
+    WHERE id = v_auth_uid AND activo = true
+  ) THEN
+    RAISE EXCEPTION 'Usuario inactivo o sin perfil válido';
+  END IF;
+
+  IF NOT (public.is_admin() OR public.is_municipal_member(p_project_id)) THEN
+    RAISE EXCEPTION 'No tiene acceso a este proyecto';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.projects
+    WHERE id = p_project_id AND status = 'activo'
+  ) THEN
+    RAISE EXCEPTION 'Proyecto no encontrado o inactivo';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.species
+    WHERE id = p_species_id
+  ) THEN
+    RAISE EXCEPTION 'Especie no encontrada';
+  END IF;
+
+  IF p_public_space_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.public_spaces
+    WHERE id = p_public_space_id AND project_id = p_project_id
+  ) THEN
+    RAISE EXCEPTION 'Espacio público no encontrado en el proyecto';
+  END IF;
+
+  IF NOT (p_medicion ? 'fecha_medicion') OR p_medicion->>'fecha_medicion' IS NULL THEN
+    RAISE EXCEPTION 'fecha_medicion es obligatoria';
+  END IF;
+
+  BEGIN
+    v_fecha_medicion := (p_medicion->>'fecha_medicion')::date;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE EXCEPTION 'Formato de fecha_medicion inválido';
+  END;
+
+  IF v_fecha_medicion > CURRENT_DATE THEN
+    RAISE EXCEPTION 'fecha_medicion no puede ser una fecha futura';
+  END IF;
+
+  IF NOT (p_medicion ? 'configuracion_fustes') OR TRIM(p_medicion->>'configuracion_fustes') = '' THEN
+    RAISE EXCEPTION 'configuracion_fustes es obligatoria';
+  END IF;
+
   INSERT INTO trees (
     project_id,
     species_id,
@@ -382,12 +456,15 @@ BEGIN
     altura_primera_rama_m,
     clase_edad,
     estado_medicion,
+    motivo_anulacion,
+    anulado_por,
+    fecha_anulacion,
     created_by,
     created_at,
     updated_at
   ) VALUES (
     v_tree_id,
-    (p_medicion->>'fecha_medicion')::date,
+    v_fecha_medicion,
     p_medicion->>'configuracion_fustes',
     (p_medicion->>'numero_fustes')::integer,
     v_fustes_array,
@@ -397,6 +474,9 @@ BEGIN
     (p_medicion->>'altura_primera_rama_m')::numeric,
     p_medicion->>'clase_edad',
     'valida',
+    NULL,
+    NULL,
+    NULL,
     v_auth_uid,
     v_created_at,
     v_created_at

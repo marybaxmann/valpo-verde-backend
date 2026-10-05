@@ -9,17 +9,26 @@
 --   ADR-016 v1.0, ADR-010 v2.0, ADR-012, ADR-014 (docs/architecture-decisions.md)
 --   DICCIONARIO_CAMPOS (filas MEDICIONES_DENDROMETRICAS)
 --
--- DECISIONES CERRADAS EN INV-1A:
+-- DECISIONES CERRADAS EN INV-1A Y CORRECCIONES AUDITORÍA INV-1B:
 --   1. Migración legacy (Alternativa A): Cero backfill automático desde
 --      columnas dimensionales de trees. tree_measurements nace limpia.
 --      Las columnas dimensionales de trees se deprecian para nuevas escrituras.
 --   2. Empate de fecha_medicion: NO se crea UNIQUE(tree_id, fecha_medicion).
 --      Se permite almacenar múltiples mediciones el mismo día. La ambigüedad
 --      en la fecha máxima se detecta y reporta en lectura en backend.
---   3. Corrección y anulación: Permisos pendientes de gobernanza. RLS deniega
---      por defecto UPDATE y DELETE a usuarios autenticados.
---   4. Atomicidad del alta: Función RPC fn_create_tree_with_measurement
---      ejecuta árbol + medición inicial en una sola transacción PostgreSQL.
+--   3. Bloqueo de UPDATE y DELETE: Ni admin ni usuario_municipal tienen
+--      permisos de UPDATE o DELETE sobre tree_measurements. Cero borrado o
+--      modificación física de mediciones.
+--   4. Bloqueo de INSERT directo / Mediciones posteriores diferidas:
+--      tree_measurements NO tiene policy de INSERT para authenticated.
+--      La inserción de la medición inicial está autorizada EXCLUSIVAMENTE
+--      a través de la función RPC transaccional fn_create_tree_with_measurement
+--      (SECURITY DEFINER con verificación estricta de auth.uid() y membresía).
+--      No existe bypass para crear mediciones posteriores directamente.
+--   5. Restricciones de diámetros: dap_cm > 0 si existe; cada elemento de
+--      dap_fustes_cm > 0 si existe; numero_fustes >= 2 exige dap_fustes_cm.
+--      No se fuerza XOR ni se calculan DAPs equivalentes (pendiente metodológico).
+--   6. Dominio clase_edad: Joven / Semimaduro / Tempranamente maduro / Maduro / Sobremaduro.
 -- =====================================================================
 
 BEGIN;
@@ -38,21 +47,16 @@ CREATE TABLE public.tree_measurements (
   -- Configuración de fustes y dimensiones primarias
   -- Dominio funcional PENDIENTE (CC-020): se mantiene TEXT sin ENUM estático
   configuracion_fustes    TEXT NOT NULL,
-  numero_fustes           INTEGER CHECK (numero_fustes IS NULL OR numero_fustes >= 2),
-  dap_fustes_cm           NUMERIC(6,2)[] CHECK (
-                            dap_fustes_cm IS NULL OR (
-                              array_length(dap_fustes_cm, 1) >= 2
-                              AND (numero_fustes IS NULL OR array_length(dap_fustes_cm, 1) = numero_fustes)
-                            )
-                          ),
-  dap_cm                  NUMERIC(6,2) CHECK (dap_cm IS NULL OR dap_cm > 0),
+  numero_fustes           INTEGER,
+  dap_fustes_cm           NUMERIC(6,2)[],
+  dap_cm                  NUMERIC(6,2),
 
   -- Dimensiones métricas obligatorias en la medición inicial (CC-020 / DICCIONARIO_CAMPOS)
   altura_total_m          NUMERIC(6,2) NOT NULL CHECK (altura_total_m >= 0),
   diametro_copa_m         NUMERIC(6,2) NOT NULL CHECK (diametro_copa_m >= 0),
   altura_primera_rama_m   NUMERIC(6,2) NOT NULL CHECK (altura_primera_rama_m >= 0),
 
-  -- Estimación opcional
+  -- Estimación opcional (DICCIONARIO_CAMPOS fila 26)
   clase_edad              TEXT,
 
   -- Control de validez y anulación lógica (H-3 / ADR-016)
@@ -70,6 +74,33 @@ CREATE TABLE public.tree_measurements (
   -- Coherencia física: primera rama no puede superar la altura total
   CONSTRAINT chk_tree_measurements_altura_rama
     CHECK (altura_primera_rama_m <= altura_total_m),
+
+  -- Restricción estricta de dap_cm (cuando exista debe ser estrictamente positivo)
+  CONSTRAINT chk_tree_measurements_dap_cm
+    CHECK (dap_cm IS NULL OR dap_cm > 0),
+
+  -- Restricciones de fustes y diámetros individuales
+  CONSTRAINT chk_tree_measurements_fustes
+    CHECK (
+      (numero_fustes IS NULL OR (numero_fustes >= 2 AND dap_fustes_cm IS NOT NULL))
+      AND
+      (dap_fustes_cm IS NULL OR (
+        array_length(dap_fustes_cm, 1) >= 2
+        AND array_position(dap_fustes_cm, NULL) IS NULL
+        AND NOT (0 >= ANY(dap_fustes_cm))
+        AND (numero_fustes IS NULL OR array_length(dap_fustes_cm, 1) = numero_fustes)
+      ))
+    ),
+
+  -- Dominio aprobado clase_edad (DICCIONARIO_CAMPOS)
+  CONSTRAINT chk_tree_measurements_clase_edad
+    CHECK (clase_edad IS NULL OR clase_edad IN (
+      'Joven',
+      'Semimaduro',
+      'Tempranamente maduro',
+      'Maduro',
+      'Sobremaduro'
+    )),
 
   -- Coherencia de anulación lógica
   CONSTRAINT chk_tree_measurements_anulacion
@@ -99,7 +130,7 @@ CREATE INDEX idx_tree_measurements_tree_fecha
 
 
 -- ---------------------------------------------------------------------
--- SECCIÓN 3 — FUNCIÓN RPC TRANSACCIONAL (ALTA ATÓMICA ÁRBOL + MEDICIÓN)
+-- SECCIÓN 3 — FUNCIÓN RPC TRANSACCIONAL (ALTA ATÓMICA ÁRBOL + MEDICIÓN INICIAL)
 -- ---------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.fn_create_tree_with_measurement(
@@ -115,18 +146,81 @@ CREATE OR REPLACE FUNCTION public.fn_create_tree_with_measurement(
 )
 RETURNS jsonb
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
+  v_auth_uid uuid := auth.uid();
   v_tree_id uuid;
   v_tree_code text;
   v_measurement_id uuid;
   v_fustes_array numeric[];
   v_created_at timestamptz := now();
-  v_auth_uid uuid := auth.uid();
+  v_fecha_medicion date;
 BEGIN
-  -- 1. Insertar el Árbol con ubicación canónica WGS84
+  -- 1. Validar autenticación
+  IF v_auth_uid IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado';
+  END IF;
+
+  -- 2. Validar que el usuario tenga perfil activo
+  IF NOT EXISTS (
+    SELECT 1 FROM public.user_profiles
+    WHERE id = v_auth_uid AND activo = true
+  ) THEN
+    RAISE EXCEPTION 'Usuario inactivo o sin perfil válido';
+  END IF;
+
+  -- 3. Validar autorización sobre el proyecto (admin transversal o miembro municipal)
+  IF NOT (public.is_admin() OR public.is_municipal_member(p_project_id)) THEN
+    RAISE EXCEPTION 'No tiene acceso a este proyecto';
+  END IF;
+
+  -- 4. Validar existencia y estado del proyecto
+  IF NOT EXISTS (
+    SELECT 1 FROM public.projects
+    WHERE id = p_project_id AND status = 'activo'
+  ) THEN
+    RAISE EXCEPTION 'Proyecto no encontrado o inactivo';
+  END IF;
+
+  -- 5. Validar existencia de la especie
+  IF NOT EXISTS (
+    SELECT 1 FROM public.species
+    WHERE id = p_species_id
+  ) THEN
+    RAISE EXCEPTION 'Especie no encontrada';
+  END IF;
+
+  -- 6. Validar espacio público si fue provisto
+  IF p_public_space_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.public_spaces
+    WHERE id = p_public_space_id AND project_id = p_project_id
+  ) THEN
+    RAISE EXCEPTION 'Espacio público no encontrado en el proyecto';
+  END IF;
+
+  -- 7. Validar fecha_medicion (no nula y no futura)
+  IF NOT (p_medicion ? 'fecha_medicion') OR p_medicion->>'fecha_medicion' IS NULL THEN
+    RAISE EXCEPTION 'fecha_medicion es obligatoria';
+  END IF;
+
+  BEGIN
+    v_fecha_medicion := (p_medicion->>'fecha_medicion')::date;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE EXCEPTION 'Formato de fecha_medicion inválido';
+  END;
+
+  IF v_fecha_medicion > CURRENT_DATE THEN
+    RAISE EXCEPTION 'fecha_medicion no puede ser una fecha futura';
+  END IF;
+
+  -- 8. Validar configuracion_fustes obligatoria
+  IF NOT (p_medicion ? 'configuracion_fustes') OR TRIM(p_medicion->>'configuracion_fustes') = '' THEN
+    RAISE EXCEPTION 'configuracion_fustes es obligatoria';
+  END IF;
+
+  -- 9. Insertar el Árbol con ubicación canónica WGS84
   INSERT INTO public.trees (
     project_id,
     species_id,
@@ -152,7 +246,7 @@ BEGIN
   )
   RETURNING id, tree_code INTO v_tree_id, v_tree_code;
 
-  -- 2. Procesar diámetros por fuste si existen
+  -- 10. Procesar array de fustes
   IF p_medicion ? 'dap_fustes_cm' AND jsonb_typeof(p_medicion->'dap_fustes_cm') = 'array' THEN
     SELECT ARRAY(SELECT jsonb_array_elements_text(p_medicion->'dap_fustes_cm')::numeric)
     INTO v_fustes_array;
@@ -160,7 +254,8 @@ BEGIN
     v_fustes_array := NULL;
   END IF;
 
-  -- 3. Insertar la Medición Inicial en tree_measurements
+  -- 11. Insertar la Medición Inicial en tree_measurements
+  -- created_by forzado a auth.uid(), estado_medicion forzado a 'valida'
   INSERT INTO public.tree_measurements (
     tree_id,
     fecha_medicion,
@@ -173,12 +268,15 @@ BEGIN
     altura_primera_rama_m,
     clase_edad,
     estado_medicion,
+    motivo_anulacion,
+    anulado_por,
+    fecha_anulacion,
     created_by,
     created_at,
     updated_at
   ) VALUES (
     v_tree_id,
-    (p_medicion->>'fecha_medicion')::date,
+    v_fecha_medicion,
     p_medicion->>'configuracion_fustes',
     (p_medicion->>'numero_fustes')::integer,
     v_fustes_array,
@@ -188,6 +286,9 @@ BEGIN
     (p_medicion->>'altura_primera_rama_m')::numeric,
     p_medicion->>'clase_edad',
     'valida',
+    NULL,
+    NULL,
+    NULL,
     v_auth_uid,
     v_created_at,
     v_created_at
@@ -208,19 +309,18 @@ GRANT EXECUTE ON FUNCTION public.fn_create_tree_with_measurement(uuid, uuid, uui
 
 
 -- ---------------------------------------------------------------------
--- SECCIÓN 4 — ROW LEVEL SECURITY (ADR-014)
+-- SECCIÓN 4 — ROW LEVEL SECURITY (ADR-014 / INV-1A / INV-1B)
 -- ---------------------------------------------------------------------
 
 ALTER TABLE public.tree_measurements ENABLE ROW LEVEL SECURITY;
 
--- 1. Admin: acceso total
-CREATE POLICY tree_measurements_all_admin
-  ON public.tree_measurements FOR ALL
+-- 1. Admin: SOLO lectura de mediciones
+CREATE POLICY tree_measurements_select_admin
+  ON public.tree_measurements FOR SELECT
   TO authenticated
-  USING (public.is_admin())
-  WITH CHECK (public.is_admin());
+  USING (public.is_admin());
 
--- 2. Usuario municipal: lectura de mediciones en proyectos asignados
+-- 2. Usuario municipal: SOLO lectura de mediciones en proyectos asignados
 CREATE POLICY tree_measurements_select_municipal
   ON public.tree_measurements FOR SELECT
   TO authenticated
@@ -232,20 +332,13 @@ CREATE POLICY tree_measurements_select_municipal
     )
   );
 
--- 3. Usuario municipal: inserción de mediciones en proyectos asignados
-CREATE POLICY tree_measurements_insert_municipal
-  ON public.tree_measurements FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.trees t
-      WHERE t.id = tree_measurements.tree_id
-        AND public.is_municipal_member(t.project_id)
-    )
-  );
-
--- NOTA: Políticas de UPDATE y DELETE no se crean. Quedan denegadas por omisión
--- en cumplimiento de la decisión de mantener permisos de anulación/corrección PENDIENTES.
+-- NOTA CRÍTICA DE SEGURIDAD (CORRECCIÓN AUDITORÍA INV-1B):
+-- - NO existen policies de UPDATE ni DELETE: denegados por omisión para todos los usuarios.
+--   Cero modificación ni borrado físico de mediciones existentes.
+-- - NO existe policy de INSERT para authenticated: la inserción directa vía PostgREST queda
+--   completamente bloqueada. La ÚNICA vía autorizada de inserción en tree_measurements es la
+--   función transaccional fn_create_tree_with_measurement, que opera exclusivamente al momento
+--   del alta del árbol. No es posible crear mediciones posteriores por omisión o bypass.
 
 
 -- ---------------------------------------------------------------------
@@ -253,6 +346,9 @@ CREATE POLICY tree_measurements_insert_municipal
 -- ---------------------------------------------------------------------
 
 DO $$
+DECLARE
+  v_policy_count integer;
+  v_invalid_policies integer;
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_tables
@@ -263,9 +359,28 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_proc
-    WHERE proname = 'fn_create_tree_with_measurement'
+    WHERE proname = 'fn_create_tree_with_measurement' AND prosecdef = true
   ) THEN
-    RAISE EXCEPTION 'Migración 006 abortada: función fn_create_tree_with_measurement no existe.';
+    RAISE EXCEPTION 'Migración 006 abortada: función fn_create_tree_with_measurement SECURITY DEFINER no existe.';
+  END IF;
+
+  -- Verificar que solo existan exactamente 2 policies (ambas SELECT)
+  SELECT COUNT(*) INTO v_policy_count
+  FROM pg_policies
+  WHERE schemaname = 'public' AND tablename = 'tree_measurements';
+
+  IF v_policy_count <> 2 THEN
+    RAISE EXCEPTION 'Migración 006 abortada: se esperaban exactamente 2 policies SELECT en tree_measurements, pero se encontraron %.', v_policy_count;
+  END IF;
+
+  -- Verificar que no haya policies de INSERT, UPDATE o DELETE
+  SELECT COUNT(*) INTO v_invalid_policies
+  FROM pg_policies
+  WHERE schemaname = 'public' AND tablename = 'tree_measurements'
+    AND cmd IN ('INSERT', 'UPDATE', 'DELETE', 'ALL');
+
+  IF v_invalid_policies > 0 THEN
+    RAISE EXCEPTION 'Migración 006 abortada: se detectaron policies prohibidas (INSERT/UPDATE/DELETE/ALL) en tree_measurements.';
   END IF;
 END $$;
 

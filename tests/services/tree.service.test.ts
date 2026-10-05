@@ -17,7 +17,7 @@ function fakeMeasurement(
     altura_total_m: 12.0,
     diametro_copa_m: 6.5,
     altura_primera_rama_m: 2.5,
-    clase_edad: "adulto",
+    clase_edad: "Maduro",
     estado_medicion: "valida",
     motivo_anulacion: null,
     anulado_por: null,
@@ -69,5 +69,14 @@ describe("resolveCurrentMeasurement", () => {
     expect(result.medicion_actual_detalle).toContain(
       "Existen múltiples mediciones válidas con la misma fecha máxima"
     );
+  });
+
+  it("más de 2 candidatas empatadas en fecha máxima (ej. 3) -> estado error_empate_fecha_maxima", () => {
+    const m1 = fakeMeasurement("m-1", "2026-10-05");
+    const m2 = fakeMeasurement("m-2", "2026-10-05");
+    const m3 = fakeMeasurement("m-3", "2026-10-05");
+    const result = resolveCurrentMeasurement([m1, m2, m3]);
+    expect(result.medicion_actual).toBeNull();
+    expect(result.medicion_actual_estado).toBe("error_empate_fecha_maxima");
   });
 });

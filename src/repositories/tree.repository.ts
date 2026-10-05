@@ -124,6 +124,14 @@ export async function createTreeWithMeasurementRpc(
   );
 
   if (error) {
+    if (error.code === "23503") {
+      if (error.message.includes("species")) throw new Error("Especie no encontrada");
+      if (error.message.includes("public_spaces")) throw new Error("Espacio público no encontrado");
+      if (error.message.includes("projects")) throw new Error("Proyecto no encontrado");
+    }
+    if (error.code === "23514") {
+      throw new Error(`Restricción de datos no cumplida: ${error.message}`);
+    }
     throw new Error(`Error al crear árbol con medición inicial: ${error.message}`);
   }
 

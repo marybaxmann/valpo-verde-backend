@@ -1,6 +1,20 @@
 import { z } from "zod";
 
 /**
+ * Dominio aprobado de clase_edad (DICCIONARIO_CAMPOS fila 26).
+ * Estimación opcional para captura de terreno (ámbito operativo).
+ */
+export const CLASE_EDAD_VALUES = [
+  "Joven",
+  "Semimaduro",
+  "Tempranamente maduro",
+  "Maduro",
+  "Sobremaduro",
+] as const;
+
+export type ClaseEdad = (typeof CLASE_EDAD_VALUES)[number];
+
+/**
  * Esquema de validación para la Medición Dendrométrica Inicial obligatoria
  * en el alta de árbol (INV-1A / CC-020 / DICCIONARIO_CAMPOS).
  */
@@ -9,7 +23,31 @@ export const initialMeasurementSchema = z
     fecha_medicion: z
       .string()
       .trim()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "fecha_medicion debe tener formato AAAA-MM-DD"),
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "fecha_medicion debe tener formato AAAA-MM-DD")
+      .refine(
+        (val) => {
+          const [year, month, day] = val.split("-").map(Number);
+          if (month < 1 || month > 12) return false;
+          const date = new Date(Date.UTC(year, month - 1, day));
+          return (
+            date.getUTCFullYear() === year &&
+            date.getUTCMonth() === month - 1 &&
+            date.getUTCDate() === day
+          );
+        },
+        {
+          message: "fecha_medicion no es una fecha válida en el calendario gregoriano",
+        }
+      )
+      .refine(
+        (val) => {
+          const today = new Date().toISOString().slice(0, 10);
+          return val <= today;
+        },
+        {
+          message: "fecha_medicion no puede ser una fecha futura",
+        }
+      ),
     configuracion_fustes: z
       .string()
       .trim()
@@ -39,12 +77,32 @@ export const initialMeasurementSchema = z
     altura_primera_rama_m: z
       .number()
       .min(0, "altura_primera_rama_m debe ser mayor o igual a 0"),
-    clase_edad: z.string().trim().min(1).optional().nullable(),
+    clase_edad: z
+      .enum(CLASE_EDAD_VALUES, {
+        errorMap: () => ({
+          message:
+            "clase_edad debe ser una de las categorías válidas: Joven, Semimaduro, Tempranamente maduro, Maduro, Sobremaduro",
+        }),
+      })
+      .optional()
+      .nullable(),
   })
   .refine((data) => data.altura_primera_rama_m <= data.altura_total_m, {
     message: "altura_primera_rama_m no puede ser mayor que altura_total_m",
     path: ["altura_primera_rama_m"],
   })
+  .refine(
+    (data) => {
+      if (data.numero_fustes !== null && data.numero_fustes !== undefined) {
+        return data.dap_fustes_cm !== null && data.dap_fustes_cm !== undefined;
+      }
+      return true;
+    },
+    {
+      message: "Si se registra numero_fustes, dap_fustes_cm es obligatorio",
+      path: ["dap_fustes_cm"],
+    }
+  )
   .refine(
     (data) => {
       if (data.numero_fustes && data.dap_fustes_cm) {

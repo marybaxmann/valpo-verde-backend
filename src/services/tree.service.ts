@@ -213,29 +213,65 @@ export async function createTreeForUser(
     throw new AppError("Proyecto no encontrado", 404);
   }
 
-  const rpcResult = await createTreeWithMeasurementRpc(accessToken, {
-    p_project_id: projectId,
-    p_species_id: body.species_id,
-    p_public_space_id: body.public_space_id ?? null,
-    p_direccion: body.direccion ?? null,
-    p_comuna: body.comuna ?? null,
-    p_lugar_referencia: body.lugar_referencia ?? null,
-    p_lon: body.ubicacion.lon,
-    p_lat: body.ubicacion.lat,
-    p_medicion: {
-      fecha_medicion: body.medicion_inicial.fecha_medicion,
-      configuracion_fustes: body.medicion_inicial.configuracion_fustes,
-      numero_fustes: body.medicion_inicial.numero_fustes ?? null,
-      dap_fustes_cm: body.medicion_inicial.dap_fustes_cm ?? null,
-      dap_cm: body.medicion_inicial.dap_cm ?? null,
-      altura_total_m: body.medicion_inicial.altura_total_m,
-      diametro_copa_m: body.medicion_inicial.diametro_copa_m,
-      altura_primera_rama_m: body.medicion_inicial.altura_primera_rama_m,
-      clase_edad: body.medicion_inicial.clase_edad ?? null,
-    },
-  });
+  try {
+    const rpcResult = await createTreeWithMeasurementRpc(accessToken, {
+      p_project_id: projectId,
+      p_species_id: body.species_id,
+      p_public_space_id: body.public_space_id ?? null,
+      p_direccion: body.direccion ?? null,
+      p_comuna: body.comuna ?? null,
+      p_lugar_referencia: body.lugar_referencia ?? null,
+      p_lon: body.ubicacion.lon,
+      p_lat: body.ubicacion.lat,
+      p_medicion: {
+        fecha_medicion: body.medicion_inicial.fecha_medicion,
+        configuracion_fustes: body.medicion_inicial.configuracion_fustes,
+        numero_fustes: body.medicion_inicial.numero_fustes ?? null,
+        dap_fustes_cm: body.medicion_inicial.dap_fustes_cm ?? null,
+        dap_cm: body.medicion_inicial.dap_cm ?? null,
+        altura_total_m: body.medicion_inicial.altura_total_m,
+        diametro_copa_m: body.medicion_inicial.diametro_copa_m,
+        altura_primera_rama_m: body.medicion_inicial.altura_primera_rama_m,
+        clase_edad: body.medicion_inicial.clase_edad ?? null,
+      },
+    });
 
-  return getTreeDetailForUser(user, rpcResult.tree_id, accessToken);
+    return getTreeDetailForUser(user, rpcResult.tree_id, accessToken);
+  } catch (err: unknown) {
+    if (err instanceof AppError) {
+      throw err;
+    }
+    const msg = (err as Error)?.message || "";
+    if (msg.includes("No tiene acceso")) {
+      throw new AppError("No tiene acceso a este proyecto", 403);
+    }
+    if (msg.includes("Usuario no autenticado")) {
+      throw new AppError("Usuario no autenticado", 401);
+    }
+    if (msg.includes("Usuario inactivo")) {
+      throw new AppError("Usuario inactivo o sin perfil válido", 403);
+    }
+    if (msg.includes("Proyecto no encontrado")) {
+      throw new AppError("Proyecto no encontrado o inactivo", 404);
+    }
+    if (msg.includes("Especie no encontrada")) {
+      throw new AppError("Especie no encontrada", 400);
+    }
+    if (msg.includes("Espacio público no encontrado")) {
+      throw new AppError("Espacio público no encontrado en el proyecto", 400);
+    }
+    if (
+      msg.includes("fecha_medicion no puede ser una fecha futura") ||
+      msg.includes("Formato de fecha_medicion") ||
+      msg.includes("fecha_medicion es obligatoria")
+    ) {
+      throw new AppError(msg, 400);
+    }
+    if (msg.includes("Restricción de datos no cumplida") || msg.includes("chk_tree_measurements")) {
+      throw new AppError("Los datos de la medición no cumplen las restricciones de integridad", 400);
+    }
+    throw err;
+  }
 }
 
 /**
