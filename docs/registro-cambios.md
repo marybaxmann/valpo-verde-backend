@@ -27,7 +27,7 @@ hoja VERSION del Excel maestro.
 
 | ID | Título | Tipo | Estado | Origen | Versión paquete | Bloqueado por | Fecha |
 |---|---|---|---|---|---|---|---|
-| CC-001 | Fuente de verdad metodológica (PR-002 v2.0) y control de cambios | 2 (+5) | APROBADO METODOLÓGICAMENTE | Diagnóstico de documentación y control de cambios | — (sin versión publicada) | — | 2026-10-04 |
+| CC-001 | Fuente de verdad metodológica (PR-002 v2.0) y control de cambios | 2 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — (sin versión publicada) | — | 2026-10-04 |
 | CC-002 | Hojas REGLAS_INDICADORES y VERSION; registro de la versión previa a 2.0.0 | 3 | APROBADO METODOLÓGICAMENTE | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-003 | Hojas normativas del Excel maestro | por definir | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-004 | Relación entre LISTAS y DICCIONARIO_CAMPOS | 1 | DETECTADO | Diagnóstico de documentación y control de cambios | — | CC-003 | 2026-10-04 |
@@ -108,7 +108,7 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Diagnóstico de documentación y control de cambios (2026-10-04), derivado de la auditoría de diagramas (borrador v3). |
 | Tipo | 2 — gobernanza metodológica: fuente de verdad y precedencia (+5 documental) |
-| Estado | APROBADO METODOLÓGICAMENTE |
+| Estado | CERRADO (sin implementación) |
 | Regla / campo afectado | PR-002, PR-011, PR-016; `docs/workflow.md` §2, §4, §5, §6, §10 y nueva §14; `CLAUDE.md` (orden de lectura, metodología técnica, reglas transversales); `docs/methodology/00-index.md` (propósito, estado de transición, precedencia, marcas de contenido transitorio); agentes `rules-engine`, `architect`, `qa`; creación de este registro. |
 | Versión anterior | PR-002 v1.0 (el texto de `docs/methodology/` prevalecía sobre los diagramas); PR-011 v1.0; PR-016 v2.0; sin control de cambios formal ni formato de `rule_version`. |
 | Versión nueva | PR-002 v2.0 (paquete metodológico versionado, sin precedencia interna); PR-011 v2.0; PR-016 v3.0; `docs/workflow.md` §14 (control de cambios, estados, matriz de impacto, verificación de sincronización, versionado `MAJOR.MINOR.PATCH` y `rule_version` = `MAJOR.MINOR`). |
@@ -127,7 +127,7 @@ motivo)
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-04 |
 | Fecha de implementación | sin implementación (cambio de gobernanza documental) |
-| Commits / PR asociados | pendiente (sin commit hasta revisión) |
+| Commits / PR asociados | `437109b` — [CC-001] Fuente de verdad metodológica (PR-002 v2.0) y control de cambios (rama `claude/valpo-verde-frontend-p2-kh1bcx`, repositorio backend). Cierre registrado en un commit documental posterior. |
 | Observaciones | Los documentos `docs/methodology/01-roots-base.md` a `05-infrastructure.md` no se modifican en este CC: `00-index.md` declara su condición transitoria y deja sin efecto sus frases de precedencia. Su reemplazo como historial ocurrirá con el paquete 2.0.0. Pendientes detectados durante este CC: CC-003 a CC-007. |
 
 **Checklist de sincronización**
@@ -146,7 +146,7 @@ motivo)
 - [x] API / Zod — N/A.
 - [x] Frontend — N/A.
 - [x] Verificación §14.9 (implementación) — N/A.
-- [ ] Revisión final — pendiente de revisión por una aprobadora antes del commit.
+- [x] Revisión final — revisado y aprobado por marybaxmann (2026-10-04) antes del commit; documentos verificados tras el commit `437109b`.
 
 **Historial de estados**
 
@@ -155,6 +155,7 @@ motivo)
 | 2026-10-04 | DETECTADO | — | Contradicción entre PR-002 v1.0 y la fuente metodológica adoptada; ausencia de control de cambios. |
 | 2026-10-04 | EN REVISIÓN | — | Diagnóstico de documentación y propuesta consolidada. |
 | 2026-10-04 | APROBADO METODOLÓGICAMENTE | marybaxmann | Propuesta consolidada aprobada; implementación autorizada solo para el alcance de CC-001. Cambios escritos en la rama `claude/valpo-verde-frontend-p2-kh1bcx` del repositorio backend, sin commit, pendientes de revisión. Al integrarse: `CERRADO` (sin implementación). |
+| 2026-10-04 | CERRADO (sin implementación) | marybaxmann | Commit `437109b` publicado en la rama del repositorio backend; documentos verificados. Sin implementación en BD, backend, API ni frontend. |
 
 ---
 
