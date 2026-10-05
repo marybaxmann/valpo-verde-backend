@@ -102,11 +102,13 @@ Afecta:
 - tests
 - documentación
 
-## PR-002 — Fuente de metodología (v2.1)
-Estado: vigente
+## PR-002 — Fuente de metodología (v2.1 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.1
 Reemplaza: PR-002 v2.0
 Origen: CC-003
+Reemplazada por: PR-002 v2.2
+Motivo del reemplazo: la composición del Excel maestro no incluía el anexo MEDICIONES_DENDROMETRICAS (CC-020) y la autoridad de DICCIONARIO_CAMPOS no incluía el ámbito de cada campo (CC-008). Origen: CC-008, CC-020.
 
 La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
 
@@ -157,9 +159,67 @@ Afecta:
 - tests
 - documentación
 
-## PR-003 — Rol Usuario municipal
+## PR-002 — Fuente de metodología (v2.2)
 Estado: vigente
+Versión: 2.2
+Reemplaza: PR-002 v2.1
+Origen: CC-008, CC-020
+Motivo: incorporar el anexo MEDICIONES_DENDROMETRICAS a la composición del Excel maestro (CC-020) y el ámbito `operativo` / `metodologico` de cada campo a la autoridad de DICCIONARIO_CAMPOS (CC-008). Sin otros cambios respecto de v2.1.
+
+La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
+
+- Excel maestro (nombre fijo), con la composición indicada más abajo;
+- diagramas de decisión de la misma versión (archivo fuente + exportación);
+- documentación metodológica en `docs/methodology/` (versión vigente, explicación e historial).
+
+Todos representan una misma versión metodológica y deben mantenerse sincronizados. No existe precedencia entre ellos. Una contradicción entre artefactos es una inconsistencia: se abre un CC (`docs/workflow.md` §14), se determina cuál representa la decisión metodológica aprobada y se sincronizan todos los artefactos afectados.
+
+La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define. No son fuente metodológica: el código, `database/schema.sql`, el prototipo `marybaxmann/Valpo-Verde-Conecta` ni Groundzy. Las referencias técnicas externas (p. ej. ISA, Smiley y Fraedrich) son fundamento citado dentro del paquete, no fuente directa.
+
+`docs/methodology/` documenta solo la versión vigente. Las versiones anteriores se conservan como historial marcadas como reemplazadas y nunca se interpretan como vigentes.
+
+Solo se implementan reglas con estado vigente en la versión publicada que corresponda. No se inventan umbrales, categorías, ramas de decisión, fórmulas ni matrices.
+
+### Composición del Excel maestro
+
+| Categoría | Hojas | Carácter |
+|---|---|---|
+| Núcleo normativo / metodológico | DICCIONARIO_CAMPOS, REGLAS_INDICADORES, MATRICES_CALCULO | Fuente de verdad metodológica. |
+| Gobernanza | VERSION | Registro de versiones del paquete. |
+| Catálogo controlado subordinado | LISTAS | Parte del paquete; su funcionamiento definitivo se resuelve en CC-004. |
+| Módulo metodológico en propuesta | INDICES | Pendiente de adopción (CC-016). No es fuente normativa vigente; sus fórmulas no son implementables hasta adoptarse mediante un CC específico. Mientras permanezca en propuesta, sus cambios no modifican `rule_version`. |
+| Anexos / modelos operativos no normativos | ARBOLES, MEDICIONES_DENDROMETRICAS, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO, USUARIOS | Representan la captura y organización operacional de la información. No son fuente de verdad para reglas, dominios, roles ni resultados calculados. Deben conformarse al núcleo normativo; sus cambios no generan versión del paquete. |
+
+Los diagramas de decisión y `docs/methodology/` forman parte del paquete como documentación y representación de la metodología: documentan y referencian las reglas ejecutables, no las duplican.
+
+### Autoridad
+
+- DICCIONARIO_CAMPOS es la autoridad funcional sobre cada campo: definición, tipo de dato funcional, dominio o referencia al catálogo, unidad, obligatoriedad, condición de activación, origen manual o calculado, dependencias, fórmula aritmética de variables derivadas cuando corresponda y ámbito del campo (`operativo` o `metodologico`, `docs/workflow.md` §14.12). No repite umbrales de clasificación (REGLAS_INDICADORES), rangos de agregación (MATRICES_CALCULO) ni definiciones de roles y permisos (PR correspondientes). Cuando un resultado depende de R01–R04, M01–M05 u otra regla agregadora, referencia su ID sin volver a escribir la lógica.
+- REGLAS_INDICADORES contiene las condiciones o umbrales sobre variables que producen una clasificación parcial (Despreciable / Sin afectación, Leve, Moderada, Severa, No determinado, No aplica) y los ajustes de clasificación cuando correspondan.
+- MATRICES_CALCULO combina resultados parciales previamente obtenidos. No define umbrales sobre variables crudas.
+- Catálogos: "un catálogo, un solo lugar". DICCIONARIO_CAMPOS indica qué catálogo utiliza cada campo; los valores de catálogos jerárquicos, compartidos o suficientemente extensos pueden residir en LISTAS; los mismos valores no se mantienen simultáneamente y de forma independiente en DICCIONARIO_CAMPOS y LISTAS.
+- Roles y permisos: solo las PR correspondientes (PR-003, PR-004). Ni la hoja USUARIOS ni la columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS son fuente de roles.
+- Cada pieza de lógica existe en un único lugar; los demás artefactos la referencian mediante su identificador.
+
+### Relación con el modelo de datos
+
+El modelo de datos de la plataforma debe implementar de forma consistente el contrato funcional definido por el paquete metodológico. DICCIONARIO_CAMPOS define el significado y comportamiento funcional de los campos, pero no constituye por sí solo el esquema físico de la base de datos. PK, FK, normalización, relaciones, índices, constraints técnicos, autenticación y otros elementos pertenecen al diseño de datos/backend. Las hojas operativas tampoco constituyen el esquema físico de la base de datos.
+
+Versionado, aprobación y control de cambios: `docs/workflow.md` §14. Estado de transición hasta la primera versión publicada (2.0.0): `docs/methodology/00-index.md`.
+
+Afecta:
+- rules-engine
+- backend
+- base de datos
+- frontend
+- tests
+- documentación
+
+## PR-003 — Rol Usuario municipal (v4.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 4.0
+Reemplazada por: PR-003 v5.0
+Motivo del reemplazo: no establecía que el Usuario municipal puede registrar mediciones dendrométricas ni que hacerlo no constituye una inspección técnica (CC-020).
 
 Actualización 3.0 (cierre C-4): se fijan los identificadores del rol.
 - Identificador interno: `usuario_municipal`
@@ -194,6 +254,56 @@ No realiza:
 - modificación manual de resultados calculados.
 
 Reemplaza cualquier regla anterior que tratara al usuario municipal como inspector técnico.
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-003 — Rol Usuario municipal (v5.0)
+Estado: vigente
+Versión: 5.0
+Reemplaza: PR-003 v4.0
+Origen: CC-020
+Motivo: aclarar que el Usuario municipal puede registrar mediciones dendrométricas y que ello no constituye una inspección técnica. Sin otros cambios de permisos respecto de v4.0; no resuelve CC-015.
+
+Actualización 3.0 (cierre C-4): se fijan los identificadores del rol.
+- Identificador interno: `usuario_municipal`
+- Etiqueta de interfaz: `Usuario municipal`
+
+Actualización 4.0 (multiproyecto, aclaración menor — no cambia el resto de permisos):
+"acceder a su proyecto asignado" significa que exista una fila en
+`project_members` para ese usuario y proyecto. El enforcement se aplica
+primero en backend; RLS se añade posteriormente. Ver PR-005 v3.0 y ADR-005 v2.0.
+
+El Usuario municipal realiza captura básica y consulta.
+
+Puede:
+- acceder a su proyecto asignado;
+- ver dashboard básico;
+- consultar inventario;
+- registrar nuevos árboles, incluida su medición dendrométrica inicial (PR-006 v7.0);
+- registrar nuevas mediciones dendrométricas de los árboles de su proyecto asignado (PR-006 v7.0);
+- editar datos básicos del árbol permitidos;
+- consultar resultados técnicos;
+- reportar y consultar incidencias;
+- consultar mantenimiento;
+- consultar indicadores básicos.
+
+No realiza:
+- evaluación técnica;
+- inspección estructural;
+- cálculo de severidades;
+- cálculo de puntajes;
+- evaluación de vitalidad;
+- evaluación de riesgo;
+- priorización técnica;
+- modificación manual de resultados calculados.
+
+Reemplaza cualquier regla anterior que tratara al usuario municipal como inspector técnico.
+
+Aclaración 5.0 (CC-020): registrar una medición dendrométrica (MEDICIONES_DENDROMETRICAS) no constituye evaluación técnica ni inspección estructural. MEDICIÓN DENDROMÉTRICA e INSPECCIÓN TÉCNICA son conceptos distintos; su relación sigue pendiente (ADR-016). Los permisos para corregir o anular mediciones no se amplían en esta versión (PR-006 v7.0).
 
 Afecta:
 - frontend
@@ -425,9 +535,11 @@ Afecta:
 - base de datos
 - permisos
 
-## PR-006 — Registro básico del árbol (v6.0)
-Estado: vigente
+## PR-006 — Registro básico del árbol (v6.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 6.0
+Reemplazada por: PR-006 v7.0
+Motivo del reemplazo: trataba DAP, altura total, diámetro de copa y altura de primera rama como atributos del árbol sobrescribibles, sin historial (CC-020, ADR-016).
 Reemplaza: PR-006 v5.0
 Origen: CC-019
 Motivo: sincronizar la sección "Coordenadas" con ADR-010 v2.0. Sin otros cambios respecto de v5.0.
@@ -486,6 +598,103 @@ Datos de especie (cierre C-3):
 - No hay duplicación: `nombre_comun` vive exclusivamente en `species`.
 - Al seleccionar una especie, `nombre_cientifico` y `nombre_comun` se resuelven desde `species`.
 - La política para crear nuevas especies en el catálogo queda pendiente.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+
+## PR-006 — Registro básico del árbol (v7.0)
+Estado: vigente
+Versión: 7.0
+Reemplaza: PR-006 v6.0
+Origen: CC-020
+Motivo: separar la identidad del árbol (ÁRBOL) de sus mediciones dendrométricas fechadas (MEDICIONES_DENDROMETRICAS) para conservar el historial dendrométrico (ADR-016).
+
+Las listas siguientes describen la información presentada/capturada por la interfaz y su contrato funcional (DICCIONARIO_CAMPOS), no columnas físicas de la base de datos.
+
+### Alta del árbol
+
+Para el usuario, el alta es un único flujo:
+
+Identificación → Ubicación → Especie → Medición dendrométrica inicial → Guardar
+
+Conceptualmente, el alta produce ÁRBOL + MEDICIÓN INICIAL. El usuario no crea primero el árbol y después, en otro módulo, su primera medición. El alta se completa cuando quedan registrados el árbol georreferenciado y su medición dendrométrica inicial.
+
+ÁRBOL — identidad y caracterización relativamente estable:
+
+Identificación:
+- código del árbol automático (`tree_code` mantiene la secuencia global `A-000001`, …);
+- fecha de registro (alta) automática;
+- registrado por automático;
+- proyecto: el alta exige `project_id`; el espacio público seleccionado (`public_spaces`) debe pertenecer al mismo proyecto que el árbol (PR-005 v3.0).
+
+Ubicación:
+- ubicación canónica en WGS84 (`ubicacion_wgs84`), obligatoria para completar el alta;
+- comuna;
+- dirección;
+- lugar de referencia.
+
+Especie:
+- especie científica;
+- nombre común, resuelto desde el catálogo de especies.
+
+MEDICIÓN DENDROMÉTRICA INICIAL — obligatoria para completar el alta:
+- fecha de la medición;
+- configuración de fustes;
+- DAP (ejemplar de un solo fuste) o diámetros por fuste (ejemplar con más de un fuste);
+- altura total (`altura_total_m`);
+- diámetro de copa;
+- altura de primera rama;
+- clase de edad: opcional (estimación).
+
+En un ejemplar con más de un fuste se conservan los diámetros individuales medidos. El DAP equivalente se calcula únicamente cuando exista una regla metodológica aprobada aplicable; mientras esa regla siga abierta puede quedar pendiente de cálculo, y su ausencia no impide completar la medición si se registraron los datos primarios obligatorios.
+
+La definición funcional de cada campo (obligatoriedad, activación, dominio y ámbito) vive en DICCIONARIO_CAMPOS (PR-002 v2.2).
+
+### Historial de mediciones
+
+- Relación conceptual: ARBOLES 1:N MEDICIONES_DENDROMETRICAS.
+- Nueva medición: nuevo evento dendrométrico realizado al ejemplar. No sobrescribe mediciones anteriores.
+- Corrección: se modifica un dato erróneo de la misma medición, conservando auditoría. No constituye una nueva medición.
+- Anulación: anulación lógica de la medición completa, que deja de considerarse válida. Permanece en el historial, no participa en la determinación del valor actual y conserva motivo, autor y fecha de anulación.
+- Última medición válida: la medición no anulada con la `fecha_medicion` más reciente. `fecha_medicion` indica cuándo se realizó la medición; la fecha de registro indica cuándo fue ingresada al sistema, tiene función de trazabilidad administrativa y no determina cuál medición es la vigente.
+- Valor dendrométrico actual: se deriva de la última medición válida. No existe como un segundo dato editable independiente.
+- Especie: una modificación posterior de la identificación taxonómica es una corrección o refinamiento de identificación, no una nueva medición.
+
+### Permisos
+
+- El Usuario municipal registra el alta (árbol + medición inicial) y nuevas mediciones dendrométricas (PR-003 v5.0). Registrar una medición no constituye una inspección técnica.
+- El Administrador puede consultar y corregir estos datos (PR-004).
+- Pendiente: permisos de anulación de mediciones y si el Usuario municipal puede corregir mediciones o la especie.
+
+### Coordenadas (cierre C-2, revisión AD-2; ADR-010 v2.0)
+
+- El uso de PostGIS se mantiene como decisión vigente.
+- La ubicación canónica es WGS84 / EPSG:4326 (ADR-010 v2.0). Una coordenada capturada directamente en WGS84 no requiere transformación.
+- La captura de coordenadas en otro CRS (p. ej. UTM Este/Norte), el datum, el huso y la estructura de la coordenada original de levantamiento siguen pendientes (ADR-010 v2.0). No bloquean la ubicación canónica en WGS84.
+- No se crean columnas de latitud/longitud como segunda ubicación editable. La coordenada original de levantamiento se conserva para trazabilidad; su estructura física está pendiente (ADR-010 v2.0).
+- Al ser la plataforma multiproyecto, no se asume una única zona UTM global; el CRS/SRID de captura lo define la configuración del proyecto (ver PR-005).
+
+### Datos de especie (cierre C-3)
+
+- No hay duplicación: `nombre_comun` vive exclusivamente en `species`.
+- Al seleccionar una especie, `nombre_cientifico` y `nombre_comun` se resuelven desde `species`.
+- La política para crear nuevas especies en el catálogo queda pendiente.
+
+### Pendientes (no se cierran en esta versión)
+
+- Categorías definitivas de configuración de fustes (monofuste, bifurcado, multifuste) y su relación con el número de fustes y la regla de DAP equivalente.
+- Política de especie no determinada, fuente y administración del catálogo de especies y nombres comunes (puede haber más de uno por especie).
+- UTM, datum, huso y conservación de la coordenada original (ADR-010 v2.0).
+- Relación MEDICIÓN ↔ INSPECCIÓN (ADR-016).
+- Obligatoriedad de cada campo en mediciones posteriores a la inicial.
+- Tratamiento metodológico de la clase de edad.
+- Correspondencia entre comuna, dirección y lugar de referencia y los campos `sector` y `ubicacion_descriptiva` de DICCIONARIO_CAMPOS.
+- Permisos de anulación y de corrección de mediciones por el Usuario municipal.
+
+Esta PR no modifica `schema.sql`. El diseño físico se realiza después, a partir de CC-020.
 
 Afecta:
 - frontend
