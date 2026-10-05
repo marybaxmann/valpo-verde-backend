@@ -205,6 +205,8 @@ CREATE TABLE trees (
   lugar_referencia          TEXT,                                -- texto descriptivo libre, NO representa la plaza/parque
   ubicacion                  geography(Point, 4326),                -- PENDIENTE: sin poblar hasta recibir geolocalización
 
+  -- DEPRECADO por ADR-016 (INV-1A): las dimensiones dendrométricas se registran en tree_measurements.
+  -- Se conservan por compatibilidad legacy; no se usan para nuevas escrituras.
   dap                          NUMERIC(6,2) CHECK (dap >= 0),                       -- cm
   altura_total                    NUMERIC(6,2) CHECK (altura_total >= 0),             -- m
   diametro_copa                      NUMERIC(6,2) CHECK (diametro_copa >= 0),           -- m
@@ -253,6 +255,161 @@ CREATE INDEX idx_trees_estado_ciclo_vida ON trees (estado_ciclo_vida);
 CREATE TRIGGER trg_trees_updated_at
   BEFORE UPDATE ON trees
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ---------------------------------------------------------------------
+-- MEDICIONES DENDROMÉTRICAS (INV-1A / CC-020 / ADR-016 v1.0)
+-- ---------------------------------------------------------------------
+
+CREATE TABLE tree_measurements (
+  id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tree_id                 UUID NOT NULL REFERENCES trees(id) ON DELETE RESTRICT,
+
+  fecha_medicion          DATE NOT NULL,
+  configuracion_fustes    TEXT NOT NULL,
+  numero_fustes           INTEGER CHECK (numero_fustes IS NULL OR numero_fustes >= 2),
+  dap_fustes_cm           NUMERIC(6,2)[] CHECK (
+                            dap_fustes_cm IS NULL OR (
+                              array_length(dap_fustes_cm, 1) >= 2
+                              AND (numero_fustes IS NULL OR array_length(dap_fustes_cm, 1) = numero_fustes)
+                            )
+                          ),
+  dap_cm                  NUMERIC(6,2) CHECK (dap_cm IS NULL OR dap_cm > 0),
+
+  altura_total_m          NUMERIC(6,2) NOT NULL CHECK (altura_total_m >= 0),
+  diametro_copa_m         NUMERIC(6,2) NOT NULL CHECK (diametro_copa_m >= 0),
+  altura_primera_rama_m   NUMERIC(6,2) NOT NULL CHECK (altura_primera_rama_m >= 0),
+
+  clase_edad              TEXT,
+
+  estado_medicion         TEXT NOT NULL DEFAULT 'valida'
+                            CHECK (estado_medicion IN ('valida', 'anulada')),
+  motivo_anulacion        TEXT,
+  anulado_por             UUID REFERENCES user_profiles(id) ON DELETE RESTRICT,
+  fecha_anulacion         TIMESTAMPTZ,
+
+  created_by              UUID NOT NULL REFERENCES user_profiles(id) ON DELETE RESTRICT,
+  created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_tree_measurements_altura_rama
+    CHECK (altura_primera_rama_m <= altura_total_m),
+
+  CONSTRAINT chk_tree_measurements_anulacion
+    CHECK (
+      (estado_medicion = 'valida' AND motivo_anulacion IS NULL AND anulado_por IS NULL AND fecha_anulacion IS NULL)
+      OR
+      (estado_medicion = 'anulada' AND motivo_anulacion IS NOT NULL AND anulado_por IS NOT NULL AND fecha_anulacion IS NOT NULL)
+    )
+);
+
+CREATE INDEX idx_tree_measurements_tree_id
+  ON tree_measurements (tree_id);
+
+CREATE INDEX idx_tree_measurements_tree_fecha
+  ON tree_measurements (tree_id, fecha_medicion DESC)
+  WHERE (estado_medicion = 'valida');
+
+CREATE TRIGGER trg_tree_measurements_updated_at
+  BEFORE UPDATE ON tree_measurements
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Función RPC transaccional para alta atómica (árbol + medición inicial)
+CREATE OR REPLACE FUNCTION fn_create_tree_with_measurement(
+  p_project_id uuid,
+  p_species_id uuid,
+  p_public_space_id uuid,
+  p_direccion text,
+  p_comuna text,
+  p_lugar_referencia text,
+  p_lon double precision,
+  p_lat double precision,
+  p_medicion jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_tree_id uuid;
+  v_tree_code text;
+  v_measurement_id uuid;
+  v_fustes_array numeric[];
+  v_created_at timestamptz := now();
+  v_auth_uid uuid := auth.uid();
+BEGIN
+  INSERT INTO trees (
+    project_id,
+    species_id,
+    public_space_id,
+    direccion,
+    comuna,
+    lugar_referencia,
+    ubicacion,
+    created_by,
+    created_at,
+    updated_at
+  ) VALUES (
+    p_project_id,
+    p_species_id,
+    p_public_space_id,
+    p_direccion,
+    p_comuna,
+    p_lugar_referencia,
+    ST_SetSRID(ST_MakePoint(p_lon, p_lat), 4326)::geography,
+    v_auth_uid,
+    v_created_at,
+    v_created_at
+  )
+  RETURNING id, tree_code INTO v_tree_id, v_tree_code;
+
+  IF p_medicion ? 'dap_fustes_cm' AND jsonb_typeof(p_medicion->'dap_fustes_cm') = 'array' THEN
+    SELECT ARRAY(SELECT jsonb_array_elements_text(p_medicion->'dap_fustes_cm')::numeric)
+    INTO v_fustes_array;
+  ELSE
+    v_fustes_array := NULL;
+  END IF;
+
+  INSERT INTO tree_measurements (
+    tree_id,
+    fecha_medicion,
+    configuracion_fustes,
+    numero_fustes,
+    dap_fustes_cm,
+    dap_cm,
+    altura_total_m,
+    diametro_copa_m,
+    altura_primera_rama_m,
+    clase_edad,
+    estado_medicion,
+    created_by,
+    created_at,
+    updated_at
+  ) VALUES (
+    v_tree_id,
+    (p_medicion->>'fecha_medicion')::date,
+    p_medicion->>'configuracion_fustes',
+    (p_medicion->>'numero_fustes')::integer,
+    v_fustes_array,
+    (p_medicion->>'dap_cm')::numeric,
+    (p_medicion->>'altura_total_m')::numeric,
+    (p_medicion->>'diametro_copa_m')::numeric,
+    (p_medicion->>'altura_primera_rama_m')::numeric,
+    p_medicion->>'clase_edad',
+    'valida',
+    v_auth_uid,
+    v_created_at,
+    v_created_at
+  )
+  RETURNING id INTO v_measurement_id;
+
+  RETURN jsonb_build_object(
+    'tree_id', v_tree_id,
+    'tree_code', v_tree_code,
+    'measurement_id', v_measurement_id
+  );
+END;
+$$;
 
 -- ---------------------------------------------------------------------
 -- AUDITORÍA GENERAL
