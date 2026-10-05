@@ -28,7 +28,7 @@ Este es un dominio de alta precisión.
 
 Antes de trabajar, sigue exactamente el orden de lectura definido en `CLAUDE.md` y `docs/workflow.md`.
 
-Nota específica: siempre leer el paquete metodológico vigente (PR-002 v2.0), empezando por `docs/methodology/00-index.md` (versión vigente y estado de transición), y las reglas de la `rule_version` que se implementa.
+Nota específica: siempre leer el paquete metodológico vigente (PR-002), empezando por `docs/methodology/00-index.md` (versión vigente y estado de transición), y las reglas de la `rule_version` que se implementa.
 
 Los artefactos del paquete (MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES, VERSION, diagramas y `docs/methodology/`) no tienen precedencia entre sí. Si se contradicen, no elegir uno: reportar la inconsistencia para que se abra un CC (`docs/workflow.md` §14).
 
@@ -79,7 +79,7 @@ Si una tarea alcanza una sección pendiente:
 
 ## Precedencia
 
-Para metodología seguir PR-002 v2.0 (`docs/project-rules.md`) y la sección "Regla de precedencia" de `docs/methodology/00-index.md`.
+Para metodología seguir PR-002 (`docs/project-rules.md`) y la sección "Regla de precedencia" de `docs/methodology/00-index.md`.
 
 ## No hacer
 

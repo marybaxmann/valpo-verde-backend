@@ -45,7 +45,7 @@ Siempre:
 Condicional:
 
 4. `docs/architecture-decisions.md` — si la tarea afecta arquitectura, datos, autenticación, permisos, infraestructura técnica o decisiones transversales;
-5. el paquete metodológico vigente (PR-002 v2.0), con `docs/methodology/00-index.md` como punto de entrada — si la tarea afecta evaluación técnica / metodológica; si además implica un cambio, `docs/workflow.md` §14 y `docs/registro-cambios.md`;
+5. el paquete metodológico vigente (PR-002), con `docs/methodology/00-index.md` como punto de entrada — si la tarea afecta evaluación técnica / metodológica; si además implica un cambio, `docs/workflow.md` §14 y `docs/registro-cambios.md`;
 6. el código / `database/schema.sql` actual — según la tarea, después de comprender las decisiones documentadas.
 
 Este mismo criterio está en `CLAUDE.md`; ambos deben coincidir.
@@ -89,7 +89,7 @@ Una decisión explícita nueva de una aprobadora del proyecto (§14.5: `marybaxm
 
 Si el cambio afecta metodología:
 
-1. revisar el paquete metodológico vigente (PR-002 v2.0), con `docs/methodology/00-index.md` como punto de entrada;
+1. revisar el paquete metodológico vigente (PR-002), con `docs/methodology/00-index.md` como punto de entrada;
 2. identificar el estado de cada regla afectada (`estado_regla`: vigente, pendiente, reemplazada, descartada). Hasta la publicación del paquete 2.0.0 rige el estado de transición descrito en `docs/methodology/00-index.md`;
 3. no inferir información faltante;
 4. no copiar reglas entre componentes por similitud;
@@ -290,7 +290,7 @@ Si una feature depende de una decisión pendiente:
 Jerarquía de referencias (de mayor a menor autoridad):
 
 1. **Prototipo propio `marybaxmann/Valpo-Verde-Conecta`** — referencia funcional/UX principal.
-2. **Paquete metodológico (PR-002 v2.0, `docs/methodology/`)** — fuente técnica.
+2. **Paquete metodológico (PR-002, `docs/methodology/`)** — fuente técnica.
 3. **Groundzy** — referencia visual/UX secundaria.
 
 El frontend `marybaxmann/Valpo-Verde-Conecta` puede utilizarse para comprender:
@@ -386,9 +386,11 @@ metodológica ni la implementación.
    backend, API, frontend) deriva. Un cambio de implementación nunca
    modifica la metodología.
 2. Los artefactos de la fuente metodológica (MATRICES_CALCULO,
-   DICCIONARIO_CAMPOS, REGLAS_INDICADORES, VERSION, diagramas de decisión
-   y `docs/methodology/`) representan una misma versión metodológica.
-   Ninguno prevalece automáticamente sobre otro.
+   DICCIONARIO_CAMPOS, REGLAS_INDICADORES, VERSION, LISTAS como catálogo
+   subordinado, diagramas de decisión y `docs/methodology/`) representan
+   una misma versión metodológica. Ninguno prevalece automáticamente sobre
+   otro; una contradicción entre LISTAS y DICCIONARIO_CAMPOS también se
+   trata mediante control de cambios.
 3. Una contradicción entre artefactos es una inconsistencia. No se
    resuelve eligiendo uno: se abre un CC, se determina cuál representa la
    decisión metodológica aprobada y se sincronizan todos los afectados.

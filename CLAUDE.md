@@ -13,9 +13,9 @@ Siempre:
 Condicional:
 
 4. `docs/architecture-decisions.md` (ADR) — si la tarea afecta arquitectura, datos, autenticación, permisos, infraestructura técnica o decisiones transversales;
-5. el paquete metodológico vigente (PR-002 v2.0), con `docs/methodology/00-index.md` como punto de entrada — si la tarea afecta evaluación técnica / metodológica; si además implica un cambio, `docs/workflow.md` §14 y `docs/registro-cambios.md`;
+5. el paquete metodológico vigente (PR-002), con `docs/methodology/00-index.md` como punto de entrada — si la tarea afecta evaluación técnica / metodológica; si además implica un cambio, `docs/workflow.md` §14 y `docs/registro-cambios.md`;
 6. el código / `database/schema.sql` actual — según la tarea, después de comprender las decisiones documentadas;
-7. `docs/roadmap.md` — si la tarea puede depender de un pendiente ya detectado (migraciones sin validar, metodología sin cerrar, backend sin implementar). Es un índice de tareas, no una fuente de reglas: ante cualquier diferencia con `project-rules.md`, `architecture-decisions.md` o el paquete metodológico (PR-002 v2.0), esos documentos mandan.
+7. `docs/roadmap.md` — si la tarea puede depender de un pendiente ya detectado (migraciones sin validar, metodología sin cerrar, backend sin implementar). Es un índice de tareas, no una fuente de reglas: ante cualquier diferencia con `project-rules.md`, `architecture-decisions.md` o el paquete metodológico (PR-002), esos documentos mandan.
 
 Ninguna decisión es permanente.
 
@@ -36,7 +36,7 @@ Ninguna decisión es permanente.
 
 ### Metodología técnica
 
-- Fuente de verdad: el paquete metodológico versionado definido en PR-002 v2.0 (Excel maestro con MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION; diagramas de decisión de la misma versión; `docs/methodology/`). No hay precedencia interna: una contradicción entre artefactos es una inconsistencia y se trata como cambio CC (`docs/workflow.md` §14).
+- Fuente de verdad: el paquete metodológico versionado definido en PR-002 (Excel maestro con MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION; diagramas de decisión de la misma versión; `docs/methodology/`). No hay precedencia interna: una contradicción entre artefactos es una inconsistencia y se trata como cambio CC (`docs/workflow.md` §14).
 - La implementación (BD, backend, API, frontend) deriva del paquete y nunca lo define.
 - La versión vigente y el estado de transición se consultan **siempre** en `docs/methodology/00-index.md`. No duplicarlos aquí.
 

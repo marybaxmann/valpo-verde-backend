@@ -70,11 +70,13 @@ Afecta:
 - backend
 - tests
 
-## PR-002 — Fuente de metodología (v2.0)
-Estado: vigente
+## PR-002 — Fuente de metodología (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
 Reemplaza: PR-002 v1.0
 Origen: CC-001
+Reemplazada por: PR-002 v2.1
+Motivo del reemplazo: clasificaba VERSION como hoja normativa y no definía el carácter de las demás hojas del Excel maestro (LISTAS, INDICES y hojas operativas), ni la autoridad de cada artefacto. Origen: CC-003.
 
 La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
 
@@ -89,6 +91,61 @@ La implementación (base de datos, backend, API, frontend) deriva del paquete y 
 `docs/methodology/` documenta solo la versión vigente. Las versiones anteriores se conservan como historial marcadas como reemplazadas y nunca se interpretan como vigentes.
 
 Solo se implementan reglas con estado vigente en la versión publicada que corresponda. No se inventan umbrales, categorías, ramas de decisión, fórmulas ni matrices.
+
+Versionado, aprobación y control de cambios: `docs/workflow.md` §14. Estado de transición hasta la primera versión publicada (2.0.0): `docs/methodology/00-index.md`.
+
+Afecta:
+- rules-engine
+- backend
+- base de datos
+- frontend
+- tests
+- documentación
+
+## PR-002 — Fuente de metodología (v2.1)
+Estado: vigente
+Versión: 2.1
+Reemplaza: PR-002 v2.0
+Origen: CC-003
+
+La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
+
+- Excel maestro (nombre fijo), con la composición indicada más abajo;
+- diagramas de decisión de la misma versión (archivo fuente + exportación);
+- documentación metodológica en `docs/methodology/` (versión vigente, explicación e historial).
+
+Todos representan una misma versión metodológica y deben mantenerse sincronizados. No existe precedencia entre ellos. Una contradicción entre artefactos es una inconsistencia: se abre un CC (`docs/workflow.md` §14), se determina cuál representa la decisión metodológica aprobada y se sincronizan todos los artefactos afectados.
+
+La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define. No son fuente metodológica: el código, `database/schema.sql`, el prototipo `marybaxmann/Valpo-Verde-Conecta` ni Groundzy. Las referencias técnicas externas (p. ej. ISA, Smiley y Fraedrich) son fundamento citado dentro del paquete, no fuente directa.
+
+`docs/methodology/` documenta solo la versión vigente. Las versiones anteriores se conservan como historial marcadas como reemplazadas y nunca se interpretan como vigentes.
+
+Solo se implementan reglas con estado vigente en la versión publicada que corresponda. No se inventan umbrales, categorías, ramas de decisión, fórmulas ni matrices.
+
+### Composición del Excel maestro
+
+| Categoría | Hojas | Carácter |
+|---|---|---|
+| Núcleo normativo / metodológico | DICCIONARIO_CAMPOS, REGLAS_INDICADORES, MATRICES_CALCULO | Fuente de verdad metodológica. |
+| Gobernanza | VERSION | Registro de versiones del paquete. |
+| Catálogo controlado subordinado | LISTAS | Parte del paquete; su funcionamiento definitivo se resuelve en CC-004. |
+| Módulo metodológico en propuesta | INDICES | Pendiente de adopción (CC-016). No es fuente normativa vigente; sus fórmulas no son implementables hasta adoptarse mediante un CC específico. Mientras permanezca en propuesta, sus cambios no modifican `rule_version`. |
+| Anexos / modelos operativos no normativos | ARBOLES, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO, USUARIOS | Representan la captura y organización operacional de la información. No son fuente de verdad para reglas, dominios, roles ni resultados calculados. Deben conformarse al núcleo normativo; sus cambios no generan versión del paquete. |
+
+Los diagramas de decisión y `docs/methodology/` forman parte del paquete como documentación y representación de la metodología: documentan y referencian las reglas ejecutables, no las duplican.
+
+### Autoridad
+
+- DICCIONARIO_CAMPOS es la autoridad funcional sobre cada campo: definición, tipo de dato funcional, dominio o referencia al catálogo, unidad, obligatoriedad, condición de activación, origen manual o calculado, dependencias y fórmula aritmética de variables derivadas cuando corresponda. No repite umbrales de clasificación (REGLAS_INDICADORES), rangos de agregación (MATRICES_CALCULO) ni definiciones de roles y permisos (PR correspondientes). Cuando un resultado depende de R01–R04, M01–M05 u otra regla agregadora, referencia su ID sin volver a escribir la lógica.
+- REGLAS_INDICADORES contiene las condiciones o umbrales sobre variables que producen una clasificación parcial (Despreciable / Sin afectación, Leve, Moderada, Severa, No determinado, No aplica) y los ajustes de clasificación cuando correspondan.
+- MATRICES_CALCULO combina resultados parciales previamente obtenidos. No define umbrales sobre variables crudas.
+- Catálogos: "un catálogo, un solo lugar". DICCIONARIO_CAMPOS indica qué catálogo utiliza cada campo; los valores de catálogos jerárquicos, compartidos o suficientemente extensos pueden residir en LISTAS; los mismos valores no se mantienen simultáneamente y de forma independiente en DICCIONARIO_CAMPOS y LISTAS.
+- Roles y permisos: solo las PR correspondientes (PR-003, PR-004). Ni la hoja USUARIOS ni la columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS son fuente de roles.
+- Cada pieza de lógica existe en un único lugar; los demás artefactos la referencian mediante su identificador.
+
+### Relación con el modelo de datos
+
+El modelo de datos de la plataforma debe implementar de forma consistente el contrato funcional definido por el paquete metodológico. DICCIONARIO_CAMPOS define el significado y comportamiento funcional de los campos, pero no constituye por sí solo el esquema físico de la base de datos. PK, FK, normalización, relaciones, índices, constraints técnicos, autenticación y otros elementos pertenecen al diseño de datos/backend. Las hojas operativas tampoco constituyen el esquema físico de la base de datos.
 
 Versionado, aprobación y control de cambios: `docs/workflow.md` §14. Estado de transición hasta la primera versión publicada (2.0.0): `docs/methodology/00-index.md`.
 
@@ -480,7 +537,7 @@ Origen: CC-001
 Las reglas técnicas deben implementarse en:
 `services/rules/`
 
-Cada cambio metodológico se registra como CC y se versiona según `docs/workflow.md` §14. `rule_version` corresponde a `MAJOR.MINOR` de la versión publicada del paquete metodológico (PR-002 v2.0).
+Cada cambio metodológico se registra como CC y se versiona según `docs/workflow.md` §14. `rule_version` corresponde a `MAJOR.MINOR` de la versión publicada del paquete metodológico (PR-002).
 
 El estado de cada regla (vigente, pendiente, reemplazada, descartada) lo determina el paquete metodológico: columna `estado_regla` de REGLAS_INDICADORES a partir del paquete 2.0.0; hasta entonces rige el estado de transición de `docs/methodology/00-index.md`.
 
@@ -615,7 +672,7 @@ y de la metodología.
 
 Prioridad de referencias (de mayor a menor autoridad):
 1. Prototipo funcional propio (`marybaxmann/Valpo-Verde-Conecta`) — referencia funcional/UX.
-2. Paquete metodológico (PR-002 v2.0, `docs/methodology/`) — fuente técnica.
+2. Paquete metodológico (PR-002, `docs/methodology/`) — fuente técnica.
 3. Groundzy — referencia visual/UX secundaria.
 4. Otras referencias secundarias.
 

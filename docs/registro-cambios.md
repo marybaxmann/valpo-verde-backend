@@ -29,11 +29,22 @@ hoja VERSION del Excel maestro.
 |---|---|---|---|---|---|---|---|
 | CC-001 | Fuente de verdad metodológica (PR-002 v2.0) y control de cambios | 2 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — (sin versión publicada) | — | 2026-10-04 |
 | CC-002 | Hojas REGLAS_INDICADORES y VERSION; registro de la versión previa a 2.0.0 | 3 | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
-| CC-003 | Hojas normativas del Excel maestro | por definir | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
+| CC-003 | Composición normativa del Excel maestro y autoridad de cada artefacto (PR-002 v2.1) | 2 (+5) | APROBADO METODOLÓGICAMENTE | Diagnóstico de documentación y control de cambios; auditoría de hojas del Excel maestro | — (sin versión publicada) | — | 2026-10-04 |
 | CC-004 | Relación entre LISTAS y DICCIONARIO_CAMPOS | 1 | DETECTADO | Diagnóstico de documentación y control de cambios | — | CC-003 | 2026-10-04 |
 | CC-005 | Datos personales en la hoja USUARIOS | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-006 | Archivos fuente `.drawio` de los diagramas | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-007 | Inconsistencias documentales (README, roadmap, checkpoint, CLAUDE.md, workflow §13, frontend) | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
+| CC-008 | Columna `ambito` en DICCIONARIO_CAMPOS y ajuste de `workflow.md` §14.10 | 3 (+2) | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | CC-003 | 2026-10-04 |
+| CC-009 | Validación de `clase_edad` en ARBOLES | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-010 | `nivel_riesgo` y `resultado_general` manuales en INSPECCIONES frente a `clasificacion_riesgo` (R04) | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-011 | `prioridad_reportada`, Prioridad de OT y `clasificacion_prioridad` (M05) | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-012 | Menús dependientes, rangos con nombre y validaciones técnicas de los anexos | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-013 | Cobertura de DICCIONARIO_CAMPOS para entidades operativas y normalización de nombres | 3 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-014 | Eliminar la duplicación de R01–R04 y M01–M05 en DICCIONARIO_CAMPOS | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | Sincronización del paquete 2.0.0 | 2026-10-04 |
+| CC-015 | Consolidación de roles (PR-003, PR-004, PR-009, USUARIOS, "¿Quién lo ingresa?") | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-016 | Auditoría y eventual adopción de INDICES | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -216,28 +227,60 @@ motivo)
 
 ---
 
-### CC-003 — Hojas normativas del Excel maestro
+### CC-003 — Composición normativa del Excel maestro y autoridad de cada artefacto
 
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-04 |
-| Origen | Diagnóstico de documentación y control de cambios (2026-10-04). |
-| Tipo | por definir en revisión |
-| Estado | DETECTADO |
-| Regla / campo afectado | Hojas del Excel maestro distintas de MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION: ARBOLES, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO, USUARIOS, LISTAS, INDICES. |
-| Versión anterior | Sin definición. |
-| Versión nueva | Por definir. |
-| Motivo | PR-002 v2.0 enumera las hojas normativas; falta decidir si las demás forman parte del paquete o son anexos. |
-| Fundamento / fuente | — |
-| Archivos afectados | Por definir. |
-| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
-| Pruebas necesarias | Por definir. |
-| Dependencias | — |
-| rule_version | por definir |
-| Aprobado por / Fecha de aprobación | — |
-| Fecha de implementación | — |
-| Commits / PR asociados | — |
-| Observaciones | No resuelto en CC-001. |
+| Origen | Diagnóstico de documentación y control de cambios; auditoría de las 13 hojas del Excel maestro (commit `3df0cd2`). |
+| Tipo | 2 — gobernanza metodológica: composición del paquete y autoridad (+5 documental) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | PR-002; `docs/methodology/00-index.md` (propósito y estado de transición); `docs/workflow.md` §14.2 (lista de artefactos sincronizados). |
+| Versión anterior | PR-002 v2.0: "hojas normativas MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION"; sin clasificación de las demás hojas ni reglas de autoridad entre artefactos. |
+| Versión nueva | PR-002 v2.1: composición del Excel maestro (núcleo normativo: DICCIONARIO_CAMPOS, REGLAS_INDICADORES, MATRICES_CALCULO; gobernanza: VERSION; catálogo controlado subordinado: LISTAS; módulo metodológico en propuesta: INDICES; anexos operativos no normativos: ARBOLES, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO, USUARIOS), autoridad por tipo de información, frontera DICCIONARIO / REGLAS / MATRICES, principio "cada pieza de lógica en un solo lugar" y relación con el modelo de datos. `workflow.md` §14.2 incluye LISTAS. |
+| Motivo | Sin una clasificación formal, las hojas operativas, LISTAS e INDICES funcionaban como fuentes paralelas de dominios, roles y resultados, y DICCIONARIO_CAMPOS repetía lógica de MATRICES_CALCULO. |
+| Fundamento / fuente | Decisiones de `marybaxmann` del 2026-10-04 (aprobación de la dirección de CC-003 y ajustes finales). |
+| Archivos afectados | `docs/project-rules.md` (solo PR-002), `docs/methodology/00-index.md`, `docs/workflow.md` (solo §14.2), `docs/registro-cambios.md`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno. Las contradicciones detectadas en las hojas se registran como CC separados. |
+| Impacto en BD | Ninguno. Aclaración normativa: DICCIONARIO_CAMPOS define el contrato funcional de los campos, no el esquema físico. |
+| Impacto en backend | Ninguno. |
+| Impacto en API | Ninguno. |
+| Impacto en frontend | Ninguno. |
+| Pruebas necesarias | No aplica (documental). Verificación: ningún documento vigente atribuye a las hojas operativas, a USUARIOS ni a INDICES el carácter de fuente normativa vigente. |
+| Dependencias | CC-001, CC-002. Habilita CC-004 y CC-008 a CC-018. |
+| rule_version | sin cambio |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-04 |
+| Fecha de implementación | sin implementación (cambio de gobernanza documental) |
+| Commits / PR asociados | pendiente (sin commit hasta revisión) |
+| Observaciones | No se corrige ninguna contradicción dentro de CC-003. Se amplía CC-004 y se abren CC-008 a CC-018 en estado DETECTADO. Otros documentos citan "PR-002 v2.0" (`CLAUDE.md`, `docs/workflow.md` §2/§5/§10, agentes `rules-engine` y `architect`, PR-011 v2.0, PR-016 v3.0); quedan fuera del alcance autorizado de CC-003. |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios.
+- [x] REGLAS_INDICADORES — N/A: sin cambios.
+- [x] MATRICES_CALCULO — N/A: sin cambios.
+- [x] DICCIONARIO_CAMPOS — N/A: sin cambios.
+- [x] VERSION — N/A: sin cambios.
+- [x] docs/methodology/ — `00-index.md`: propósito y punto 7 del estado de transición.
+- [x] PR / ADR — PR-002 v2.1. Sin ADR afectadas.
+- [x] Export de texto — N/A: el export aún no existe.
+- [x] Verificación §14.9 (fuente) — N/A: no se modifican artefactos metodológicos.
+- [x] Migración + schema.sql — N/A.
+- [x] Backend (services/rules) — N/A.
+- [x] API / Zod — N/A.
+- [x] Frontend — N/A.
+- [x] Verificación §14.9 (implementación) — N/A.
+- [ ] Revisión final — pendiente de revisión por una aprobadora antes del commit.
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-04 | DETECTADO | — | Falta de definición de las hojas normativas del Excel maestro. |
+| 2026-10-04 | EN REVISIÓN | — | Auditoría de las 13 hojas y propuesta de clasificación. |
+| 2026-10-04 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ficha final aprobada; implementación documental autorizada. Cambios escritos en la rama del repositorio backend, sin commit, pendientes de revisión. |
 
 ---
 
@@ -250,9 +293,9 @@ motivo)
 | Tipo | 1 (probable) |
 | Estado | DETECTADO |
 | Regla / campo afectado | Hoja LISTAS y columna "Unidad / valores" de DICCIONARIO_CAMPOS. |
-| Versión anterior | Ambas hojas definen valores permitidos; el propio diccionario anota listas inconsistentes en algunos campos. |
+| Versión anterior | Ambas hojas definen valores permitidos de forma independiente. Contradicciones detectadas (auditoría de CC-003): (1) acciones de OT: "Otra" figura bajo *Evaluación instrumental* en LISTAS y bajo *Reevaluación* en DICCIONARIO_CAMPOS (`subtipo_accion`); (2) Tipos_de_conflicto incluye "Deformación" pero no "Hundimiento", mientras DICCIONARIO_CAMPOS define `presenta_hundimiento_vereda`; (3) una sola lista Materialidad_infraestructura incluye "Baldosa", pero `materialidad_calzada` no la admite; (4) los catálogos de acción y subtipo de OT se mantienen a la vez en LISTAS y en DICCIONARIO_CAMPOS (`Accion_solicitada`, `subtipo_accion`). |
 | Versión nueva | Por definir. |
-| Motivo | Dos lugares que definen catálogos pueden contradecirse. |
+| Motivo | Dos lugares que definen catálogos pueden contradecirse. Principio de entrada aprobado (2026-10-04): "Un catálogo, un solo lugar" (PR-002 v2.1). |
 | Fundamento / fuente | — |
 | Archivos afectados | Excel maestro. |
 | Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
@@ -262,7 +305,7 @@ motivo)
 | Aprobado por / Fecha de aprobación | — |
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
-| Observaciones | No resuelto en CC-001. |
+| Observaciones | No resuelto. Ampliado en CC-003 con las contradicciones detectadas. Todavía no se decide qué catálogos y valores concretos permanecen en LISTAS. |
 
 ---
 
@@ -338,3 +381,278 @@ motivo)
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
 | Observaciones | (1) `README.md`: el árbol de `database/` lista solo las migraciones 001 y 002. (2) `docs/roadmap.md`: la sección "Frontend productivo" dice que el repositorio no está creado; la sección "Metodología" está superada; el formato de `rule_version` ya quedó definido (§14.10). (3) `docs/checkpoint-2026-09-16.md`: foto histórica con §14–§15 desactualizadas; decidir si se anota o se deja como histórico. (4) `CLAUDE.md`: "`valpo-verde-frontend` = nombre previsto… No asumir que hoy son el mismo repositorio"; el repositorio ya existe. (5) `docs/workflow.md` §13: dice que ningún subagente existe; ya existen cinco en `.claude/agents/`. (6) Frontend: `README.md` y `docs/frontend-architecture.md` indican F7 sin commit; está committeado (`142d293`). (7) Los `readme.md` de `docs/excel/` quedarán obsoletos al trasladar el paquete. (8) `docs/roadmap.md` línea 10: "ante cualquier diferencia con … `docs/methodology/`, esos documentos mandan" — debe remitir al paquete metodológico (PR-002 v2.0), como ya lo hace `CLAUDE.md`. No resuelto en CC-001. |
+
+---
+
+### CC-008 — Columna `ambito` en DICCIONARIO_CAMPOS y ajuste de `workflow.md` §14.10
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 3 (+2 gobernanza de versionado) |
+| Estado | DETECTADO |
+| Regla / campo afectado | DICCIONARIO_CAMPOS (nueva columna `ambito`); `docs/workflow.md` §14.10 (definición de MINOR/PATCH). |
+| Versión anterior | DICCIONARIO_CAMPOS no distingue campos metodológicos de campos puramente operativos; §14.10 sube MINOR ante cualquier cambio de campos. |
+| Versión nueva | Por definir. |
+| Motivo | Un cambio en un campo solo operativo no debería generar una nueva `rule_version`. |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro, `docs/workflow.md`. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | CC-003. |
+| rule_version | por definir |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | Necesidad aprobada conceptualmente (2026-10-04). Antes de implementar debe presentarse una propuesta con: valores permitidos, definición exacta de cada valor, efecto sobre `version_paquete` y efecto sobre `rule_version`. No modificar todavía DICCIONARIO_CAMPOS ni §14.10. |
+
+---
+
+### CC-009 — Validación de `clase_edad` en ARBOLES
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 1 |
+| Estado | DETECTADO |
+| Regla / campo afectado | Hoja ARBOLES (anexo) y campo `clase_edad` de DICCIONARIO_CAMPOS. |
+| Versión anterior | La validación de lista "Joven, Semimaduro, Maduro, Sobremaduro" está aplicada a la columna O (`dap_cm`) y no a la columna S (`clase_edad`); además tiene 4 valores, frente a 5 en DICCIONARIO_CAMPOS ("Tempranamente maduro"). |
+| Versión nueva | Por definir. |
+| Motivo | Validación aplicada al campo equivocado y dominio distinto del diccionario. |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro (hoja ARBOLES). |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | CC-003 (DICCIONARIO_CAMPOS es la autoridad sobre el dominio). |
+| rule_version | sin cambio (anexo no normativo) |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | No corregido en CC-003. |
+
+---
+
+### CC-010 — `nivel_riesgo` y `resultado_general` manuales en INSPECCIONES frente a `clasificacion_riesgo` (R04)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 2 |
+| Estado | DETECTADO |
+| Regla / campo afectado | Hoja INSPECCIONES (anexo): `nivel_riesgo`, `resultado_general`; `clasificacion_riesgo` (R04). |
+| Versión anterior | `nivel_riesgo` se ingresa manualmente con la escala Crítica / Alta / Media / Baja; `clasificacion_riesgo` se calcula con R04 con la escala Bajo / Moderado / Alto / Extremo. `resultado_general` es de ingreso manual. |
+| Versión nueva | Por definir. |
+| Motivo | Posible resultado de riesgo manual y paralelo al calculado (PR-008). |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro (INSPECCIONES; luego DICCIONARIO_CAMPOS). |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | Por determinar en la revisión (no se presupone dependencia de CC-013). |
+| rule_version | por definir |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | Antes de sincronizar el diccionario debe resolverse conceptualmente: (1) si `nivel_riesgo` debe existir; (2) si representa algo distinto de `clasificacion_riesgo`; (3) si `resultado_general` es descriptivo o calculado; (4) quién puede ingresarlos; (5) si alguno debe eliminarse. |
+
+---
+
+### CC-011 — `prioridad_reportada`, Prioridad de OT y `clasificacion_prioridad` (M05)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 2 |
+| Estado | DETECTADO |
+| Regla / campo afectado | `prioridad_reportada` (INCIDENCIA), `Prioridad` (ORDENES DE TRABAJO), `clasificacion_prioridad` (M05). |
+| Versión anterior | Los dos primeros se ingresan manualmente con las etiquetas Crítica / Alta / Media / Baja, las mismas de `clasificacion_prioridad`, que se calcula con M05. |
+| Versión nueva | Por definir. |
+| Motivo | Relación entre los tres campos no definida. |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro (anexos; luego DICCIONARIO_CAMPOS). |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | Por determinar en la revisión. |
+| rule_version | por definir |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | No asumir que son el mismo concepto por compartir etiquetas. Primero debe definirse semánticamente cada campo; después se sincroniza el diccionario. |
+
+---
+
+### CC-012 — Menús dependientes, rangos con nombre y validaciones técnicas de los anexos
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 1 (técnico) |
+| Estado | DETECTADO |
+| Regla / campo afectado | Hojas ORDENES DE TRABAJO, INSPECCIONES, MANTENIMIENTO (anexos) y rangos con nombre sobre LISTAS. |
+| Versión anterior | Lista de `Tipo_ot` "Inspección, Mantenimiento" con un espacio que rompe el menú dependiente; menús dependientes limitados a pocas filas (D2:D10, E2:E4, fila 2 en INSPECCIONES y MANTENIMIENTO); rangos con nombre `Evaluación_inicial` y `Otra_Intervención` que apuntan a celdas de encabezado. |
+| Versión nueva | Por definir. |
+| Motivo | Los menús de captura no funcionan de forma consistente. |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | CC-004. |
+| rule_version | sin cambio (anexos no normativos) |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | No resolver dentro de CC-003. |
+
+---
+
+### CC-013 — Cobertura de DICCIONARIO_CAMPOS para entidades operativas y normalización de nombres
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 3 |
+| Estado | DETECTADO |
+| Regla / campo afectado | DICCIONARIO_CAMPOS; entidades INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO, USUARIOS. |
+| Versión anterior | Cobertura de campos en DICCIONARIO_CAMPOS: INCIDENCIA 0/13, INSPECCIONES 0/17, MANTENIMIENTO 0/18, ORDENES DE TRABAJO 2/13, USUARIOS 0/6. Nombres de OT sin convención (`ID_OT`, `ID_Árbol`, `OT_ creado_por`). |
+| Versión nueva | Por definir. |
+| Motivo | DICCIONARIO_CAMPOS no puede ejercer su autoridad sobre campos que no define. |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | CC-008 (ámbito), CC-015 (roles); debe considerar N19 de la auditoría de diagramas (convención de nombres). |
+| rule_version | por definir |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | No implementar todavía. |
+
+---
+
+### CC-014 — Eliminar la duplicación de R01–R04 y M01–M05 en DICCIONARIO_CAMPOS
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 1 |
+| Estado | DETECTADO |
+| Regla / campo afectado | Columna "Fórmula / regla de cálculo" de los campos de salida en DICCIONARIO_CAMPOS (`probabilidad_falla_*`, `clasificacion_*`, `probabilidad_impacto`, `clasificacion_prioridad`). |
+| Versión anterior | DICCIONARIO_CAMPOS repite la lógica de R01–R04 y M01–M05; esa duplicación originó la diferencia de rangos de R02 y R03 con MATRICES_CALCULO. |
+| Versión nueva | Por definir. |
+| Motivo | Cada pieza de lógica debe existir en un solo lugar (PR-002 v2.1). |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | Sincronización metodológica del paquete 2.0.0 y decisiones D/N ya auditadas (en particular N11). |
+| rule_version | por definir |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | CC-014 no puede redefinir de forma independiente R01–R04 ni M01–M05. Objetivo: que DICCIONARIO_CAMPOS deje de duplicar la lógica y referencie los IDs de MATRICES_CALCULO. Se ejecuta coordinadamente con la sincronización del paquete 2.0.0. |
+
+---
+
+### CC-015 — Consolidación de roles
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 2 |
+| Estado | DETECTADO |
+| Regla / campo afectado | PR-003, PR-004, PR-009; hoja USUARIOS; columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS. |
+| Versión anterior | USUARIOS define 4 roles (Administrador, Usuario municipal, Inspector, Encargado de mantención) y dice que el usuario municipal "no registra evaluaciones"; "¿Quién lo ingresa?" usa 9 formas distintas; PR-003/PR-004/PR-009 asignan la evaluación al Administrador. Decisión de la autora pendiente de registrar: usuario municipal e inspector son el mismo rol; el Administrador solo crea proyectos y agrega usuarios. |
+| Versión nueva | Por definir. |
+| Motivo | Roles inconsistentes entre reglas, diccionario y datos de ejemplo. |
+| Fundamento / fuente | — |
+| Archivos afectados | `docs/project-rules.md`, Excel maestro. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | Por determinar en la revisión. |
+| rule_version | por definir |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | Queda explícitamente pendiente decidir si "Encargado de mantención" será un rol independiente. |
+
+---
+
+### CC-016 — Auditoría y eventual adopción de INDICES
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 2 |
+| Estado | DETECTADO |
+| Regla / campo afectado | Hoja INDICES (11 indicadores con fórmula y fuente técnica). |
+| Versión anterior | Módulo metodológico en propuesta (PR-002 v2.1). Dependencias no consolidadas: "Diámetro medio de copa" usa dos diámetros perpendiculares (D₁, D₂) que no existen como campos en DICCIONARIO_CAMPOS. |
+| Versión nueva | Por definir. |
+| Motivo | Adoptar o descartar los indicadores mediante auditoría. |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | CC-003. |
+| rule_version | sin cambio mientras esté en propuesta |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | INDICES no es implementable ni normativa vigente hasta cerrar CC-016. Mientras siga en propuesta, sus cambios no modifican `rule_version`. |
+
+---
+
+### CC-017 — Ubicación de `cumplimiento_distancia_seguridad_bt_mt`
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 1 |
+| Estado | DETECTADO |
+| Regla / campo afectado | Campo `cumplimiento_distancia_seguridad_bt_mt` (DICCIONARIO_CAMPOS) y reglas de red aérea (REGLAS_INDICADORES). |
+| Versión anterior | Definido como fórmula en DICCIONARIO_CAMPOS, pero aplica un umbral (2,00 m) que produce una categoría (Cumple / No cumple); según la frontera de PR-002 v2.1 podría corresponder a REGLAS_INDICADORES. |
+| Versión nueva | Por definir. |
+| Motivo | Determinar en qué artefacto vive esta lógica. |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | Revisar junto con D20 y N6 de la auditoría de diagramas. |
+| rule_version | por definir |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | No mover todavía la lógica. |
+
+---
+
+### CC-018 — Normalización y saneamiento de datos de ejemplo
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 5 |
+| Estado | DETECTADO |
+| Regla / campo afectado | Filas de ejemplo de los anexos operativos (INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO, USUARIOS, entre otras). |
+| Versión anterior | Ejemplos que no cumplen las convenciones vigentes: código de árbol `A-000023` frente al formato `AV`; identificadores `USR-00x` frente al sistema real de identificación y autenticación; árboles y registros de ejemplo de OT, INSPECCIONES u otras hojas que no cumplen las convenciones vigentes. |
+| Versión nueva | Por definir. |
+| Motivo | Los datos de ejemplo no deben contradecir las convenciones vigentes. |
+| Fundamento / fuente | — |
+| Archivos afectados | Excel maestro. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
+| Pruebas necesarias | Por definir. |
+| Dependencias | — |
+| rule_version | sin cambio |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | Distinto de CC-005 (privacidad y saneamiento de datos personales). CC-018 no elimina datos todavía; solo registra el problema. |
