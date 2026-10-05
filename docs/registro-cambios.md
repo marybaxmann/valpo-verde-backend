@@ -30,7 +30,7 @@ hoja VERSION del Excel maestro.
 | CC-001 | Fuente de verdad metodológica (PR-002 v2.0) y control de cambios | 2 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — (sin versión publicada) | — | 2026-10-04 |
 | CC-002 | Hojas REGLAS_INDICADORES y VERSION; registro de la versión previa a 2.0.0 | 3 | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-003 | Composición normativa del Excel maestro y autoridad de cada artefacto (PR-002 v2.1) | 2 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios; auditoría de hojas del Excel maestro | — (sin versión publicada) | — | 2026-10-04 |
-| CC-004 | Relación entre LISTAS y DICCIONARIO_CAMPOS | 1 | DETECTADO | Diagnóstico de documentación y control de cambios | — | CC-003 | 2026-10-04 |
+| CC-004 | Relación entre LISTAS y DICCIONARIO_CAMPOS | 1 (+5) | FUENTE SINCRONIZADA | Diagnóstico de documentación y control de cambios; auditoría de hojas del Excel maestro (CC-003) | 2.0.0 (en preparación) | — | 2026-10-04 |
 | CC-005 | Datos personales en la hoja USUARIOS | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-006 | Archivos fuente `.drawio` de los diagramas | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-007 | Inconsistencias documentales (README, roadmap, checkpoint, CLAUDE.md, workflow §13, frontend) | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
@@ -290,23 +290,55 @@ motivo)
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-04 |
-| Origen | Diagnóstico de documentación y control de cambios (2026-10-04). |
-| Tipo | 1 (probable) |
-| Estado | DETECTADO |
-| Regla / campo afectado | Hoja LISTAS y columna "Unidad / valores" de DICCIONARIO_CAMPOS. |
+| Origen | Diagnóstico de documentación y control de cambios (2026-10-04); auditoría de hojas del Excel maestro (CC-003). |
+| Tipo | 1 — corrección de inconsistencia entre artefactos de la fuente (+5 documental) |
+| Estado | FUENTE SINCRONIZADA |
+| Regla / campo afectado | Hoja LISTAS (nueva tabla P:X); DICCIONARIO_CAMPOS: "Unidad / valores" (H) de `cavidad_basal_interna`, `cavidad_interna_tronco`, `zona_objetivo`, `tasa_ocupacion_objetivo`, `probabilidad_impacto`, `consecuencia_*`, `probabilidad_falla_*`, `clasificacion_*` (componentes), `clasificacion_infraestructura`, `clasificacion_riesgo`, `clasificacion_prioridad`, `Accion_solicitada`, `subtipo_accion`; "Validación y dependencias" (L) de `probabilidad_impacto`, `probabilidad_falla_*`, `clasificacion_*` (componentes), `clasificacion_infraestructura`, `clasificacion_riesgo`, `clasificacion_prioridad`; hoja VERSION (fila 2.0.0 en preparación); `docs/workflow.md` §14.9. |
 | Versión anterior | Ambas hojas definen valores permitidos de forma independiente. Contradicciones detectadas (auditoría de CC-003): (1) acciones de OT: "Otra" figura bajo *Evaluación instrumental* en LISTAS y bajo *Reevaluación* en DICCIONARIO_CAMPOS (`subtipo_accion`); (2) Tipos_de_conflicto incluye "Deformación" pero no "Hundimiento", mientras DICCIONARIO_CAMPOS define `presenta_hundimiento_vereda`; (3) una sola lista Materialidad_infraestructura incluye "Baldosa", pero `materialidad_calzada` no la admite; (4) los catálogos de acción y subtipo de OT se mantienen a la vez en LISTAS y en DICCIONARIO_CAMPOS (`Accion_solicitada`, `subtipo_accion`). |
-| Versión nueva | Por definir. |
+| Versión nueva | LISTAS contiene en P:X la tabla normalizada de catálogos (`id_catalogo`, `codigo`, `etiqueta`, `orden`, `catalogo_padre`, `codigo_padre`, `estado_valor`, `cc`, `observaciones`): 12 catálogos y 70 valores `vigente` — `tipo_ot` (2), `accion` (12), `subtipo_accion` (21), `confirmacion_cavidad_interna` (3) y 8 escalas de 4 valores (`escala_probabilidad_falla`, `escala_nivel_riesgo`, `escala_consecuencia`, `escala_probabilidad_impacto`, `escala_zona_objetivo`, `escala_tasa_ocupacion`, `escala_clasificacion_infraestructura`, `escala_prioridad`). DICCIONARIO_CAMPOS referencia esos dominios como `LISTAS:<id_catalogo>` (19 celdas H, 10 celdas L). Convenciones en `docs/methodology/convenciones-catalogos.md`. |
 | Motivo | Dos lugares que definen catálogos pueden contradecirse. Principio de entrada aprobado (2026-10-04): "Un catálogo, un solo lugar" (PR-002 v2.1). |
-| Fundamento / fuente | — |
-| Archivos afectados | Excel maestro. |
-| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
-| Pruebas necesarias | Por definir. |
-| Dependencias | CC-003. |
-| rule_version | por definir |
-| Aprobado por / Fecha de aprobación | — |
-| Fecha de implementación | — |
-| Commits / PR asociados | — |
-| Observaciones | No resuelto. Ampliado en CC-003 con las contradicciones detectadas. Todavía no se decide qué catálogos y valores concretos permanecen en LISTAS. |
+| Fundamento / fuente | Decisiones de `marybaxmann` del 2026-10-04: (a) "Otra" solo bajo Evaluación instrumental, con observaciones obligatorias; (b) Retiro_residuos bajo Tala_retiro; (c) Tipos_de_conflicto descartada, no se migra; (d) materialidad de vereda y de calzada son dominios separados que permanecen en DICCIONARIO_CAMPOS (calzada no admite Baldosa) y Materialidad_infraestructura no se migra; (e) `codigo` persistente en snake_case ASCII, `etiqueta` solo de presentación. Criterio de ubicación (exclusivo y corto → DICCIONARIO; compartido, jerárquico o escala → LISTAS); Sí/No como dominio base; una sola jerarquía `tipo_ot → accion → subtipo_accion` con subtipo null para acciones sin subtipos; LISTAS solo representa escalas (autoridad: REGLAS_INDICADORES y MATRICES_CALCULO); transición del bloque A1:N9 hacia CC-012; F1 (etiqueta larga de `zona_objetivo`) y F2 (etiquetas aprobadas). |
+| Archivos afectados | `docs/excel/Base de Datos Valpo Verde.xlsx` (solo LISTAS, DICCIONARIO_CAMPOS y VERSION); `docs/methodology/convenciones-catalogos.md` (nuevo); `docs/workflow.md` §14.9; `docs/registro-cambios.md`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | LISTAS: tabla P1:X71 (encabezado + 70 filas), validación de lista en V2:V5000 y rótulo técnico en A11; bloque A1:N9 y los 14 rangos con nombre sin cambios. DICCIONARIO_CAMPOS: H32, H44, H133–H144, H146–H150 (contenido completo reemplazado por la referencia) y L135, L139–L144, L146–L148 (solo la frase de enumeración); el resto de las celdas sin cambios, incluido "Puntaje total válido 0–9" en L139–L141 (CC-014). VERSION: fila 3 `2.0.0` en preparación, `cc_incluidos` CC-004, sin `rule_version`. Sin cambios en MATRICES_CALCULO, REGLAS_INDICADORES, INDICES ni anexos. |
+| Impacto en BD | Ninguno en CC-004. |
+| Impacto en backend | Ninguno en CC-004. Necesidad documentada: la validación definitiva de los valores de catálogo es del backend, y se requiere un mecanismo de consulta de catálogos con su contrato funcional (sin endpoints definidos). |
+| Impacto en API | Ninguno en CC-004 (no se definen endpoints). |
+| Impacto en frontend | Ninguno en CC-004. Necesidad documentada: guardar `codigo` y mostrar `etiqueta`; selects dependientes filtrados por `codigo_padre`; limpiar hijos al cambiar el padre; no hardcodear catálogos compartidos en React. |
+| Pruebas necesarias | Verificación del Excel: partes del `.xlsx` distintas de LISTAS, DICCIONARIO_CAMPOS y VERSION idénticas byte a byte; A1:N9 y rangos con nombre sin cambios; conteos por catálogo; unicidad (`id_catalogo`, `codigo`) y formato `^[a-z0-9_]+$`; relaciones padre-hijo; existencia de toda referencia `LISTAS:<id>`; ausencia de enumeraciones en las celdas H/L afectadas; etiquetas de escala frente a MATRICES_CALCULO; filas 2 y 3 de VERSION. Revisión manual en Microsoft Excel. |
+| Dependencias | CC-003. Relación de los catálogos con `rule_version` / `version_paquete`: pendiente de CC-008. Regeneración de menús y retiro del bloque A1:N9: CC-012. |
+| rule_version | sin cambio (2.0.0 en preparación, sin `rule_version` asignada) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-04 |
+| Fecha de implementación | 2026-10-04 (Excel maestro y documentación). Sin implementación en BD, backend, API ni frontend. |
+| Commits / PR asociados | Pendiente (sin commit; cambios en la rama `claude/valpo-verde-frontend-p2-kh1bcx` del repositorio backend, pendientes de revisión). |
+| Observaciones | **Implementación:** solo se modificaron las partes `xl/worksheets/sheet8.xml` (LISTAS), `sheet9.xml` (DICCIONARIO_CAMPOS) y `sheet13.xml` (VERSION), con celdas `inlineStr` y estilos existentes (s=7 encabezado, s=13 texto); `sharedStrings.xml`, `styles.xml`, `workbook.xml` y demás partes idénticas byte a byte. SHA-256 antes `a71b289b…a4df905e37`, después `bc0520b8…c4b9c974`. **Pendiente registrado (F1):** las filas de M01 en MATRICES_CALCULO usan la forma corta de las etiquetas de `zona_objetivo`; LISTAS usa la forma larga de DICCIONARIO_CAMPOS. Se alinearán en la sincronización del paquete 2.0.0; MATRICES_CALCULO no se modifica en CC-004. **No migrados:** Tipos_de_conflicto (descartada) y Materialidad_infraestructura quedan solo en el bloque técnico A:N hasta CC-012. **Fuera de alcance:** menús (CC-012), datos de ejemplo que guardan la acción como su propio subtipo (CC-018), duplicación R/M y "0–9" (CC-014), ámbito y versionado de catálogos (CC-008); N13–N21 y MP1 siguen PENDIENTE. |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios de lógica.
+- [x] REGLAS_INDICADORES — N/A: sin cambios (autoridad de las escalas; LISTAS no redefine su lógica).
+- [x] MATRICES_CALCULO — N/A: sin cambios (verificado byte a byte). Diferencia de etiquetas de `zona_objetivo` en M01 registrada para 2.0.0.
+- [x] DICCIONARIO_CAMPOS — 19 celdas H y 10 celdas L remiten a `LISTAS:<id_catalogo>`.
+- [x] VERSION — fila `2.0.0` en preparación con `cc_incluidos` CC-004; fila "previa a 2.0.0" sin cambios.
+- [x] docs/methodology/ — `convenciones-catalogos.md` creado.
+- [x] PR / ADR — N/A.
+- [x] Export de texto — N/A: el export aún no existe.
+- [x] Verificación §14.9 (fuente) — controles de catálogos verificados; puntos de versión publicada, reglas y diagramas N/A (paquete 2.0.0 en preparación, sin reglas cargadas).
+- [x] Migración + schema.sql — N/A: sin implementación en CC-004.
+- [x] Backend (services/rules) — N/A: sin implementación en CC-004.
+- [x] API / Zod — N/A: sin implementación en CC-004.
+- [x] Frontend — N/A: sin implementación en CC-004.
+- [x] Verificación §14.9 (implementación) — N/A: sin implementación en CC-004.
+- [ ] Revisión final — pendiente: revisión manual en Microsoft Excel por marybaxmann antes del commit.
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-04 | DETECTADO | — | Catálogos definidos de forma independiente en LISTAS y DICCIONARIO_CAMPOS; contradicciones ampliadas en CC-003. |
+| 2026-10-04 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisiones (a)–(e), criterio de ubicación, esquema P:X, catálogos, códigos, etiquetas (F1, F2) y transición aprobados; implementación autorizada en el Excel maestro y la documentación. |
+| 2026-10-04 | FUENTE SINCRONIZADA | marybaxmann | LISTAS P:X, DICCIONARIO_CAMPOS, VERSION, `convenciones-catalogos.md` y `workflow.md` §14.9 actualizados y verificados. Sin commit, pendiente de revisión manual en Microsoft Excel. Al verificarse el commit: `CERRADO` (sin implementación). |
 
 ---
 
@@ -381,7 +413,7 @@ motivo)
 | Aprobado por / Fecha de aprobación | — |
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
-| Observaciones | (1) `README.md`: el árbol de `database/` lista solo las migraciones 001 y 002. (2) `docs/roadmap.md`: la sección "Frontend productivo" dice que el repositorio no está creado; la sección "Metodología" está superada; el formato de `rule_version` ya quedó definido (§14.10). (3) `docs/checkpoint-2026-09-16.md`: foto histórica con §14–§15 desactualizadas; decidir si se anota o se deja como histórico. (4) `CLAUDE.md`: "`valpo-verde-frontend` = nombre previsto… No asumir que hoy son el mismo repositorio"; el repositorio ya existe. (5) `docs/workflow.md` §13: dice que ningún subagente existe; ya existen cinco en `.claude/agents/`. (6) Frontend: `README.md` y `docs/frontend-architecture.md` indican F7 sin commit; está committeado (`142d293`). (7) Los `readme.md` de `docs/excel/` quedarán obsoletos al trasladar el paquete. (8) `docs/roadmap.md` línea 10: "ante cualquier diferencia con … `docs/methodology/`, esos documentos mandan" — debe remitir al paquete metodológico (PR-002 v2.0), como ya lo hace `CLAUDE.md`. No resuelto en CC-001. |
+| Observaciones | (1) `README.md`: el árbol de `database/` lista solo las migraciones 001 y 002. (2) `docs/roadmap.md`: la sección "Frontend productivo" dice que el repositorio no está creado; la sección "Metodología" está superada; el formato de `rule_version` ya quedó definido (§14.10). (3) `docs/checkpoint-2026-09-16.md`: foto histórica con §14–§15 desactualizadas; decidir si se anota o se deja como histórico. (4) `CLAUDE.md`: "`valpo-verde-frontend` = nombre previsto… No asumir que hoy son el mismo repositorio"; el repositorio ya existe. (5) `docs/workflow.md` §13: dice que ningún subagente existe; ya existen cinco en `.claude/agents/`. (6) Frontend: `README.md` y `docs/frontend-architecture.md` indican F7 sin commit; está committeado (`142d293`). (7) Los `readme.md` de `docs/excel/` quedarán obsoletos al trasladar el paquete. (8) `docs/roadmap.md` línea 10: "ante cualquier diferencia con … `docs/methodology/`, esos documentos mandan" — debe remitir al paquete metodológico (PR-002 v2.0), como ya lo hace `CLAUDE.md`. (9) `docs/methodology/00-index.md`, sección "Regla de precedencia" (línea 261): referencia residual a "PR-002 v2.0" como fuente única; debe remitir a PR-002 (pendiente registrado en CC-003; anotado en CC-004). No resuelto en CC-001. |
 
 ---
 
@@ -656,4 +688,4 @@ motivo)
 | Aprobado por / Fecha de aprobación | — |
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
-| Observaciones | Distinto de CC-005 (privacidad y saneamiento de datos personales). CC-018 no elimina datos todavía; solo registra el problema. |
+| Observaciones | Distinto de CC-005 (privacidad y saneamiento de datos personales). CC-018 no elimina datos todavía; solo registra el problema. Caso agregado por CC-004: datos de ejemplo que guardan la acción como su propio subtipo, contrario a la convención "acción sin subtipos → subtipo vacío (null)" (`docs/methodology/convenciones-catalogos.md`): ORDENES DE TRABAJO `OT-I-000001` (`Accion_solicitada` y `subtipo_accion` = "Evaluación inicial") e INSPECCIONES `INS-000001` (`tipo_inspeccion_realizada` y `subtipo_inspeccion` = "Evaluación inicial"). No se corrigen en CC-004. |

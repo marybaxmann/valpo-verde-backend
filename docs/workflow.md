@@ -548,6 +548,17 @@ Un CC solo pasa a `FUENTE SINCRONIZADA` si se cumple todo lo que aplica:
 - [ ] Export de texto regenerado desde el Excel.
 - [ ] La ficha CC registra la versión del paquete y `rule_version`.
 
+Catálogos (LISTAS ↔ DICCIONARIO_CAMPOS; convenciones en
+`docs/methodology/convenciones-catalogos.md`, CC-004):
+
+- [ ] Toda referencia `LISTAS:<id_catalogo>` existe en LISTAS.
+- [ ] Ningún dominio se mantiene en dos fuentes editables.
+- [ ] Los códigos son únicos dentro de su catálogo.
+- [ ] Las relaciones padre-hijo referencian códigos existentes.
+- [ ] Todo código usado por el contrato funcional existe en LISTAS.
+- [ ] Las escalas de LISTAS son consistentes con REGLAS_INDICADORES y
+      MATRICES_CALCULO, sin que LISTAS redefina su lógica.
+
 Para pasar a `PROBADO`:
 
 - [ ] Pruebas por regla, incluidos los valores borde de cada intervalo.
