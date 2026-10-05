@@ -2,23 +2,41 @@
 
 ## Propósito
 
-Este directorio contiene la especificación metodológica que debe seguir el motor de reglas de Valpo Verde.
+Este directorio documenta la metodología técnica de Valpo Verde y su versión, como parte del paquete metodológico definido en PR-002 v2.1.
 
-Los diagramas originales entregados por la autora son evidencia metodológica.
+La fuente de verdad metodológica es un paquete versionado y sincronizado compuesto por:
 
-La versión textual consolidada en `docs/methodology/` determina qué partes de cada diagrama están:
-- vigentes;
-- vigentes parciales;
-- pendientes;
-- obsoletas.
+- Excel maestro (nombre fijo); la composición y el carácter de cada hoja (núcleo normativo, gobernanza, catálogo subordinado, módulo en propuesta y anexos operativos no normativos) se definen en PR-002 v2.1, sección "Composición del Excel maestro";
+- diagramas de decisión de la misma versión;
+- la documentación metodológica de este directorio.
 
-Si existe una diferencia entre un diagrama antiguo y su especificación textual consolidada, se debe respetar el estado y contenido de la especificación textual vigente.
+No existe precedencia entre estos artefactos. Una contradicción entre ellos es una inconsistencia: se abre un CC (`docs/workflow.md` §14), se determina cuál representa la decisión metodológica aprobada y se sincronizan todos los artefactos afectados.
+
+La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define.
 
 No inferir ni completar metodología faltante.
 
 ---
 
+## Versión vigente y estado de transición
+
+Versión vigente del paquete metodológico: **ninguna publicada todavía**. La primera versión formal será `2.0.0` (`docs/workflow.md` §14.10).
+
+Hasta su publicación rige el siguiente estado de transición (CC-001):
+
+1. El Excel maestro actual (`docs/excel/Base de Datos Valpo Verde.xlsx`) no tiene versión formal. Contiene inconsistencias internas detectadas en la auditoría de diagramas (por ejemplo, rangos de R02 y R03 distintos entre MATRICES_CALCULO y DICCIONARIO_CAMPOS). Desde CC-002 incluye la hoja REGLAS_INDICADORES, con su estructura pero sin reglas metodológicas cargadas (0 reglas), y la hoja VERSION, que contiene únicamente el registro "previa a 2.0.0 — sin versión formal". El paquete 2.0.0 no está publicado, no existe una `rule_version` publicada y la metodología técnica todavía no se ha sincronizado mediante los CC posteriores.
+2. Los diagramas disponibles en `docs/excel/diagramas/` son exportaciones en imagen; los archivos fuente `.drawio` no están en el repositorio.
+3. Los documentos `01-roots-base.md` a `05-infrastructure.md` (versión 1.1) y las secciones de este índice marcadas como **CONTENIDO TRANSITORIO** corresponden a la metodología textual previa. No incorporan decisiones metodológicas posteriores ni el Excel maestro. Se conservarán como historial, marcados como reemplazados, cuando se publique el paquete 2.0.0.
+4. Las frases de esos documentos que declaran que la especificación textual prevalece sobre el diagrama quedan sin efecto por PR-002 (v2.0 y siguientes).
+5. Mientras no exista una versión publicada no hay reglas vigentes implementables: no se implementa metodología en `services/rules/` (PR-002 v2.1, PR-011 v2.0).
+6. Las decisiones metodológicas ya tomadas y aún no sincronizadas se registran como CC en `docs/registro-cambios.md`. No se incorporan a estos documentos fuera de su CC.
+7. La hoja INDICES es un módulo metodológico en propuesta (CC-016): no es fuente normativa vigente y sus fórmulas no son implementables. Las hojas ARBOLES, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO y USUARIOS son anexos operativos no normativos (PR-002 v2.1, CC-003); las contradicciones detectadas en ellas están registradas como CC y no se corrigen fuera de su CC.
+
+---
+
 ## Estados metodológicos
+
+> **CONTENIDO TRANSITORIO** — vocabulario de la metodología textual previa (v1.1). A partir del paquete 2.0.0, el estado de cada regla se expresa con `estado_regla` en REGLAS_INDICADORES (vigente · pendiente · reemplazada · descartada), según PR-011 v2.0.
 
 Los estados metodológicos son distintos de los estados usados por las `PR-*`.
 
@@ -72,6 +90,8 @@ Los estados de `PR-*` y los estados metodológicos son vocabularios distintos. P
 
 ## Estructura metodológica
 
+> **CONTENIDO TRANSITORIO** — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
+
 | Archivo | Componente | Estado actual |
 |---|---|---|
 | `01-roots-base.md` | Raíces y base | vigente parcial |
@@ -90,6 +110,8 @@ Los estados aquí declarados representan el estado metodológico consolidado esp
 ---
 
 ## Estado general actual
+
+> **CONTENIDO TRANSITORIO** — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
 
 ### Raíces y base
 Estado: vigente parcial
@@ -232,17 +254,19 @@ No crear todavía estructura de código únicamente por existir este documento.
 
 ## Regla de precedencia
 
-Existen dos jerarquías de precedencia distintas, una por ámbito. No compiten entre sí porque aplican a ámbitos distintos.
+Existen dos criterios distintos, uno por ámbito. No compiten entre sí porque aplican a ámbitos distintos.
 
 ### Metodología técnica
 
-1. especificación textual vigente en `docs/methodology/`;
-2. diagramas originales entregados por la autora;
-3. código existente;
-4. prototipo visual;
-5. referencias externas.
+Fuente única: el paquete metodológico vigente (PR-002 v2.0). Sus artefactos (MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES, VERSION, diagramas de decisión y este directorio) no tienen precedencia entre sí: una contradicción entre ellos se trata como inconsistencia mediante un CC (`docs/workflow.md` §14).
 
-El prototipo visual nunca debe utilizarse como fuente de metodología.
+No son fuente metodológica:
+
+- el código existente y `database/schema.sql`;
+- el prototipo visual, que nunca debe utilizarse como fuente de metodología;
+- Groundzy.
+
+Las referencias técnicas externas son fundamento citado dentro del paquete, no fuente directa.
 
 ### Flujo funcional / UX
 
@@ -254,6 +278,10 @@ El prototipo visual nunca debe utilizarse como fuente de metodología.
 ---
 
 ## Pendientes conocidos
+
+> **CONTENIDO TRANSITORIO** — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
+
+> Nota (CC-001): el formato de `rule_version` quedó definido en `docs/workflow.md` §14.10.
 
 - conversión definitiva de puntaje total a probabilidad de falla (las tablas del diagrama difieren entre raíces/base, tronco y copa/ramas);
 - probabilidad de impacto;

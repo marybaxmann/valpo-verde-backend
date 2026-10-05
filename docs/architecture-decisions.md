@@ -298,7 +298,7 @@ Claves foráneas:
 - Las referencias de auditoría nullable (`created_by`, `added_by`) usan `ON DELETE SET NULL`.
 - El offboarding de un usuario debe eliminar primero sus membresías; no hay `CASCADE` automático.
 
-CRS/SRID: **no** se agrega columna a `projects` todavía (ADR-010 sigue `propuesta`).
+CRS/SRID: **no** se agrega columna a `projects` todavía (ADR-010 v2.0).
 
 RLS: diseñada e implementada — ver Actualización 2.1 más abajo y ADR-014.
 
@@ -474,10 +474,12 @@ PR-011
 
 ---
 
-## ADR-010 — Geolocalización canónica
-Estado: propuesta
+## ADR-010 — Geolocalización canónica (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
 Fecha: 2026-08
+Reemplazada por: ADR-010 v2.0
+Motivo del reemplazo: decisión SIG-0 de marybaxmann (CC-019): la ubicación canónica y el principio de transformación quedan adoptados; esta versión los dejaba como propuesta.
 
 ### Contexto
 La interfaz actual contempla captura de UTM Este/Norte.
@@ -512,6 +514,56 @@ Sí. Esta ADR es deliberadamente propuesta y revisable.
 PR-005
 PR-006
 PR-015
+
+---
+
+## ADR-010 — Geolocalización canónica (v2.0)
+Estado: vigente
+Versión: 2.0
+Fecha: 2026-10
+Reemplaza: ADR-010 v1.0
+Origen: CC-019
+Motivo: decisión SIG-0 de marybaxmann (2026-10-04). Se adoptan la ubicación canónica y el principio de transformación; el CRS de captura y la implementación concreta quedan pendientes.
+Capas afectadas: base de datos, backend, frontend, documentación.
+
+### Contexto
+La v1.0 dejaba como propuesta la estrategia "captura según CRS del proyecto → transformación → ubicación canónica WGS84 → `geography(Point,4326)`". La arquitectura SIG (ADR-015) necesita una ubicación canónica adoptada para construir el mapa de inventario.
+
+PostGIS está habilitado y `trees.ubicacion geography(Point,4326)` existe con índice GIST (`idx_trees_ubicacion`).
+
+### Decisión
+Adoptado:
+- `trees.ubicacion geography(Point,4326)` es la ubicación canónica del árbol.
+- WGS84 / EPSG:4326 es la representación espacial canónica.
+- El sistema puede recibir una coordenada en el CRS de captura definido.
+- La transformación desde el CRS de captura al sistema canónico es responsabilidad de la capa servidor de Valpo Verde.
+- Una coordenada capturada directamente en WGS84 (por ejemplo, un punto elegido en el mapa o la ubicación del dispositivo) no requiere transformación.
+- No se crean columnas de latitud/longitud como segunda ubicación editable. Las coordenadas derivadas que entregue la API son de solo lectura.
+- Se conserva la coordenada original de levantamiento para trazabilidad.
+- La plataforma es multiproyecto y no asume una única zona UTM global; el proyecto deberá poder definir su CRS de captura.
+
+Pendiente:
+- CRS/SRID y datum de captura.
+- Configuración del CRS (dónde y cómo se define el CRS de captura del proyecto).
+- Estructura física de la coordenada original de levantamiento.
+- Mecanismo concreto de transformación: PostGIS (`ST_Transform`), Node/backend u otra solución técnicamente validada.
+
+No modificar schema todavía.
+
+### Consecuencias
+- UI y almacenamiento no tienen que usar el mismo CRS.
+- La captura en WGS84 y el mapa de inventario (ADR-015) no dependen de los pendientes; la captura manual en otro CRS (por ejemplo, UTM Este/Norte) sí.
+- Cualquier cambio físico derivado de los pendientes (configuración del CRS, coordenada original) requiere su CC y su migración.
+- Permite interoperabilidad geográfica.
+
+### Puede cambiar
+Sí. Los pendientes se cierran en una nueva versión de esta ADR.
+
+### Reglas relacionadas
+PR-005
+PR-006 v6.0
+PR-015 v2.0
+ADR-015
 
 ---
 
@@ -695,3 +747,51 @@ PR-018
 ADR-002
 ADR-005 v2.1
 ADR-013
+
+---
+
+## ADR-015 — Arquitectura SIG con ArcGIS
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-10
+Origen: CC-019
+
+### Contexto
+La plataforma requiere visualización e interacción geoespacial (PR-015). Estado al adoptar esta ADR:
+- PostGIS está habilitado y `trees.ubicacion geography(Point,4326)` existe con índice GIST (`idx_trees_ubicacion`), sin datos de ubicación cargados.
+- No existe ningún mapa, capa SIG, endpoint geoespacial ni dependencia cartográfica en backend o frontend. El frontend solo tiene un placeholder visual sin uso (`MapPlaceholder`).
+- PR-015 v1.0 dejaba sin definir el proveedor cartográfico y prohibía implementar el mapa definitivo.
+
+El riesgo principal de integrar una plataforma SIG es mantener una segunda copia editable de los árboles (por ejemplo, en ArcGIS Online) en paralelo a Supabase: dos fuentes de verdad y sincronización bidireccional.
+
+### Decisión
+1. Supabase/PostgreSQL + PostGIS es la única fuente de verdad de los datos espaciales de Valpo Verde (ADR-003, ADR-010 v2.0).
+2. El backend/API es el único canal de escritura de datos, incluidos los espaciales.
+3. El frontend nunca escribe directamente en una capa ArcGIS. Toda edición, incluida la ubicación, se envía a la API.
+4. ArcGIS Maps SDK for JavaScript es la tecnología SIG del frontend.
+5. La primera alternativa para representar los árboles es una FeatureLayer client-side construida con los datos obtenidos desde el backend.
+6. Se descarta la Hosted Feature Layer editable como almacén de los árboles.
+7. ArcGIS Online es opcional y posterior: solo para mapas o capas institucionales y para exportaciones derivadas de solo lectura. Nunca es la fuente maestra del inventario.
+8. ArcGIS no calcula riesgo, prioridad ni ninguna otra clasificación metodológica. Renderers y popups solo representan valores ya calculados y entregados por el backend, sin lógica metodológica (por ejemplo, expresiones Arcade que clasifiquen).
+9. Toda exportación a ArcGIS, si existe posteriormente, es derivada y regenerable desde la fuente oficial. No se edita ni se reimporta.
+10. Primer caso de uso: mapa de inventario de árboles por proyecto.
+
+### Consecuencias
+- El mapa de inventario no espera a riesgo, priorización, infraestructura, mantenimiento, incidencias, órdenes de trabajo ni a la publicación del paquete metodológico 2.0.0. Esas capas se incorporan después, cada una con su contrato de datos.
+- Las capas de riesgo y priorización requieren además una `rule_version` publicada (PR-002, PR-011).
+- Los endpoints de árboles que alimenten el mapa siguen ADR-014 (JWT de usuario y policy RLS vigente en el mismo entorno).
+- La simbología por catálogo usa los `codigo` del mecanismo de consulta de catálogos (`docs/methodology/convenciones-catalogos.md`); no se hardcodean catálogos.
+- Pendiente: seleccionar y validar el mecanismo de acceso/autenticación a los servicios cartográficos ArcGIS requeridos para desarrollo y producción. No se adopta todavía ninguna alternativa. Debe resolverse antes de implementar el mapa que dependa de dichos servicios.
+- Esta ADR no modifica por sí misma `schema.sql`, endpoints ni frontend.
+
+### Puede cambiar
+Sí. Cualquier cambio que introduzca escritura en capas ArcGIS o una copia editable fuera de Supabase requiere una nueva versión de esta ADR.
+
+### Reglas relacionadas
+PR-006 v6.0
+PR-015 v2.0
+PR-017
+ADR-001
+ADR-003
+ADR-010 v2.0
+ADR-014

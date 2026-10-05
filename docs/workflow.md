@@ -45,7 +45,7 @@ Siempre:
 Condicional:
 
 4. `docs/architecture-decisions.md` — si la tarea afecta arquitectura, datos, autenticación, permisos, infraestructura técnica o decisiones transversales;
-5. `docs/methodology/00-index.md` y el documento metodológico específico — si la tarea afecta evaluación técnica / metodológica;
+5. el paquete metodológico vigente (PR-002), con `docs/methodology/00-index.md` como punto de entrada — si la tarea afecta evaluación técnica / metodológica; si además implica un cambio, `docs/workflow.md` §14 y `docs/registro-cambios.md`;
 6. el código / `database/schema.sql` actual — según la tarea, después de comprender las decisiones documentadas.
 
 Este mismo criterio está en `CLAUDE.md`; ambos deben coincidir.
@@ -81,7 +81,7 @@ Si la nueva decisión contradice una regla:
 
 Este procedimiento es idéntico al descrito en `docs/project-rules.md` (Propósito); ambos documentos deben mantenerlo redactado de la misma forma.
 
-Una decisión explícita nueva de la autora del proyecto puede reemplazar una decisión anterior.
+Una decisión explícita nueva de una aprobadora del proyecto (§14.5: `marybaxmann` o `Valen-j211`) puede reemplazar una decisión anterior.
 
 ---
 
@@ -89,17 +89,13 @@ Una decisión explícita nueva de la autora del proyecto puede reemplazar una de
 
 Si el cambio afecta metodología:
 
-1. revisar `docs/methodology/`;
-2. identificar si la regla está:
-   - vigente;
-   - vigente parcial;
-   - pendiente;
-   - obsoleta;
+1. revisar el paquete metodológico vigente (PR-002), con `docs/methodology/00-index.md` como punto de entrada;
+2. identificar el estado de cada regla afectada (`estado_regla`: vigente, pendiente, reemplazada, descartada). Hasta la publicación del paquete 2.0.0 rige el estado de transición descrito en `docs/methodology/00-index.md`;
 3. no inferir información faltante;
 4. no copiar reglas entre componentes por similitud;
-5. no implementar una rama pendiente;
-6. no implementar una rama obsoleta aunque aparezca en un diagrama antiguo;
-7. actualizar `rule_version` cuando corresponda.
+5. no implementar una regla pendiente;
+6. no implementar una regla reemplazada o descartada, aunque aparezca en un diagrama o documento antiguo;
+7. registrar y versionar el cambio según §14 (incluida `rule_version`, §14.10).
 
 La metodología debe mantenerse separada de decisiones visuales o de UX.
 
@@ -168,9 +164,9 @@ Solicitud
 Flujo:
 
 Nueva decisión/diagrama
-→ consolidar versión textual en `docs/methodology/`
-→ determinar estado
-→ actualizar reglas/versiones
+→ CC en `docs/registro-cambios.md` (§14)
+→ sincronizar el paquete metodológico (§14.7, paso 2)
+→ publicar la versión (§14.10)
 → implementar en `services/rules/`
 → agregar/verificar tests
 → QA
@@ -294,7 +290,7 @@ Si una feature depende de una decisión pendiente:
 Jerarquía de referencias (de mayor a menor autoridad):
 
 1. **Prototipo propio `marybaxmann/Valpo-Verde-Conecta`** — referencia funcional/UX principal.
-2. **Diagramas / metodología en `docs/methodology/`** — fuente técnica.
+2. **Paquete metodológico (PR-002, `docs/methodology/`)** — fuente técnica.
 3. **Groundzy** — referencia visual/UX secundaria.
 
 El frontend `marybaxmann/Valpo-Verde-Conecta` puede utilizarse para comprender:
@@ -365,3 +361,243 @@ Cuando existan subagentes:
 Una tarea pequeña debe resolverse directamente si no requiere especialización adicional.
 
 El uso de subagentes no reemplaza las reglas ni fuentes de verdad del proyecto.
+
+---
+
+## 14. Control de cambios
+
+### 14.1 Propósito
+
+Esta sección define cómo se registra, aprueba, sincroniza, implementa y
+cierra cualquier cambio que afecte la fuente metodológica de Valpo Verde
+(PR-002) o su implementación.
+
+El registro oficial de cambios es `docs/registro-cambios.md`. Cada cambio
+se identifica con un ID `CC-NNN`: correlativo, de tres dígitos, nunca
+reutilizado (aunque el cambio se descarte).
+
+Las herramientas temporales de revisión (por ejemplo, un Excel de
+auditoría) no son registro oficial y no autorizan modificar la fuente
+metodológica ni la implementación.
+
+### 14.2 Principios
+
+1. La fuente metodológica define; la implementación (base de datos,
+   backend, API, frontend) deriva. Un cambio de implementación nunca
+   modifica la metodología.
+2. Los artefactos de la fuente metodológica (MATRICES_CALCULO,
+   DICCIONARIO_CAMPOS, REGLAS_INDICADORES, VERSION, LISTAS como catálogo
+   subordinado, diagramas de decisión y `docs/methodology/`) representan
+   una misma versión metodológica. Ninguno prevalece automáticamente sobre
+   otro; una contradicción entre LISTAS y DICCIONARIO_CAMPOS también se
+   trata mediante control de cambios.
+3. Una contradicción entre artefactos es una inconsistencia. No se
+   resuelve eligiendo uno: se abre un CC, se determina cuál representa la
+   decisión metodológica aprobada y se sincronizan todos los afectados.
+4. Un cambio no está terminado porque se modificó un artefacto. Solo
+   termina en `CERRADO`, después de verificar la sincronización de todo
+   lo afectado (14.9).
+5. Un CC que no está `APROBADO METODOLÓGICAMENTE` no autoriza modificar
+   el Excel maestro, los diagramas ni el código. Una decisión pendiente
+   no se implementa (§9).
+6. No se borran versiones anteriores: se marcan como reemplazadas (§4).
+
+### 14.3 Cuándo se requiere un CC
+
+Requieren CC:
+
+- cualquier modificación de la fuente metodológica (PR-002);
+- crear o reemplazar una PR o una ADR;
+- cambios de modelo de datos (campos, tablas, migraciones);
+- implementar o modificar en backend/frontend una regla metodológica;
+- corregir una inconsistencia entre artefactos de la fuente, o entre la
+  fuente y la implementación.
+
+No requieren CC (siguen §6, "cambio pequeño y localizado"):
+
+- refactorizaciones sin cambio de comportamiento;
+- estilos o maquetación de interfaz sin efecto en datos ni reglas;
+- actualización de dependencias;
+- correcciones tipográficas fuera de la fuente metodológica;
+- regenerar el export de texto de la fuente sin cambiar el Excel.
+
+### 14.4 Tipos de cambio
+
+| Tipo | Definición | Ejemplo |
+|---|---|---|
+| 1. Corrección de inconsistencia | Artefactos que deben decir lo mismo no lo dicen, o hay un error matemático. Si ningún artefacto refleja la decisión aprobada, el CC pasa a tipo 2. | R02 decía 8–18 en MATRICES_CALCULO; el máximo real es 14. |
+| 2. Cambio metodológico | Cambia un umbral, clasificación, fórmula, agregación o salida. | Nueva salida "No determinado". |
+| 3. Cambio de modelo de datos | Cambia la estructura de campos o tablas. Requiere ADR si es transversal. | Permitir múltiples redes por árbol. |
+| 4. Cambio de implementación | Código que implementa una regla ya aprobada. Requiere que la regla esté en una versión publicada del paquete. | El backend calcula R02. |
+| 5. Cambio documental | Sin cambio de lógica ni de datos. | Actualizar un diagrama desactualizado. |
+
+Un CC puede afectar más de un tipo: se registra un tipo principal y los
+secundarios.
+
+### 14.5 Aprobación
+
+- Pueden aprobar cambios metodológicos (tipos 1, 2, 3 y 5 que toquen la
+  fuente) y publicar versiones del paquete: `marybaxmann` o `Valen-j211`.
+- Basta la aprobación de una de las dos. No se exige doble aprobación.
+- La ficha CC registra quién aprobó y la fecha.
+- Los cambios tipo 4 requieren revisión técnica y un CC metodológico
+  previo en `FUENTE SINCRONIZADA` o posterior.
+- Si en el futuro ciertos cambios requieren doble aprobación, se
+  incorporará como regla explícita en esta sección.
+
+### 14.6 Estados
+
+Flujo principal:
+
+```
+DETECTADO → EN REVISIÓN → PENDIENTE DE DECISIÓN → APROBADO METODOLÓGICAMENTE
+→ FUENTE SINCRONIZADA → PENDIENTE DE IMPLEMENTACIÓN → IMPLEMENTADO → PROBADO → CERRADO
+```
+
+| Estado | Significado | Para salir del estado |
+|---|---|---|
+| `DETECTADO` | Se registró el cambio o la inconsistencia. | Iniciar revisión. |
+| `EN REVISIÓN` | Se analiza alcance, impacto (14.8) y dependencias. | Ficha de impacto completa. Si la decisión ya existe, puede pasar directo a `APROBADO METODOLÓGICAMENTE`. |
+| `PENDIENTE DE DECISIÓN` | La revisión ya identificó exactamente qué decisión falta tomar; la ficha la formula. | Decisión registrada por una aprobadora (14.5). |
+| `APROBADO METODOLÓGICAMENTE` | Decisión tomada y registrada. En tipo 4 significa aprobado técnicamente. | Sincronizar la fuente (14.7, paso 2). |
+| `FUENTE SINCRONIZADA` | Todos los artefactos afectados están actualizados en la misma versión y pasaron 14.9. | Tipo 5: `CERRADO` (sin implementación). Resto: `PENDIENTE DE IMPLEMENTACIÓN`. |
+| `PENDIENTE DE IMPLEMENTACIÓN` | Falta llevar el cambio a BD, backend, API o frontend. | Implementación en el entorno de desarrollo/pruebas (ADR-013). |
+| `IMPLEMENTADO` | El código y las migraciones están aplicados en desarrollo/pruebas. | Ejecutar las pruebas de la ficha. |
+| `PROBADO` | Las pruebas de la ficha pasan. | Revisión final (agente `qa` cuando corresponda). |
+| `CERRADO` | Cambio completo y verificado. Para tipo 5 se anota "sin implementación". | — |
+
+Estados auxiliares (fuera del flujo lineal):
+
+- `BLOQUEADO`: no puede avanzar por una dependencia pendiente (otro CC o
+  una decisión). Se indica cuál; al resolverse, vuelve al estado en que
+  estaba.
+- `REEMPLAZADO`: otro CC lo deja sin efecto. Se indica cuál.
+- `DESCARTADO`: se decidió no hacerlo. Se indica motivo y quién decidió.
+
+`CERRADO` significa hoy "probado en desarrollo/pruebas". Cuando exista
+el entorno productivo (ADR-013) se agregará un estado de despliegue.
+
+### 14.7 Flujo de actualización
+
+```
+0. DETECCIÓN → ficha CC (DETECTADO)
+1. DECISIÓN METODOLÓGICA (14.5) → nueva versión de PR/ADR si contradice una vigente (§4)
+2. FUENTE METODOLÓGICA — un solo paquete, una sola versión:
+     DICCIONARIO_CAMPOS (los campos deben existir antes de usarse)
+     → REGLAS_INDICADORES y MATRICES_CALCULO
+     → diagramas de decisión
+     → docs/methodology/ (versión, explicación, historial)
+     → hoja VERSION + export de texto + verificación 14.9
+     → publicación de la versión (tag de git)
+3. MODELO DE BASE DE DATOS (solo si corresponde): migración nueva (nunca
+   editar una aplicada), schema.sql, RLS si hay tabla nueva (ADR-014),
+   validación en desarrollo/pruebas (ADR-013)
+4. BACKEND: services/rules/ → services → validación Zod / API
+5. FRONTEND: formularios, activaciones, resultados y roles
+6. PRUEBAS: casos borde por regla, integración de API, E2E
+7. REVISIÓN FINAL (qa) → CERRADO
+```
+
+El paso 2 es atómico: los artefactos de la fuente no se publican por
+separado. Los cambios tipo 5 recorren 0 → 1 (si corresponde) → 2 → 7.
+Los cambios tipo 4 empiezan en el paso 3, sobre una versión publicada.
+
+Los cambios al Excel maestro y a los diagramas se hacen en una rama y se
+integran mediante pull request que cita el CC; no se suben directo a `main`.
+
+### 14.8 Matriz de impacto
+
+● obligatorio · ○ si corresponde · — no aplica
+
+| Cambio | Diagrama | REGLAS_IND. | MATRICES | DICCIONARIO | docs/methodology | PR/ADR | BD / migración | Backend (rules) | API / Zod | Frontend | Pruebas | rule_version |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Umbral o límite de intervalo | ● | ● | ○ | ○ | ● | ○ | — | ● | — | ○ | ● | ● |
+| Nueva salida o rama (p. ej. No determinado) | ● | ● | ○ | ● | ● | ○ | ○ | ● | ● | ● | ● | ● |
+| Agregación o rangos de clasificación | — | — | ● | ● | ● | ○ | ○ | ● | — | ○ | ● | ● |
+| Campo nuevo | ○ | ○ | — | ● | ○ | — | ● | ○ | ● | ● | ● | ○ |
+| Renombrar campo | ● | ● | ○ | ● | ○ | — | ○ | ○ | ● | ● | ● | ○ |
+| Valores o catálogo de un campo | ○ | ○ | — | ● | ○ | — | ○ | ○ | ● | ● | ● | ○ |
+| Activación o dependencia de campo | ○ | — | — | ● | ○ | — | — | ○ | ● | ● | ● | ○ |
+| Modelo de datos estructural | ○ | ○ | ○ | ● | ● | ● (ADR) | ● | ● | ● | ● | ● | ○ |
+| Corrección entre artefactos de la fuente | ○ | ○ | ○ | ○ | ○ | — | — | ○ | — | — | ● | ○ |
+| Solo texto o forma de un diagrama | ● | — | — | — | ○ | — | — | — | — | — | — | — |
+| Implementación de regla aprobada | — | — | — | — | — | — | ○ | ● | ○ | ○ | ● | — |
+| Rol o permisos | — | — | — | ○ | — | ● | ● (RLS) | ● | ● | ● | ● | — |
+
+### 14.9 Verificación de sincronización
+
+Un CC solo pasa a `FUENTE SINCRONIZADA` si se cumple todo lo que aplica:
+
+- [ ] La misma versión figura en la hoja VERSION, los diagramas y
+      `docs/methodology/00-index.md`.
+- [ ] Todo campo citado en REGLAS_INDICADORES (`campos_utilizados`),
+      MATRICES_CALCULO y diagramas existe en DICCIONARIO_CAMPOS con el
+      mismo nombre.
+- [ ] Las condiciones de activación del DICCIONARIO son coherentes con el
+      orden de evaluación del diagrama.
+- [ ] Cada camino del diagrama tiene una regla vigente y cada regla
+      vigente tiene un camino; ningún nodo queda sin salida.
+- [ ] `max_indicador` = mayor puntaje de las reglas vigentes del indicador.
+- [ ] Máximo de cada regla agregadora = suma de los `max_indicador` que
+      aportan a ella, y coincide en MATRICES (tabla y texto) y DICCIONARIO
+      (fórmula y validación).
+- [ ] Los rangos de clasificación cubren 0…máximo sin huecos ni solapes.
+- [ ] Los intervalos numéricos de cada indicador no tienen huecos ni
+      solapes.
+- [ ] Ninguna salida "No determinado" o "No aplica" tiene puntaje 0.
+- [ ] Export de texto regenerado desde el Excel.
+- [ ] La ficha CC registra la versión del paquete y `rule_version`.
+
+Catálogos (LISTAS ↔ DICCIONARIO_CAMPOS; convenciones en
+`docs/methodology/convenciones-catalogos.md`, CC-004):
+
+- [ ] Toda referencia `LISTAS:<id_catalogo>` existe en LISTAS.
+- [ ] Ningún dominio se mantiene en dos fuentes editables.
+- [ ] Los códigos son únicos dentro de su catálogo.
+- [ ] Las relaciones padre-hijo referencian códigos existentes.
+- [ ] Todo código usado por el contrato funcional existe en LISTAS.
+- [ ] Las escalas de LISTAS son consistentes con REGLAS_INDICADORES y
+      MATRICES_CALCULO, sin que LISTAS redefina su lógica.
+
+Para pasar a `PROBADO`:
+
+- [ ] Pruebas por regla, incluidos los valores borde de cada intervalo.
+- [ ] El backend declara la `rule_version` que implementa y coincide con
+      una versión publicada.
+- [ ] La implementación usa solo reglas `vigente` de esa versión.
+- [ ] Ningún resultado calculado puede editarse manualmente (PR-008).
+
+Para cambios que no tocan la fuente metodológica (por ejemplo, cambios de
+gobernanza en `docs/`), los puntos que no aplican se marcan `N/A` en la
+ficha con su motivo.
+
+### 14.10 Versionado
+
+| Elemento | Formato | Regla |
+|---|---|---|
+| Versión del paquete metodológico | `MAJOR.MINOR.PATCH` | MAJOR: cambia la estructura de la evaluación (componentes, agregaciones, matrices nuevas). MINOR: cambia algún resultado calculable, o el conjunto o significado de los campos. PATCH: no cambia resultados ni campos (redacción, forma de diagramas, notas). |
+| `rule_version` | `MAJOR.MINOR` | Igual a la versión del paquete sin PATCH. Un PATCH no genera nueva `rule_version`. Se guarda en cada resultado calculado. |
+| Tag de git | `metodologia-vMAJOR.MINOR.PATCH` | Se crea al publicar cada versión. |
+| Excel maestro | nombre fijo | No se crea una copia por versión: el historial está en git y los tags. |
+
+- La hoja VERSION del Excel maestro es la fuente de las versiones
+  publicadas.
+- Primera versión sincronizada: `2.0.0` (`rule_version` `2.0`). El Excel
+  previo se registra como "previa a 2.0.0 — sin versión formal".
+- Tipo de CC → versión: tipo 2 → MINOR (MAJOR si cambia la estructura);
+  tipo 1 → MINOR si altera algún resultado posible, si no PATCH; tipo 3 →
+  MINOR si cambia campos del DICCIONARIO; tipo 4 → sin cambio de versión;
+  tipo 5 → PATCH (o ninguno si está fuera del paquete).
+- La implementación de una `rule_version` usa solo las reglas `vigente`
+  del paquete publicado con esa versión. Las reglas `reemplazada` son
+  trazabilidad, nunca reglas activas.
+- Commits que implementan o modifican un CC: mensaje con prefijo
+  `[CC-NNN]`. La nueva versión de una PR o ADR indica "Origen: CC-NNN".
+
+### 14.11 Relación con otras secciones
+
+- §4 (reemplazo de reglas) se mantiene: el CC registra qué PR o ADR se
+  reemplaza y la nueva versión.
+- §5 y el flujo "Cambio metodológico" de §6 se aplican a través de esta
+  sección.
+- §9 (estados pendientes) se aplica sin cambios.

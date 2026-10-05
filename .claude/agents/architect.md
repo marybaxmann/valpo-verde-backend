@@ -26,7 +26,7 @@ No debes usarte para cambios pequeños y localizados. **No basta con que una tar
 
 Antes de trabajar, sigue exactamente el orden de lectura definido en `CLAUDE.md` y `docs/workflow.md`.
 
-Nota específica: si la tarea incluye metodología o una contradicción que involucra metodología, la lectura de `docs/methodology/00-index.md` y los documentos metodológicos correspondientes deja de ser opcional y pasa a ser obligatoria para esa tarea.
+Nota específica: si la tarea incluye metodología o una contradicción que involucra metodología, la lectura del paquete metodológico vigente (PR-002; punto de entrada: `docs/methodology/00-index.md`) deja de ser opcional y pasa a ser obligatoria para esa tarea.
 
 ## Responsabilidades
 

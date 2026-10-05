@@ -24,7 +24,7 @@ No es necesario para cada cambio trivial.
 
 Ejemplos:
 
-- cambio metodológico → revisar metodología + `rules-engine`;
+- cambio metodológico → revisar paquete metodológico + `rules-engine` + verificación de sincronización (`docs/workflow.md` §14.9);
 - migración → revisar schema / migración / integridad;
 - endpoint → revisar backend / permisos / validación;
 - cambio transversal → ampliar solo a las capas afectadas.

@@ -42,9 +42,11 @@ Afecta:
 - UX
 - arquitectura funcional
 
-## PR-002 — Fuente de metodología
-Estado: vigente
+## PR-002 — Fuente de metodología (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-002 v2.0
+Motivo del reemplazo: la precedencia "texto de `docs/methodology/` > diagramas" no refleja la fuente metodológica adoptada (Excel maestro + diagramas de decisión) y permitía resolver contradicciones eligiendo un artefacto en lugar de tratarlas como inconsistencias. Origen: CC-001.
 
 Los diagramas de flujo entregados por la autora son la fuente metodológica para:
 - raíces/base;
@@ -67,6 +69,93 @@ Afecta:
 - rules-engine
 - backend
 - tests
+
+## PR-002 — Fuente de metodología (v2.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 2.0
+Reemplaza: PR-002 v1.0
+Origen: CC-001
+Reemplazada por: PR-002 v2.1
+Motivo del reemplazo: clasificaba VERSION como hoja normativa y no definía el carácter de las demás hojas del Excel maestro (LISTAS, INDICES y hojas operativas), ni la autoridad de cada artefacto. Origen: CC-003.
+
+La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
+
+- Excel maestro (nombre fijo), con las hojas normativas MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION;
+- diagramas de decisión de la misma versión (archivo fuente + exportación);
+- documentación metodológica en `docs/methodology/` (versión vigente, explicación e historial).
+
+Todos representan una misma versión metodológica y deben mantenerse sincronizados. No existe precedencia entre ellos. Una contradicción entre artefactos es una inconsistencia: se abre un CC (`docs/workflow.md` §14), se determina cuál representa la decisión metodológica aprobada y se sincronizan todos los artefactos afectados.
+
+La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define. No son fuente metodológica: el código, `database/schema.sql`, el prototipo `marybaxmann/Valpo-Verde-Conecta` ni Groundzy. Las referencias técnicas externas (p. ej. ISA, Smiley y Fraedrich) son fundamento citado dentro del paquete, no fuente directa.
+
+`docs/methodology/` documenta solo la versión vigente. Las versiones anteriores se conservan como historial marcadas como reemplazadas y nunca se interpretan como vigentes.
+
+Solo se implementan reglas con estado vigente en la versión publicada que corresponda. No se inventan umbrales, categorías, ramas de decisión, fórmulas ni matrices.
+
+Versionado, aprobación y control de cambios: `docs/workflow.md` §14. Estado de transición hasta la primera versión publicada (2.0.0): `docs/methodology/00-index.md`.
+
+Afecta:
+- rules-engine
+- backend
+- base de datos
+- frontend
+- tests
+- documentación
+
+## PR-002 — Fuente de metodología (v2.1)
+Estado: vigente
+Versión: 2.1
+Reemplaza: PR-002 v2.0
+Origen: CC-003
+
+La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
+
+- Excel maestro (nombre fijo), con la composición indicada más abajo;
+- diagramas de decisión de la misma versión (archivo fuente + exportación);
+- documentación metodológica en `docs/methodology/` (versión vigente, explicación e historial).
+
+Todos representan una misma versión metodológica y deben mantenerse sincronizados. No existe precedencia entre ellos. Una contradicción entre artefactos es una inconsistencia: se abre un CC (`docs/workflow.md` §14), se determina cuál representa la decisión metodológica aprobada y se sincronizan todos los artefactos afectados.
+
+La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define. No son fuente metodológica: el código, `database/schema.sql`, el prototipo `marybaxmann/Valpo-Verde-Conecta` ni Groundzy. Las referencias técnicas externas (p. ej. ISA, Smiley y Fraedrich) son fundamento citado dentro del paquete, no fuente directa.
+
+`docs/methodology/` documenta solo la versión vigente. Las versiones anteriores se conservan como historial marcadas como reemplazadas y nunca se interpretan como vigentes.
+
+Solo se implementan reglas con estado vigente en la versión publicada que corresponda. No se inventan umbrales, categorías, ramas de decisión, fórmulas ni matrices.
+
+### Composición del Excel maestro
+
+| Categoría | Hojas | Carácter |
+|---|---|---|
+| Núcleo normativo / metodológico | DICCIONARIO_CAMPOS, REGLAS_INDICADORES, MATRICES_CALCULO | Fuente de verdad metodológica. |
+| Gobernanza | VERSION | Registro de versiones del paquete. |
+| Catálogo controlado subordinado | LISTAS | Parte del paquete; su funcionamiento definitivo se resuelve en CC-004. |
+| Módulo metodológico en propuesta | INDICES | Pendiente de adopción (CC-016). No es fuente normativa vigente; sus fórmulas no son implementables hasta adoptarse mediante un CC específico. Mientras permanezca en propuesta, sus cambios no modifican `rule_version`. |
+| Anexos / modelos operativos no normativos | ARBOLES, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO, USUARIOS | Representan la captura y organización operacional de la información. No son fuente de verdad para reglas, dominios, roles ni resultados calculados. Deben conformarse al núcleo normativo; sus cambios no generan versión del paquete. |
+
+Los diagramas de decisión y `docs/methodology/` forman parte del paquete como documentación y representación de la metodología: documentan y referencian las reglas ejecutables, no las duplican.
+
+### Autoridad
+
+- DICCIONARIO_CAMPOS es la autoridad funcional sobre cada campo: definición, tipo de dato funcional, dominio o referencia al catálogo, unidad, obligatoriedad, condición de activación, origen manual o calculado, dependencias y fórmula aritmética de variables derivadas cuando corresponda. No repite umbrales de clasificación (REGLAS_INDICADORES), rangos de agregación (MATRICES_CALCULO) ni definiciones de roles y permisos (PR correspondientes). Cuando un resultado depende de R01–R04, M01–M05 u otra regla agregadora, referencia su ID sin volver a escribir la lógica.
+- REGLAS_INDICADORES contiene las condiciones o umbrales sobre variables que producen una clasificación parcial (Despreciable / Sin afectación, Leve, Moderada, Severa, No determinado, No aplica) y los ajustes de clasificación cuando correspondan.
+- MATRICES_CALCULO combina resultados parciales previamente obtenidos. No define umbrales sobre variables crudas.
+- Catálogos: "un catálogo, un solo lugar". DICCIONARIO_CAMPOS indica qué catálogo utiliza cada campo; los valores de catálogos jerárquicos, compartidos o suficientemente extensos pueden residir en LISTAS; los mismos valores no se mantienen simultáneamente y de forma independiente en DICCIONARIO_CAMPOS y LISTAS.
+- Roles y permisos: solo las PR correspondientes (PR-003, PR-004). Ni la hoja USUARIOS ni la columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS son fuente de roles.
+- Cada pieza de lógica existe en un único lugar; los demás artefactos la referencian mediante su identificador.
+
+### Relación con el modelo de datos
+
+El modelo de datos de la plataforma debe implementar de forma consistente el contrato funcional definido por el paquete metodológico. DICCIONARIO_CAMPOS define el significado y comportamiento funcional de los campos, pero no constituye por sí solo el esquema físico de la base de datos. PK, FK, normalización, relaciones, índices, constraints técnicos, autenticación y otros elementos pertenecen al diseño de datos/backend. Las hojas operativas tampoco constituyen el esquema físico de la base de datos.
+
+Versionado, aprobación y control de cambios: `docs/workflow.md` §14. Estado de transición hasta la primera versión publicada (2.0.0): `docs/methodology/00-index.md`.
+
+Afecta:
+- rules-engine
+- backend
+- base de datos
+- frontend
+- tests
+- documentación
 
 ## PR-003 — Rol Usuario municipal
 Estado: vigente
@@ -259,7 +348,7 @@ El rol (`admin`, `usuario_municipal`) sigue siendo global en `user_profiles`.
 - `species` es global.
 - `public_spaces` es scoped por proyecto: `UNIQUE(project_id, nombre)`; la misma plaza/nombre puede existir en proyectos distintos; un árbol no puede apuntar a un `public_space` de otro proyecto.
 - `tree_code` mantiene la secuencia global (`A-000001`, …).
-- CRS/SRID sigue pendiente (ADR-010 `propuesta`): no se agrega columna todavía.
+- CRS/SRID sigue pendiente (ADR-010 v2.0): no se agrega columna todavía.
 
 ### Despliegue
 
@@ -271,9 +360,11 @@ Afecta:
 - frontend
 - permisos
 
-## PR-006 — Registro básico del árbol
-Estado: vigente
+## PR-006 — Registro básico del árbol (v5.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 5.0
+Reemplazada por: PR-006 v6.0
+Motivo del reemplazo: ADR-010 pasó a v2.0 vigente (CC-019); la sección "Coordenadas" la describía como estrategia propuesta no cerrada.
 
 Actualización 3.0 (cierre C-2 y C-3): se aclara el manejo de coordenadas y
 la resolución de datos de especie. Las listas siguientes describen
@@ -319,6 +410,74 @@ Coordenadas (cierre C-2, revisión AD-2):
 - El uso de PostGIS se mantiene como decisión vigente.
 - La interfaz actual contempla la captura de coordenadas UTM Este/Norte.
 - Estrategia propuesta actual (ver ADR-010), no cerrada definitivamente: el almacenamiento canónico es `geography(Point,4326)` y el backend transforma las coordenadas capturadas a ese sistema antes de persistirlas.
+- Esta estrategia puede cambiar posteriormente.
+- Al ser la plataforma multiproyecto, no se asume una única zona UTM global; el CRS/SRID de captura lo define la configuración del proyecto (ver PR-005).
+- No se modifica `schema.sql` todavía.
+
+Datos de especie (cierre C-3):
+- No hay duplicación: `nombre_comun` vive exclusivamente en `species`.
+- Al seleccionar una especie, `nombre_cientifico` y `nombre_comun` se resuelven desde `species`.
+- La política para crear nuevas especies en el catálogo queda pendiente.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+
+## PR-006 — Registro básico del árbol (v6.0)
+Estado: vigente
+Versión: 6.0
+Reemplaza: PR-006 v5.0
+Origen: CC-019
+Motivo: sincronizar la sección "Coordenadas" con ADR-010 v2.0. Sin otros cambios respecto de v5.0.
+
+Actualización 3.0 (cierre C-2 y C-3): se aclara el manejo de coordenadas y
+la resolución de datos de especie. Las listas siguientes describen
+información presentada/capturada por la interfaz, no necesariamente
+columnas físicas de `trees`.
+
+Actualización 4.0 (revisión AD-2): se explicita que PostGIS es decisión
+vigente y que el almacenamiento canónico en `geography(Point,4326)` con
+transformación en backend es la estrategia propuesta actual (ADR-010), no
+cerrada, y puede cambiar.
+
+Actualización 5.0 (multiproyecto, aclaración menor):
+el alta de árbol exige `project_id`; el espacio público seleccionado
+(`public_spaces`) debe pertenecer al mismo proyecto que el árbol;
+`tree_code` mantiene la secuencia global (`A-000001`, …); sin cambios en la
+estrategia de coordenadas. Ver PR-005 v3.0.
+
+El Usuario municipal puede registrar únicamente el bloque básico de la ficha:
+
+Identificación:
+- código del árbol automático;
+- fecha de registro automática;
+- registrado por automático.
+
+Ubicación:
+- comuna;
+- dirección;
+- lugar de referencia;
+- coordenadas UTM Este/Norte;
+- futura geolocalización.
+
+Caracterización básica:
+- especie científica;
+- nombre común;
+- DAP;
+- altura total;
+- diámetro de copa;
+- altura de primera rama.
+
+El Administrador puede consultar y corregir estos datos.
+
+Coordenadas (cierre C-2, revisión AD-2; actualizado en v6.0, CC-019):
+- El uso de PostGIS se mantiene como decisión vigente.
+- La interfaz actual contempla la captura de coordenadas UTM Este/Norte.
+- Estrategia vigente (ADR-010 v2.0): la ubicación canónica es `trees.ubicacion geography(Point,4326)` (WGS84 / EPSG:4326). La transformación desde el CRS de captura al sistema canónico es responsabilidad de la capa servidor de Valpo Verde; su mecanismo concreto está pendiente (ADR-010 v2.0).
+- Una coordenada capturada directamente en WGS84 no requiere transformación.
+- No se crean columnas de latitud/longitud como segunda ubicación editable. La coordenada original de levantamiento se conserva para trazabilidad; su estructura física está pendiente (ADR-010 v2.0).
 - Esta estrategia puede cambiar posteriormente.
 - Al ser la plataforma multiproyecto, no se asume una única zona UTM global; el CRS/SRID de captura lo define la configuración del proyecto (ver PR-005).
 - No se modifica `schema.sql` todavía.
@@ -417,9 +576,11 @@ Afecta:
 - storage
 - base de datos
 
-## PR-011 — Motor de reglas
-Estado: vigente
+## PR-011 — Motor de reglas (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-011 v2.0
+Motivo del reemplazo: remitía el estado de las reglas a `docs/methodology/` y dejaba sin formato `rule_version`; ambos puntos quedan definidos por PR-002 v2.0 y `docs/workflow.md` §14. Origen: CC-001.
 
 Las reglas técnicas deben implementarse en:
 `services/rules/`
@@ -432,6 +593,25 @@ Los diagramas/textos metodológicos en `docs/methodology/` determinan qué está
 - obsoleto.
 
 No implementar reglas pendientes.
+
+Afecta:
+- backend
+- rules-engine
+
+## PR-011 — Motor de reglas (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-011 v1.0
+Origen: CC-001
+
+Las reglas técnicas deben implementarse en:
+`services/rules/`
+
+Cada cambio metodológico se registra como CC y se versiona según `docs/workflow.md` §14. `rule_version` corresponde a `MAJOR.MINOR` de la versión publicada del paquete metodológico (PR-002).
+
+El estado de cada regla (vigente, pendiente, reemplazada, descartada) lo determina el paquete metodológico: columna `estado_regla` de REGLAS_INDICADORES a partir del paquete 2.0.0; hasta entonces rige el estado de transición de `docs/methodology/00-index.md`.
+
+Solo se implementan reglas vigentes de una versión publicada. No implementar reglas pendientes, reemplazadas ni descartadas.
 
 Afecta:
 - backend
@@ -487,9 +667,11 @@ Afecta:
 - frontend
 - risk_evaluations
 
-## PR-015 — Geolocalización
-Estado: vigente
+## PR-015 — Geolocalización (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-015 v2.0
+Motivo del reemplazo: se definió la tecnología SIG (ADR-015) y se autorizó el mapa de inventario, que esta versión prohibía (CC-019).
 
 La arquitectura debe quedar preparada para geolocalización.
 
@@ -512,9 +694,43 @@ Afecta:
 - frontend
 - backend
 
-## PR-016 — Groundzy
+## PR-015 — Geolocalización (v2.0)
 Estado: vigente
 Versión: 2.0
+Reemplaza: PR-015 v1.0
+Origen: CC-019
+Motivo: decisión SIG-0 de marybaxmann (2026-10-04). El detalle arquitectónico vive en ADR-015 y ADR-010 v2.0.
+
+PostGIS se mantiene como única fuente de verdad espacial (ADR-010 v2.0).
+
+Tecnología SIG del frontend: ArcGIS Maps SDK for JavaScript (ADR-015).
+
+Se autoriza el desarrollo progresivo del mapa. Primer caso de uso: mapa de inventario de árboles por proyecto, alimentado por el backend. Las capas de riesgo, priorización, infraestructura, mantenimiento, incidencias y órdenes de trabajo se incorporan posteriormente.
+
+ArcGIS no es fuente de datos ni de cálculo:
+- ninguna capa ArcGIS es editable desde la plataforma; toda escritura pasa por la API;
+- ArcGIS no calcula riesgo, prioridad ni otra clasificación metodológica.
+
+Pendiente: seleccionar y validar el mecanismo de acceso/autenticación a los servicios cartográficos ArcGIS requeridos para desarrollo y producción (ADR-015). Debe resolverse antes de implementar el mapa que dependa de dichos servicios.
+
+El objetivo progresivo sigue siendo una experiencia territorial similar conceptualmente a Groundzy (referencia de UX, PR-016):
+- árboles georreferenciados;
+- selección desde mapa;
+- panel contextual;
+- ubicación del dispositivo;
+- registro desde ubicación;
+- filtros territoriales.
+
+Afecta:
+- base de datos
+- frontend
+- backend
+
+## PR-016 — Groundzy (v2.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 2.0
+Reemplazada por: PR-016 v3.0
+Motivo del reemplazo: el punto 2 de la prioridad de referencias citaba "Diagramas / metodología (`docs/methodology/`)" como fuente técnica; se actualiza a la fuente definida por PR-002 v2.0. Sin otros cambios. Origen: CC-001.
 
 Actualización 2.0 (cierre W-1): se elimina la contradicción entre calificar
 a Groundzy como "principal" y ubicarla en el puesto 3 de la lista de
@@ -534,6 +750,33 @@ y de la metodología.
 Prioridad de referencias (de mayor a menor autoridad):
 1. Prototipo funcional propio (`marybaxmann/Valpo-Verde-Conecta`) — referencia funcional/UX.
 2. Diagramas / metodología (`docs/methodology/`) — fuente técnica.
+3. Groundzy — referencia visual/UX secundaria.
+4. Otras referencias secundarias.
+
+Afecta:
+- frontend
+- UX
+
+## PR-016 — Groundzy (v3.0)
+Estado: vigente
+Versión: 3.0
+Reemplaza: PR-016 v2.0
+Origen: CC-001
+
+Groundzy inspira experiencia visual y organización de UX.
+
+No define:
+- lógica;
+- metodología;
+- reglas de negocio;
+- estructura de datos.
+
+Es secundaria respecto del prototipo propio (`marybaxmann/Valpo-Verde-Conecta`)
+y de la metodología.
+
+Prioridad de referencias (de mayor a menor autoridad):
+1. Prototipo funcional propio (`marybaxmann/Valpo-Verde-Conecta`) — referencia funcional/UX.
+2. Paquete metodológico (PR-002, `docs/methodology/`) — fuente técnica.
 3. Groundzy — referencia visual/UX secundaria.
 4. Otras referencias secundarias.
 

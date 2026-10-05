@@ -13,9 +13,9 @@ Siempre:
 Condicional:
 
 4. `docs/architecture-decisions.md` (ADR) — si la tarea afecta arquitectura, datos, autenticación, permisos, infraestructura técnica o decisiones transversales;
-5. `docs/methodology/00-index.md` y el documento metodológico específico — si la tarea afecta evaluación técnica / metodológica;
+5. el paquete metodológico vigente (PR-002), con `docs/methodology/00-index.md` como punto de entrada — si la tarea afecta evaluación técnica / metodológica; si además implica un cambio, `docs/workflow.md` §14 y `docs/registro-cambios.md`;
 6. el código / `database/schema.sql` actual — según la tarea, después de comprender las decisiones documentadas;
-7. `docs/roadmap.md` — si la tarea puede depender de un pendiente ya detectado (migraciones sin validar, metodología sin cerrar, backend sin implementar). Es un índice de tareas, no una fuente de reglas: ante cualquier diferencia con `project-rules.md`, `architecture-decisions.md` o `docs/methodology/`, esos documentos mandan.
+7. `docs/roadmap.md` — si la tarea puede depender de un pendiente ya detectado (migraciones sin validar, metodología sin cerrar, backend sin implementar). Es un índice de tareas, no una fuente de reglas: ante cualquier diferencia con `project-rules.md`, `architecture-decisions.md` o el paquete metodológico (PR-002), esos documentos mandan.
 
 Ninguna decisión es permanente.
 
@@ -36,8 +36,9 @@ Ninguna decisión es permanente.
 
 ### Metodología técnica
 
-- Fuente consolidada: `docs/methodology/`. Jerarquía de precedencia: la definida en `docs/methodology/00-index.md`.
-- El estado metodológico actual (`vigente` / `vigente parcial` / `pendiente` / `obsoleta`) se consulta **siempre** en `docs/methodology/00-index.md`. No duplicarlo aquí.
+- Fuente de verdad: el paquete metodológico versionado definido en PR-002 (Excel maestro con MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION; diagramas de decisión de la misma versión; `docs/methodology/`). No hay precedencia interna: una contradicción entre artefactos es una inconsistencia y se trata como cambio CC (`docs/workflow.md` §14).
+- La implementación (BD, backend, API, frontend) deriva del paquete y nunca lo define.
+- La versión vigente y el estado de transición se consultan **siempre** en `docs/methodology/00-index.md`. No duplicarlos aquí.
 
 ---
 
@@ -45,7 +46,7 @@ Ninguna decisión es permanente.
 
 - **No inventar.** Cuando falte una decisión: implementar solo lo documentado como `vigente` y reportar el bloqueo restante. Una feature no se completa inventando reglas para cubrir una sección pendiente.
 - **No usar `database/schema.sql`** como fuente para inventar reglas metodológicas pendientes.
-- **Decisiones versionables.** Para cambios de reglas y versionado, seguir exactamente el procedimiento definido en `docs/project-rules.md` y `docs/workflow.md`.
+- **Decisiones versionables.** Para cambios de reglas y versionado, seguir exactamente el procedimiento definido en `docs/project-rules.md` y `docs/workflow.md`; todo cambio que requiera CC (`docs/workflow.md` §14.3) se registra en `docs/registro-cambios.md`.
 
 ---
 
