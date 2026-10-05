@@ -2,7 +2,19 @@ import { AuthenticatedUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
 import { InvalidLocationError, LonLat, parseLocationPoint } from "../utils/geoPoint";
 import { findProjectById } from "../repositories/project.repository";
-import { findTreesPage, TreeRow } from "../repositories/tree.repository";
+import {
+  createTreeWithMeasurementRpc,
+  findTreeById,
+  findTreesPage,
+  TreeDetailRow,
+  TreeRow,
+} from "../repositories/tree.repository";
+import {
+  findLatestValidMeasurementsCandidates,
+  findMeasurementsByTreeId,
+  TreeMeasurementRow,
+} from "../repositories/treeMeasurement.repository";
+import { CreateTreeBody } from "../schemas/tree.schema";
 import { assertProjectAccess } from "./authorization.service";
 
 /**
@@ -127,6 +139,177 @@ export async function listProjectTreesForUser(
       total: rows.length,
       con_ubicacion: features.length,
       sin_ubicacion: sinUbicacion,
+    },
+  };
+}
+
+export interface TreeDetailDTO {
+  id: string;
+  tree_code: string;
+  legacy_id: string | null;
+  project_id: string;
+  public_space_id: string | null;
+  direccion: string | null;
+  comuna: string | null;
+  lugar_referencia: string | null;
+  ubicacion: { lon: number; lat: number } | null;
+  estado_ciclo_vida: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  species: { id: string; nombre_cientifico: string; nombre_comun: string | null } | null;
+  public_spaces: { id: string; nombre: string; tipo: string | null } | null;
+  medicion_actual: TreeMeasurementRow | null;
+  medicion_actual_estado: "sin_mediciones" | "ok" | "error_empate_fecha_maxima";
+  medicion_actual_detalle: string | null;
+}
+
+/**
+ * Resuelve la medición actual de un árbol a partir de sus candidatas de fecha máxima
+ * respetando estrictamente la Decisión 2 de INV-1A (sin desempates arbitrarios).
+ */
+export function resolveCurrentMeasurement(candidates: TreeMeasurementRow[]): {
+  medicion_actual: TreeMeasurementRow | null;
+  medicion_actual_estado: "sin_mediciones" | "ok" | "error_empate_fecha_maxima";
+  medicion_actual_detalle: string | null;
+} {
+  if (candidates.length === 0) {
+    return {
+      medicion_actual: null,
+      medicion_actual_estado: "sin_mediciones",
+      medicion_actual_detalle: null,
+    };
+  }
+
+  if (candidates.length === 1 || candidates[0].fecha_medicion > candidates[1].fecha_medicion) {
+    return {
+      medicion_actual: candidates[0],
+      medicion_actual_estado: "ok",
+      medicion_actual_detalle: null,
+    };
+  }
+
+  // Empate de dos o más mediciones válidas con la misma fecha_medicion máxima
+  return {
+    medicion_actual: null,
+    medicion_actual_estado: "error_empate_fecha_maxima",
+    medicion_actual_detalle:
+      "Existen múltiples mediciones válidas con la misma fecha máxima; requiere resolución metodológica",
+  };
+}
+
+/**
+ * Alta atómica de árbol y medición dendrométrica inicial (PR-006 v7.0, ADR-016).
+ */
+export async function createTreeForUser(
+  user: AuthenticatedUser,
+  projectId: string,
+  body: CreateTreeBody,
+  accessToken: string
+): Promise<{ data: TreeDetailDTO }> {
+  await assertProjectAccess(user, projectId, accessToken);
+  const project = await findProjectById(accessToken, projectId);
+  if (!project) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+
+  const rpcResult = await createTreeWithMeasurementRpc(accessToken, {
+    p_project_id: projectId,
+    p_species_id: body.species_id,
+    p_public_space_id: body.public_space_id ?? null,
+    p_direccion: body.direccion ?? null,
+    p_comuna: body.comuna ?? null,
+    p_lugar_referencia: body.lugar_referencia ?? null,
+    p_lon: body.ubicacion.lon,
+    p_lat: body.ubicacion.lat,
+    p_medicion: {
+      fecha_medicion: body.medicion_inicial.fecha_medicion,
+      configuracion_fustes: body.medicion_inicial.configuracion_fustes,
+      numero_fustes: body.medicion_inicial.numero_fustes ?? null,
+      dap_fustes_cm: body.medicion_inicial.dap_fustes_cm ?? null,
+      dap_cm: body.medicion_inicial.dap_cm ?? null,
+      altura_total_m: body.medicion_inicial.altura_total_m,
+      diametro_copa_m: body.medicion_inicial.diametro_copa_m,
+      altura_primera_rama_m: body.medicion_inicial.altura_primera_rama_m,
+      clase_edad: body.medicion_inicial.clase_edad ?? null,
+    },
+  });
+
+  return getTreeDetailForUser(user, rpcResult.tree_id, accessToken);
+}
+
+/**
+ * Consulta la ficha completa de un árbol con su medición actual resuelta.
+ */
+export async function getTreeDetailForUser(
+  user: AuthenticatedUser,
+  treeId: string,
+  accessToken: string
+): Promise<{ data: TreeDetailDTO }> {
+  const tree = await findTreeById(accessToken, treeId);
+  if (!tree) {
+    throw new AppError("Árbol no encontrado", 404);
+  }
+
+  await assertProjectAccess(user, tree.project_id, accessToken);
+
+  const candidates = await findLatestValidMeasurementsCandidates(accessToken, treeId);
+  const { medicion_actual, medicion_actual_estado, medicion_actual_detalle } =
+    resolveCurrentMeasurement(candidates);
+
+  let coords: { lon: number; lat: number } | null = null;
+  if (tree.ubicacion) {
+    const pt = parseLocationPoint(tree.ubicacion);
+    if (pt) {
+      coords = { lon: pt[0], lat: pt[1] };
+    }
+  }
+
+  return {
+    data: {
+      id: tree.id,
+      tree_code: tree.tree_code,
+      legacy_id: tree.legacy_id,
+      project_id: tree.project_id,
+      public_space_id: tree.public_space_id,
+      direccion: tree.direccion,
+      comuna: tree.comuna,
+      lugar_referencia: tree.lugar_referencia,
+      ubicacion: coords,
+      estado_ciclo_vida: tree.estado_ciclo_vida,
+      created_by: tree.created_by,
+      created_at: tree.created_at,
+      updated_at: tree.updated_at,
+      species: tree.species,
+      public_spaces: tree.public_spaces,
+      medicion_actual,
+      medicion_actual_estado,
+      medicion_actual_detalle,
+    },
+  };
+}
+
+/**
+ * Consulta el historial de mediciones dendrométricas de un árbol (solo lectura).
+ */
+export async function listTreeMeasurementsForUser(
+  user: AuthenticatedUser,
+  treeId: string,
+  accessToken: string,
+  includeAnuladas: boolean = false
+): Promise<{ data: TreeMeasurementRow[]; meta: { total: number } }> {
+  const tree = await findTreeById(accessToken, treeId);
+  if (!tree) {
+    throw new AppError("Árbol no encontrado", 404);
+  }
+
+  await assertProjectAccess(user, tree.project_id, accessToken);
+
+  const measurements = await findMeasurementsByTreeId(accessToken, treeId, includeAnuladas);
+  return {
+    data: measurements,
+    meta: {
+      total: measurements.length,
     },
   };
 }
