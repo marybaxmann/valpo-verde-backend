@@ -30,7 +30,7 @@ hoja VERSION del Excel maestro.
 | CC-001 | Fuente de verdad metodológica (PR-002 v2.0) y control de cambios | 2 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — (sin versión publicada) | — | 2026-10-04 |
 | CC-002 | Hojas REGLAS_INDICADORES y VERSION; registro de la versión previa a 2.0.0 | 3 | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-003 | Composición normativa del Excel maestro y autoridad de cada artefacto (PR-002 v2.1) | 2 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios; auditoría de hojas del Excel maestro | — (sin versión publicada) | — | 2026-10-04 |
-| CC-004 | Relación entre LISTAS y DICCIONARIO_CAMPOS | 1 (+5) | FUENTE SINCRONIZADA | Diagnóstico de documentación y control de cambios; auditoría de hojas del Excel maestro (CC-003) | 2.0.0 (en preparación) | — | 2026-10-04 |
+| CC-004 | Relación entre LISTAS y DICCIONARIO_CAMPOS | 1 (+5) | CERRADO (sin implementación) | Diagnóstico de documentación y control de cambios; auditoría de hojas del Excel maestro (CC-003) | 2.0.0 (en preparación) | — | 2026-10-04 |
 | CC-005 | Datos personales en la hoja USUARIOS | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-006 | Archivos fuente `.drawio` de los diagramas | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-007 | Inconsistencias documentales (README, roadmap, checkpoint, CLAUDE.md, workflow §13, frontend) | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
@@ -292,7 +292,7 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Diagnóstico de documentación y control de cambios (2026-10-04); auditoría de hojas del Excel maestro (CC-003). |
 | Tipo | 1 — corrección de inconsistencia entre artefactos de la fuente (+5 documental) |
-| Estado | FUENTE SINCRONIZADA |
+| Estado | CERRADO (sin implementación) |
 | Regla / campo afectado | Hoja LISTAS (nueva tabla P:X); DICCIONARIO_CAMPOS: "Unidad / valores" (H) de `cavidad_basal_interna`, `cavidad_interna_tronco`, `zona_objetivo`, `tasa_ocupacion_objetivo`, `probabilidad_impacto`, `consecuencia_*`, `probabilidad_falla_*`, `clasificacion_*` (componentes), `clasificacion_infraestructura`, `clasificacion_riesgo`, `clasificacion_prioridad`, `Accion_solicitada`, `subtipo_accion`; "Validación y dependencias" (L) de `probabilidad_impacto`, `probabilidad_falla_*`, `clasificacion_*` (componentes), `clasificacion_infraestructura`, `clasificacion_riesgo`, `clasificacion_prioridad`; hoja VERSION (fila 2.0.0 en preparación); `docs/workflow.md` §14.9. |
 | Versión anterior | Ambas hojas definen valores permitidos de forma independiente. Contradicciones detectadas (auditoría de CC-003): (1) acciones de OT: "Otra" figura bajo *Evaluación instrumental* en LISTAS y bajo *Reevaluación* en DICCIONARIO_CAMPOS (`subtipo_accion`); (2) Tipos_de_conflicto incluye "Deformación" pero no "Hundimiento", mientras DICCIONARIO_CAMPOS define `presenta_hundimiento_vereda`; (3) una sola lista Materialidad_infraestructura incluye "Baldosa", pero `materialidad_calzada` no la admite; (4) los catálogos de acción y subtipo de OT se mantienen a la vez en LISTAS y en DICCIONARIO_CAMPOS (`Accion_solicitada`, `subtipo_accion`). |
 | Versión nueva | LISTAS contiene en P:X la tabla normalizada de catálogos (`id_catalogo`, `codigo`, `etiqueta`, `orden`, `catalogo_padre`, `codigo_padre`, `estado_valor`, `cc`, `observaciones`): 12 catálogos y 70 valores `vigente` — `tipo_ot` (2), `accion` (12), `subtipo_accion` (21), `confirmacion_cavidad_interna` (3) y 8 escalas de 4 valores (`escala_probabilidad_falla`, `escala_nivel_riesgo`, `escala_consecuencia`, `escala_probabilidad_impacto`, `escala_zona_objetivo`, `escala_tasa_ocupacion`, `escala_clasificacion_infraestructura`, `escala_prioridad`). DICCIONARIO_CAMPOS referencia esos dominios como `LISTAS:<id_catalogo>` (19 celdas H, 10 celdas L). Convenciones en `docs/methodology/convenciones-catalogos.md`. |
@@ -311,7 +311,7 @@ motivo)
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-04 |
 | Fecha de implementación | 2026-10-04 (Excel maestro y documentación). Sin implementación en BD, backend, API ni frontend. |
-| Commits / PR asociados | Pendiente (sin commit; cambios en la rama `claude/valpo-verde-frontend-p2-kh1bcx` del repositorio backend, pendientes de revisión). |
+| Commits / PR asociados | `58a5db0` — [CC-004] Normalizar catálogos LISTAS y referencias del diccionario (rama `claude/valpo-verde-frontend-p2-kh1bcx`, repositorio backend). Cierre registrado en un commit documental posterior. |
 | Observaciones | **Implementación:** solo se modificaron las partes `xl/worksheets/sheet8.xml` (LISTAS), `sheet9.xml` (DICCIONARIO_CAMPOS) y `sheet13.xml` (VERSION), con celdas `inlineStr` y estilos existentes (s=7 encabezado, s=13 texto); `sharedStrings.xml`, `styles.xml`, `workbook.xml` y demás partes idénticas byte a byte. SHA-256 antes `a71b289b…a4df905e37`, después `bc0520b8…c4b9c974`. **Pendiente registrado (F1):** las filas de M01 en MATRICES_CALCULO usan la forma corta de las etiquetas de `zona_objetivo`; LISTAS usa la forma larga de DICCIONARIO_CAMPOS. Se alinearán en la sincronización del paquete 2.0.0; MATRICES_CALCULO no se modifica en CC-004. **No migrados:** Tipos_de_conflicto (descartada) y Materialidad_infraestructura quedan solo en el bloque técnico A:N hasta CC-012. **Fuera de alcance:** menús (CC-012), datos de ejemplo que guardan la acción como su propio subtipo (CC-018), duplicación R/M y "0–9" (CC-014), ámbito y versionado de catálogos (CC-008); N13–N21 y MP1 siguen PENDIENTE. |
 
 **Checklist de sincronización**
@@ -330,7 +330,7 @@ motivo)
 - [x] API / Zod — N/A: sin implementación en CC-004.
 - [x] Frontend — N/A: sin implementación en CC-004.
 - [x] Verificación §14.9 (implementación) — N/A: sin implementación en CC-004.
-- [ ] Revisión final — pendiente: revisión manual en Microsoft Excel por marybaxmann antes del commit.
+- [x] Revisión final — revisión del diff y de las verificaciones, y revisión manual en Microsoft Excel, aprobadas por marybaxmann (2026-10-04) antes del commit; verificado tras el commit `58a5db0`.
 
 **Historial de estados**
 
@@ -339,6 +339,7 @@ motivo)
 | 2026-10-04 | DETECTADO | — | Catálogos definidos de forma independiente en LISTAS y DICCIONARIO_CAMPOS; contradicciones ampliadas en CC-003. |
 | 2026-10-04 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisiones (a)–(e), criterio de ubicación, esquema P:X, catálogos, códigos, etiquetas (F1, F2) y transición aprobados; implementación autorizada en el Excel maestro y la documentación. |
 | 2026-10-04 | FUENTE SINCRONIZADA | marybaxmann | LISTAS P:X, DICCIONARIO_CAMPOS, VERSION, `convenciones-catalogos.md` y `workflow.md` §14.9 actualizados y verificados. Sin commit, pendiente de revisión manual en Microsoft Excel. Al verificarse el commit: `CERRADO` (sin implementación). |
+| 2026-10-04 | CERRADO (sin implementación) | marybaxmann | Commit `58a5db0` publicado y verificado: 12 catálogos y 70 valores en LISTAS P:X, 29 referencias `LISTAS:<id>` en DICCIONARIO_CAMPOS, VERSION 2.0.0 en preparación sin `rule_version`; SHA-256 del Excel `bc0520b8…c4b9c974`. Sin implementación en BD, backend, API ni frontend. |
 
 ---
 
