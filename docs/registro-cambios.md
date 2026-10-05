@@ -45,6 +45,7 @@ hoja VERSION del Excel maestro.
 | CC-016 | Auditoría y eventual adopción de INDICES | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | APROBADO METODOLÓGICAMENTE | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -690,3 +691,60 @@ motivo)
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
 | Observaciones | Distinto de CC-005 (privacidad y saneamiento de datos personales). CC-018 no elimina datos todavía; solo registra el problema. Caso agregado por CC-004: datos de ejemplo que guardan la acción como su propio subtipo, contrario a la convención "acción sin subtipos → subtipo vacío (null)" (`docs/methodology/convenciones-catalogos.md`): ORDENES DE TRABAJO `OT-I-000001` (`Accion_solicitada` y `subtipo_accion` = "Evaluación inicial") e INSPECCIONES `INS-000001` (`tipo_inspeccion_realizada` y `subtipo_inspeccion` = "Evaluación inicial"). No se corrigen en CC-004. |
+
+---
+
+### CC-019 — Arquitectura SIG con ArcGIS (SIG-0)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-04 |
+| Origen | Auditoría SIG de backend y frontend (2026-10-04) y decisión SIG-0. |
+| Tipo | 5 — documental (decisiones de arquitectura; sin cambio de lógica ni de datos) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | ADR-010, ADR-015 (nueva), PR-015, PR-006 (sección "Coordenadas"); referencia a ADR-010 en PR-005 v3.0 y ADR-005 v2.0. |
+| Versión anterior | ADR-010 v1.0 (`propuesta`); PR-015 v1.0 (proveedor cartográfico no definido; "no implementar mapa definitivo todavía"); PR-006 v5.0 (coordenadas como estrategia propuesta no cerrada); sin ADR de arquitectura SIG. |
+| Versión nueva | ADR-015 v1.0 — Arquitectura SIG con ArcGIS (vigente); ADR-010 v2.0 (vigente); PR-015 v2.0; PR-006 v6.0. |
+| Motivo | Formalizar la integración de ArcGIS sin crear una segunda fuente de verdad de los datos espaciales y habilitar el mapa de inventario de árboles por proyecto. |
+| Fundamento / fuente | Decisiones de `marybaxmann` del 2026-10-04: aprobación del plan documental SIG-0 con ajustes (transformación como responsabilidad de la capa servidor, sin fijar su mecanismo; acceso a servicios ArcGIS pendiente; corrección solo referencial en PR-005 y ADR-005). |
+| Archivos afectados | `docs/architecture-decisions.md`, `docs/project-rules.md`, `docs/registro-cambios.md`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Ninguno en CC-019. Pendientes declarados en ADR-010 v2.0 (CRS/SRID y datum de captura, configuración del CRS, estructura de la coordenada original, mecanismo de transformación). |
+| Impacto en backend | Ninguno en CC-019. Los endpoints de árboles para el mapa deben seguir ADR-014. |
+| Impacto en API | Ninguno en CC-019 (no se definen endpoints). |
+| Impacto en frontend | Ninguno en CC-019. Tecnología SIG adoptada: ArcGIS Maps SDK for JavaScript, con FeatureLayer client-side como primera alternativa (ADR-015). |
+| Pruebas necesarias | No aplica (documental). Verificación: ninguna referencia vigente describe ADR-010 como `propuesta` ni prohíbe el mapa de inventario. |
+| Dependencias | Ninguna. Pendiente antes de implementar un mapa que dependa de servicios cartográficos ArcGIS: seleccionar y validar el mecanismo de acceso/autenticación para desarrollo y producción (ADR-015). |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-04 |
+| Fecha de implementación | sin implementación (cambio documental) |
+| Commits / PR asociados | Pendiente (sin commit; cambios en la rama `claude/valpo-verde-frontend-p2-kh1bcx` del repositorio backend, pendientes de revisión). |
+| Observaciones | PR-005 v3.0 y ADR-005 v2.0: actualización de referencia documental, sin cambio sustantivo ni nueva versión: "(ADR-010 `propuesta`)" y "(ADR-010 sigue `propuesta`)" pasan a "(ADR-010 v2.0)". Las notas históricas ("Actualización 4.0" de PR-006, contenido de ADR-010 v1.0) se conservan. No modifica CC-005 a CC-018, el Excel maestro, la metodología, `database/`, `src/` ni el frontend. |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios.
+- [x] REGLAS_INDICADORES — N/A: sin cambios.
+- [x] MATRICES_CALCULO — N/A: sin cambios.
+- [x] DICCIONARIO_CAMPOS — N/A: sin cambios.
+- [x] VERSION — N/A: fuera del paquete metodológico.
+- [x] docs/methodology/ — N/A: sin cambios.
+- [x] PR / ADR — ADR-015 v1.0, ADR-010 v2.0, PR-015 v2.0, PR-006 v6.0; corrección referencial en PR-005 v3.0 y ADR-005 v2.0.
+- [x] Export de texto — N/A: el export aún no existe.
+- [x] Verificación §14.9 (fuente) — N/A: no se modifican artefactos metodológicos.
+- [x] Migración + schema.sql — N/A.
+- [x] Backend (services/rules) — N/A.
+- [x] API / Zod — N/A.
+- [x] Frontend — N/A.
+- [x] Verificación §14.9 (implementación) — N/A.
+- [ ] Revisión final — pendiente: revisión de marybaxmann antes del commit.
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-04 | DETECTADO | — | Proveedor cartográfico no definido (PR-015 v1.0) y ADR-010 en `propuesta`; auditoría SIG de backend y frontend. |
+| 2026-10-04 | EN REVISIÓN | — | Plan documental SIG-0. |
+| 2026-10-04 | APROBADO METODOLÓGICAMENTE | marybaxmann | Plan SIG-0 aprobado con ajustes; implementación documental autorizada. Cambios escritos en la rama del repositorio backend, sin commit, pendientes de revisión. Al integrarse: `CERRADO` (sin implementación). |
