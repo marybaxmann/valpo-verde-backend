@@ -45,7 +45,7 @@ hoja VERSION del Excel maestro.
 | CC-016 | Auditoría y eventual adopción de INDICES | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
-| CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | APROBADO METODOLÓGICAMENTE | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
+| CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | CERRADO (sin implementación) | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -701,7 +701,7 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Auditoría SIG de backend y frontend (2026-10-04) y decisión SIG-0. |
 | Tipo | 5 — documental (decisiones de arquitectura; sin cambio de lógica ni de datos) |
-| Estado | APROBADO METODOLÓGICAMENTE |
+| Estado | CERRADO (sin implementación) |
 | Regla / campo afectado | ADR-010, ADR-015 (nueva), PR-015, PR-006 (sección "Coordenadas"); referencia a ADR-010 en PR-005 v3.0 y ADR-005 v2.0. |
 | Versión anterior | ADR-010 v1.0 (`propuesta`); PR-015 v1.0 (proveedor cartográfico no definido; "no implementar mapa definitivo todavía"); PR-006 v5.0 (coordenadas como estrategia propuesta no cerrada); sin ADR de arquitectura SIG. |
 | Versión nueva | ADR-015 v1.0 — Arquitectura SIG con ArcGIS (vigente); ADR-010 v2.0 (vigente); PR-015 v2.0; PR-006 v6.0. |
@@ -720,7 +720,7 @@ motivo)
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-04 |
 | Fecha de implementación | sin implementación (cambio documental) |
-| Commits / PR asociados | Pendiente (sin commit; cambios en la rama `claude/valpo-verde-frontend-p2-kh1bcx` del repositorio backend, pendientes de revisión). |
+| Commits / PR asociados | `7e7f923` — [CC-019] Formalizar arquitectura SIG con ArcGIS (SIG-0) (rama `claude/valpo-verde-frontend-p2-kh1bcx`, repositorio backend). Cierre registrado en un commit documental posterior. |
 | Observaciones | PR-005 v3.0 y ADR-005 v2.0: actualización de referencia documental, sin cambio sustantivo ni nueva versión: "(ADR-010 `propuesta`)" y "(ADR-010 sigue `propuesta`)" pasan a "(ADR-010 v2.0)". Las notas históricas ("Actualización 4.0" de PR-006, contenido de ADR-010 v1.0) se conservan. No modifica CC-005 a CC-018, el Excel maestro, la metodología, `database/`, `src/` ni el frontend. |
 
 **Checklist de sincronización**
@@ -739,7 +739,7 @@ motivo)
 - [x] API / Zod — N/A.
 - [x] Frontend — N/A.
 - [x] Verificación §14.9 (implementación) — N/A.
-- [ ] Revisión final — pendiente: revisión de marybaxmann antes del commit.
+- [x] Revisión final — revisado y aprobado por marybaxmann (2026-10-04) antes del commit; documentos verificados tras el commit `7e7f923`.
 
 **Historial de estados**
 
@@ -748,3 +748,4 @@ motivo)
 | 2026-10-04 | DETECTADO | — | Proveedor cartográfico no definido (PR-015 v1.0) y ADR-010 en `propuesta`; auditoría SIG de backend y frontend. |
 | 2026-10-04 | EN REVISIÓN | — | Plan documental SIG-0. |
 | 2026-10-04 | APROBADO METODOLÓGICAMENTE | marybaxmann | Plan SIG-0 aprobado con ajustes; implementación documental autorizada. Cambios escritos en la rama del repositorio backend, sin commit, pendientes de revisión. Al integrarse: `CERRADO` (sin implementación). |
+| 2026-10-04 | CERRADO (sin implementación) | marybaxmann | Commit `7e7f923` publicado y verificado. Sin implementación en BD, backend, API ni frontend. |
