@@ -79,20 +79,25 @@ Implementado:
   ver ADR-014) — RLS no reemplaza la autorización de backend, coexisten.
   Validado end-to-end tanto con mocks (Postman/manual) como con JWTs reales
   contra `valpo-verde-conecta` (desarrollo/pruebas, no producción).
+- Inventario espacial para el mapa (SIG-1, ADR-015 / ADR-010 v2.0) —
+  `GET /api/projects/:id/trees`, solo lectura (ver "Contrato para frontend").
 - Framework de tests: Jest + ts-jest + Supertest, configurados
-  (`jest.config.js`, `tsconfig.jest.json`). 5 suites / 33 tests PASS.
+  (`jest.config.js`, `tsconfig.jest.json`). 8 suites / 68 tests PASS.
 
 Deliberadamente NO implementado todavía (fuera de alcance de esta iteración):
 - `POST /api/auth/login` — el login ocurre en el frontend directamente
   contra Supabase Auth; este backend solo valida el token resultante.
-- Endpoints de árboles, inspecciones, incidencias, mantenimiento,
-  infraestructura, dashboard — y, junto con ellos, extender RLS a esas
-  tablas (la primera fase de RLS cubre solo las 6 tablas de proyectos/
-  membresías, las únicas con endpoints hoy).
+- Escritura de árboles (alta/edición, incluida la ubicación) y endpoints de
+  inspecciones, incidencias, mantenimiento, infraestructura, dashboard — y,
+  junto con ellos, extender RLS a las tablas que aún no la tienen (la
+  migración `005` cubre `user_profiles`, `projects`, `project_members`,
+  `public_spaces`, `trees` e `incidents`).
 - Motor de reglas de evaluación (`services/rules/`).
 - Lógica de riesgo (probabilidad de impacto, consecuencias, matriz final):
   pendiente de metodología.
-- Cualquier funcionalidad de mapas/geolocalización.
+- Geolocalización más allá de la lectura del inventario: captura de
+  coordenadas, transformación de CRS (pendiente, ADR-010 v2.0) y capas
+  temáticas del mapa.
 
 ## Contrato para frontend
 
@@ -107,6 +112,42 @@ bajo este contrato (PR-018 v2.0 / ADR-014):
 - El backend determina `req.user` (identidad + rol global) y aplica los
   permisos; el frontend no decide seguridad, solo adapta la UI según el
   rol que el backend confirme (p. ej. vía `GET /api/auth/me`).
+
+### `GET /api/projects/:id/trees` (SIG-1)
+
+Inventario de árboles del proyecto para el mapa (ADR-015). Autorización:
+`assertProjectAccess` + RLS de `trees` con el JWT del usuario.
+
+```json
+{
+  "data": {
+    "type": "FeatureCollection",
+    "features": [{
+      "type": "Feature",
+      "id": "<uuid>",
+      "geometry": { "type": "Point", "coordinates": [<lon>, <lat>] },
+      "properties": {
+        "id": "<uuid>", "tree_code": "A-000001", "legacy_id": null,
+        "estado_ciclo_vida": "activo",
+        "nombre_cientifico": "…", "nombre_comun": "…",
+        "direccion": null, "comuna": null, "lugar_referencia": null
+      }
+    }]
+  },
+  "meta": { "total": 1, "con_ubicacion": 1, "sin_ubicacion": 0 }
+}
+```
+
+- GeoJSON RFC 7946: WGS84, `[longitud, latitud]`, sin miembro `crs`.
+  Coordenadas derivadas de `trees.ubicacion` (leída como
+  `ubicacion::geometry`), solo lectura.
+- Incluye todos los estados de ciclo de vida. Los árboles sin ubicación
+  cuentan en `meta.total` y `meta.sin_ubicacion`, pero no van en `features`.
+- Devuelve el proyecto completo: lectura interna por cursor (`id > último
+  id`, páginas de hasta 1000) hasta recibir una página vacía.
+- Errores: 400 id inválido · 401 sin token · 403 sin acceso · 404 proyecto
+  inexistente · 500 si una ubicación llega con formato inesperado (nunca se
+  descarta un punto en silencio).
 
 ## Variables de entorno
 
