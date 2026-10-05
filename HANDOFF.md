@@ -10,70 +10,72 @@
 
 ## 📌 Metadatos del Relevo
 - **Última actualización:** 2026-10-05
-- **Agente emisor:** Claude Code
-- **Agente receptor sugerido:** AGY — INV-1A (diseño técnico)
-- **Rama Git vigente:** `main`
+- **Agente emisor:** AGY (Gemini)
+- **Agente receptor sugerido:** Auditoría / QA / Siguiente iteración (Frontend o INV-1C)
+- **Rama Git vigente:** `feature/inv-1b-inventario-arbol-medicion`
 - **Ruta del proyecto:** `C:\Users\usuario\code\valpo-verde-backend`
-- **Resumen:** INV-1A — diseño técnico del inventario (CC-020 pendiente de implementación)
+- **Resumen:** INV-1B backend implementado y verificado (10 suites, 103 tests pass) — listo para auditoría
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
 ---
 
-## 🎯 Próximo hito: INV-1A — DISEÑO TÉCNICO DEL INVENTARIO
+## 🎯 Estado de la Tarea: INV-1B IMPLEMENTADO Y LISTO PARA AUDITORÍA
 
-Traducir el modelo conceptual ya aprobado —**ARBOLES 1:N MEDICIONES_DENDROMETRICAS**— a un diseño técnico compatible con la arquitectura existente (`routes → controllers → services → repositories`, Supabase/PostgreSQL + PostGIS, autorización en dos capas backend + RLS).
+Se implementó el backend del primer circuito funcional del Inventario:
+`PROYECTO → ALTA DE ÁRBOL → UBICACIÓN WGS84 → ESPECIE → MEDICIÓN DENDROMÉTRICA INICIAL → GUARDAR → FICHA DEL ÁRBOL → MEDICIÓN ACTUAL`.
 
-INV-1A **no implementa**. Debe preparar, para aprobación posterior:
-- modelo físico;
-- migración;
-- RLS de las entidades afectadas (ADR-014);
-- contratos de API;
-- alta atómica árbol + medición inicial;
-- historial de mediciones (nueva medición, corrección auditada, anulación lógica);
-- obtención de la última medición válida y del valor dendrométrico actual derivado.
-
-Durante el diseño **no se cierran decisiones metodológicas pendientes** (ver abajo).
-
-Fuentes a leer: ADR-016, PR-006 v7.0, PR-003 v5.0, `docs/methodology/modelo-arbol-medicion.md`, DICCIONARIO_CAMPOS (ARBOLES y MEDICIONES_DENDROMETRICAS), `docs/workflow.md` §14.12, ADR-010 v2.0, ADR-014, `database/schema.sql` (estado actual, no fuente).
+### Componentes Implementados
+1. **Migración `006_tree_measurements.sql` y actualización de `schema.sql`:**
+   - Tabla `tree_measurements` desacoplada (PK `UUID`, FK `tree_id` con `ON DELETE RESTRICT`).
+   - Restricciones validadas contra `DICCIONARIO_CAMPOS`: `dap_cm > 0`, `numero_fustes >= 2`, `dap_fustes_cm` (array >= 2 coincidente con `numero_fustes`), `altura_primera_rama_m <= altura_total_m`.
+   - Índices B-Tree: `idx_tree_measurements_tree_id` e índice parcial `idx_tree_measurements_tree_fecha` filtrado por `estado_medicion = 'valida'`.
+   - RLS: Policies `tree_measurements_all_admin`, `tree_measurements_select_municipal`, `tree_measurements_insert_municipal`. Políticas de UPDATE y DELETE no creadas (bloqueadas por decisión de gobernanza).
+   - RPC transaccional: `fn_create_tree_with_measurement` con `SECURITY INVOKER` para alta atómica de árbol y medición inicial.
+   - Migración legacy (Alternativa A): Cero backfill automático. Columnas dimensionales legacy de `trees` marcadas como deprecadas para nuevas escrituras.
+2. **Validación Zod (`src/schemas/tree.schema.ts`):**
+   - `initialMeasurementSchema`: validación estricta de medición inicial.
+   - `createTreeSchema`: validación de alta unificada (WGS84 lon [-180, 180], lat [-90, 90], `species_id`, etc.).
+   - `treeIdParamSchema`: validación de identificador de árbol en parámetros.
+3. **Capa Repositories:**
+   - `treeMeasurement.repository.ts`: `findMeasurementsByTreeId` y `findLatestValidMeasurementsCandidates` (con mocks en `__mocks__`).
+   - `tree.repository.ts`: ampliado con `findTreeById` y `createTreeWithMeasurementRpc` (con mocks en `__mocks__`).
+4. **Capa Services (`src/services/tree.service.ts`):**
+   - `createTreeForUser`: valida acceso y ejecuta RPC de alta atómica.
+   - `getTreeDetailForUser`: consulta ficha de árbol y resuelve `medicion_actual`.
+   - `listTreeMeasurementsForUser`: consulta historial ordenado (lectura).
+   - `resolveCurrentMeasurement`: implementa lógica estricta sin desempate arbitrario:
+     - 0 válidas → `medicion_actual: null`, `medicion_actual_estado: 'sin_mediciones'`.
+     - 1 fecha máxima inequívoca → `medicion_actual: obj`, `medicion_actual_estado: 'ok'`.
+     - Empate en fecha máxima ($\ge 2$) → `medicion_actual: null`, `medicion_actual_estado: 'error_empate_fecha_maxima'`.
+5. **Capa Controllers y Rutas:**
+   - `tree.controller.ts`: implementa `createTree`, `getTreeDetail`, `listTreeMeasurements`.
+   - `project.routes.ts`: monta `POST /:id/trees`.
+   - `tree.routes.ts`: monta `GET /:treeId` y `GET /:treeId/measurements`.
+   - `src/routes/index.ts`: monta `/trees`.
+6. **Tests y Verificación:**
+   - 10 test suites / 103 tests pasando exitosamente (`npm test`).
+   - Typecheck limpio sin errores (`npx tsc --noEmit`).
+   - Compatibilidad total con SIG-1 (`GET /api/projects/:id/trees`) preservada.
 
 ---
 
-## 📌 Estado actual
-- **CC-020** (separación ÁRBOL / MEDICIÓN DENDROMÉTRICA) — integrado en `main` por PR #3 (merge `637db1a`; commits `6af04ec`, `15c9994`). Estado: **PENDIENTE DE IMPLEMENTACIÓN**. Especificación de ámbito `operativo`: puede implementarse sin esperar la publicación de 2.0.0 (§14.12), pero la implementación todavía no está autorizada.
-- **CC-008** (columna `ambito`, §14.12) — **CERRADO** (sin implementación).
-- **CC-009** (validación de `clase_edad`) — **CERRADO** (sin implementación).
-- Paquete metodológico 2.0.0: **en preparación, no publicado**; sin `rule_version`. `services/rules/` sigue bloqueado.
-- Migraciones `001`–`005` validadas en desarrollo/pruebas (`valpo-verde-conecta`); el entorno productivo aún no existe (ADR-013).
-- SIG-1 cerrado: `GET /api/projects/:id/trees` (solo lectura; no expone dimensiones).
-
-**Todavía NO existe:**
-- implementación física del modelo ÁRBOL 1:N MEDICIONES_DENDROMETRICAS;
-- migraciones, RLS, API ni frontend de INV-1.
-
-`trees` en `schema.sql` conserva columnas dimensionales sobrescribibles (`dap`, `altura_total`, `diametro_copa`, `altura_primera_rama`) que no se ajustan a ADR-016: no escribir en ellas; su tratamiento se define en el diseño de INV-1A.
-
----
-
-## ⚠️ Decisiones PENDIENTE (no cerrar en INV-1A)
-- Categorías definitivas de configuración de fustes, criterio/altura de referencia, relación con `numero_fustes` y regla de DAP equivalente (no implementable). Si, una vez aprobada, la regla de DAP equivalente requerirá publicación del paquete: por decidir.
-- Política de especie no determinada, fuente y administración del catálogo de especies, nombres comunes.
-- UTM: obligatoriedad, datum, huso y conservación de la coordenada original (ADR-010 v2.0). WGS84 es la ubicación canónica obligatoria.
-- Relación MEDICIÓN ↔ INSPECCIÓN (A / B / C) y efecto de corregir o anular una medición usada por una inspección completada (ADR-007).
-- Obligatoriedad de los campos en mediciones posteriores a la inicial.
-- Tratamiento metodológico de `clase_edad`.
-- Correspondencia `sector` / `ubicacion_descriptiva` ↔ comuna, dirección y lugar de referencia.
-- Permisos de anulación de mediciones y de corrección por el Usuario municipal.
-
-Reglas permanentes: no inventar reglas; autorización en dos capas (`authorization.service.ts` + RLS, ADR-014, PR-018).
+## ⚠️ Decisiones PENDIENTE (Preservadas intactas)
+- Categorías definitivas de `configuracion_fustes` (se mantuvo como `TEXT` abierto).
+- Relación fustes ↔ fórmula de DAP equivalente (no se inventó fórmula).
+- Corrección y anulación de mediciones (permisos pendientes, RLS UPDATE/DELETE denegado).
+- Obligatoriedad de campos en mediciones posteriores a la inicial.
+- Política de especie no determinada y almacenamiento UTM adicional.
+- Relación MEDICIÓN ↔ INSPECCIÓN.
+- No modificar migraciones 001–005 ni fusionar a `main`.
 
 ---
 
 ## 📝 Notas de Agentes
-- **2026-10-05 — Claude Code:** Cierre documental de CC-008, CC-009 y CC-020 tras el PR #3. Sin cambios en `database/`, `src/`, migraciones, RLS, API, frontend, SIG ni Excel.
+- **2026-10-05 — AGY (Gemini):** Implementación completa de INV-1B en la rama `feature/inv-1b-inventario-arbol-medicion`. Todas las pruebas unitarias y de integración pasan (103 tests). No se realizaron commits a `main`.
 
 ---
 
 ## 🚀 Instrucción Directa para el Siguiente Agente (Prompt de arranque)
 
-> *"Hola AGY. Lee `HANDOFF.md` (contexto operativo, no fuente metodológica), `CLAUDE.md`, `docs/workflow.md` §14 (incluida §14.12), ADR-016, PR-006 v7.0, PR-003 v5.0, `docs/methodology/modelo-arbol-medicion.md` y las filas ARBOLES / MEDICIONES_DENDROMETRICAS de DICCIONARIO_CAMPOS. Prepara el diseño técnico de INV-1A: modelo físico, migración, RLS, contratos de API, alta atómica árbol + medición inicial, historial de mediciones y obtención de la última medición válida. NO implementes ni modifiques código, schema o migraciones. NO cierres ninguna decisión marcada como PENDIENTE: si el diseño la necesita, déjala como punto abierto para la investigadora."*
+> *"Hola. INV-1B está completamente implementado y verificado en la rama `feature/inv-1b-inventario-arbol-medicion`. Lee `HANDOFF.md` y `docs/workflow.md`. Ejecuta `git status` y `npm test` para verificar el estado limpio de las 10 test suites (103 tests pasando). Procede con la revisión/auditoría o con el siguiente hito que autorice la investigadora."*
