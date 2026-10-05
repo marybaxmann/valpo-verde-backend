@@ -42,9 +42,11 @@ Afecta:
 - UX
 - arquitectura funcional
 
-## PR-002 — Fuente de metodología
-Estado: vigente
+## PR-002 — Fuente de metodología (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-002 v2.0
+Motivo del reemplazo: la precedencia "texto de `docs/methodology/` > diagramas" no refleja la fuente metodológica adoptada (Excel maestro + diagramas de decisión) y permitía resolver contradicciones eligiendo un artefacto en lugar de tratarlas como inconsistencias. Origen: CC-001.
 
 Los diagramas de flujo entregados por la autora son la fuente metodológica para:
 - raíces/base;
@@ -67,6 +69,36 @@ Afecta:
 - rules-engine
 - backend
 - tests
+
+## PR-002 — Fuente de metodología (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-002 v1.0
+Origen: CC-001
+
+La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
+
+- Excel maestro (nombre fijo), con las hojas normativas MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION;
+- diagramas de decisión de la misma versión (archivo fuente + exportación);
+- documentación metodológica en `docs/methodology/` (versión vigente, explicación e historial).
+
+Todos representan una misma versión metodológica y deben mantenerse sincronizados. No existe precedencia entre ellos. Una contradicción entre artefactos es una inconsistencia: se abre un CC (`docs/workflow.md` §14), se determina cuál representa la decisión metodológica aprobada y se sincronizan todos los artefactos afectados.
+
+La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define. No son fuente metodológica: el código, `database/schema.sql`, el prototipo `marybaxmann/Valpo-Verde-Conecta` ni Groundzy. Las referencias técnicas externas (p. ej. ISA, Smiley y Fraedrich) son fundamento citado dentro del paquete, no fuente directa.
+
+`docs/methodology/` documenta solo la versión vigente. Las versiones anteriores se conservan como historial marcadas como reemplazadas y nunca se interpretan como vigentes.
+
+Solo se implementan reglas con estado vigente en la versión publicada que corresponda. No se inventan umbrales, categorías, ramas de decisión, fórmulas ni matrices.
+
+Versionado, aprobación y control de cambios: `docs/workflow.md` §14. Estado de transición hasta la primera versión publicada (2.0.0): `docs/methodology/00-index.md`.
+
+Afecta:
+- rules-engine
+- backend
+- base de datos
+- frontend
+- tests
+- documentación
 
 ## PR-003 — Rol Usuario municipal
 Estado: vigente
@@ -417,9 +449,11 @@ Afecta:
 - storage
 - base de datos
 
-## PR-011 — Motor de reglas
-Estado: vigente
+## PR-011 — Motor de reglas (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-011 v2.0
+Motivo del reemplazo: remitía el estado de las reglas a `docs/methodology/` y dejaba sin formato `rule_version`; ambos puntos quedan definidos por PR-002 v2.0 y `docs/workflow.md` §14. Origen: CC-001.
 
 Las reglas técnicas deben implementarse en:
 `services/rules/`
@@ -432,6 +466,25 @@ Los diagramas/textos metodológicos en `docs/methodology/` determinan qué está
 - obsoleto.
 
 No implementar reglas pendientes.
+
+Afecta:
+- backend
+- rules-engine
+
+## PR-011 — Motor de reglas (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-011 v1.0
+Origen: CC-001
+
+Las reglas técnicas deben implementarse en:
+`services/rules/`
+
+Cada cambio metodológico se registra como CC y se versiona según `docs/workflow.md` §14. `rule_version` corresponde a `MAJOR.MINOR` de la versión publicada del paquete metodológico (PR-002 v2.0).
+
+El estado de cada regla (vigente, pendiente, reemplazada, descartada) lo determina el paquete metodológico: columna `estado_regla` de REGLAS_INDICADORES a partir del paquete 2.0.0; hasta entonces rige el estado de transición de `docs/methodology/00-index.md`.
+
+Solo se implementan reglas vigentes de una versión publicada. No implementar reglas pendientes, reemplazadas ni descartadas.
 
 Afecta:
 - backend
@@ -512,9 +565,11 @@ Afecta:
 - frontend
 - backend
 
-## PR-016 — Groundzy
-Estado: vigente
+## PR-016 — Groundzy (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: PR-016 v3.0
+Motivo del reemplazo: el punto 2 de la prioridad de referencias citaba "Diagramas / metodología (`docs/methodology/`)" como fuente técnica; se actualiza a la fuente definida por PR-002 v2.0. Sin otros cambios. Origen: CC-001.
 
 Actualización 2.0 (cierre W-1): se elimina la contradicción entre calificar
 a Groundzy como "principal" y ubicarla en el puesto 3 de la lista de
@@ -534,6 +589,33 @@ y de la metodología.
 Prioridad de referencias (de mayor a menor autoridad):
 1. Prototipo funcional propio (`marybaxmann/Valpo-Verde-Conecta`) — referencia funcional/UX.
 2. Diagramas / metodología (`docs/methodology/`) — fuente técnica.
+3. Groundzy — referencia visual/UX secundaria.
+4. Otras referencias secundarias.
+
+Afecta:
+- frontend
+- UX
+
+## PR-016 — Groundzy (v3.0)
+Estado: vigente
+Versión: 3.0
+Reemplaza: PR-016 v2.0
+Origen: CC-001
+
+Groundzy inspira experiencia visual y organización de UX.
+
+No define:
+- lógica;
+- metodología;
+- reglas de negocio;
+- estructura de datos.
+
+Es secundaria respecto del prototipo propio (`marybaxmann/Valpo-Verde-Conecta`)
+y de la metodología.
+
+Prioridad de referencias (de mayor a menor autoridad):
+1. Prototipo funcional propio (`marybaxmann/Valpo-Verde-Conecta`) — referencia funcional/UX.
+2. Paquete metodológico (PR-002 v2.0, `docs/methodology/`) — fuente técnica.
 3. Groundzy — referencia visual/UX secundaria.
 4. Otras referencias secundarias.
 

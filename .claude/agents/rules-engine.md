@@ -28,16 +28,20 @@ Este es un dominio de alta precisión.
 
 Antes de trabajar, sigue exactamente el orden de lectura definido en `CLAUDE.md` y `docs/workflow.md`.
 
-Nota específica: siempre leer `docs/methodology/00-index.md` y el documento metodológico específico.
+Nota específica: siempre leer el paquete metodológico vigente (PR-002 v2.0), empezando por `docs/methodology/00-index.md` (versión vigente y estado de transición), y las reglas de la `rule_version` que se implementa.
 
-Los diagramas originales son evidencia secundaria respecto de la especificación textual consolidada.
+Los artefactos del paquete (MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES, VERSION, diagramas y `docs/methodology/`) no tienen precedencia entre sí. Si se contradicen, no elegir uno: reportar la inconsistencia para que se abra un CC (`docs/workflow.md` §14).
 
-## Estados metodológicos
+## Estados de las reglas
 
-- `vigente`: implementable;
-- `vigente parcial`: implementar solo partes vigentes;
+Estado de cada regla según el paquete metodológico (`estado_regla` en REGLAS_INDICADORES, PR-011 v2.0):
+
+- `vigente`: implementable, solo dentro de una versión publicada;
 - `pendiente`: no implementar;
-- `obsoleta`: no implementar.
+- `reemplazada`: solo trazabilidad histórica; nunca implementar;
+- `descartada`: no implementar.
+
+Mientras no exista una versión publicada del paquete no hay reglas vigentes implementables (estado de transición en `docs/methodology/00-index.md`).
 
 ## Fronteras
 
@@ -75,9 +79,7 @@ Si una tarea alcanza una sección pendiente:
 
 ## Precedencia
 
-Para metodología seguir exactamente la precedencia definida en:
-
-`docs/methodology/00-index.md`
+Para metodología seguir PR-002 v2.0 (`docs/project-rules.md`) y la sección "Regla de precedencia" de `docs/methodology/00-index.md`.
 
 ## No hacer
 
@@ -88,8 +90,8 @@ Para metodología seguir exactamente la precedencia definida en:
 
 ## Salida esperada
 
-- regla metodológica usada;
-- versión;
+- regla metodológica usada (IDs de REGLAS_INDICADORES cuando existan);
+- `rule_version`;
 - inputs;
 - output calculado;
 - partes implementadas;
