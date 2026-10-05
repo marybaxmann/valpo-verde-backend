@@ -5,11 +5,6 @@
 > se aseguró que el desarrollo asistido por IA fuera consistente con la
 > metodología del estudio.
 
-Este documento no busca describir exhaustivamente el software
-implementado. Su propósito es conservar la trazabilidad de las
-decisiones que transformaron el estudio en una herramienta aplicable a
-la gestión municipal del arbolado urbano y su interacción con la
-infraestructura gris.
 
 ```mermaid
 flowchart LR
