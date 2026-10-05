@@ -561,7 +561,7 @@ Sí. Los pendientes se cierran en una nueva versión de esta ADR.
 
 ### Reglas relacionadas
 PR-005
-PR-006 v6.0
+PR-006 v7.0
 PR-015 v2.0
 ADR-015
 
@@ -788,10 +788,60 @@ El riesgo principal de integrar una plataforma SIG es mantener una segunda copia
 Sí. Cualquier cambio que introduzca escritura en capas ArcGIS o una copia editable fuera de Supabase requiere una nueva versión de esta ADR.
 
 ### Reglas relacionadas
-PR-006 v6.0
+PR-006 v7.0
 PR-015 v2.0
 PR-017
 ADR-001
 ADR-003
 ADR-010 v2.0
 ADR-014
+
+---
+
+## ADR-016 — Árbol y medición dendrométrica como conceptos distintos
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-10
+Origen: CC-020
+
+### Contexto
+El anexo ARBOLES, DICCIONARIO_CAMPOS y la tabla `trees` de `schema.sql` trataban DAP, altura total, diámetro de copa, altura de primera rama, configuración de fustes y clase de edad como atributos del árbol, sin fecha propia: una nueva medición sobrescribía la anterior. Esto contradice la preservación histórica (ADR-012) y deja sin trazabilidad las evaluaciones que dependen de las dimensiones del momento: `zona_objetivo` se define respecto de la altura total del árbol (M01).
+
+### Decisión
+1. ÁRBOL representa la identidad y la caracterización relativamente estable del ejemplar: identificación, proyecto, ubicación canónica en WGS84 (ADR-010 v2.0) y especie.
+2. MEDICIÓN DENDROMÉTRICA (`MEDICIONES_DENDROMETRICAS`) es el registro fechado de las dimensiones y características dendrométricas observadas, medidas o estimadas de un ejemplar: configuración de fustes, DAP o diámetros por fuste, altura total (`altura_total_m`), diámetro de copa, altura de primera rama y clase de edad (opcional).
+3. Relación conceptual: ARBOLES 1:N MEDICIONES_DENDROMETRICAS.
+4. Medición inicial: el alta es un único flujo de usuario que produce ÁRBOL + MEDICIÓN INICIAL; la medición inicial es obligatoria para completar el inventario (PR-006 v7.0).
+5. Nueva medición: nuevo evento dendrométrico; no sobrescribe mediciones anteriores.
+6. Corrección: modifica un dato erróneo de la misma medición conservando auditoría; no es una nueva medición.
+7. Anulación: anulación lógica de la medición completa; permanece en el historial, no participa en el valor actual y conserva motivo, autor y fecha de anulación.
+8. Última medición válida: la medición no anulada con la `fecha_medicion` más reciente. La fecha de registro no determina cuál medición es la vigente.
+9. Valor dendrométrico actual: se deriva de la última medición válida; no existe como un segundo dato editable independiente.
+10. Una modificación posterior de la especie es una corrección o refinamiento de identificación, no una nueva medición.
+11. MEDICIÓN DENDROMÉTRICA e INSPECCIÓN TÉCNICA son conceptos distintos. Registrar una medición no constituye una inspección técnica (PR-003 v5.0).
+
+Pendiente (no se cierra en esta ADR):
+- Relación MEDICIÓN ↔ INSPECCIÓN: (A) la inspección referencia una medición existente, (B) la inspección genera una nueva medición, o (C) ambas.
+- Efecto de corregir o anular una medición ya utilizada por una inspección completada, que es inmutable (ADR-007).
+- Categorías definitivas de configuración de fustes y regla de DAP equivalente.
+- Obligatoriedad de cada campo en mediciones posteriores a la inicial y tratamiento metodológico de la clase de edad.
+
+Esta ADR no define el esquema físico (tablas, claves, constraints ni migraciones).
+
+### Consecuencias
+- Se preserva el historial dendrométrico de cada ejemplar y es posible reconstruir con qué dimensiones se hizo cada evaluación.
+- El modelo actual de `trees` (columnas `dap`, `altura_total`, `diametro_copa`, `altura_primera_rama` sobrescribibles) no se ajusta a esta decisión. Su adaptación requiere diseño técnico y migración posteriores (CC-020); no se implementa escritura de dimensiones sobre `trees`.
+- El endpoint de inventario para el mapa (SIG-1) no expone dimensiones y no se ve afectado.
+- La especificación es de ámbito `operativo` (DICCIONARIO_CAMPOS, CC-008): puede pasar a implementación desde `FUENTE SINCRONIZADA` sin esperar la publicación del paquete 2.0.0 (`docs/workflow.md` §14.12). Las reglas de evaluación siguen exigiendo una versión publicada.
+
+### Puede cambiar
+Sí, preservando la trazabilidad histórica de árboles, mediciones e inspecciones.
+
+### Reglas relacionadas
+PR-003 v5.0
+PR-004
+PR-006 v7.0
+PR-009
+ADR-007
+ADR-010 v2.0
+ADR-012

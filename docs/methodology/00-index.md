@@ -2,11 +2,11 @@
 
 ## Propósito
 
-Este directorio documenta la metodología técnica de Valpo Verde y su versión, como parte del paquete metodológico definido en PR-002 v2.1.
+Este directorio documenta la metodología técnica de Valpo Verde y su versión, como parte del paquete metodológico definido en PR-002 v2.2.
 
 La fuente de verdad metodológica es un paquete versionado y sincronizado compuesto por:
 
-- Excel maestro (nombre fijo); la composición y el carácter de cada hoja (núcleo normativo, gobernanza, catálogo subordinado, módulo en propuesta y anexos operativos no normativos) se definen en PR-002 v2.1, sección "Composición del Excel maestro";
+- Excel maestro (nombre fijo); la composición y el carácter de cada hoja (núcleo normativo, gobernanza, catálogo subordinado, módulo en propuesta y anexos operativos no normativos) se definen en PR-002 v2.2, sección "Composición del Excel maestro";
 - diagramas de decisión de la misma versión;
 - la documentación metodológica de este directorio.
 
@@ -28,9 +28,11 @@ Hasta su publicación rige el siguiente estado de transición (CC-001):
 2. Los diagramas disponibles en `docs/excel/diagramas/` son exportaciones en imagen; los archivos fuente `.drawio` no están en el repositorio.
 3. Los documentos `01-roots-base.md` a `05-infrastructure.md` (versión 1.1) y las secciones de este índice marcadas como **CONTENIDO TRANSITORIO** corresponden a la metodología textual previa. No incorporan decisiones metodológicas posteriores ni el Excel maestro. Se conservarán como historial, marcados como reemplazados, cuando se publique el paquete 2.0.0.
 4. Las frases de esos documentos que declaran que la especificación textual prevalece sobre el diagrama quedan sin efecto por PR-002 (v2.0 y siguientes).
-5. Mientras no exista una versión publicada no hay reglas vigentes implementables: no se implementa metodología en `services/rules/` (PR-002 v2.1, PR-011 v2.0).
+5. Mientras no exista una versión publicada no hay reglas vigentes implementables: no se implementa metodología en `services/rules/` (PR-002 v2.2, PR-011 v2.0).
 6. Las decisiones metodológicas ya tomadas y aún no sincronizadas se registran como CC en `docs/registro-cambios.md`. No se incorporan a estos documentos fuera de su CC.
-7. La hoja INDICES es un módulo metodológico en propuesta (CC-016): no es fuente normativa vigente y sus fórmulas no son implementables. Las hojas ARBOLES, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO y USUARIOS son anexos operativos no normativos (PR-002 v2.1, CC-003); las contradicciones detectadas en ellas están registradas como CC y no se corrigen fuera de su CC.
+7. La hoja INDICES es un módulo metodológico en propuesta (CC-016): no es fuente normativa vigente y sus fórmulas no son implementables. Las hojas ARBOLES, MEDICIONES_DENDROMETRICAS, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO y USUARIOS son anexos operativos no normativos (PR-002 v2.2, CC-003); las contradicciones detectadas en ellas están registradas como CC y no se corrigen fuera de su CC.
+8. Desde CC-008, DICCIONARIO_CAMPOS registra el ámbito de cada campo (`operativo` o `metodologico`). Las especificaciones de ámbito `operativo` pueden pasar a implementación desde `FUENTE SINCRONIZADA`, sin esperar la publicación del paquete (`docs/workflow.md` §14.12). Esto no habilita ninguna regla metodológica: el punto 5 se mantiene.
+9. El modelo conceptual ÁRBOL / MEDICIONES_DENDROMETRICAS (CC-020, ADR-016) está documentado en `modelo-arbol-medicion.md`. Forma parte del paquete 2.0.0 en preparación; no es contenido transitorio.
 
 ---
 

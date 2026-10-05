@@ -428,7 +428,7 @@ No requieren CC (siguen §6, "cambio pequeño y localizado"):
 | 1. Corrección de inconsistencia | Artefactos que deben decir lo mismo no lo dicen, o hay un error matemático. Si ningún artefacto refleja la decisión aprobada, el CC pasa a tipo 2. | R02 decía 8–18 en MATRICES_CALCULO; el máximo real es 14. |
 | 2. Cambio metodológico | Cambia un umbral, clasificación, fórmula, agregación o salida. | Nueva salida "No determinado". |
 | 3. Cambio de modelo de datos | Cambia la estructura de campos o tablas. Requiere ADR si es transversal. | Permitir múltiples redes por árbol. |
-| 4. Cambio de implementación | Código que implementa una regla ya aprobada. Requiere que la regla esté en una versión publicada del paquete. | El backend calcula R02. |
+| 4. Cambio de implementación | Código que implementa una regla o una especificación ya aprobada. Una regla metodológica requiere que esté en una versión publicada del paquete; una especificación de ámbito `operativo` requiere que su CC esté en `FUENTE SINCRONIZADA` (§14.12). | El backend calcula R02. |
 | 5. Cambio documental | Sin cambio de lógica ni de datos. | Actualizar un diagrama desactualizado. |
 
 Un CC puede afectar más de un tipo: se registra un tipo principal y los
@@ -501,6 +501,10 @@ el entorno productivo (ADR-013) se agregará un estado de despliegue.
 El paso 2 es atómico: los artefactos de la fuente no se publican por
 separado. Los cambios tipo 5 recorren 0 → 1 (si corresponde) → 2 → 7.
 Los cambios tipo 4 empiezan en el paso 3, sobre una versión publicada.
+Excepción reglada (CC-008, §14.12): un CC cuyo alcance de implementación
+se limita a especificaciones de ámbito `operativo` puede pasar al paso 3
+desde `FUENTE SINCRONIZADA`, sin esperar la publicación de la versión
+(tag) del paso 2. Las reglas metodológicas no tienen esta excepción.
 
 Los cambios al Excel maestro y a los diagramas se hacen en una rama y se
 integran mediante pull request que cita el CC; no se suben directo a `main`.
@@ -563,7 +567,10 @@ Para pasar a `PROBADO`:
 
 - [ ] Pruebas por regla, incluidos los valores borde de cada intervalo.
 - [ ] El backend declara la `rule_version` que implementa y coincide con
-      una versión publicada.
+      una versión publicada. N/A en implementaciones limitadas a ámbito
+      `operativo` (§14.12): no ejecutan reglas metodológicas; la ficha CC
+      registra la versión del paquete (publicada o en preparación) que
+      contiene la especificación.
 - [ ] La implementación usa solo reglas `vigente` de esa versión.
 - [ ] Ningún resultado calculado puede editarse manualmente (PR-008).
 
@@ -575,7 +582,7 @@ ficha con su motivo.
 
 | Elemento | Formato | Regla |
 |---|---|---|
-| Versión del paquete metodológico | `MAJOR.MINOR.PATCH` | MAJOR: cambia la estructura de la evaluación (componentes, agregaciones, matrices nuevas). MINOR: cambia algún resultado calculable, o el conjunto o significado de los campos. PATCH: no cambia resultados ni campos (redacción, forma de diagramas, notas). |
+| Versión del paquete metodológico | `MAJOR.MINOR.PATCH` | MAJOR: cambia la estructura de la evaluación (componentes, agregaciones, matrices nuevas). MINOR: cambia algún resultado calculable, o el conjunto o significado de los campos de ámbito `metodologico`. PATCH: no cambia resultados ni campos de ámbito `metodologico` (redacción, forma de diagramas, notas, cambios limitados a campos de ámbito `operativo`; §14.12). |
 | `rule_version` | `MAJOR.MINOR` | Igual a la versión del paquete sin PATCH. Un PATCH no genera nueva `rule_version`. Se guarda en cada resultado calculado. |
 | Tag de git | `metodologia-vMAJOR.MINOR.PATCH` | Se crea al publicar cada versión. |
 | Excel maestro | nombre fijo | No se crea una copia por versión: el historial está en git y los tags. |
@@ -586,7 +593,8 @@ ficha con su motivo.
   previo se registra como "previa a 2.0.0 — sin versión formal".
 - Tipo de CC → versión: tipo 2 → MINOR (MAJOR si cambia la estructura);
   tipo 1 → MINOR si altera algún resultado posible, si no PATCH; tipo 3 →
-  MINOR si cambia campos del DICCIONARIO; tipo 4 → sin cambio de versión;
+  MINOR si cambia campos de ámbito `metodologico` del DICCIONARIO, PATCH si
+  solo cambia campos de ámbito `operativo` (§14.12); tipo 4 → sin cambio de versión;
   tipo 5 → PATCH (o ninguno si está fuera del paquete).
 - La implementación de una `rule_version` usa solo las reglas `vigente`
   del paquete publicado con esa versión. Las reglas `reemplazada` son
@@ -601,3 +609,45 @@ ficha con su motivo.
 - §5 y el flujo "Cambio metodológico" de §6 se aplican a través de esta
   sección.
 - §9 (estados pendientes) se aplica sin cambios.
+
+### 14.12 Ámbito de los campos: operativo y metodológico (CC-008)
+
+DICCIONARIO_CAMPOS registra en la columna `ambito` el ámbito de cada campo:
+
+| Valor | Definición |
+|---|---|
+| `metodologico` | El campo es entrada, salida o parte de una regla de evaluación, clasificación, probabilidad de falla, riesgo, afectación global, priorización o indicadores metodológicos (REGLAS_INDICADORES, MATRICES_CALCULO, o INDICES cuando se adopte), o su valor resulta de una de esas reglas. |
+| `operativo` | Especificación operativa o estructural del inventario o de la gestión (identidad, ubicación, trazabilidad, registro de mediciones y similares) que no constituye ni ejecuta ninguna de esas reglas. |
+
+Reglas:
+
+1. Un campo sin valor en `ambito` se trata como `metodologico` hasta que
+   un CC lo clasifique.
+2. El ámbito de un campo se asigna y aprueba en el CC que lo crea o
+   modifica (§14.5).
+3. Un CC cuyo alcance de implementación se limita a especificaciones de
+   ámbito `operativo` puede pasar a implementación (paso 3 de §14.7) sin
+   esperar la publicación de la versión del paquete, siempre que:
+   a. esté `APROBADO METODOLÓGICAMENTE`;
+   b. esté en `FUENTE SINCRONIZADA` (fuentes actualizadas y verificación
+      §14.9 aprobada);
+   c. la implementación no ejecute ninguna regla metodológica ni calcule
+      ningún campo de ámbito `metodologico`;
+   d. la implementación no implemente fórmulas ni reglas pendientes o no
+      aprobadas, aunque estén descritas en el campo;
+   e. la ficha CC registre la versión del paquete (publicada o en
+      preparación) que contiene la especificación.
+4. Las reglas de evaluación, clasificación, probabilidad de falla, riesgo,
+   afectación global, priorización e indicadores metodológicos siguen
+   exigiendo una versión publicada y su `rule_version` (PR-002, PR-011,
+   §14.4, §14.10). Esta sección no las exceptúa.
+5. Referencias cruzadas: si un campo `metodologico` usa como referencia un
+   campo `operativo` (por ejemplo, `zona_objetivo` usa `altura_total_m`),
+   todo cambio de definición, unidad o dominio del campo operativo evalúa
+   en el mismo CC su efecto sobre el campo metodológico. Si ese efecto
+   altera algún resultado calculable, el cambio se versiona como
+   metodológico (MINOR).
+6. Versionado: un cambio limitado a campos de ámbito `operativo` no altera
+   `rule_version` y corresponde a PATCH (§14.10). Mientras la primera
+   versión (2.0.0) no se publique, estos cambios se acumulan en la versión
+   en preparación.
