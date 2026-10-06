@@ -10,7 +10,10 @@ import {
   listMembers,
   removeMember,
 } from "../controllers/projectMember.controller";
-import { listProjectTrees } from "../controllers/tree.controller";
+import {
+  createTree,
+  listProjectTrees,
+} from "../controllers/tree.controller";
 
 const router = Router();
 
@@ -26,5 +29,6 @@ router.post("/:id/members", authMiddleware, addMember);
 router.delete("/:id/members/:userId", authMiddleware, removeMember);
 
 router.get("/:id/trees", authMiddleware, listProjectTrees);
+router.post("/:id/trees", authMiddleware, createTree);
 
 export default router;

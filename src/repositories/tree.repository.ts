@@ -58,3 +58,109 @@ export async function findTreesPage(
   }
   return (data ?? []) as unknown as TreeRow[];
 }
+
+export interface CreateTreeRpcParams {
+  p_project_id: string;
+  p_species_id: string;
+  p_public_space_id: string | null;
+  p_direccion: string | null;
+  p_comuna: string | null;
+  p_lugar_referencia: string | null;
+  p_lon: number;
+  p_lat: number;
+  p_medicion: {
+    fecha_medicion: string;
+    configuracion_fustes: string;
+    numero_fustes?: number | null;
+    dap_fustes_cm?: number[] | null;
+    dap_cm?: number | null;
+    altura_total_m: number;
+    diametro_copa_m: number;
+    altura_primera_rama_m: number;
+    clase_edad?: string | null;
+  };
+}
+
+export interface CreateTreeRpcResult {
+  tree_id: string;
+  tree_code: string;
+  measurement_id: string;
+}
+
+export interface TreeDetailRow {
+  id: string;
+  tree_code: string;
+  legacy_id: string | null;
+  project_id: string;
+  public_space_id: string | null;
+  direccion: string | null;
+  comuna: string | null;
+  lugar_referencia: string | null;
+  ubicacion: unknown;
+  estado_ciclo_vida: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  species: { id: string; nombre_cientifico: string; nombre_comun: string | null } | null;
+  public_spaces: { id: string; nombre: string; tipo: string | null } | null;
+}
+
+const TREE_DETAIL_COLUMNS =
+  "id, tree_code, legacy_id, project_id, public_space_id, direccion, comuna, lugar_referencia, ubicacion::geometry, estado_ciclo_vida, created_by, created_at, updated_at, species(id, nombre_cientifico, nombre_comun), public_spaces(id, nombre, tipo)";
+
+/**
+ * Invoca la función RPC transaccional fn_create_tree_with_measurement en PostgreSQL.
+ * Inserta árbol y medición inicial en una sola transacción atómica con RLS evaluado
+ * mediante el JWT del usuario (ADR-014 / INV-1A).
+ */
+export async function createTreeWithMeasurementRpc(
+  accessToken: string,
+  params: CreateTreeRpcParams
+): Promise<CreateTreeRpcResult> {
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase.rpc(
+    "fn_create_tree_with_measurement",
+    params
+  );
+
+  if (error) {
+    if (error.code === "23503") {
+      if (error.message.includes("species")) throw new Error("Especie no encontrada");
+      if (error.message.includes("public_spaces")) throw new Error("Espacio público no encontrado");
+      if (error.message.includes("projects")) throw new Error("Proyecto no encontrado");
+    }
+    if (error.code === "23514") {
+      throw new Error(`Restricción de datos no cumplida: ${error.message}`);
+    }
+    if (error.code === "23502") {
+      throw new Error(`Dato obligatorio no proporcionado: ${error.message}`);
+    }
+    if (error.code === "22P02") {
+      throw new Error(`Formato de dato inválido: ${error.message}`);
+    }
+    throw new Error(`Error al crear árbol con medición inicial: ${error.message}`);
+  }
+
+  return data as unknown as CreateTreeRpcResult;
+}
+
+/**
+ * Consulta un árbol por su identificador único para la ficha de árbol (GET /api/trees/:treeId).
+ */
+export async function findTreeById(
+  accessToken: string,
+  treeId: string
+): Promise<TreeDetailRow | null> {
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
+    .from("trees")
+    .select(TREE_DETAIL_COLUMNS)
+    .eq("id", treeId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Error al consultar árbol por id: ${error.message}`);
+  }
+
+  return (data ?? null) as unknown as TreeDetailRow | null;
+}

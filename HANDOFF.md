@@ -9,71 +9,92 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-05
-- **Agente emisor:** Claude Code
-- **Agente receptor sugerido:** AGY — INV-1A (diseño técnico)
-- **Rama Git vigente:** `main`
+- **Última actualización:** 2026-10-06
+- **Agente emisor:** AGY (Gemini)
+- **Agente receptor sugerido:** Investigadora (marybaxmann) / Claude Code
+- **Rama Git vigente:** `feature/inv-1b-inventario-arbol-medicion`
 - **Ruta del proyecto:** `C:\Users\usuario\code\valpo-verde-backend`
-- **Resumen:** INV-1A — diseño técnico del inventario (CC-020 pendiente de implementación)
+- **Resumen:** INV-1B VALIDADO EN SUPABASE — LISTO PARA MERGE (006 aplicada, 26/26 pruebas reales en Postgres OK, 120 tests pass)
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
 ---
 
-## 🎯 Próximo hito: INV-1A — DISEÑO TÉCNICO DEL INVENTARIO
+## 🎯 Estado de la Tarea: INV-1B VALIDADO EN SUPABASE — LISTO PARA MERGE
 
-Traducir el modelo conceptual ya aprobado —**ARBOLES 1:N MEDICIONES_DENDROMETRICAS**— a un diseño técnico compatible con la arquitectura existente (`routes → controllers → services → repositories`, Supabase/PostgreSQL + PostGIS, autorización en dos capas backend + RLS).
+> [!IMPORTANT]
+> **MIGRACIÓN 006 APLICADA Y VALIDADA EMPÍRICAMENTE EN SUPABASE REAL (`valpo-verde-conecta`).**
+> Se ejecutó la batería de 26 pruebas reales contra PostgreSQL, RLS, la función RPC transaccional y los endpoints de Express con 100% de éxito (26/26 pruebas pasadas).
+> **NO SE HA HECHO MERGE A `main` NI SE HA INICIADO FRONTEND** (a la espera de la autorización formal de cierre de hito).
+> **CC-020 CONTINÚA PENDIENTE** en su tratamiento metodológico (se capturan las 5 categorías operativas aprobadas en el diccionario, pero las reglas/evaluación no se inventan).
 
-INV-1A **no implementa**. Debe preparar, para aprobación posterior:
-- modelo físico;
-- migración;
-- RLS de las entidades afectadas (ADR-014);
-- contratos de API;
-- alta atómica árbol + medición inicial;
-- historial de mediciones (nueva medición, corrección auditada, anulación lógica);
-- obtención de la última medición válida y del valor dendrométrico actual derivado.
+### Evidencia Empírica Comprobada en PostgreSQL Real
 
-Durante el diseño **no se cierran decisiones metodológicas pendientes** (ver abajo).
+1. **Tabla `tree_measurements`:**
+   - Creada en el esquema `public` con todas las columnas aprobadas en INV-1A/ADR-016.
+   - Restricción de integridad referencial FK `tree_id` configurada con `ON DELETE RESTRICT`.
 
-Fuentes a leer: ADR-016, PR-006 v7.0, PR-003 v5.0, `docs/methodology/modelo-arbol-medicion.md`, DICCIONARIO_CAMPOS (ARBOLES y MEDICIONES_DENDROMETRICAS), `docs/workflow.md` §14.12, ADR-010 v2.0, ADR-014, `database/schema.sql` (estado actual, no fuente).
+2. **Seguridad RLS y Denegación por Defecto:**
+   - **Lectura anónima bloqueada:** Usuario sin autenticación recibe 0 filas.
+   - **INSERT directo bloqueado por RLS:** Intentos de inserción directa desde cliente alcanzado por JWT (tanto `admin` como `usuario_municipal`) son rechazados por PostgreSQL:
+     `new row violates row-level security policy for table "tree_measurements"`.
+   - **UPDATE directo bloqueado:** 0 registros modificados al carecer de política de actualización.
+   - **DELETE directo bloqueado:** 0 registros eliminados al carecer de política de borrado físico.
+   - Políticas de SELECT aprobadas y activas:
+     - `tree_measurements_select_admin` (USING `public.is_admin()`)
+     - `tree_measurements_select_municipal` (USING `public.is_municipal_member(t.project_id)`)
+
+3. **Operación Transaccional Atómica y Autorización (`fn_create_tree_with_measurement`):**
+   - Configurada como `SECURITY DEFINER` con `SET search_path = public, pg_temp`.
+   - **Llamada no autenticada:** Rechazada con excepción `'Usuario no autenticado'`.
+   - **Usuario municipal no miembro:** Rechazado con excepción `'No tiene acceso a este proyecto'`.
+   - **Usuario inactivo:** Rechazado con excepción `'Usuario inactivo o sin perfil válido'`.
+   - **Especie inexistente:** Rechazada con excepción `'Especie no encontrada'`.
+   - **Espacio público de otro proyecto:** Rechazado con excepción `'Espacio público no encontrado en el proyecto'`.
+   - **Trazabilidad estricta forzada:** `created_by` se asigna automáticamente a `auth.uid()` del usuario que invoca la función (comprobado tanto con admin como con usuario municipal), y `estado_medicion` se fija obligatoriamente a `'valida'`.
+   - **Secuencia y código canónico:** Generación correcta de `tree_code` secuencial bajo formato `A-XXXXXX` (ej. `A-000006`).
+   - **Resolución PostGIS:** Columna `ubicacion` creada exitosamente como `geography(Point, 4326)` con coordenadas WGS84 canónicas.
+
+4. **Validaciones de Integridad y Diámetros (H-1):**
+   - **Alta sin diámetros rechazada en DB:** La RPC rechaza mediciones donde `dap_cm` y `dap_fustes_cm` son nulos (`'La medición inicial requiere al menos un diámetro registrado (dap_cm o dap_fustes_cm)'`).
+   - **`numero_fustes = 1` rechazado:** Violación de constraint `chk_tree_measurements_fustes`.
+   - **Alta con solo `dap_cm`:** Permitida y validada.
+   - **Alta con solo `dap_fustes_cm`:** Permitida y validada con array dimensional coincidente.
+   - **Alta con coexistencia de ambos:** Permitida sin XOR forzado.
+
+5. **Atomicidad y Rollback Transaccional:**
+   - Se provocó deliberadamente una falla en la inserción de la medición (mismatch de fustes) posterior al `INSERT` del árbol.
+   - PostgreSQL realizó un rollback total de la transacción: **cero árboles huérfanos creados** (recuento de `trees` idéntico antes y después del fallo).
+
+6. **Endpoints Backend Reales (Express -> Supabase):**
+   - `POST /api/projects/:id/trees` → 201 Created con alta unificada.
+   - `GET /api/trees/:treeId` → 200 OK devolviendo ficha completa del árbol y `medicion_actual_estado: 'ok'`.
+   - `GET /api/trees/:treeId/measurements` → 200 OK devolviendo historial cronológico de mediciones.
+   - `GET /api/projects/:id/trees` (SIG-1) → 200 OK devolviendo la `FeatureCollection` canónica en GeoJSON WGS84.
+   - Limpieza segura de datos de prueba completada, retornando la base de datos a su estado limpio inicial.
 
 ---
 
-## 📌 Estado actual
-- **CC-020** (separación ÁRBOL / MEDICIÓN DENDROMÉTRICA) — integrado en `main` por PR #3 (merge `637db1a`; commits `6af04ec`, `15c9994`). Estado: **PENDIENTE DE IMPLEMENTACIÓN**. Especificación de ámbito `operativo`: puede implementarse sin esperar la publicación de 2.0.0 (§14.12), pero la implementación todavía no está autorizada.
-- **CC-008** (columna `ambito`, §14.12) — **CERRADO** (sin implementación).
-- **CC-009** (validación de `clase_edad`) — **CERRADO** (sin implementación).
-- Paquete metodológico 2.0.0: **en preparación, no publicado**; sin `rule_version`. `services/rules/` sigue bloqueado.
-- Migraciones `001`–`005` validadas en desarrollo/pruebas (`valpo-verde-conecta`); el entorno productivo aún no existe (ADR-013).
-- SIG-1 cerrado: `GET /api/projects/:id/trees` (solo lectura; no expone dimensiones).
-
-**Todavía NO existe:**
-- implementación física del modelo ÁRBOL 1:N MEDICIONES_DENDROMETRICAS;
-- migraciones, RLS, API ni frontend de INV-1.
-
-`trees` en `schema.sql` conserva columnas dimensionales sobrescribibles (`dap`, `altura_total`, `diametro_copa`, `altura_primera_rama`) que no se ajustan a ADR-016: no escribir en ellas; su tratamiento se define en el diseño de INV-1A.
-
----
-
-## ⚠️ Decisiones PENDIENTE (no cerrar en INV-1A)
-- Categorías definitivas de configuración de fustes, criterio/altura de referencia, relación con `numero_fustes` y regla de DAP equivalente (no implementable). Si, una vez aprobada, la regla de DAP equivalente requerirá publicación del paquete: por decidir.
-- Política de especie no determinada, fuente y administración del catálogo de especies, nombres comunes.
-- UTM: obligatoriedad, datum, huso y conservación de la coordenada original (ADR-010 v2.0). WGS84 es la ubicación canónica obligatoria.
-- Relación MEDICIÓN ↔ INSPECCIÓN (A / B / C) y efecto de corregir o anular una medición usada por una inspección completada (ADR-007).
-- Obligatoriedad de los campos en mediciones posteriores a la inicial.
-- Tratamiento metodológico de `clase_edad`.
-- Correspondencia `sector` / `ubicacion_descriptiva` ↔ comuna, dirección y lugar de referencia.
-- Permisos de anulación de mediciones y de corrección por el Usuario municipal.
-
-Reglas permanentes: no inventar reglas; autorización en dos capas (`authorization.service.ts` + RLS, ADR-014, PR-018).
+## ⚠️ Decisiones PENDIENTE (Preservadas intactas)
+- **H-1 / Mediciones posteriores:** Obligatoriedad de diámetros en mediciones posteriores a la inicial continúa pendiente.
+- **CC-020:** Tratamiento metodológico, reglas de transición y cálculo de `clase_edad` por consolidar (categorías operativas capturadas, evaluación pendiente).
+- **Categorías definitivas de `configuracion_fustes`:** Se mantiene como `TEXT` abierto.
+- **Tratamiento / publicación futura del DAP equivalente:** Pendiente, no se inventó fórmula.
+- **Sector / `ubicacion_descriptiva`:** Pendiente.
+- **Obligatoriedad / datum / huso de UTM:** Pendiente.
+- **Relación MEDICIÓN ↔ INSPECCIÓN:** Pendiente.
+- **Permisos futuros de corrección y anulación:** Pendientes de gobernanza (RLS UPDATE/DELETE no implementados).
+- **Tratamiento metodológico definitivo del empate de fecha máxima:** Pendiente regla de negocio.
+- **Sincronización de `fecha_medicion <= fecha actual` con `DICCIONARIO_CAMPOS`:** Pendiente.
+- **No modificar migraciones 001–005 ni fusionar a `main`.**
 
 ---
 
 ## 📝 Notas de Agentes
-- **2026-10-05 — Claude Code:** Cierre documental de CC-008, CC-009 y CC-020 tras el PR #3. Sin cambios en `database/`, `src/`, migraciones, RLS, API, frontend, SIG ni Excel.
+- **2026-10-06 — AGY (Gemini):** Migración `006_tree_measurements.sql` aplicada en Supabase por la investigadora. Se completó la validación empírica en PostgreSQL real con 26/26 pruebas exitosas que abarcan RLS, atomicidad, constraints, RPC y endpoints backend Express. 120 tests automáticos pasando. Rama lista para merge a `main` cuando la investigadora lo autorice formalmente.
 
 ---
 
 ## 🚀 Instrucción Directa para el Siguiente Agente (Prompt de arranque)
 
-> *"Hola AGY. Lee `HANDOFF.md` (contexto operativo, no fuente metodológica), `CLAUDE.md`, `docs/workflow.md` §14 (incluida §14.12), ADR-016, PR-006 v7.0, PR-003 v5.0, `docs/methodology/modelo-arbol-medicion.md` y las filas ARBOLES / MEDICIONES_DENDROMETRICAS de DICCIONARIO_CAMPOS. Prepara el diseño técnico de INV-1A: modelo físico, migración, RLS, contratos de API, alta atómica árbol + medición inicial, historial de mediciones y obtención de la última medición válida. NO implementes ni modifiques código, schema o migraciones. NO cierres ninguna decisión marcada como PENDIENTE: si el diseño la necesita, déjala como punto abierto para la investigadora."*
+> *"Hola. INV-1B está completamente implementado y validado empíricamente en la base de datos Supabase real en la rama `feature/inv-1b-inventario-arbol-medicion`. Lee `HANDOFF.md` y `docs/workflow.md`. Ejecuta `git status`, `npm test` (120 tests pasando) y `npx tsc --noEmit`. La migración 006 está aplicada y verificada con 26 pruebas en PostgreSQL. A la espera de autorización formal de la investigadora para proceder al merge en main o al hito siguiente."*

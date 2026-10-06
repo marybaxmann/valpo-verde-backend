@@ -7,8 +7,9 @@ Punto de entrada. Deliberadamente corto: indica qué leer y qué fuente manda. N
 Siempre:
 
 1. `CLAUDE.md` (este archivo);
-2. `docs/project-rules.md` — reglas y decisiones vigentes (`PR-*`);
-3. `docs/workflow.md` — procedimiento obligatorio para cualquier cambio.
+2. `HANDOFF.md` — memoria de relevo entre agentes (estado actual, cambios recientes y bloqueos);
+3. `docs/project-rules.md` — reglas y decisiones vigentes (`PR-*`);
+4. `docs/workflow.md` — procedimiento obligatorio para cualquier cambio.
 
 Condicional:
 
@@ -81,3 +82,14 @@ Fronteras:
 - `rules-engine` calcula; `backend` orquesta, persiste y expone los resultados.
 
 `architect` y `qa` son de solo lectura/análisis (no implementan). Solo se usa `architect` si la tarea cambia decisiones, contratos o varias capas; una implementación ya decidida y localizada va directo al agente especializado. `qa` se limita al alcance del cambio que se le entregue, no al repositorio completo.
+ 
+---
+ 
+## Protocolo de Handoff entre Agentes (Claude ↔ AGY ↔ GPT)
+ 
+- **Lectura obligatoria:** Al iniciar cualquier sesión, lee `HANDOFF.md` para conocer el estado dejado por otros agentes.
+- **Preparar Relevo:** Cuando el usuario diga "prepara handoff para [AGY/GPT]" o cuando termines un bloque de trabajo, actualiza `HANDOFF.md` con:
+  1. **Objetivo activo** y **Agente receptor sugerido**.
+  2. **Qué se hizo en este turno:** archivos creados/modificados y resultado de tests (`npm test`).
+  3. **Bloqueos / decisiones pendientes:** reglas que falten o discrepancias detectadas.
+  4. **Instrucción directa para el siguiente agente:** redacta el prompt exacto y listo para copiar para que el siguiente agente empiece sin fricción.
