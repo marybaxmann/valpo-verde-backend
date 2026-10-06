@@ -9,101 +9,110 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-05
+- **Última actualización:** 2026-10-06
 - **Agente emisor:** AGY (Gemini)
-- **Agente receptor sugerido:** Claude Code (Reauditoría) / Investigadora
+- **Agente receptor sugerido:** Claude Code / Investigadora
 - **Rama Git vigente:** `feature/inv-1b-inventario-arbol-medicion`
 - **Ruta del proyecto:** `C:\Users\usuario\code\valpo-verde-backend`
-- **Resumen:** INV-1B CORREGIDO — LISTO PARA REAUDITORÍA (10 suites, 116 tests pass, RLS SELECT-only, RPC SECURITY DEFINER)
+- **Resumen:** INV-1B CORREGIDO — 006 LISTA PARA APLICACIÓN (10 suites, 120 tests pass, H-1 implementado, RLS SELECT-only)
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
 ---
 
-## 🎯 Estado de la Tarea: INV-1B CORREGIDO — LISTO PARA REAUDITORÍA
+## 🎯 Estado de la Tarea: INV-1B CORREGIDO — 006 LISTA PARA APLICACIÓN
 
 > [!IMPORTANT]
-> **INV-1B NO ESTÁ CERRADO**. Se corrigieron todas las observaciones de la auditoría de Claude Code. El hito queda en estado `INV-1B CORREGIDO — LISTO PARA REAUDITORÍA`.
-> **CC-020 CONTINÚA PENDIENTE** en su tratamiento metodológico (se capturan las 5 categorías aprobadas en el diccionario, pero las reglas/evaluación no se inventan).
+> **INV-1B NO ESTÁ CERRADO NI MERGEADO A MAIN**. La migración `006_tree_measurements.sql` está completamente preparada y corregida en código, pero **NO ha sido ejecutada en Supabase**.
+> Se implementaron todas las correcciones solicitadas en la segunda ronda de auditoría de Claude Code.
+> **CC-020 CONTINÚA PENDIENTE** en su tratamiento metodológico (se capturan las 5 categorías operativas aprobadas en el diccionario, pero las reglas/evaluación no se inventan).
 
-### Correcciones Aplicadas Post-Auditoría Claude
+### Correcciones Aplicadas en esta Ronda (Post-Reauditoría Claude)
 
-1. **Corrección de RLS en `tree_measurements`:**
-   - **Eliminada la policy permisiva `tree_measurements_all_admin`** (que otorgaba `ALL` a admin, contradiciendo el diseño que bloquea UPDATE/DELETE).
-   - **Admin NO tiene UPDATE ni DELETE ni INSERT directo.**
-   - **Usuario municipal NO tiene UPDATE ni DELETE ni INSERT directo.**
-   - La tabla `tree_measurements` cuenta con RLS habilitado y **exclusivamente 2 políticas de SELECT**:
-     - `tree_measurements_select_admin` (FOR SELECT USING (is_admin()))
-     - `tree_measurements_select_municipal` (FOR SELECT USING (is_active_municipal() AND is_project_member(tree_id -> project_id)))
-   - **Cero políticas para INSERT, UPDATE, DELETE** para roles autenticados y anónimos. Inserciones directas vía PostgREST quedan bloqueadas físicamente por RLS (código 42501).
+1. **H-1 — Diámetro Obligatorio en Medición Inicial:**
+   - La medición inicial exige al menos un diámetro registrado: `dap_cm IS NOT NULL OR dap_fustes_cm IS NOT NULL`.
+   - **No es XOR:** Se permite solo `dap_cm`, solo `dap_fustes_cm` (con sus campos dependientes coherentes: `numero_fustes >= 2`, array coincidentemente dimensionado), o la coexistencia de ambos. No se prohíbe coexistencia, no se calcula DAP equivalente ni se deriva `dap_cm`.
+   - **Ámbito:** Implementado en el esquema Zod (`initialMeasurementSchema.refine(...)`) y dentro de la función de base de datos `fn_create_tree_with_measurement`.
+   - **No es CHECK de tabla:** No se configuró como constraint en `tree_measurements` dado que la obligatoriedad de mediciones posteriores continúa pendiente.
+   - Si no se provee ningún diámetro en el alta inicial, se rechaza con HTTP 400 Bad Request.
 
-2. **Alta Inicial Exclusiva y Trazabilidad (RPC `SECURITY DEFINER`):**
-   - La inserción de la medición inicial está autorizada **única y exclusivamente** mediante la función transaccional `fn_create_tree_with_measurement`.
-   - Se configuró como `SECURITY DEFINER` (ejecuta como owner de DB para escribir en la tabla restringida) pero con **verificación estricta en profundidad**:
-     - Verifica `auth.uid() IS NOT NULL` (o parámetro equivalente validado).
-     - Valida perfil activo y rol del usuario (`is_active_municipal()` o `is_admin()`).
-     - Valida membresía activa en el proyecto (`is_project_member(project_id)`).
-     - Valida existencia de especie y proyecto activo.
-     - Valida fecha gregoriana válida y no futura.
-     - Fuerza estrictamente `created_by = v_user_id` y `estado_medicion = 'valida'`. El usuario no puede suplantar autor ni insertar mediciones pre-anuladas.
-   - **Mediciones posteriores NO están autorizadas, no tienen endpoint, ni política INSERT directa ni RPC en backend.**
+2. **`numero_fustes` Intacto:**
+   - Se mantiene estrictamente `numero_fustes >= 2` cuando se registra.
+   - `numero_fustes = 1` no está implementado ni permitido (rechazado con HTTP 400).
 
-3. **Corrección de Restricciones de Diámetros:**
-   - **Eliminada la restricción de exclusión mutua (XOR)** entre `dap_cm` y `dap_fustes_cm`.
-   - Si `dap_cm` está presente: `dap_cm > 0`.
-   - Si `dap_fustes_cm` está presente: cada elemento debe ser `> 0` (`NOT (0 >= ANY(dap_fustes_cm))`).
-   - Si `numero_fustes >= 2`: exige obligatoriamente `dap_fustes_cm IS NOT NULL` y `array_length(dap_fustes_cm, 1) = numero_fustes`.
-   - Se permite árbol sin diámetros registrados en la medición si no se midió.
+3. **Eliminación de Regla No Aprobada de Altura:**
+   - Se eliminó completamente la restricción `altura_primera_rama_m <= altura_total_m` de:
+     - `database/migrations/006_tree_measurements.sql`
+     - `database/schema.sql`
+     - `src/schemas/tree.schema.ts`
+     - Tests asociados (ahora verifican que no se rechace un árbol por esta condición).
+   - Se conservan únicamente las validaciones individuales de no-negatividad (`>= 0`) aprobadas.
 
-4. **Alineación de Dominio `clase_edad` (Fila 26 `DICCIONARIO_CAMPOS`):**
-   - Valores aprobados en el diccionario: `'Joven'`, `'Semimaduro'`, `'Tempranamente maduro'`, `'Maduro'`, `'Sobremaduro'`.
-   - Alineado tanto en el CHECK constraint de SQL como en el esquema Zod (`CLASE_EDAD_VALUES`).
-   - Se mantiene como opcional. Su tratamiento metodológico y reglas continúan PENDIENTES bajo **CC-020**.
+4. **Estado del Proyecto en la RPC:**
+   - Se eliminó de `fn_create_tree_with_measurement` la condición `status = 'activo'` sobre `projects`.
+   - La RPC verifica existencia del proyecto (`projects.id = p_project_id`) y membresía/autorización, pero no bloquea proyectos cerrados para el alta inicial (PR-005 no establece dicha prohibición funcional en esta etapa).
 
-5. **Validación Estricta de Fechas y Mapeo de Errores DB/RPC:**
-   - Esquema Zod valida calendario gregoriano estricto (rechaza fechas inválidas como `2026-02-31` y fechas futuras `> hoy`).
-   - Errores previsibles de base de datos y RPC (`23503`, `23514`, violaciones de constraints, mensajes de `RAISE EXCEPTION`) son capturados en repositorio/servicio y mapeados a `AppError` con códigos HTTP apropiados (400, 401, 403, 404), evitando 500 no controlados.
+5. **Validación de Fecha de Medición:**
+   - Se mantiene la validación operacional: formato gregoriano estricto y `fecha_medicion <= fecha actual` (no futura).
+   - *Nota operativa:* Este criterio deberá sincronizarse posteriormente con `DICCIONARIO_CAMPOS` para formalizar su explicitud metodológica.
 
-6. **Resolución de `medicion_actual` (INV-1A):**
-   - 0 mediciones válidas → `null` (`sin_mediciones`).
-   - 1 fecha máxima inequívoca → medición actual (`ok`).
-   - $\ge 2$ mediciones válidas compartiendo la fecha máxima → `null` (`error_empate_fecha_maxima`), sin desempate arbitrario.
-   - Mediciones anuladas son ignoradas por el índice parcial y la consulta de candidatas.
+6. **PostGIS y `search_path` de la RPC:**
+   - Se verificó mediante inspección de esquema en Supabase que las funciones y tipos de PostGIS (`st_point`, `st_makepoint`, `geometry`, `geography`, `spatial_ref_sys`) residen en el esquema `public`.
+   - La RPC `fn_create_tree_with_measurement` mantiene de forma segura:
+     `SET search_path = public, pg_temp`
+     sin agregar `extensions` innecesariamente.
 
-7. **Pruebas y Verificación:**
-   - Se ampliaron los tests unitarios y de integración:
-     - Alta con medición sin diámetros (201).
-     - Validación estricta de fecha gregoriana y fechas futuras (400).
-     - Validación de `clase_edad` permitidas (201) y no permitidas (400).
-     - Validación de `numero_fustes >= 2` sin `dap_fustes_cm` (400).
-     - Validación de `dap_fustes_cm` con valores no positivos (400).
-     - Caso de $\ge 3$ mediciones válidas empatadas en fecha máxima.
-     - Manejo de mediciones anuladas coexistiendo con válidas.
-     - Verificación de rutas inexistentes/prohibidas (`POST /api/trees/:id/measurements` retorna 404).
-     - Mapeo limpio de errores de RPC a 400.
-   - **Total tests:** 10 test suites, 116 tests pasando exitosamente.
-   - **Typecheck:** `npx tsc --noEmit` limpio (0 errores).
+7. **RLS Estricto y Trazabilidad Real:**
+   - La tabla `tree_measurements` cuenta con RLS habilitado y **exactamente 2 políticas de SELECT**:
+     - `tree_measurements_select_admin` (USING `public.is_admin()`)
+     - `tree_measurements_select_municipal` (USING `public.is_municipal_member(t.project_id)`)
+   - **Cero políticas para INSERT, UPDATE o DELETE**: RLS opera con denegación por defecto (`deny-by-default`) para roles autenticados y anónimos. Inserciones directas vía PostgREST quedan impedidas.
+   - La inserción inicial de medición se realiza **exclusivamente** mediante `fn_create_tree_with_measurement` (`SECURITY DEFINER`), la cual fija internamente:
+     `created_by = auth.uid()`
+     `estado_medicion = 'valida'`
+     utilizando la identidad de sesión de Supabase (`auth.uid()`) sin parámetros de suplantación.
+
+8. **Mapeo Puntual de Errores DB/RPC:**
+   - Errores de PostgreSQL `23502` (violación de NOT NULL) y `22P02` (sintaxis/formato inválido) son mapeados limpiamente a HTTP 400 en el repositorio y servicio, evitando respuestas 500 no controladas.
+
+9. **Configuración `.gitignore`:**
+   - Se excluye puntualmente `.claude/launch.json` sin ignorar los agentes versionados en `.claude/agents/`.
+
+10. **Batería de Pruebas Automatizadas:**
+    - Se ejecutaron las 10 test suites, alcanzando **120 tests pasando exitosamente** (`npm test`), incluyendo:
+      - Alta inicial con solo `dap_cm` (201).
+      - Alta inicial con solo `dap_fustes_cm` y dependientes coherentes (201).
+      - Alta inicial con coexistencia de ambos diámetros (201).
+      - Alta inicial sin ningún diámetro (400).
+      - `numero_fustes = 1` rechazado (400).
+      - Fechas inexistentes o futuras rechazadas (400).
+      - `altura_primera_rama_m > altura_total_m` no rechazada (201).
+      - ≥3 mediciones empatadas en fecha máxima resueltas como `error_empate_fecha_maxima` con `medicion_actual: null`.
+      - Coexistencia de mediciones anuladas y válidas resuelta inequívocamente.
+      - Rutas de mediciones posteriores inexistentes (`POST /api/trees/:treeId/measurements` retorna 404).
 
 ---
 
 ## ⚠️ Decisiones PENDIENTE (Preservadas intactas)
-- **CC-020:** Tratamiento metodológico y reglas de `clase_edad` por consolidar (categorías capturadas, evaluación pendiente).
+- **H-1 / Mediciones posteriores:** Obligatoriedad de diámetros en mediciones posteriores a la inicial continúa pendiente.
+- **CC-020:** Tratamiento metodológico, reglas de transición y cálculo de `clase_edad` por consolidar (categorías operativas capturadas, evaluación pendiente).
 - **Categorías definitivas de `configuracion_fustes`:** Se mantiene como `TEXT` abierto.
-- **Relación fustes ↔ fórmula de DAP equivalente:** Continúa pendiente, no se inventó fórmula.
-- **Corrección y anulación de mediciones:** Permisos y flujos pendientes de gobernanza (RLS UPDATE/DELETE completamente denegado).
-- **Mediciones posteriores:** Flujo no autorizado en INV-1B.
-- **Política de especie no determinada y almacenamiento UTM adicional:** Pendientes.
+- **Tratamiento / publicación futura del DAP equivalente:** Pendiente, no se inventó fórmula.
+- **Sector / `ubicacion_descriptiva`:** Pendiente.
+- **Obligatoriedad / datum / huso de UTM:** Pendiente.
 - **Relación MEDICIÓN ↔ INSPECCIÓN:** Pendiente.
+- **Permisos futuros de corrección y anulación:** Pendientes de gobernanza (RLS UPDATE/DELETE no implementados).
 - **Tratamiento metodológico definitivo del empate de fecha máxima:** Pendiente regla de negocio.
+- **Sincronización de `fecha_medicion <= fecha actual` con `DICCIONARIO_CAMPOS`:** Pendiente.
 - **No modificar migraciones 001–005 ni fusionar a `main`.**
 
 ---
 
 ## 📝 Notas de Agentes
-- **2026-10-05 — AGY (Gemini):** Corregidas todas las observaciones de la auditoría de Claude Code sobre la rama `feature/inv-1b-inventario-arbol-medicion`. RLS endurecido a SELECT-only, RPC con `SECURITY DEFINER` y validaciones en profundidad, constraints de diámetros y clase_edad alineados con el Excel metodológico, validación gregoriana de fechas, y tests ampliados a 116 tests pasando. Listo para reauditoría.
+- **2026-10-06 — AGY (Gemini):** Correcciones de la reauditoría aplicadas completamente. Diámetro obligatorio implementado en alta inicial (H-1), eliminada regla inventada de altura, removida exigencia de estado de proyecto en la RPC, search_path verificado con PostGIS en public, .gitignore corregido y HANDOFF alineado fielmente con el código real. 120 tests pasando. Listo para aplicación de 006 cuando se autorice.
 
 ---
 
 ## 🚀 Instrucción Directa para el Siguiente Agente (Prompt de arranque)
 
-> *"Hola. INV-1B fue corregido tras la auditoría de Claude Code y se encuentra en la rama `feature/inv-1b-inventario-arbol-medicion`. Lee `HANDOFF.md` y `docs/workflow.md`. Ejecuta `git status` y `npm test` para verificar el estado limpio de las 10 test suites (116 tests pasando) y `npx tsc --noEmit`. Procede con la reauditoría de INV-1B. Recuerda que INV-1B NO debe fusionarse a main hasta la aprobación formal de la investigadora."*
+> *"Hola. INV-1B fue corregido según la reauditoría de Claude Code en la rama `feature/inv-1b-inventario-arbol-medicion`. Lee `HANDOFF.md` y `docs/workflow.md`. Ejecuta `git status`, `npm test` (120 tests pasando) y `npx tsc --noEmit`. La migración 006 está lista para ser aplicada en Supabase una vez autorizada por la investigadora. Recuerda que INV-1B NO debe fusionarse a main."*
