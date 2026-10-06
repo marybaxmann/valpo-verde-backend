@@ -132,6 +132,12 @@ export async function createTreeWithMeasurementRpc(
     if (error.code === "23514") {
       throw new Error(`Restricción de datos no cumplida: ${error.message}`);
     }
+    if (error.code === "23502") {
+      throw new Error(`Dato obligatorio no proporcionado: ${error.message}`);
+    }
+    if (error.code === "22P02") {
+      throw new Error(`Formato de dato inválido: ${error.message}`);
+    }
     throw new Error(`Error al crear árbol con medición inicial: ${error.message}`);
   }
 

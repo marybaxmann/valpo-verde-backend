@@ -87,10 +87,21 @@ export const initialMeasurementSchema = z
       .optional()
       .nullable(),
   })
-  .refine((data) => data.altura_primera_rama_m <= data.altura_total_m, {
-    message: "altura_primera_rama_m no puede ser mayor que altura_total_m",
-    path: ["altura_primera_rama_m"],
-  })
+  .refine(
+    (data) => {
+      const hasDap = data.dap_cm !== null && data.dap_cm !== undefined;
+      const hasDapFustes =
+        data.dap_fustes_cm !== null &&
+        data.dap_fustes_cm !== undefined &&
+        data.dap_fustes_cm.length > 0;
+      return hasDap || hasDapFustes;
+    },
+    {
+      message:
+        "La medición inicial requiere al menos un diámetro registrado (dap_cm o dap_fustes_cm)",
+      path: ["dap_cm"],
+    }
+  )
   .refine(
     (data) => {
       if (data.numero_fustes !== null && data.numero_fustes !== undefined) {

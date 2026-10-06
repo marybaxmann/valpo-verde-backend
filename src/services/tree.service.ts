@@ -252,7 +252,7 @@ export async function createTreeForUser(
       throw new AppError("Usuario inactivo o sin perfil válido", 403);
     }
     if (msg.includes("Proyecto no encontrado")) {
-      throw new AppError("Proyecto no encontrado o inactivo", 404);
+      throw new AppError("Proyecto no encontrado", 404);
     }
     if (msg.includes("Especie no encontrada")) {
       throw new AppError("Especie no encontrada", 400);
@@ -266,6 +266,14 @@ export async function createTreeForUser(
       msg.includes("fecha_medicion es obligatoria")
     ) {
       throw new AppError(msg, 400);
+    }
+    if (
+      msg.includes("requiere al menos un diámetro registrado") ||
+      msg.includes("configuracion_fustes es obligatoria") ||
+      msg.includes("Dato obligatorio no proporcionado") ||
+      msg.includes("Formato de dato inválido")
+    ) {
+      throw new AppError(msg.replace(/^Error al crear árbol con medición inicial:\s*/, ""), 400);
     }
     if (msg.includes("Restricción de datos no cumplida") || msg.includes("chk_tree_measurements")) {
       throw new AppError("Los datos de la medición no cumplen las restricciones de integridad", 400);

@@ -397,10 +397,20 @@ describe("POST /api/projects/:id/trees", () => {
     expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
   });
 
-  it("payload con altura_primera_rama_m > altura_total_m -> 400", async () => {
+  it("payload con altura_primera_rama_m > altura_total_m no debe rechazarse por regla inventada -> 201", async () => {
     authAsAdmin();
+    mockFindProjectById.mockResolvedValue(PROJECT);
+    mockCreateTreeWithMeasurementRpc.mockResolvedValue({
+      tree_id: TREE_ID,
+      measurement_id: "m-init-1",
+      tree_code: "VAL-4444",
+    });
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([
+      fakeMeasurementRow("m-init-1"),
+    ]);
 
-    const invalidPayload = {
+    const payload = {
       ...validCreateTreePayload,
       medicion_inicial: {
         ...validCreateTreePayload.medicion_inicial,
@@ -411,11 +421,9 @@ describe("POST /api/projects/:id/trees", () => {
     const res = await request(app)
       .post(`/api/projects/${PROJECT_ID}/trees`)
       .set(authHeader)
-      .send(invalidPayload);
+      .send(payload);
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toContain("altura_primera_rama_m");
-    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+    expect(res.status).toBe(201);
   });
 
   it("usuario_municipal sin membresía -> 403", async () => {
@@ -514,18 +522,8 @@ describe("POST /api/projects/:id/trees", () => {
     expect(res.body.data.id).toBe(TREE_ID);
   });
 
-  it("medición sin diámetros (dap_cm, numero_fustes, dap_fustes_cm null) -> 201 exitoso sin XOR forzado", async () => {
+  it("H-1: medición inicial sin ningún diámetro (dap_cm y dap_fustes_cm null) -> 400 Bad Request", async () => {
     authAsAdmin();
-    mockFindProjectById.mockResolvedValue(PROJECT);
-    mockCreateTreeWithMeasurementRpc.mockResolvedValue({
-      tree_id: TREE_ID,
-      measurement_id: "m-init-2",
-      tree_code: "VAL-4444",
-    });
-    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
-    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([
-      fakeMeasurementRow("m-init-2", { dap_cm: null, numero_fustes: null, dap_fustes_cm: null }),
-    ]);
 
     const payloadSinDiametros = {
       ...validCreateTreePayload,
@@ -542,7 +540,124 @@ describe("POST /api/projects/:id/trees", () => {
       .set(authHeader)
       .send(payloadSinDiametros);
 
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("al menos un diámetro registrado");
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+  });
+
+  it("H-1: alta inicial con solo dap_cm -> 201 exitoso", async () => {
+    authAsAdmin();
+    mockFindProjectById.mockResolvedValue(PROJECT);
+    mockCreateTreeWithMeasurementRpc.mockResolvedValue({
+      tree_id: TREE_ID,
+      measurement_id: "m-init-dap",
+      tree_code: "VAL-4444",
+    });
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([
+      fakeMeasurementRow("m-init-dap", { dap_cm: 25.4, numero_fustes: null, dap_fustes_cm: null }),
+    ]);
+
+    const payloadSoloDap = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        dap_cm: 25.4,
+        numero_fustes: null,
+        dap_fustes_cm: null,
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payloadSoloDap);
+
     expect(res.status).toBe(201);
+  });
+
+  it("H-1: alta inicial con solo dap_fustes_cm coherente -> 201 exitoso", async () => {
+    authAsAdmin();
+    mockFindProjectById.mockResolvedValue(PROJECT);
+    mockCreateTreeWithMeasurementRpc.mockResolvedValue({
+      tree_id: TREE_ID,
+      measurement_id: "m-init-fustes",
+      tree_code: "VAL-4444",
+    });
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([
+      fakeMeasurementRow("m-init-fustes", { dap_cm: null, numero_fustes: 2, dap_fustes_cm: [15.2, 18.0] }),
+    ]);
+
+    const payloadSoloFustes = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        dap_cm: null,
+        numero_fustes: 2,
+        dap_fustes_cm: [15.2, 18.0],
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payloadSoloFustes);
+
+    expect(res.status).toBe(201);
+  });
+
+  it("H-1: alta inicial con ambos dap_cm y dap_fustes_cm -> 201 exitoso sin XOR forzado", async () => {
+    authAsAdmin();
+    mockFindProjectById.mockResolvedValue(PROJECT);
+    mockCreateTreeWithMeasurementRpc.mockResolvedValue({
+      tree_id: TREE_ID,
+      measurement_id: "m-init-both",
+      tree_code: "VAL-4444",
+    });
+    mockFindTreeById.mockResolvedValue(fakeTreeDetailRow(TREE_ID));
+    mockFindLatestValidMeasurementsCandidates.mockResolvedValue([
+      fakeMeasurementRow("m-init-both", { dap_cm: 22.0, numero_fustes: 2, dap_fustes_cm: [15.2, 18.0] }),
+    ]);
+
+    const payloadBoth = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        dap_cm: 22.0,
+        numero_fustes: 2,
+        dap_fustes_cm: [15.2, 18.0],
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payloadBoth);
+
+    expect(res.status).toBe(201);
+  });
+
+  it("numero_fustes = 1 -> rechazado (400 Bad Request)", async () => {
+    authAsAdmin();
+
+    const payload = {
+      ...validCreateTreePayload,
+      medicion_inicial: {
+        ...validCreateTreePayload.medicion_inicial,
+        numero_fustes: 1,
+        dap_fustes_cm: null,
+      },
+    };
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send(payload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("numero_fustes");
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
   });
 
   it("numero_fustes registrado sin dap_fustes_cm -> 400 Bad Request", async () => {

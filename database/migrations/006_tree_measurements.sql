@@ -71,10 +71,6 @@ CREATE TABLE public.tree_measurements (
   created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-  -- Coherencia física: primera rama no puede superar la altura total
-  CONSTRAINT chk_tree_measurements_altura_rama
-    CHECK (altura_primera_rama_m <= altura_total_m),
-
   -- Restricción estricta de dap_cm (cuando exista debe ser estrictamente positivo)
   CONSTRAINT chk_tree_measurements_dap_cm
     CHECK (dap_cm IS NULL OR dap_cm > 0),
@@ -176,12 +172,12 @@ BEGIN
     RAISE EXCEPTION 'No tiene acceso a este proyecto';
   END IF;
 
-  -- 4. Validar existencia y estado del proyecto
+  -- 4. Validar existencia del proyecto (PR-005: la spec vigente no prohíbe alta en proyecto cerrado aún)
   IF NOT EXISTS (
     SELECT 1 FROM public.projects
-    WHERE id = p_project_id AND status = 'activo'
+    WHERE id = p_project_id
   ) THEN
-    RAISE EXCEPTION 'Proyecto no encontrado o inactivo';
+    RAISE EXCEPTION 'Proyecto no encontrado';
   END IF;
 
   -- 5. Validar existencia de la especie
@@ -218,6 +214,12 @@ BEGIN
   -- 8. Validar configuracion_fustes obligatoria
   IF NOT (p_medicion ? 'configuracion_fustes') OR TRIM(p_medicion->>'configuracion_fustes') = '' THEN
     RAISE EXCEPTION 'configuracion_fustes es obligatoria';
+  END IF;
+
+  -- 8b. H-1: Validar obligatoriedad de diámetro en medición inicial (dap_cm o dap_fustes_cm)
+  IF (NOT (p_medicion ? 'dap_cm') OR p_medicion->>'dap_cm' IS NULL)
+     AND (NOT (p_medicion ? 'dap_fustes_cm') OR p_medicion->>'dap_fustes_cm' IS NULL OR jsonb_array_length(p_medicion->'dap_fustes_cm') = 0) THEN
+    RAISE EXCEPTION 'La medición inicial requiere al menos un diámetro registrado (dap_cm o dap_fustes_cm)';
   END IF;
 
   -- 9. Insertar el Árbol con ubicación canónica WGS84
