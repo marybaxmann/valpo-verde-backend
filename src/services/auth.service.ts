@@ -5,6 +5,15 @@ import {
 } from "../repositories/userProfile.repository";
 import { AppError } from "../utils/AppError";
 import { AuthenticatedUser } from "../types/auth";
+import { TtlCache } from "../utils/ttlCache";
+
+/**
+ * Sesiones ya validadas (token → perfil) durante 60 s, para no repetir en
+ * cada petición los dos viajes a Supabase (validar token + leer perfil).
+ * Contrapartida aceptada: un usuario desactivado o un token revocado puede
+ * seguir respondiendo hasta 60 s. Solo se guardan validaciones exitosas.
+ */
+const sessionCache = new TtlCache<AuthenticatedUser>(60_000);
 
 /**
  * Valida un JWT de Supabase Auth y devuelve el perfil de aplicación
@@ -17,6 +26,9 @@ import { AuthenticatedUser } from "../types/auth";
 export async function resolveAuthenticatedUser(
   token: string
 ): Promise<AuthenticatedUser> {
+  const cached = sessionCache.get(token);
+  if (cached) return cached;
+
   const authUser = await getAuthUserByToken(token);
 
   if (!authUser) {
@@ -36,11 +48,13 @@ export async function resolveAuthenticatedUser(
     throw new AppError("Usuario inactivo", 403);
   }
 
-  return {
+  const user: AuthenticatedUser = {
     id: authUser.id,
     email: authUser.email,
     nombre: profile.nombre,
     role: extractRoleName(profile.role),
     activo: profile.activo,
   };
+  sessionCache.set(token, user);
+  return user;
 }

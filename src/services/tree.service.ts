@@ -2,6 +2,7 @@ import { AuthenticatedUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
 import { InvalidLocationError, LonLat, parseLocationPoint } from "../utils/geoPoint";
 import { findProjectById } from "../repositories/project.repository";
+import { TtlCache } from "../utils/ttlCache";
 import {
   createTreeWithMeasurementRpc,
   findTreeById,
@@ -99,6 +100,23 @@ function toFeature(row: TreeRow, coordinates: LonLat): TreeFeature {
  * Los árboles sin ubicación se cuentan en `meta` pero no van en `features`.
  */
 /**
+ * Proyectos cuya existencia ya se confirmó para un usuario (60 s): evita un
+ * viaje a Supabase en cada consulta de árboles. Solo se guardan proyectos
+ * existentes; un 404 nunca se guarda.
+ */
+const projectExistsCache = new TtlCache<true>(60_000);
+
+async function assertProjectExists(user: AuthenticatedUser, projectId: string, accessToken: string): Promise<void> {
+  const key = `${user.id}:${projectId}`;
+  if (projectExistsCache.get(key)) return;
+  const project = await findProjectById(accessToken, projectId);
+  if (!project) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+  projectExistsCache.set(key, true);
+}
+
+/**
  * Todas las filas de árboles del proyecto (con y sin ubicación), con la
  * misma verificación de acceso que el inventario. Para agregados y
  * listados de módulos que no deben omitir árboles sin georreferenciar.
@@ -109,10 +127,7 @@ export async function listAllProjectTreeRowsForUser(
   accessToken: string
 ): Promise<TreeRow[]> {
   await assertProjectAccess(user, projectId, accessToken);
-  const project = await findProjectById(accessToken, projectId);
-  if (!project) {
-    throw new AppError("Proyecto no encontrado", 404);
-  }
+  await assertProjectExists(user, projectId, accessToken);
   return findAllProjectTrees(accessToken, projectId);
 }
 
@@ -122,10 +137,7 @@ export async function listProjectTreesForUser(
   accessToken: string
 ): Promise<TreeInventory> {
   await assertProjectAccess(user, projectId, accessToken);
-  const project = await findProjectById(accessToken, projectId);
-  if (!project) {
-    throw new AppError("Proyecto no encontrado", 404);
-  }
+  await assertProjectExists(user, projectId, accessToken);
 
   const rows = await findAllProjectTrees(accessToken, projectId);
   const features: TreeFeature[] = [];
@@ -227,10 +239,7 @@ export async function createTreeForUser(
   accessToken: string
 ): Promise<{ data: TreeDetailDTO }> {
   await assertProjectWriter(user, projectId, accessToken);
-  const project = await findProjectById(accessToken, projectId);
-  if (!project) {
-    throw new AppError("Proyecto no encontrado", 404);
-  }
+  await assertProjectExists(user, projectId, accessToken);
 
   try {
     const rpcResult = await createTreeWithMeasurementRpc(accessToken, {

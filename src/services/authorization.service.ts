@@ -1,6 +1,19 @@
 import { AuthenticatedUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
 import { findMembership } from "../repositories/projectMember.repository";
+import { TtlCache } from "../utils/ttlCache";
+
+/**
+ * Membresías confirmadas (usuario:proyecto) durante 60 s. Solo se guardan
+ * confirmaciones; quitar un miembro invalida su entrada (ver
+ * invalidateMembership, llamado desde projectMember.service).
+ */
+const membershipCache = new TtlCache<true>(60_000);
+
+/** Olvida la membresía en caché de un usuario en un proyecto. */
+export function invalidateMembership(projectId: string, userId: string): void {
+  membershipCache.invalidate(`${userId}:${projectId}`);
+}
 
 /**
  * Autorización centralizada del modelo multiproyecto (PR-003 v4.0,
@@ -66,11 +79,15 @@ export async function assertProjectAccess(
     return;
   }
 
+  const key = `${user.id}:${projectId}`;
+  if (membershipCache.get(key)) return;
+
   const membership = await findMembership(accessToken, projectId, user.id);
 
   if (!membership) {
     throw new AppError("No tiene acceso a este proyecto", 403);
   }
+  membershipCache.set(key, true);
 }
 
 /**
