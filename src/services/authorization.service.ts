@@ -72,3 +72,20 @@ export async function assertProjectAccess(
     throw new AppError("No tiene acceso a este proyecto", 403);
   }
 }
+
+/**
+ * Exige permiso de ESCRITURA sobre los datos de un proyecto (CC-022):
+ * - `admin` → 403: acceso de solo lectura a los datos del proyecto
+ *   (PR-004 v5.0; conserva la gestión de proyectos y miembros).
+ * - `usuario_municipal` → exige membresía (assertProjectAccess, PR-003 v6.0).
+ */
+export async function assertProjectWriter(
+  user: AuthenticatedUser,
+  projectId: string,
+  accessToken: string
+): Promise<void> {
+  if (isAdmin(user)) {
+    throw new AppError("El Administrador tiene acceso de solo lectura a los datos del proyecto", 403);
+  }
+  await assertProjectAccess(user, projectId, accessToken);
+}

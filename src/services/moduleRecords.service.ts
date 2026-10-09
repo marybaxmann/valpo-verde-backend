@@ -3,7 +3,7 @@ import { AppError } from "../utils/AppError";
 import { findTreeById } from "../repositories/tree.repository";
 import { listAllProjectTreeRowsForUser, resolveCurrentMeasurement } from "./tree.service";
 import { findValidMeasurementsByTreeIds, TreeMeasurementRow } from "../repositories/treeMeasurement.repository";
-import { assertAdmin, assertProjectAccess } from "./authorization.service";
+import { assertProjectAccess, assertProjectWriter } from "./authorization.service";
 import {
   findIncidentsByProjectId,
   findInfrastructureAssessmentsByTreeIds,
@@ -34,10 +34,17 @@ function rethrow(err: unknown): never {
   throw err;
 }
 
-async function treeProjectFor(user: AuthenticatedUser, treeId: string, accessToken: string): Promise<string> {
+async function treeProjectFor(
+  user: AuthenticatedUser,
+  treeId: string,
+  accessToken: string,
+  write = false
+): Promise<string> {
   const tree = await findTreeById(accessToken, treeId);
   if (!tree) throw new AppError("Árbol no encontrado", 404);
-  await assertProjectAccess(user, tree.project_id, accessToken);
+  // Escritura: el Administrador es solo lectura (CC-022, PR-004 v5.0).
+  if (write) await assertProjectWriter(user, tree.project_id, accessToken);
+  else await assertProjectAccess(user, tree.project_id, accessToken);
   return tree.project_id;
 }
 
@@ -93,7 +100,7 @@ export async function createInfrastructureAssessmentForUser(
   body: CreateInfrastructureAssessmentBody,
   accessToken: string
 ): Promise<{ data: InfrastructureAssessmentDTO }> {
-  await treeProjectFor(user, treeId, accessToken);
+  await treeProjectFor(user, treeId, accessToken, true);
   try {
     const row = await insertInfrastructureAssessment(accessToken, {
       tree_id: treeId,
@@ -135,7 +142,7 @@ export async function createMaintenanceOrderForUser(
   body: CreateMaintenanceOrderBody,
   accessToken: string
 ) {
-  const treeProject = await treeProjectFor(user, body.tree_id, accessToken);
+  const treeProject = await treeProjectFor(user, body.tree_id, accessToken, true);
   if (treeProject !== projectId) throw new AppError("El árbol no pertenece a este proyecto", 400);
   try {
     const row = await insertMaintenanceOrder(accessToken, {
@@ -165,9 +172,9 @@ export async function createIncidentForUser(
   body: CreateIncidentBody,
   accessToken: string
 ) {
-  await assertProjectAccess(user, projectId, accessToken);
+  await assertProjectWriter(user, projectId, accessToken);
   if (body.tree_id) {
-    const treeProject = await treeProjectFor(user, body.tree_id, accessToken);
+    const treeProject = await treeProjectFor(user, body.tree_id, accessToken, true);
     if (treeProject !== projectId) throw new AppError("El árbol no pertenece a este proyecto", 400);
   }
   try {
@@ -193,9 +200,8 @@ export async function listProjectIncidentsForUser(user: AuthenticatedUser, proje
 // ------------------------------------------------- Cambios de estado
 
 /**
- * Cambio de estado de una orden de trabajo. Solo Administrador: PR-003 v5.0
- * no otorga al Usuario municipal gestión de mantenimiento ("consultar
- * mantenimiento"), y RLS no le concede UPDATE.
+ * Cambio de estado de una orden de trabajo: Usuario municipal miembro del
+ * proyecto (PR-003 v6.0, CC-022). El Administrador es solo lectura.
  */
 export async function updateMaintenanceStateForUser(
   user: AuthenticatedUser,
@@ -204,10 +210,9 @@ export async function updateMaintenanceStateForUser(
   body: UpdateMaintenanceStateBody,
   accessToken: string
 ) {
-  assertAdmin(user);
   const order = await findMaintenanceById(accessToken, orderId);
   if (!order) throw new AppError("Orden de trabajo no encontrada", 404);
-  const treeProject = await treeProjectFor(user, order.tree_id, accessToken);
+  const treeProject = await treeProjectFor(user, order.tree_id, accessToken, true);
   if (treeProject !== projectId) throw new AppError("Orden de trabajo no encontrada", 404);
   const updated = await updateMaintenanceState(accessToken, orderId, body.estado, user.id);
   if (!updated) throw new AppError("No tiene permiso para actualizar esta orden", 403);
@@ -216,8 +221,8 @@ export async function updateMaintenanceStateForUser(
 
 /**
  * Cambio de estado de una incidencia (con nota de seguimiento opcional que
- * se agrega a la bitácora `observacion`). Solo Administrador: la migración
- * 005 excluye explícitamente UPDATE de incidents para usuario_municipal.
+ * se agrega a la bitácora `observacion`): Usuario municipal miembro del
+ * proyecto (PR-003 v6.0, CC-022). El Administrador es solo lectura.
  */
 export async function updateIncidentStateForUser(
   user: AuthenticatedUser,
@@ -226,7 +231,7 @@ export async function updateIncidentStateForUser(
   body: UpdateIncidentStateBody,
   accessToken: string
 ) {
-  assertAdmin(user);
+  await assertProjectWriter(user, projectId, accessToken);
   const incident = await findIncidentById(accessToken, incidentId);
   if (!incident || incident.project_id !== projectId) throw new AppError("Incidencia no encontrada", 404);
   const nota = body.observacion?.trim();

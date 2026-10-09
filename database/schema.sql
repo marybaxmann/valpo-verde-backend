@@ -1,7 +1,8 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 5 — posterior a la migración 010: incluye 005–006 (RLS base,
+--   (revisión 6 — posterior a la migración 011 (CC-022, Administrador solo
+--   lectura); antes revisión 5, posterior a la migración 010: incluye 005–006 (RLS base,
 --   tree_measurements + RPC de alta), 007 (evaluación de riesgo), 008
 --   (infraestructura, mantención), 009 (códigos OT/INC) y 010 (RLS en
 --   tablas expuestas). Sincronizado el 2026-10-09.)
@@ -369,7 +370,7 @@ BEGIN
     RAISE EXCEPTION 'Usuario inactivo o sin perfil válido';
   END IF;
 
-  IF NOT (public.is_admin() OR public.is_municipal_member(p_project_id)) THEN
+  IF NOT public.is_municipal_member(p_project_id) THEN  -- CC-022 (011): el Administrador es solo lectura
     RAISE EXCEPTION 'No tiene acceso a este proyecto';
   END IF;
 
@@ -912,7 +913,7 @@ CREATE INDEX idx_photos_tree ON photos (tree_id);
 -- Pendientes explícitos que este esquema NO resuelve (por diseño):
 --   - probability_thresholds: sin filas (rangos numéricos por entregar)
 --   - risk_evaluations: sin lógica de cálculo (impacto/consecuencias/matriz)
---   - RLS: definida en migraciones (005, 006, 007, 008, 010), no aquí.
+--   - RLS: definida en migraciones (005, 006, 007, 008, 010, 011), no aquí.
 --     spatial_ref_sys (PostGIS) conserva privilegios de escritura para los
 --     roles de la API: la tabla pertenece a supabase_admin (issue #9).
 --   - M04 (clasificación global de infraestructura) y M05 (prioridad):

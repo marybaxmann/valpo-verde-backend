@@ -100,8 +100,16 @@ describe("Infraestructura — /api/trees/:treeId/infrastructure-assessments", ()
     expect(res.status).toBe(401);
   });
 
-  it("admin crea evaluación con datos crudos -> 201", async () => {
+  it("admin -> 403 al registrar (solo lectura, CC-022) y no inserta", async () => {
     authAsAdmin();
+    treeInProject();
+    const res = await request(app).post(url).set(authHeader).send(body());
+    expect(res.status).toBe(403);
+    expect(m(insertInfrastructureAssessment)).not.toHaveBeenCalled();
+  });
+
+  it("usuario_municipal miembro crea evaluación con datos crudos -> 201", async () => {
+    authAsMunicipal();
     treeInProject();
     m(insertInfrastructureAssessment).mockResolvedValue({
       id: RECORD_ID,
@@ -151,8 +159,19 @@ describe("Infraestructura — /api/trees/:treeId/infrastructure-assessments", ()
 describe("Mantención — /api/projects/:id/maintenance", () => {
   const url = `/api/projects/${PROJECT_ID}/maintenance`;
 
-  it("admin crea orden con acción y subtipo de LISTAS -> 201", async () => {
+  it("admin -> 403 al crear orden (solo lectura, CC-022)", async () => {
     authAsAdmin();
+    treeInProject();
+    const res = await request(app)
+      .post(url)
+      .set(authHeader)
+      .send({ tree_id: TREE_ID, accion_solicitada: "poda", subtipo_accion: "formacion" });
+    expect(res.status).toBe(403);
+    expect(m(insertMaintenanceOrder)).not.toHaveBeenCalled();
+  });
+
+  it("usuario_municipal miembro crea orden con acción y subtipo de LISTAS -> 201", async () => {
+    authAsMunicipal();
     treeInProject();
     m(insertMaintenanceOrder).mockResolvedValue({ id: RECORD_ID, codigo_ot: "OT-M-000001", estado: "pendiente" });
     const res = await request(app)
@@ -175,7 +194,7 @@ describe("Mantención — /api/projects/:id/maintenance", () => {
   });
 
   it("árbol de otro proyecto -> 400", async () => {
-    authAsAdmin();
+    authAsMunicipal();
     treeInProject(OTHER_PROJECT_ID);
     const res = await request(app)
       .post(url)
@@ -195,11 +214,13 @@ describe("Mantención — /api/projects/:id/maintenance", () => {
     expect(res.body.data).toEqual([]);
   });
 
-  it("cambio de estado por usuario_municipal -> 403 y no actualiza", async () => {
-    authAsMunicipal();
+  it("cambio de estado por admin -> 403 (solo lectura, CC-022) y no actualiza", async () => {
+    authAsAdmin();
+    m(findMaintenanceById).mockResolvedValue({ id: RECORD_ID, tree_id: TREE_ID, estado: "pendiente" });
+    treeInProject();
     const res = await request(app).patch(`${url}/${RECORD_ID}/estado`).set(authHeader).send({ estado: "programada" });
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("Requiere rol administrador");
+    expect(res.body.error).toBe("El Administrador tiene acceso de solo lectura a los datos del proyecto");
     expect(m(updateMaintenanceState)).not.toHaveBeenCalled();
   });
 
@@ -209,8 +230,8 @@ describe("Mantención — /api/projects/:id/maintenance", () => {
     expect(res.status).toBe(400);
   });
 
-  it("admin cambia estado -> 200", async () => {
-    authAsAdmin();
+  it("usuario_municipal miembro cambia estado -> 200 (PR-003 v6.0)", async () => {
+    authAsMunicipal();
     m(findMaintenanceById).mockResolvedValue({ id: RECORD_ID, tree_id: TREE_ID, estado: "pendiente" });
     treeInProject();
     m(updateMaintenanceState).mockResolvedValue({ id: RECORD_ID, estado: "en_ejecucion" });
@@ -247,8 +268,15 @@ describe("Incidencias — /api/projects/:id/incidents", () => {
     expect(res.status).toBe(200);
   });
 
-  it("admin cambia estado y agrega nota a la bitácora -> 200", async () => {
+  it("cambio de estado por admin -> 403 (solo lectura, CC-022)", async () => {
     authAsAdmin();
+    const res = await request(app).patch(`${url}/${RECORD_ID}/estado`).set(authHeader).send({ estado: "en_revision" });
+    expect(res.status).toBe(403);
+    expect(m(updateIncidentState)).not.toHaveBeenCalled();
+  });
+
+  it("usuario_municipal miembro cambia estado y agrega nota a la bitácora -> 200", async () => {
+    authAsMunicipal();
     m(findIncidentById).mockResolvedValue({ id: RECORD_ID, project_id: PROJECT_ID, estado: "ingresada", observacion: null });
     m(updateIncidentState).mockResolvedValue({ id: RECORD_ID, estado: "en_revision" });
     const res = await request(app)
@@ -262,7 +290,7 @@ describe("Incidencias — /api/projects/:id/incidents", () => {
   });
 
   it("incidencia de otro proyecto -> 404", async () => {
-    authAsAdmin();
+    authAsMunicipal();
     m(findIncidentById).mockResolvedValue({ id: RECORD_ID, project_id: OTHER_PROJECT_ID, estado: "ingresada" });
     const res = await request(app).patch(`${url}/${RECORD_ID}/estado`).set(authHeader).send({ estado: "resuelta" });
     expect(res.status).toBe(404);

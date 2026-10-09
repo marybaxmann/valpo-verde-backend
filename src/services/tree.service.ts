@@ -16,7 +16,7 @@ import {
   TreeMeasurementRow,
 } from "../repositories/treeMeasurement.repository";
 import { CreateTreeBody, UpdateTreeBody } from "../schemas/tree.schema";
-import { assertProjectAccess } from "./authorization.service";
+import { assertProjectAccess, assertProjectWriter } from "./authorization.service";
 
 /**
  * Inventario espacial de un proyecto para el mapa (SIG-1, ADR-015,
@@ -226,7 +226,7 @@ export async function createTreeForUser(
   body: CreateTreeBody,
   accessToken: string
 ): Promise<{ data: TreeDetailDTO }> {
-  await assertProjectAccess(user, projectId, accessToken);
+  await assertProjectWriter(user, projectId, accessToken);
   const project = await findProjectById(accessToken, projectId);
   if (!project) {
     throw new AppError("Proyecto no encontrado", 404);
@@ -321,7 +321,7 @@ export async function updateTreeForUser(
     throw new AppError("Árbol no encontrado", 404);
   }
 
-  await assertProjectAccess(user, tree.project_id, accessToken);
+  await assertProjectWriter(user, tree.project_id, accessToken);
 
   try {
     await updateTreeFields(accessToken, treeId, body);

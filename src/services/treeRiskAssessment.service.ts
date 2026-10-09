@@ -10,7 +10,7 @@ import {
 } from "../repositories/treeRiskAssessment.repository";
 import { evaluarRiesgo } from "./rules/treeRisk";
 import { CreateTreeRiskAssessmentBody } from "../schemas/treeRiskAssessment.schema";
-import { assertProjectAccess } from "./authorization.service";
+import { assertProjectAccess, assertProjectWriter } from "./authorization.service";
 
 export interface TreeRiskAssessmentDTO {
   id: string;
@@ -83,7 +83,7 @@ export async function createTreeRiskAssessmentForUser(
   if (!tree) {
     throw new AppError("Árbol no encontrado", 404);
   }
-  await assertProjectAccess(user, tree.project_id, accessToken);
+  await assertProjectWriter(user, tree.project_id, accessToken);
 
   const resultado = evaluarRiesgo(body.variables);
 
