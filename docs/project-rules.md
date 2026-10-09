@@ -284,9 +284,11 @@ Afecta:
 - permisos
 - RLS
 
-## PR-003 — Rol Usuario municipal (v5.0)
-Estado: vigente
+## PR-003 — Rol Usuario municipal (v5.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 5.0
+Reemplazada por: PR-003 v6.0
+Motivo del reemplazo: no permitía al Usuario municipal registrar órdenes de trabajo ni actualizar el estado de órdenes e incidencias (CC-022).
 Reemplaza: PR-003 v4.0
 Origen: CC-020
 Motivo: aclarar que el Usuario municipal puede registrar mediciones dendrométricas y que ello no constituye una inspección técnica. Sin otros cambios de permisos respecto de v4.0; no resuelve CC-015.
@@ -334,9 +336,50 @@ Afecta:
 - permisos
 - RLS
 
-## PR-004 — Rol Administrador
+## PR-003 — Rol Usuario municipal (v6.0)
 Estado: vigente
+Versión: 6.0
+Reemplaza: PR-003 v5.0
+Origen: CC-022
+Motivo: el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes de trabajo e incidencias; el Administrador pasa a acceso de solo lectura sobre los datos del proyecto (PR-004 v5.0).
+
+- Identificador interno: `usuario_municipal`
+- Etiqueta de interfaz: `Usuario municipal`
+- "Acceder a su proyecto asignado" significa que exista una fila en `project_members` para ese usuario y proyecto (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- acceder a su proyecto asignado;
+- ver dashboard básico;
+- consultar inventario;
+- registrar nuevos árboles, incluida su medición dendrométrica inicial (PR-006 v7.0);
+- registrar nuevas mediciones dendrométricas de los árboles de su proyecto asignado (PR-006 v7.0);
+- editar datos básicos del árbol permitidos;
+- consultar resultados técnicos;
+- reportar y consultar incidencias, y actualizar su estado (CC-022);
+- registrar órdenes de trabajo y actualizar su estado (CC-022);
+- consultar indicadores básicos.
+
+No realiza:
+- cálculo de severidades;
+- cálculo de puntajes;
+- priorización técnica;
+- modificación manual de resultados calculados.
+
+Pendiente (CC-015, en revisión): si el Usuario municipal es también el Inspector y, por lo tanto, realiza la evaluación técnica (estructural, de vitalidad, de riesgo e infraestructura). La versión 5.0 lo excluía; con PR-004 v5.0 el Administrador ya no realiza evaluaciones, por lo que mientras CC-015 se resuelve el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal (el cálculo lo realiza siempre el motor metodológico y no puede modificarse manualmente). También quedan pendientes en CC-015: el rol "Encargado de mantención" y quién puede corregir datos ya registrados (especie, mediciones, ubicación).
+
+Aclaración (CC-020): registrar una medición dendrométrica no constituye evaluación técnica ni inspección estructural; su relación con la inspección sigue pendiente (ADR-016).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-004 — Rol Administrador (v4.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 4.0
+Reemplazada por: PR-004 v5.0
+Motivo del reemplazo: el Administrador deja de realizar la evaluación y la gestión de inventario, infraestructura, incidencias y mantenimiento; conserva la gestión de proyectos y usuarios y la consulta de solo lectura (CC-022).
 
 Actualización 3.0 (cierre C-4 y C-5): se fijan los identificadores del rol
 y se reemplaza la regla sobre edición de resultados calculados por una
@@ -377,6 +420,38 @@ Afecta:
 - permisos
 - RLS
 - rules-engine
+
+## PR-004 — Rol Administrador (v5.0)
+Estado: vigente
+Versión: 5.0
+Reemplaza: PR-004 v4.0
+Origen: CC-022
+Motivo: decisión de la autora y su equipo (2026-10-09): el Administrador crea proyectos y agrega usuarios, y puede ver el proyecto completo en modo de solo lectura.
+
+- Identificador interno: `admin`
+- Etiqueta de interfaz: `Administrador`
+- Acceso transversal a todos los proyectos en esta versión (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- crear y gestionar proyectos;
+- gestionar los miembros de cada proyecto (`project_members`);
+- consultar, en modo de solo lectura, toda la información de los proyectos: dashboard, inventario, mediciones, fichas, evaluaciones técnicas y de riesgo, infraestructura, mantención, incidencias e indicadores.
+
+No realiza:
+- registro ni edición de árboles o mediciones;
+- evaluaciones técnicas (estructural, vitalidad, riesgo, infraestructura);
+- registro de órdenes de trabajo o incidencias, ni cambios de su estado;
+- modificación manual de resultados calculados.
+
+Los resultados producidos por el motor metodológico no pueden ser modificados manualmente. Cualquier futura excepción deberá definirse como una regla explícita, versionada y trazable. No existe actualmente mecanismo de override manual.
+
+Pendiente (CC-015): quién corrige datos ya registrados (la versión 4.0 permitía al Administrador "completar/corregir datos básicos").
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
 
 ## PR-005 — Proyectos (v2.0 — REEMPLAZADA)
 Estado: reemplazada
@@ -766,13 +841,38 @@ Afecta:
 - rules-engine
 - frontend
 
-## PR-009 — Inspecciones
-Estado: vigente
+## PR-009 — Inspecciones (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-009 v2.0
+Motivo del reemplazo: asignaba las inspecciones al Administrador, que pasa a solo lectura (CC-022).
 
 Las inspecciones:
 - pertenecen a un árbol;
 - son realizadas por Administrador;
+- comienzan como `borrador`;
+- admiten autosave por sección;
+- al completarse quedan inmutables;
+- conservan `rule_version`.
+
+Una inspección completada no se modifica retroactivamente.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- rules-engine
+
+## PR-009 — Inspecciones (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-009 v1.0
+Origen: CC-022
+Motivo: el Administrador pasa a solo lectura (PR-004 v5.0).
+
+Las inspecciones:
+- pertenecen a un árbol;
+- no son realizadas por el Administrador (PR-004 v5.0); el rol que las realiza se define en CC-015 (pendiente);
 - comienzan como `borrador`;
 - admiten autosave por sección;
 - al completarse quedan inmutables;

@@ -41,13 +41,14 @@ hoja VERSION del Excel maestro.
 | CC-012 | Menús dependientes, rangos con nombre y validaciones técnicas de los anexos | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-013 | Cobertura de DICCIONARIO_CAMPOS para entidades operativas y normalización de nombres | 3 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-014 | Eliminar la duplicación de R01–R04 y M01–M05 en DICCIONARIO_CAMPOS | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | Sincronización del paquete 2.0.0 | 2026-10-04 |
-| CC-015 | Consolidación de roles (PR-003, PR-004, PR-009, USUARIOS, "¿Quién lo ingresa?") | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-015 | Consolidación de roles (PR-003, PR-004, PR-009, USUARIOS, "¿Quién lo ingresa?") | 2 | EN REVISIÓN | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-016 | Auditoría y eventual adopción de INDICES | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | CERRADO (sin implementación) | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
 | CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | PENDIENTE DE IMPLEMENTACIÓN | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
 | CC-021 | Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores (PR-001 v3.0; PR-016 v4.0) | 5 | APROBADO METODOLÓGICAMENTE | Definición del agente frontend-ux y revisión de referencias de producto | — (fuera del paquete) | — | 2026-10-06 |
+| CC-022 | Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0) | 2 | APROBADO METODOLÓGICAMENTE | Decisión parcial de CC-015 (autora y equipo) | — (fuera del paquete) | — | 2026-10-09 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -670,7 +671,7 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Auditoría de hojas del Excel maestro (CC-003). |
 | Tipo | 2 |
-| Estado | DETECTADO |
+| Estado | EN REVISIÓN |
 | Regla / campo afectado | PR-003, PR-004, PR-009; hoja USUARIOS; columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS. |
 | Versión anterior | USUARIOS define 4 roles (Administrador, Usuario municipal, Inspector, Encargado de mantención) y dice que el usuario municipal "no registra evaluaciones"; "¿Quién lo ingresa?" usa 9 formas distintas; PR-003/PR-004/PR-009 asignan la evaluación al Administrador. Decisión de la autora pendiente de registrar: usuario municipal e inspector son el mismo rol; el Administrador solo crea proyectos y agrega usuarios. |
 | Versión nueva | Por definir. |
@@ -684,7 +685,7 @@ motivo)
 | Aprobado por / Fecha de aprobación | — |
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
-| Observaciones | Queda explícitamente pendiente decidir si "Encargado de mantención" será un rol independiente. |
+| Observaciones | Queda explícitamente pendiente decidir si "Encargado de mantención" será un rol independiente. **Decisión parcial (2026-10-09) → CC-022:** el Administrador crea proyectos, agrega usuarios y ve el proyecto completo en modo de solo lectura; el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes e incidencias (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0). **Siguen pendientes en este CC:** (1) si el Usuario municipal es también el Inspector y realiza la evaluación técnica (mientras tanto, con el Administrador en solo lectura, el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal); (2) el rol "Encargado de mantención"; (3) quién corrige datos ya registrados (especie, mediciones, ubicación); (4) sincronización de la hoja USUARIOS y de la columna "¿Quién lo ingresa?" del Excel maestro. |
 
 ---
 
@@ -936,3 +937,45 @@ motivo)
 | 2026-10-06 | DETECTADO | — | PR-016 v3.0 y `CLAUDE.md` ubicaban el prototipo por encima de la documentación vigente para lo funcional/UX. |
 | 2026-10-06 | APROBADO METODOLÓGICAMENTE | marybaxmann | Jerarquía de seis niveles, referencia visual principal y retiro de Groundzy aprobados; implementación documental autorizada. Cambios escritos en la rama del repositorio backend, sin commit, pendientes de revisión. Al integrarse: `CERRADO` (sin implementación). |
 | 2026-10-06 | APROBADO METODOLÓGICAMENTE | marybaxmann | Se incorpora la actualización referencial de ADR-001 y el relevo en `HANDOFF.md`. Verificación sin contradicciones activas sobre la jerarquía de fuentes. Preparado para integración mediante PR desde la rama `docs/cc-021-jerarquia-fuentes`; tras el merge se registra el commit y se cierra como `CERRADO` (sin implementación). |
+
+---
+
+### CC-022 — Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-09 |
+| Origen | Decisión parcial de CC-015 (Consolidación de roles), definida por la autora con su equipo durante la auditoría post-demo. |
+| Tipo | 2 — regla de negocio / permisos |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | PR-003, PR-004, PR-009. |
+| Versión anterior | PR-004 v4.0: el Administrador "realiza la evaluación del arbolado" y gestiona inventarios, infraestructura, incidencias y mantenimiento. PR-003 v5.0: el Usuario municipal reporta y consulta incidencias y solo consulta mantenimiento. PR-009 v1.0: las inspecciones las realiza el Administrador. |
+| Versión nueva | PR-004 v5.0: el Administrador crea y gestiona proyectos, gestiona sus miembros y consulta toda la información del proyecto en modo de solo lectura; no registra ni modifica datos de árboles, mediciones, evaluaciones, infraestructura, órdenes ni incidencias. PR-003 v6.0: el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes e incidencias. PR-009 v2.0: las inspecciones no las realiza el Administrador; el rol que las realiza se define en CC-015. |
+| Motivo | Separar la administración de la plataforma (proyectos y usuarios) de la operación técnica del arbolado, que recae en el equipo municipal. |
+| Fundamento / fuente | Decisión de `marybaxmann` y su equipo del 2026-10-09: "para admin está la opción de que vea el proyecto, pero solo eso" (confirmado: todo el proyecto en modo de solo lectura); "el usuario municipal sí puede cambiar y actualizar estados"; el resto de CC-015 queda pendiente. |
+| Archivos afectados | `docs/project-rules.md`, `docs/registro-cambios.md`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Hoja USUARIOS y columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS: pendientes de sincronizar junto con CC-015. |
+| Impacto en BD | RLS: el Administrador pasa de acceso total a solo lectura en `trees`, `tree_risk_assessments`, `tree_infrastructure_assessments`, `maintenance` e `incidents`; el Usuario municipal obtiene UPDATE sobre `maintenance` e `incidents` de su proyecto; `fn_create_tree_with_measurement` deja de aceptar al Administrador. Migración 011. |
+| Impacto en backend | El Administrador recibe 403 en altas y ediciones (árbol, evaluaciones, órdenes, incidencias, estados); el cambio de estado pasa del Administrador al Usuario municipal. |
+| Impacto en API | Mismos endpoints; cambia quién está autorizado. |
+| Impacto en frontend | Para el Administrador se ocultan las acciones de registro, edición y cambio de estado; el Usuario municipal ve la actualización de estados. |
+| Pruebas necesarias | Administrador: lectura de proyecto, inventario, fichas y módulos; 403 en altas, ediciones y cambios de estado (backend y RLS). Usuario municipal: actualización de estado de órdenes e incidencias de su proyecto; sin acceso a proyectos ajenos. |
+| Dependencias | CC-015 (pendientes: evaluación técnica por el Usuario municipal/Inspector, "Encargado de mantención", corrección de datos, sincronización del Excel). |
+| rule_version | sin cambio (permisos fuera del paquete metodológico) |
+| Aprobado por | marybaxmann (con su equipo) |
+| Fecha de aprobación | 2026-10-09 |
+| Fecha de implementación | Pendiente |
+| Commits / PR asociados | Rama `docs/cc-022-roles` (documentación); implementación en `feature/demo-sivu`. |
+| Observaciones | Con el Administrador en solo lectura, ningún rol vigente tiene asignada formalmente la evaluación técnica hasta que se resuelva CC-015; el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal (cálculo siempre por el motor, sin modificación manual). |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios.
+- [x] REGLAS_INDICADORES — N/A: sin cambios.
+- [x] MATRICES_CALCULO — N/A: sin cambios.
+- [ ] DICCIONARIO_CAMPOS — columna "¿Quién lo ingresa?": pendiente (con CC-015).
+- [ ] Hoja USUARIOS — pendiente (con CC-015).
+- [x] VERSION — N/A: fuera del paquete metodológico.
+- [x] PR / ADR — PR-003 v6.0, PR-004 v5.0, PR-009 v2.0.
+
