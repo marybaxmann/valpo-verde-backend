@@ -74,3 +74,26 @@ export async function findLatestValidMeasurementsCandidates(
 
   return (data ?? []) as unknown as TreeMeasurementRow[];
 }
+
+/**
+ * Mediciones válidas de un conjunto de árboles (fecha_medicion DESC,
+ * created_at DESC), en una sola consulta — para agregados de proyecto.
+ */
+export async function findValidMeasurementsByTreeIds(
+  accessToken: string,
+  treeIds: string[]
+): Promise<TreeMeasurementRow[]> {
+  if (treeIds.length === 0) return [];
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
+    .from("tree_measurements")
+    .select("*")
+    .in("tree_id", treeIds)
+    .eq("estado_medicion", "valida")
+    .order("fecha_medicion", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) {
+    throw new Error(`Error al consultar mediciones del proyecto: ${error.message}`);
+  }
+  return (data ?? []) as TreeMeasurementRow[];
+}
