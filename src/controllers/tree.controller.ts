@@ -2,12 +2,13 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../utils/AppError";
 import { projectIdParamSchema } from "../schemas/project.schema";
-import { createTreeSchema, treeIdParamSchema } from "../schemas/tree.schema";
+import { createTreeSchema, treeIdParamSchema, updateTreeSchema } from "../schemas/tree.schema";
 import {
   createTreeForUser,
   getTreeDetailForUser,
   listProjectTreesForUser,
   listTreeMeasurementsForUser,
+  updateTreeForUser,
 } from "../services/tree.service";
 
 /**
@@ -107,6 +108,43 @@ export async function getTreeDetail(
       treeId,
       req.accessToken!
     );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * PATCH /api/trees/:treeId (o :id)
+ *
+ * Edita identidad del árbol: especie, dirección, comuna, lugar de
+ * referencia. Nunca medición dendrométrica ni ciclo de vida.
+ * Responde 200 `{ data: TreeDetailDTO }`.
+ */
+export async function updateTree(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsedParams = treeIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      throw new AppError(
+        parsedParams.error.issues[0]?.message ?? "Identificador de árbol inválido",
+        400
+      );
+    }
+
+    const parsedBody = updateTreeSchema.safeParse(req.body);
+    if (!parsedBody.success) {
+      throw new AppError(
+        parsedBody.error.issues[0]?.message ?? "Datos de edición inválidos",
+        400
+      );
+    }
+
+    const treeId = parsedParams.data.treeId ?? parsedParams.data.id!;
+    const result = await updateTreeForUser(req.user!, treeId, parsedBody.data, req.accessToken!);
     res.json(result);
   } catch (err) {
     next(err);

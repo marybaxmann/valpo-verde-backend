@@ -14,6 +14,17 @@ import {
   createTree,
   listProjectTrees,
 } from "../controllers/tree.controller";
+import { getProjectRiskSummary } from "../controllers/treeRiskAssessment.controller";
+import {
+  createIncident,
+  createMaintenanceOrder,
+  listProjectIncidents,
+  listProjectInfrastructureAssessments,
+  listProjectMaintenance,
+  getProjectIndices,
+  updateIncidentState,
+  updateMaintenanceState,
+} from "../controllers/moduleRecords.controller";
 
 const router = Router();
 
@@ -30,5 +41,17 @@ router.delete("/:id/members/:userId", authMiddleware, removeMember);
 
 router.get("/:id/trees", authMiddleware, listProjectTrees);
 router.post("/:id/trees", authMiddleware, createTree);
+
+router.get("/:id/risk-assessments/latest", authMiddleware, getProjectRiskSummary);
+
+// Corte demo: infraestructura (lectura), órdenes de trabajo e incidencias
+router.get("/:id/infrastructure-assessments", authMiddleware, listProjectInfrastructureAssessments);
+router.get("/:id/maintenance", authMiddleware, listProjectMaintenance);
+router.post("/:id/maintenance", authMiddleware, createMaintenanceOrder);
+router.get("/:id/incidents", authMiddleware, listProjectIncidents);
+router.post("/:id/incidents", authMiddleware, createIncident);
+router.get("/:id/indices", authMiddleware, getProjectIndices);
+router.patch("/:id/maintenance/:recordId/estado", authMiddleware, updateMaintenanceState);
+router.patch("/:id/incidents/:recordId/estado", authMiddleware, updateIncidentState);
 
 export default router;
