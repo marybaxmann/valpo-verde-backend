@@ -49,6 +49,7 @@ hoja VERSION del Excel maestro.
 | CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | PENDIENTE DE IMPLEMENTACIÓN | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
 | CC-021 | Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores (PR-001 v3.0; PR-016 v4.0) | 5 | APROBADO METODOLÓGICAMENTE | Definición del agente frontend-ux y revisión de referencias de producto | — (fuera del paquete) | — | 2026-10-06 |
 | CC-022 | Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0) | 2 | PROBADO | Decisión parcial de CC-015 (autora y equipo) | — (fuera del paquete) | — | 2026-10-09 |
+| CC-023 | Referencias visuales complementarias de inspiración UX/UI, incluida la vista de árbol de Groundzy (PR-016 v5.0) | 5 | APROBADO METODOLÓGICAMENTE | Rediseño visual post-demo | — (fuera del paquete) | — | 2026-10-09 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -978,4 +979,31 @@ motivo)
 - [ ] Hoja USUARIOS — pendiente (con CC-015).
 - [x] VERSION — N/A: fuera del paquete metodológico.
 - [x] PR / ADR — PR-003 v6.0, PR-004 v5.0, PR-009 v2.0.
+
+---
+
+### CC-023 — Referencias visuales complementarias de inspiración UX/UI
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-09 |
+| Origen | Rediseño visual post-demo: la autora aporta referencias de diseño y aprueba una maqueta de prueba. |
+| Tipo | 5 — documental (gobernanza de referencias; sin cambio de lógica ni de datos) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | PR-016. |
+| Versión anterior | PR-016 v4.0: `03_CityDashboardsButton.jpg` como única referencia visual oficial; Groundzy retirada, reincorporable solo mediante decisión explícita. |
+| Versión nueva | PR-016 v5.0: se mantiene la referencia principal y se agregan cuatro referencias complementarias de inspiración UX/UI (vista de árbol de Groundzy, tablero agrícola en tablet, Farm Management System, Wisetown), con reglas de uso: adaptar sin copiar, paleta de riesgo intacta, sin elementos que impliquen funciones inexistentes, gráficos solo con datos reales y validación previa con maqueta. |
+| Motivo | Dar más color y contexto territorial a la interfaz sin perder la identidad de SIVU ni contradecir la jerarquía de fuentes. |
+| Fundamento / fuente | Decisión de `marybaxmann` del 2026-10-09: le gustan los pines, el resumen rápido, la estructura de la ficha y los gráficos por módulo; pide mantener su paleta de riesgo y que el diseño no parezca un plagio de Groundzy, sino una adaptación a la arquitectura de SIVU. |
+| Archivos afectados | `docs/project-rules.md`, `docs/registro-cambios.md`; `valpo-verde-frontend/CLAUDE.md` (tabla de referencias). Las imágenes no se versionan: son material de terceros y el repositorio es público. |
+| Impacto en diagramas · Excel · BD · backend · API | Ninguno. |
+| Impacto en frontend | Ninguno en código hasta aprobar la maqueta v2; el rediseño posterior se rige por las reglas de PR-016 v5.0. |
+| Pruebas necesarias | No aplica (documental). |
+| Dependencias | CC-021 (jerarquía de fuentes). |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-09 |
+| Fecha de implementación | sin implementación (cambio documental) |
+| Commits / PR asociados | Rama `docs/cc-023-referencias-visuales`. |
+| Observaciones | Maqueta de prueba v1 validada por la autora el 2026-10-09; la maqueta v2 incorpora la diferenciación respecto de Groundzy antes del rediseño. |
 

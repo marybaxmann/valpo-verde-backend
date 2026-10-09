@@ -1118,9 +1118,11 @@ Afecta:
 - frontend
 - UX
 
-## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v4.0)
-Estado: vigente
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v4.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 4.0
+Reemplazada por: PR-016 v5.0
+Motivo del reemplazo: incorpora referencias visuales complementarias de inspiración UX/UI, entre ellas una de Groundzy, mediante decisión explícita (CC-023).
 Reemplaza: PR-016 v3.0
 Origen: CC-021
 
@@ -1138,6 +1140,45 @@ Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas
 Referencia visual aprobada:
 - Principal y única referencia visual oficial vigente: `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg`. Función exclusivamente visual: composición, lenguaje gráfico, relación mapa–paneles, densidad informativa y paleta. No define funcionalidad ni metodología.
 - Groundzy deja de ser referencia visual oficial, para evitar lenguajes visuales contradictorios. Una idea concreta de Groundzy puede reincorporarse solo mediante decisión explícita.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v5.0)
+Estado: vigente
+Versión: 5.0
+Reemplaza: PR-016 v4.0
+Origen: CC-023
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior.
+
+Referencia visual principal (sin cambio): `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg` — composición, lenguaje gráfico, relación mapa–paneles, densidad informativa y paleta.
+
+Referencias visuales complementarias (inspiración UX/UI, CC-023). Son material de terceros: se conservan fuera del repositorio público y se describen aquí por lo que aportan.
+- Vista de árbol de Groundzy (escritorio y móvil): ficha lateral del ejemplar con pestañas, mediciones con íconos, pines legibles sobre mapa satelital, barra de herramientas sobre el mapa. Se reincorpora como idea concreta, según lo previsto en PR-016 v4.0.
+- Tablero agrícola en tablet (mapa satelital con parcelas): tarjeta de resumen flotante sobre el mapa con barras de estado.
+- Farm Management System: gráficos de dona con porcentajes y tarjetas de indicadores tintadas por categoría.
+- Wisetown (tablero de áreas verdes): barras horizontales ordenadas y gráficos de evolución.
+
+Reglas de uso de las referencias complementarias:
+- Se adaptan a la arquitectura, los módulos y los datos de SIVU; no se copian su identidad, marca, nombres ni composición literal (por ejemplo, el botón verde lima y la barra en píldora de Groundzy).
+- La paleta oficial de riesgo (Bajo `#DCE8A9`, Moderado `#F9B52B`, Alto `#F04A32`, Extremo `#C7252B`) no se modifica y se usa solo para el riesgo. Los colores de módulo evitan esos tonos.
+- No se incorporan elementos que impliquen funciones o resultados que SIVU no calcula (por ejemplo, recomendaciones automáticas tipo "AI insight").
+- Los gráficos se usan solo cuando aportan a la lectura del módulo y siempre con datos reales.
+- Antes de rediseñar la interfaz se valida una maqueta visual con la autora.
 
 Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
 
