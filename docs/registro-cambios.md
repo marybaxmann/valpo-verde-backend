@@ -47,6 +47,7 @@ hoja VERSION del Excel maestro.
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | CERRADO (sin implementación) | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
 | CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | PENDIENTE DE IMPLEMENTACIÓN | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-021 | Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores (PR-001 v3.0; PR-016 v4.0) | 5 | APROBADO METODOLÓGICAMENTE | Definición del agente frontend-ux y revisión de referencias de producto | — (fuera del paquete) | — | 2026-10-06 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -878,3 +879,60 @@ motivo)
 | 2026-10-05 | FUENTE SINCRONIZADA | — | Fuentes actualizadas y verificación §14.9 aprobada en la rama `cc-020-arbol-medicion`, repositorio backend. Pendiente de integración del PR. |
 | 2026-10-05 | FUENTE SINCRONIZADA | marybaxmann | Corrección menor previa al merge (revisión de la aprobadora): `configuracion_fustes`, `numero_fustes` y `dap_fustes_cm` sin altura de referencia fija ni categorías candidatas (criterio/altura de referencia PENDIENTE); `huso` sin zona fija "19S". Verificación repetida y aprobada. |
 | 2026-10-05 | PENDIENTE DE IMPLEMENTACIÓN | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`; commits `6af04ec`, `15c9994`). Especificación de ámbito `operativo` (§14.12). Siguiente: diseño técnico INV-1A; sin implementación de software todavía. |
+
+---
+
+### CC-021 — Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-06 |
+| Origen | Definición del `CLAUDE.md` del frontend y del agente `frontend-ux`; revisión de las referencias de producto (Figma original, prototipo navegable y referencias visuales). |
+| Tipo | 5 — documental (gobernanza de referencias; sin cambio de lógica ni de datos) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | PR-001, PR-016; referencia a Groundzy en PR-015 v2.0; descripción del prototipo en el contexto de ADR-001 v1.1; `CLAUDE.md` (sección de fuentes funcional/UX); `docs/workflow.md` §10; `docs/methodology/00-index.md` (regla de precedencia, flujo funcional/UX). |
+| Versión anterior | PR-001 v2.0: `Valpo-Verde-Conecta` como "referencia funcional actual". PR-016 v3.0: prioridad de referencias con el prototipo en primer lugar para lo funcional/UX, por encima de la documentación, y Groundzy como referencia visual secundaria. |
+| Versión nueva | PR-016 v4.0: jerarquía única — (1) metodología y fuentes vigentes; (2) decisiones controladas ADR/PR/CC; (3) backend y API vigentes; (4) documentación vigente; (5) Figma y prototipo histórico, solo intención funcional; (6) referencias visuales aprobadas, solo UX/UI. Referencia visual principal y única oficial: `03_CityDashboardsButton.jpg`; Groundzy retirada como referencia oficial. PR-001 v3.0: prototipo y Figma original como referencias históricas de intención funcional. |
+| Motivo | Con el prototipo en primer lugar, una pantalla histórica podía contradecir decisiones posteriores (módulos reorganizados, campos y categorías superados). Mantener varias referencias visuales oficiales podía mezclar lenguajes visuales. |
+| Fundamento / fuente | Decisiones de `marybaxmann` del 2026-10-06: aprobación de la jerarquía de seis niveles; el Figma histórico conserva valor como evidencia de intención funcional y de producto, pero no puede restablecer decisiones que posteriormente fueron modificadas, reemplazadas o eliminadas; `03_CityDashboardsButton.jpg` como referencia visual principal aprobada; retiro de Groundzy; los diagramas de decisión metodológicos no son referencias de UI. |
+| Archivos afectados | `docs/project-rules.md`, `docs/architecture-decisions.md`, `CLAUDE.md`, `docs/workflow.md`, `docs/methodology/00-index.md`, `docs/registro-cambios.md`, `HANDOFF.md`. Repositorio frontend (sin versionar todavía): `docs/referencias/figma-original/` (8 pantallas), `docs/referencias/visuales/03_CityDashboardsButton.jpg`. |
+| Impacto en diagramas | Ninguno. Los diagramas de decisión no se copian al frontend ni se usan como referencia de UI. |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Ninguno. |
+| Impacto en backend | Ninguno. |
+| Impacto en API | Ninguno. |
+| Impacto en frontend | Ninguno en código. El `CLAUDE.md` del frontend y el agente `frontend-ux` se rigen por esta jerarquía. |
+| Pruebas necesarias | No aplica (documental). Verificación: ninguna referencia vigente ubica el prototipo o el Figma por encima de la documentación, el backend o la metodología, ni cita a Groundzy como referencia visual vigente. |
+| Dependencias | Ninguna. |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-06 |
+| Fecha de implementación | sin implementación (cambio documental) |
+| Commits / PR asociados | Pendiente (sin commit; cambios en la rama `docs/cc-021-jerarquia-fuentes` del repositorio backend, pendientes de revisión). |
+| Observaciones | PR-015 v2.0: actualización solo referencial, sin nueva versión — "experiencia territorial similar conceptualmente a Groundzy (referencia de UX, PR-016)" pasa a "experiencia territorial que permita:"; la lista de objetivos no cambia. ADR-001 v1.1: actualización solo referencial, sin nueva versión ni cambio de decisión técnica — el prototipo pasa de "referencia funcional v2 (ver PR-001)" a "referencia histórica de intención funcional (ver PR-001 v3.0 y PR-016 v4.0): no constituye fuente funcional vigente ni prevalece sobre decisiones posteriores". Distinción vigente: `clasificacion_prioridad` es un resultado metodológico (M05, versión en preparación) que el frontend podrá representar cuando exista el contrato backend; "Priorización" como módulo independiente del Figma histórico no se reconstruye por su sola presencia allí. Se conservan como historial las menciones a Groundzy y al prototipo en versiones reemplazadas, en `docs/checkpoint-2026-09-16.md` y en `docs/roadmap.md`. Ejemplo que motivó la regla: "Priorización" figura como módulo propio en el Figma histórico; su presencia allí no autoriza a recrearlo como módulo independiente. |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios.
+- [x] REGLAS_INDICADORES — N/A: sin cambios.
+- [x] MATRICES_CALCULO — N/A: sin cambios.
+- [x] DICCIONARIO_CAMPOS — N/A: sin cambios.
+- [x] VERSION — N/A: fuera del paquete metodológico.
+- [x] docs/methodology/ — `00-index.md` (regla de precedencia y flujo funcional/UX).
+- [x] PR / ADR — PR-001 v3.0, PR-016 v4.0; referencias en PR-015 v2.0 y ADR-001 v1.1.
+- [x] Export de texto — N/A.
+- [x] Verificación §14.9 (fuente) — N/A: no se modifican artefactos metodológicos.
+- [x] Migración + schema.sql — N/A.
+- [x] Backend (services/rules) — N/A.
+- [x] API / Zod — N/A.
+- [x] Frontend — N/A en código.
+- [x] Verificación §14.9 (implementación) — N/A.
+- [ ] Revisión final — pendiente: revisión de marybaxmann antes del commit.
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-06 | DETECTADO | — | PR-016 v3.0 y `CLAUDE.md` ubicaban el prototipo por encima de la documentación vigente para lo funcional/UX. |
+| 2026-10-06 | APROBADO METODOLÓGICAMENTE | marybaxmann | Jerarquía de seis niveles, referencia visual principal y retiro de Groundzy aprobados; implementación documental autorizada. Cambios escritos en la rama del repositorio backend, sin commit, pendientes de revisión. Al integrarse: `CERRADO` (sin implementación). |
+| 2026-10-06 | APROBADO METODOLÓGICAMENTE | marybaxmann | Se incorpora la actualización referencial de ADR-001 y el relevo en `HANDOFF.md`. Verificación sin contradicciones activas sobre la jerarquía de fuentes. Preparado para integración mediante PR desde la rama `docs/cc-021-jerarquia-fuentes`; tras el merge se registra el commit y se cierra como `CERRADO` (sin implementación). |

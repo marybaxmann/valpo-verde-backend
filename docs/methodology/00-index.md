@@ -256,7 +256,7 @@ No crear todavía estructura de código únicamente por existir este documento.
 
 ## Regla de precedencia
 
-Existen dos criterios distintos, uno por ámbito. No compiten entre sí porque aplican a ámbitos distintos.
+La metodología técnica tiene su propia regla (abajo). Para producto, funcionalidad y UX rige la jerarquía única de fuentes de PR-016 v4.0, en la que la metodología ocupa el primer nivel.
 
 ### Metodología técnica
 
@@ -272,10 +272,7 @@ Las referencias técnicas externas son fundamento citado dentro del paquete, no 
 
 ### Flujo funcional / UX
 
-1. prototipo propio `Valpo-Verde-Conecta`;
-2. reglas funcionales / documentación del proyecto;
-3. Groundzy;
-4. otras referencias.
+Jerarquía única (PR-016 v4.0, CC-021): metodología y fuentes vigentes → decisiones controladas → backend/API vigente → documentación vigente → Figma y prototipo histórico (solo intención funcional) → referencias visuales aprobadas (solo UX/UI).
 
 ---
 

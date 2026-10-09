@@ -22,9 +22,11 @@ Si una decisión nueva contradice una regla vigente:
 
 Este procedimiento es idéntico al descrito en `docs/workflow.md` (§4); ambos documentos deben mantenerlo redactado de la misma forma.
 
-## PR-001 — Referencia funcional del proyecto
-Estado: vigente
+## PR-001 — Referencia funcional del proyecto (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: PR-001 v3.0
+Motivo del reemplazo: definía el prototipo como "referencia funcional actual", lo que permitía que pantallas históricas prevalecieran sobre decisiones posteriores. Origen: CC-021.
 
 El repositorio:
 `marybaxmann/Valpo-Verde-Conecta`
@@ -36,6 +38,27 @@ es la referencia funcional actual para:
 - experiencia de usuario.
 
 No es fuente de metodología, reglas técnicas ni cálculos.
+
+Afecta:
+- frontend
+- UX
+- arquitectura funcional
+
+## PR-001 — Referencia funcional del proyecto (v3.0)
+Estado: vigente
+Versión: 3.0
+Reemplaza: PR-001 v2.0
+Origen: CC-021
+
+Referencias históricas de intención funcional:
+- prototipo navegable `marybaxmann/Valpo-Verde-Conecta`;
+- Figma original de SIVU: pantallas en `valpo-verde-frontend/docs/referencias/figma-original/`.
+
+Sirven para comprender la intención funcional y de producto original: qué quería resolver cada pantalla, qué información debía ver el usuario, cómo se relacionaban los módulos y cómo se esperaba recorrer el sistema.
+
+No son especificación vigente. Pueden contener módulos, campos, categorías, cálculos y flujos que después fueron modificados, reemplazados o eliminados. Conservan valor como evidencia de intención funcional y de producto, pero no pueden restablecer decisiones que posteriormente fueron modificadas, reemplazadas o eliminadas. La presencia de un elemento en ellas no demuestra que siga vigente: toda implementación se reconcilia primero con la metodología, las decisiones controladas y el backend/API vigentes (jerarquía en PR-016 v4.0).
+
+No son fuente de metodología, reglas técnicas, cálculos, estructura de datos ni permisos.
 
 Afecta:
 - frontend
@@ -922,7 +945,7 @@ ArcGIS no es fuente de datos ni de cálculo:
 
 Pendiente: seleccionar y validar el mecanismo de acceso/autenticación a los servicios cartográficos ArcGIS requeridos para desarrollo y producción (ADR-015). Debe resolverse antes de implementar el mapa que dependa de dichos servicios.
 
-El objetivo progresivo sigue siendo una experiencia territorial similar conceptualmente a Groundzy (referencia de UX, PR-016):
+El objetivo progresivo es una experiencia territorial que permita:
 - árboles georreferenciados;
 - selección desde mapa;
 - panel contextual;
@@ -966,11 +989,13 @@ Afecta:
 - frontend
 - UX
 
-## PR-016 — Groundzy (v3.0)
-Estado: vigente
+## PR-016 — Groundzy (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
 Reemplaza: PR-016 v2.0
 Origen: CC-001
+Reemplazada por: PR-016 v4.0
+Motivo del reemplazo: ubicaba el prototipo como primera referencia funcional/UX, por encima de la documentación vigente, y mantenía a Groundzy como referencia visual. Se adopta una jerarquía única de fuentes y una referencia visual principal aprobada. Origen: CC-021.
 
 Groundzy inspira experiencia visual y organización de UX.
 
@@ -992,6 +1017,34 @@ Prioridad de referencias (de mayor a menor autoridad):
 Afecta:
 - frontend
 - UX
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v4.0)
+Estado: vigente
+Versión: 4.0
+Reemplaza: PR-016 v3.0
+Origen: CC-021
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior.
+
+Referencia visual aprobada:
+- Principal y única referencia visual oficial vigente: `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg`. Función exclusivamente visual: composición, lenguaje gráfico, relación mapa–paneles, densidad informativa y paleta. No define funcionalidad ni metodología.
+- Groundzy deja de ser referencia visual oficial, para evitar lenguajes visuales contradictorios. Una idea concreta de Groundzy puede reincorporarse solo mediante decisión explícita.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
 
 ## PR-017 — Arquitectura técnica
 Estado: vigente

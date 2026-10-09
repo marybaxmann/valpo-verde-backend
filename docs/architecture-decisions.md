@@ -61,8 +61,10 @@ El proyecto tendrá un frontend navegable independiente y un backend API.
 
 Existen dos artefactos de frontend distintos que no deben confundirse:
 
-- `marybaxmann/Valpo-Verde-Conecta` — prototipo frontend navegable y
-  referencia funcional v2 (ver PR-001).
+- `marybaxmann/Valpo-Verde-Conecta` — prototipo frontend navegable;
+  referencia histórica de intención funcional (ver PR-001 v3.0 y
+  PR-016 v4.0): no constituye fuente funcional vigente ni prevalece sobre
+  decisiones posteriores.
 - `valpo-verde-frontend` — nombre previsto para el frontend productivo futuro.
 
 El prototipo actual puede reutilizarse, evolucionar, reemplazarse o servir de
