@@ -9,7 +9,7 @@ import {
   ProjectMemberWithUserRow,
 } from "../repositories/projectMember.repository";
 import { findUserProfileById } from "../repositories/userProfile.repository";
-import { assertAdmin } from "./authorization.service";
+import { assertAdmin, invalidateMembership } from "./authorization.service";
 
 /**
  * Todas las operaciones de este service son admin-only (PR-003 v4.0:
@@ -90,4 +90,5 @@ export async function removeProjectMember(
   if (!deleted) {
     throw new AppError("Membresía no encontrada", 404);
   }
+  invalidateMembership(projectId, targetUserId);
 }

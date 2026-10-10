@@ -3,3 +3,4 @@
  */
 export const findMeasurementsByTreeId = jest.fn();
 export const findLatestValidMeasurementsCandidates = jest.fn();
+export const findValidMeasurementsByTreeIds = jest.fn();

@@ -9,14 +9,117 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-06
-- **Agente emisor:** AGY (Gemini)
-- **Agente receptor sugerido:** Investigadora (marybaxmann) / Claude Code
-- **Rama Git vigente:** `feature/inv-1b-inventario-arbol-medicion`
-- **Ruta del proyecto:** `C:\Users\usuario\code\valpo-verde-backend`
-- **Resumen:** INV-1B VALIDADO EN SUPABASE — LISTO PARA MERGE (006 aplicada, 26/26 pruebas reales en Postgres OK, 120 tests pass)
+- **Última actualización:** 2026-10-06 (sesión "SIVU demo funcional")
+- **Agente emisor:** Claude Code
+- **Agente receptor sugerido:** Claude Code (nueva sesión — contexto de la anterior agotado)
+- **Rama Git vigente:** `main` en ambos repos (INV-1B ya fue mergeado antes de esta sesión: commit `f7dfe12`)
+- **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
+- **Resumen:** Demo SIVU lista (6 árboles, 4 riesgos vía motor, todos los módulos). Sin commit. Próximo: auditoría post-demo SIN tocar la demo.
+- **Nota rama:** el backend está en `docs/cc-021-jerarquia-fuentes` (no `main`); el trabajo de demo del backend quedó sin commit sobre esa rama.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
+
+---
+
+## 📋 Planificación post-demo (2026-10-09)
+- Tablero GitHub Projects: https://github.com/users/marybaxmann/projects/5 ("SIVU — Planificación", privado). Issues backend #4–#13, frontend #2–#3.
+- Backend #4 (RLS en tablas públicas): migración 010 **aplicada**; 011 (CC-022) aplicada. Repos públicos: no publicar detalles explotables en issues.
+
+## 🎨 Diseño del front (2026-10-10)
+- Maquetas: v1 https://claude.ai/artifact/BekBCfnJK5maLnRcsL2Fdq · v2 https://claude.ai/artifact/PyDjwKC5vKJbQ5nHfqzZvk (descartada: muy parecida a Groundzy) · **v3** https://claude.ai/artifact/5u7cmUZjtB4xkceKJqtpcD (cartografía + símbolos proporcionales al DAP, módulos arriba, tabla de registros, ficha técnica).
+- **Rediseño general: PENDIENTE** por decisión de la investigadora. No rediseñar sin su aprobación.
+- **Implementado:** diagnóstico por componente en la ficha (`src/components/RiskComponentDiagram.tsx`, usado en `TreeDetailModal`). Silueta genérica provisoria; solo representa `resultado` del backend y destaca el componente cuyo nivel coincide con R04.
+- **Pendiente:** silueta general o según especie → frontend issue #4.
+- Pines del mapa en gota con color de riesgo (`treePinSymbol` en `InventoryMapView.tsx`); modo claro/oscuro (`useTheme`, botón en el menú lateral). Sin commit.
+
+## 🔎 Auditoría del motor de riesgo (2026-10-10)
+- `treeRisk.ts` coincide con REGLAS_INDICADORES v3, rangos R01–R03, M01–M03 y R04; las 4 evaluaciones guardadas se recalcularon y coinciden.
+- **Corregido:** la API aceptaba datos condicionales vacíos o fuera de rango y el motor asumía severidades (p. ej. grieta sin afectación → Severa). Ahora `schemas/treeRiskAssessment.schema.ts` los rechaza (400) y el asistente del frontend no deja avanzar. Fecha futura validada con hora de Chile. Tests: 185/185.
+- **N13 decidido (CC-024, opción a):** componente "No determinado" → árbol "Sin clasificación", independiente de infraestructura y distinto de "Sin evaluación" (pin blanco en el mapa). Ficha en rama `docs/cc-024-n13-sin-clasificacion` (worktree `../valpo-verde-backend-cc024`, sin commit). Falta sincronizar el Excel (DUDAS N13, DICCIONARIO_CAMPOS). N21 sigue pendiente.
+
+---
+
+## 🚀 SESIÓN "SIVU DEMO FUNCIONAL" (2026-10-06) — leer esto primero
+
+**Contexto:** la investigadora tiene su tesis en ~2 días. Se trabajó en modo "avance visible rápido, sin romper lo que ya funciona", con auditorías metodológicas puntuales solo cuando una regla concreta lo exigía (no auditorías generales). **Nada se commiteó**; todo sigue en working tree.
+
+### Qué funciona end-to-end (probado manualmente por la investigadora)
+Usuario Municipal → Inventario → registrar árbol → aparece en mapa/listado → Inspección → Nueva evaluación → formulario de 6 pasos → cálculo real de riesgo en backend → guardar → ficha del árbol muestra el resultado → Admin puede consultar el mismo resultado.
+
+### Backend — cambios sin commit
+- **Migración `007_tree_risk_assessment.sql`** (ya aplicada en Supabase vía MCP): tabla `tree_risk_assessments` (1:N con `trees`, igual patrón que `tree_measurements`), RLS igual a `trees` (admin ALL, usuario_municipal según `is_municipal_member`), sin UPDATE/DELETE para usuario_municipal.
+- **`src/services/rules/treeRisk.ts`**: motor de cálculo R01 (raíces/cuello, máx. 9), R02 (tronco, máx. **14**), R03 (copa/ramas, máx. **5**), R04 (consolidación = el más desfavorable entre clasificaciones M02+M03 por componente), M01 (probabilidad de impacto), M02+M03 (matrices → Bajo/Moderado/Alto/Extremo). Fuente: `borrador_reglas_diagramas_v3.xlsx` (hojas REGLAS_INDICADORES, CHEQUEO_PUNTAJES) + `docs/excel/Base de Datos Valpo Verde.xlsx` (MATRICES_CALCULO, DICCIONARIO_CAMPOS, LISTAS), verificadas celda por celda. **Importante:** `docs/methodology/*.md` y `docs/project-rules.md` están DESACTUALIZADOS frente a estos Excel (dicen R02 máx. 18 y R03 máx. 9 — están mal; el código usa los valores correctos 14 y 5, confirmados por DICCIONARIO_CAMPOS). Sincronizar la documentación queda **pendiente POST-DEMO**, no se tocó.
+- **20 tests nuevos** en `tests/services/rules/treeRisk.test.ts` (casos sano/peor caso/límites/"No determinado"). Total: **140/140 tests pasando**.
+- Nuevos endpoints: `POST/GET /api/trees/:treeId/risk-assessments`, `GET /api/trees/:treeId/risk-assessments/latest`, `GET /api/projects/:id/risk-assessments/latest` (resumen de todo el proyecto en una sola consulta, para colorear el mapa sin N+1). También `PATCH /api/trees/:treeId` (editar especie/dirección/comuna/referencia — nunca ubicación ni medición).
+- **DAP equivalente (polifuste): NO implementado.** No existe fórmula aprobada en ningún Excel ni documento — se dejó explícitamente pendiente, con nota visible en el formulario.
+- Catálogo de especies sigue consultando Supabase directo (`src/api/trees.ts` en frontend) porque no hay endpoint backend — gap conocido, documentado, sin fallback ficticio.
+
+### Frontend — cambios sin commit
+- Rediseño territorial-analítico completo de Inventario/Dashboard (referencia: `docs/referencias/visuales/03_CityDashboardsButton.jpg`), mapa con Valparaíso como vista por defecto, guard contra zoom continental, zoom a selección, sincronización incremental del mapa (sin recrear ArcGIS en cada cambio).
+- Combobox buscable de especies, flujo de edición de árbol (`EditTreeModal`), Capa 0 real para Inspección e Infraestructura (`ModulePage.tsx`, con mapa), Mantención e Incidencias separadas en pantallas propias SIN mapa (`MaintenancePage.tsx`, `IncidentsPage.tsx`).
+- **Evaluación de riesgo completa**: `RiskAssessmentModal.tsx` (formulario de 6 pasos), integrado en Inspección, en el panel contextual del árbol y en la ficha técnica. Mapa coloreado por nivel de riesgo (colores oficiales) + leyenda + filtro por riesgo en Inventario. Dashboard con tarjetas de riesgo reales.
+
+### Iteración "flujo visible demo" (2026-10-06, Claude Code) — solo frontend, sin commit
+- `CreateTreeModal`: lat/lon parten vacías (antes se prellenaban con el encuadre -33.045/-71.620 → árboles apilados). Obliga a "Marcar en mapa SIG".
+- Ficha (`TreeDetailModal`): franja resumen (árbol/ubicación/dimensiones/última evaluación/nivel de riesgo), clasificación por componente, historial siempre visible si >1, acciones en pie [Volver al mapa] [Editar árbol] [Nueva evaluación].
+- Inventario: badge de riesgo por fila, distribución por riesgo en el panel de resumen, filtros se limpian al registrar árbol, panel contextual con riesgo en cabecera y acciones [Ver ficha] [Editar] [Evaluar], sincronizado si se evalúa desde la ficha.
+- Inspección (`ModulePage`): filtro Todos/Evaluados/Sin evaluar (listado + mapa), historial completo del árbol seleccionado en el panel, "Ver árbol →", "← Volver al listado".
+- Infraestructura: sin textos "Módulo aún no habilitado"; árboles reales + mapa + selección + ficha; estado vacío "Aún no existen evaluaciones de infraestructura…"; acción deshabilitada "Disponible en próxima etapa". No hay entidad backend → sin cifras.
+- Mantención/Incidencias: nuevo `ManagementModule.tsx` compartido (flujo del proceso, resumen "—", buscador/filtros deshabilitados, tabla con estado vacío, acción deshabilitada). Sin datos inventados.
+- Dashboard: distribución por riesgo, accesos a los 5 módulos sin cifras inventadas. `ProjectsList` → "Entrar al proyecto" va al Dashboard. `ProjectDetail` con accesos a todos los módulos.
+- Datos: Proyecto Valparaíso = 3 árboles (A-000010 Moderado con 4 evaluaciones —2 con `test:true`—; A-000011 y A-000012 sin evaluar). A-000010/11 en el punto por defecto, A-000012 con latitud positiva (+33.046). **La investigadora pidió NO modificarlos** (pendiente post-demo).
+- Validación: `tsc -b` + `npm run build` OK. Backend sin cambios (140/140). Sin revisión visual en navegador (Claude in Chrome no conectado) — la hace la investigadora.
+- **Ronda 2 (tras revisión visual de la investigadora):**
+  - Jerarquía: `RoleLayout.tsx` común a admin/usuario (los layouts quedan como wrappers). Fuera de proyecto el sidebar solo muestra "Mis proyectos"; dentro, solo los 6 módulos ("Inspección y Riesgo" con nombre completo). Pie del rail: bloque PROYECTO ACTUAL (+ "Cambiar proyecto") y bloque USUARIO (+ "Salir").
+  - `hooks/useCurrentProject.tsx`: el layout carga el proyecto una vez (GET /api/projects/:id) y lo comparte; Mantención/Incidencias ya no hacen peticiones propias.
+  - `ProjectsList` → pantalla "Mis proyectos" (tarjetas; admin conserva "Crear proyecto" y "Configurar").
+  - **Error "Token inválido o expirado"**: no era exclusivo de Incidencias. `getSession()` puede devolver un access_token vencido si el auto-refresh de supabase-js no corrió (pestaña en segundo plano/suspensión). `src/api/client.ts` ahora, ante 401, hace `refreshSession()` y reintenta una vez; si falla, muestra "Tu sesión expiró. Vuelve a iniciar sesión para continuar."
+  - Dashboard: CTA de tarjetas = "Ver módulo →". Inventario: "Cambiar proyecto" (antes "Cambiar Territorio").
+- **Ronda 3 (pulido visual):** sistema TABLA SIVU (`components/SivuTable.tsx` + `.sivu-table*` en global.css; `.table` no tenía estilos → encabezados "flotando"). Aplicado a Mantención, Incidencias (anchos por columna, estado vacío dentro de la tabla), historial dendrométrico y de evaluaciones de la ficha, miembros del proyecto. `.content` centrado y más ancho. Infraestructura: bloque "Evaluación de infraestructura" + riesgo actual real del árbol. Panel contextual: consecuencias. Dashboard: tarjetas de módulo de altura uniforme. Solo frontend, sin commit.
+
+### Sprint "módulos mínimos" (2026-10-06, Claude Code) — sin commit
+- **Migración 008 APLICADA** (`008_demo_infra_maintenance_incidents.sql`, solo aditiva): tabla nueva `tree_infrastructure_assessments` (datos crudos por componente, claves DICCIONARIO_CAMPOS, sin severidad/M04; RLS patrón 007); `maintenance` + columnas nullable `subtipo_accion`, `created_by` y **RLS habilitada** (antes estaba desactivada) con políticas patrón 007; `incidents` sin cambios (RLS ya existía). `created_by DEFAULT auth.uid()` + check en INSERT municipal.
+- Backend: `services/rules/moduleCatalogs.ts` (LISTAS accion/subtipo_accion CC-004 + dominios DICCIONARIO de infraestructura), `schemas/moduleRecords.schema.ts`, `repositories/moduleRecords.repository.ts`, `services/moduleRecords.service.ts`, `controllers/moduleRecords.controller.ts`. Endpoints: `GET /api/catalogs/modules`; `POST/GET /api/trees/:treeId/infrastructure-assessments`; `GET /api/projects/:id/infrastructure-assessments`; `GET/POST /api/projects/:id/maintenance`; `GET/POST /api/projects/:id/incidents`. 140/140 tests (sin tests nuevos para estos endpoints — pendiente post-demo).
+- Frontend: Infraestructura con formulario + resumen ("Clasificación global pendiente") e historial; Mantención (orden de trabajo: árbol, acción, subtipo, fecha, responsable, observación; estado = default 'pendiente') e Incidencias (árbol opcional, tipo y origen texto libre sin catálogo vigente) con tabla real; ficha con sección 5 "Gestión del ejemplar"; panel contextual con accesos; Dashboard con conteos reales. Navegación contextual por `?arbol=<id>&nuevo=1`.
+- RLS verificada con transacción simulada como usuario municipal + ROLLBACK (0 filas residuales).
+
+### Sprint "módulos básicos + Índices" (2026-10-06, Claude Code) — sin commit
+- **Migración 009 APLICADA** (aditiva): `maintenance.codigo_ot` ('OT-M-000001') e `incidents.codigo_incidencia` ('INC-000001') con secuencias + índices únicos (formato del Excel maestro). Sin cambios de RLS.
+- Estados según listas de validación del Excel: estado_ot = Pendiente/Programada/En ejecución/Completada/Cancelada; estado_incidencia = Ingresada/En revisión/Derivada/Resuelta/Descartada. Sin transiciones impuestas (la fuente no las define). Incidencias nuevas nacen 'ingresada'.
+- `PATCH /api/projects/:id/maintenance/:recordId/estado` y `/incidents/:recordId/estado` → **solo admin** (assertAdmin + RLS sin UPDATE municipal; PR-003 v5.0 y 005).
+- `GET /api/projects/:id/indices`: agregados descriptivos (conteos, especies, min/prom/máx de la medición vigente; polifuste sin DAP). **No se calculan índices de la hoja INDICES (CC-016: "no implementable ni normativa vigente")**; la pantalla Índices lista cada uno con su motivo.
+- Corregido: listados de módulos/índices omitían árboles sin ubicación (`listAllProjectTreeRowsForUser`).
+- Tests: `tests/integration/moduleRecords.routes.test.ts` (18). Total 158/158.
+- **⚠️ DECISIÓN PENDIENTE DE LA INVESTIGADORA — conflicto con PR-003 v5.0:** el Usuario municipal "no realiza evaluación técnica ni evaluación de riesgo" y solo "consulta mantenimiento", pero la RLS actual le permite INSERT en `tree_risk_assessments` (007), `tree_infrastructure_assessments` y `maintenance` (008). No se revocó nada (requiere su decisión/CC).
+
+### Dataset de demo (2026-10-06, Claude Code) — datos en Supabase
+- **Limpieza autorizada por la investigadora**: eliminados los 3 árboles de prueba A-000010/11/12 (Proyecto Valparaíso) + sus 3 mediciones y 4 evaluaciones de riesgo (incluidas las 2 `test:true`). Sin otras dependencias. 0 huérfanos.
+- **Carga histórica (levantamiento 10/08/2026)**: A004 → `A-000013`, A005 → `A-000014` (`legacy_id` = A004/A005), vía `fn_create_tree_with_measurement` como admin. Coordenadas UTM 19S convertidas con PostGIS `ST_Transform(32719→4326)`. Especie nueva en catálogo: *Robinia pseudoacacia* (Falsa acacia). Medición: monofuste, DAP/altura/copa/1ª rama del levantamiento.
+- Evaluaciones de infraestructura históricas (datos crudos; no evaluado = null). Compuertas por componente ahora admiten null ("No determinado").
+- **Riesgo NO cargado ni calculado**: faltan zona objetivo, tasa de ocupación y consecuencias (entradas obligatorias). Ambos "Sin evaluación".
+- Total final: 2 árboles (la investigadora indicó no cargar A006–A008 ni conservar los de prueba).
+
+### Casos SINTÉTICOS de demostración de riesgo (DEMO / TEST, 2026-10-06)
+- A-000015 (Bajo), A-000016 (Moderado), A-000017 (Alto), A-000018 (Extremo): árboles sintéticos, `lugar_referencia LIKE 'Caso de demostración%'`. Medición plausible, NO medida en terreno. Alta vía `fn_create_tree_with_measurement` (como admin).
+- Evaluaciones: entradas validadas con `createTreeRiskAssessmentSchema` y resultado calculado por `evaluarRiesgo` (motor vigente, sin cambios); inserción con service role y el mismo mapeo de columnas del repositorio. Script: scratchpad `demo_risk_cases.ts`. Ningún nivel asignado a mano.
+- **Limpieza post-informe** (requiere autorización explícita; orden por FK): `tree_risk_assessments` → `tree_measurements` → `trees` filtrando `tree_id IN (SELECT id FROM trees WHERE lugar_referencia LIKE 'Caso de demostración%')`.
+
+### Pendiente / cuidado
+- **Fila de prueba sin borrar**: `tree_risk_assessments`, árbol A-000010, `variables: {"test": true}`, riesgo "Bajo". La investigadora pidió dejarla hasta después de la demo. **Regla explícita suya, vigente para toda sesión futura: ningún `DROP`/`TRUNCATE`/`DELETE` sobre datos o estructuras existentes sin detenerse primero a explicar exactamente la operación.**
+- Servidores: frontend `npm run dev` (puerto 5173, CORS backend configurado para ese puerto específico — si Vite toma otro puerto falla el login con "Failed to fetch"), backend `npm run dev` (puerto 3000, tsx watch).
+- Congelado explícitamente (no tocar salvo que lo pida): Mantención/Incidencias reales, Infraestructura completa, M04/M05, priorización, sincronización documental completa, optimización de rendimiento profunda.
+
+---
+
+## 🧭 CC-021 — Jerarquía de fuentes de producto (cierre documental, 2026-10-06)
+
+- **Estado:** APROBADO METODOLÓGICAMENTE; cambios documentales sin commit en la rama `docs/cc-021-jerarquia-fuentes` (backend). Pendiente: revisión, PR a `main` y registro de cierre (`CERRADO`, sin implementación).
+- **Jerarquía vigente (PR-016 v4.0):** (1) metodología y fuentes vigentes → (2) decisiones controladas ADR/PR/CC → (3) backend + API vigente → (4) documentación vigente → (5) Figma y prototipo histórico, solo intención funcional (PR-001 v3.0) → (6) referencias visuales aprobadas, solo UX/UI.
+- El Figma/prototipo histórico conserva valor como evidencia de intención funcional, pero no restablece decisiones posteriormente modificadas, reemplazadas o eliminadas.
+- Referencia visual oficial única: `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg`. Groundzy retirada. Los diagramas metodológicos no son referencias de UI.
+- `clasificacion_prioridad` = resultado metodológico (M05, versión en preparación) que el frontend representa cuando exista el contrato backend. "Priorización" como módulo independiente del Figma histórico no se reconstruye.
+- Frontend (sin commit): `CLAUDE.md`, agente `.claude/agents/frontend-ux.md`, `docs/referencias/figma-original/` (8 pantallas) y `docs/referencias/visuales/`.
+- Hallazgos INV-1C pendientes (no corregidos): acceso directo a Supabase y especie ficticia de respaldo en `src/api/trees.ts`; revisar `ClassificationBadge.tsx`.
 
 ---
 
@@ -97,4 +200,4 @@
 
 ## 🚀 Instrucción Directa para el Siguiente Agente (Prompt de arranque)
 
-> *"Hola. INV-1B está completamente implementado y validado empíricamente en la base de datos Supabase real en la rama `feature/inv-1b-inventario-arbol-medicion`. Lee `HANDOFF.md` y `docs/workflow.md`. Ejecuta `git status`, `npm test` (120 tests pasando) y `npx tsc --noEmit`. La migración 006 está aplicada y verificada con 26 pruebas en PostgreSQL. A la espera de autorización formal de la investigadora para proceder al merge en main o al hito siguiente."*
+> *"Hola. Lee `valpo-verde-frontend/CLAUDE.md` y este HANDOFF completo. La demo de SIVU para la tesis quedó terminada el 2026-10-06 y la investigadora quiere **conservarla tal como está** (datos, código y Supabase) hasta después de presentarla. Cuando ella lo indique, haremos una **auditoría post-demo** para que todo funcione bien. Antes de cambiar nada: `git status` en ambos repos, `npm test` (158) y `npx tsc --noEmit` (backend), `npx tsc -b` y `npm run build` (frontend). Puntos a revisar en la auditoría: (1) conflicto PR-003 v5.0 vs RLS que permite al usuario municipal crear evaluaciones de riesgo/infraestructura y órdenes; (2) backend en rama `docs/cc-021-jerarquia-fuentes` con todo el trabajo de demo sin commit (decidir ramas/commits con ella); (3) migraciones 008 y 009 aplicadas en Supabase; (4) casos sintéticos A-000015…18 (limpieza solo con su autorización); (5) documentación desactualizada (frontend-architecture.md, methodology R02/R03); (6) catálogo de especies leído directo de Supabase; (7) CC-016 (INDICES) y catálogos de tipo/origen de incidencias. NO commit/push/merge ni DELETE/DROP sin autorización explícita."*

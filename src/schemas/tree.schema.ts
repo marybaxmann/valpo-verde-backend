@@ -151,6 +151,29 @@ export const createTreeSchema = z
 export type CreateTreeBody = z.infer<typeof createTreeSchema>;
 
 /**
+ * Esquema del Body de PATCH /api/trees/:treeId.
+ *
+ * Alcance deliberadamente acotado a identidad del ÁRBOL (PR-006 v7.0):
+ * especie y referencias territoriales descriptivas. NUNCA toca
+ * `tree_code`, `estado_ciclo_vida`, `ubicacion` ni ningún campo de
+ * MEDICIONES_DENDROMETRICAS — corregir una medición no es lo mismo que
+ * corregir la identidad del árbol (modelo-arbol-medicion.md).
+ */
+export const updateTreeSchema = z
+  .object({
+    species_id: z.string().uuid("species_id debe ser un UUID válido").optional(),
+    direccion: z.string().trim().optional().nullable(),
+    comuna: z.string().trim().optional().nullable(),
+    lugar_referencia: z.string().trim().optional().nullable(),
+  })
+  .strict()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Debe enviar al menos un campo para actualizar",
+  });
+
+export type UpdateTreeBody = z.infer<typeof updateTreeSchema>;
+
+/**
  * Validador para parámetro :treeId (o :id) de árbol.
  */
 export const treeIdParamSchema = z

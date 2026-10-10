@@ -2,20 +2,22 @@ import { AuthenticatedUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
 import { InvalidLocationError, LonLat, parseLocationPoint } from "../utils/geoPoint";
 import { findProjectById } from "../repositories/project.repository";
+import { TtlCache } from "../utils/ttlCache";
 import {
   createTreeWithMeasurementRpc,
   findTreeById,
   findTreesPage,
   TreeDetailRow,
   TreeRow,
+  updateTreeFields,
 } from "../repositories/tree.repository";
 import {
   findLatestValidMeasurementsCandidates,
   findMeasurementsByTreeId,
   TreeMeasurementRow,
 } from "../repositories/treeMeasurement.repository";
-import { CreateTreeBody } from "../schemas/tree.schema";
-import { assertProjectAccess } from "./authorization.service";
+import { CreateTreeBody, UpdateTreeBody } from "../schemas/tree.schema";
+import { assertProjectAccess, assertProjectWriter } from "./authorization.service";
 
 /**
  * Inventario espacial de un proyecto para el mapa (SIG-1, ADR-015,
@@ -97,16 +99,45 @@ function toFeature(row: TreeRow, coordinates: LonLat): TreeFeature {
  * no existe. Devuelve todos los estados de ciclo de vida, sin filtrar.
  * Los árboles sin ubicación se cuentan en `meta` pero no van en `features`.
  */
+/**
+ * Proyectos cuya existencia ya se confirmó para un usuario (60 s): evita un
+ * viaje a Supabase en cada consulta de árboles. Solo se guardan proyectos
+ * existentes; un 404 nunca se guarda.
+ */
+const projectExistsCache = new TtlCache<true>(60_000);
+
+async function assertProjectExists(user: AuthenticatedUser, projectId: string, accessToken: string): Promise<void> {
+  const key = `${user.id}:${projectId}`;
+  if (projectExistsCache.get(key)) return;
+  const project = await findProjectById(accessToken, projectId);
+  if (!project) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+  projectExistsCache.set(key, true);
+}
+
+/**
+ * Todas las filas de árboles del proyecto (con y sin ubicación), con la
+ * misma verificación de acceso que el inventario. Para agregados y
+ * listados de módulos que no deben omitir árboles sin georreferenciar.
+ */
+export async function listAllProjectTreeRowsForUser(
+  user: AuthenticatedUser,
+  projectId: string,
+  accessToken: string
+): Promise<TreeRow[]> {
+  await assertProjectAccess(user, projectId, accessToken);
+  await assertProjectExists(user, projectId, accessToken);
+  return findAllProjectTrees(accessToken, projectId);
+}
+
 export async function listProjectTreesForUser(
   user: AuthenticatedUser,
   projectId: string,
   accessToken: string
 ): Promise<TreeInventory> {
   await assertProjectAccess(user, projectId, accessToken);
-  const project = await findProjectById(accessToken, projectId);
-  if (!project) {
-    throw new AppError("Proyecto no encontrado", 404);
-  }
+  await assertProjectExists(user, projectId, accessToken);
 
   const rows = await findAllProjectTrees(accessToken, projectId);
   const features: TreeFeature[] = [];
@@ -207,11 +238,8 @@ export async function createTreeForUser(
   body: CreateTreeBody,
   accessToken: string
 ): Promise<{ data: TreeDetailDTO }> {
-  await assertProjectAccess(user, projectId, accessToken);
-  const project = await findProjectById(accessToken, projectId);
-  if (!project) {
-    throw new AppError("Proyecto no encontrado", 404);
-  }
+  await assertProjectWriter(user, projectId, accessToken);
+  await assertProjectExists(user, projectId, accessToken);
 
   try {
     const rpcResult = await createTreeWithMeasurementRpc(accessToken, {
@@ -280,6 +308,44 @@ export async function createTreeForUser(
     }
     throw err;
   }
+}
+
+/**
+ * Edición de identidad del ÁRBOL (PATCH /api/trees/:treeId; PR-006 v7.0).
+ * Alcance deliberadamente acotado: especie y referencias territoriales
+ * descriptivas. NUNCA toca `tree_code`, `estado_ciclo_vida`, `ubicacion`
+ * ni MEDICIONES_DENDROMETRICAS — corregir la identidad del árbol no es
+ * lo mismo que corregir o reemplazar una medición dendrométrica histórica
+ * (modelo-arbol-medicion.md: "Corrección" aplica a una medición, no al
+ * árbol; esta operación es un tercer concepto, fuera de ese historial).
+ */
+export async function updateTreeForUser(
+  user: AuthenticatedUser,
+  treeId: string,
+  body: UpdateTreeBody,
+  accessToken: string
+): Promise<{ data: TreeDetailDTO }> {
+  const tree = await findTreeById(accessToken, treeId);
+  if (!tree) {
+    throw new AppError("Árbol no encontrado", 404);
+  }
+
+  await assertProjectWriter(user, tree.project_id, accessToken);
+
+  try {
+    await updateTreeFields(accessToken, treeId, body);
+  } catch (err: unknown) {
+    const msg = (err as Error)?.message || "";
+    if (msg.includes("Especie no encontrada")) {
+      throw new AppError("Especie no encontrada", 400);
+    }
+    if (msg.includes("no encontrado o sin acceso")) {
+      throw new AppError("No tiene acceso a este árbol", 403);
+    }
+    throw err;
+  }
+
+  return getTreeDetailForUser(user, treeId, accessToken);
 }
 
 /**

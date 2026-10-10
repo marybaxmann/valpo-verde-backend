@@ -1,8 +1,11 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (Etapa 3, revisión 4 — posterior a la migración 004: NOT NULL final
---   de project_id + retiro de las FK transitorias)
+--   (revisión 6 — posterior a la migración 011 (CC-022, Administrador solo
+--   lectura); antes revisión 5, posterior a la migración 010: incluye 005–006 (RLS base,
+--   tree_measurements + RPC de alta), 007 (evaluación de riesgo), 008
+--   (infraestructura, mantención), 009 (códigos OT/INC) y 010 (RLS en
+--   tablas expuestas). Sincronizado el 2026-10-09.)
 --
 -- Este archivo es la referencia consolidada del esquema completo.
 -- El historial versionado de cambios vive en database/migrations/
@@ -18,8 +21,9 @@
 --   3. No se inventa metodología: toda columna cuya regla de cálculo aún
 --      no fue definida por el cliente queda NULLABLE y sin lógica asociada,
 --      marcada explícitamente con un comentario "-- PENDIENTE:".
---   4. RLS: fuera de este archivo hasta definir permisos exactos de
---      admin/usuario (se implementará en una migración separada).
+--   4. RLS: fuera de este archivo. Las políticas viven en las migraciones
+--      005 (base), 006, 007, 008 y 010; este archivo describe solo la
+--      estructura (tablas, columnas, índices, funciones).
 --   5. Multiproyecto (migraciones 002-004, completo): trees / incidents /
 --      public_spaces se agrupan por project_id, NOT NULL en las tres
 --      (alcanzado en 004, previo backfill 003). La coherencia "mismo
@@ -366,7 +370,7 @@ BEGIN
     RAISE EXCEPTION 'Usuario inactivo o sin perfil válido';
   END IF;
 
-  IF NOT (public.is_admin() OR public.is_municipal_member(p_project_id)) THEN
+  IF NOT public.is_municipal_member(p_project_id) THEN  -- CC-022 (011): el Administrador es solo lectura
     RAISE EXCEPTION 'No tiene acceso a este proyecto';
   END IF;
 
@@ -494,6 +498,78 @@ BEGIN
   );
 END;
 $$;
+
+-- ---------------------------------------------------------------------
+-- EVALUACIÓN TÉCNICA Y RIESGO (migración 007)
+-- ---------------------------------------------------------------------
+-- 1:N con trees: una evaluación es un evento fechado que nunca sobrescribe
+-- a otra. Persiste las variables observadas (JSONB) y los resultados
+-- calculados por el backend (services/rules/treeRisk.ts: R01–R04,
+-- M01–M03). M04 y M05 fuera de este corte. RLS: migración 007.
+
+CREATE TABLE tree_risk_assessments (
+  id                            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tree_id                       UUID NOT NULL REFERENCES trees(id),
+
+  fecha_evaluacion              DATE NOT NULL,
+
+  -- Todas las variables observadas por el inspector (R01/R02/R03, M01,
+  -- consecuencias por componente). Estructura mínima de demo, no los
+  -- 100+ campos finales del Excel — ver services/rules/treeRisk.ts para
+  -- el contrato exacto de claves.
+  variables                     JSONB NOT NULL,
+
+  -- Resultados R01/R02/R03 (NULL = "No determinado": al menos un
+  -- indicador parcial quedó sin puntaje — CHEQUEO_PUNTAJES N13, pendiente
+  -- metodológico; nunca se sustituye por 0).
+  puntaje_raices_cuello         INTEGER,
+  probabilidad_falla_raices_cuello TEXT,
+  puntaje_tronco                INTEGER,
+  probabilidad_falla_tronco     TEXT,
+  puntaje_copa_ramas            INTEGER,
+  probabilidad_falla_copa_ramas TEXT,
+
+  -- M01 (siempre calculable: zona_objetivo y tasa_ocupacion_objetivo son
+  -- obligatorias).
+  probabilidad_impacto          TEXT NOT NULL,
+
+  -- M02+M03 por componente, y R04 (NULL si algún componente es "No
+  -- determinado").
+  clasificacion_raices_cuello   TEXT,
+  clasificacion_tronco          TEXT,
+  clasificacion_copa_ramas      TEXT,
+  clasificacion_riesgo          TEXT,
+
+  -- Trazabilidad de qué versión de reglas produjo este resultado. No hay
+  -- `rule_version` publicada todavía (paquete 2.0.0 en preparación): se
+  -- usa un identificador fijo de la fuente borrador utilizada.
+  rule_version                  TEXT NOT NULL DEFAULT 'borrador_reglas_diagramas_v3',
+
+  created_by                    UUID REFERENCES user_profiles(id),
+  created_at                    TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_tree_risk_probabilidad_impacto
+    CHECK (probabilidad_impacto IN ('Muy baja', 'Baja', 'Media', 'Alta')),
+  CONSTRAINT chk_tree_risk_prob_falla_rc
+    CHECK (probabilidad_falla_raices_cuello IS NULL OR probabilidad_falla_raices_cuello IN ('Improbable', 'Posible', 'Probable', 'Inminente')),
+  CONSTRAINT chk_tree_risk_prob_falla_tr
+    CHECK (probabilidad_falla_tronco IS NULL OR probabilidad_falla_tronco IN ('Improbable', 'Posible', 'Probable', 'Inminente')),
+  CONSTRAINT chk_tree_risk_prob_falla_cr
+    CHECK (probabilidad_falla_copa_ramas IS NULL OR probabilidad_falla_copa_ramas IN ('Improbable', 'Posible', 'Probable', 'Inminente')),
+  CONSTRAINT chk_tree_risk_clasificacion_rc
+    CHECK (clasificacion_raices_cuello IS NULL OR clasificacion_raices_cuello IN ('Bajo', 'Moderado', 'Alto', 'Extremo')),
+  CONSTRAINT chk_tree_risk_clasificacion_tr
+    CHECK (clasificacion_tronco IS NULL OR clasificacion_tronco IN ('Bajo', 'Moderado', 'Alto', 'Extremo')),
+  CONSTRAINT chk_tree_risk_clasificacion_cr
+    CHECK (clasificacion_copa_ramas IS NULL OR clasificacion_copa_ramas IN ('Bajo', 'Moderado', 'Alto', 'Extremo')),
+  CONSTRAINT chk_tree_risk_clasificacion_riesgo
+    CHECK (clasificacion_riesgo IS NULL OR clasificacion_riesgo IN ('Bajo', 'Moderado', 'Alto', 'Extremo')),
+  CONSTRAINT chk_tree_risk_puntaje_rc CHECK (puntaje_raices_cuello IS NULL OR (puntaje_raices_cuello >= 0 AND puntaje_raices_cuello <= 9)),
+  CONSTRAINT chk_tree_risk_puntaje_tr CHECK (puntaje_tronco IS NULL OR (puntaje_tronco >= 0 AND puntaje_tronco <= 14)),
+  CONSTRAINT chk_tree_risk_puntaje_cr CHECK (puntaje_copa_ramas IS NULL OR (puntaje_copa_ramas >= 0 AND puntaje_copa_ramas <= 5))
+);
+
+CREATE INDEX idx_tree_risk_assessments_tree_id ON tree_risk_assessments (tree_id, fecha_evaluacion DESC);
 
 -- ---------------------------------------------------------------------
 -- AUDITORÍA GENERAL
@@ -690,12 +766,36 @@ CREATE TRIGGER trg_infra_conflicts_updated_at
   BEFORE UPDATE ON infrastructure_conflicts
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- Evaluación de infraestructura por árbol (migración 008): respuestas
+-- observadas por componente con las claves de DICCIONARIO_CAMPOS
+-- (REGISTRO_EVALUACION). Sin severidades ni nivel global: M04 pendiente
+-- ("Clasificación global pendiente"). null en una compuerta = "No
+-- determinado". No reutiliza infrastructure_conflicts porque esa tabla
+-- exige `severidad` (resultado de M04). RLS: migración 008.
+CREATE TABLE tree_infrastructure_assessments (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tree_id           UUID NOT NULL REFERENCES trees(id),
+  fecha_evaluacion  DATE NOT NULL,
+  variables         JSONB NOT NULL,
+  observaciones     TEXT,
+  created_by        UUID REFERENCES user_profiles(id) DEFAULT auth.uid(),
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_tree_infra_assessments_tree_id
+  ON tree_infrastructure_assessments (tree_id, fecha_evaluacion DESC);
+
 -- ---------------------------------------------------------------------
 -- INCIDENCIAS
 -- ---------------------------------------------------------------------
 
+-- Código oficial 'INC-000001' (formato INCIDENCIA.id_incidencia del Excel
+-- maestro), migración 009.
+CREATE SEQUENCE incidents_codigo_seq;
+
 CREATE TABLE incidents (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  codigo_incidencia TEXT DEFAULT ('INC-' || lpad(nextval('incidents_codigo_seq')::text, 6, '0')),
   tree_id          UUID,                        -- nullable: puede reportarse sin árbol identificado aún; ver FK compuesta al pie de la tabla
   project_id        UUID NOT NULL,                -- multiproyecto (002/004): DIRECTO (tree_id es nullable). NOT NULL final desde 004
   tipo              TEXT NOT NULL,               -- 'ramas_peligrosas', 'arbol_inclinado', ...
@@ -735,6 +835,11 @@ CREATE INDEX idx_incidents_tree ON incidents (tree_id, project_id);
 -- índice de incidents; respalda el RESTRICT al borrar un project).
 CREATE INDEX idx_incidents_project ON incidents (project_id);
 CREATE INDEX idx_incidents_estado ON incidents (estado);
+CREATE UNIQUE INDEX uq_incidents_codigo ON incidents (codigo_incidencia);
+-- Estados (validados en backend, no como CHECK): estado_incidencia del
+-- Excel maestro — ingresada, en_revision, derivada, resuelta, descartada.
+-- El backend registra las incidencias nuevas como 'ingresada'; el DEFAULT
+-- 'pendiente' se conserva para filas históricas.
 
 CREATE TRIGGER trg_incidents_updated_at
   BEFORE UPDATE ON incidents
@@ -744,8 +849,13 @@ CREATE TRIGGER trg_incidents_updated_at
 -- MANTENIMIENTO / INTERVENCIONES
 -- ---------------------------------------------------------------------
 
+-- Código oficial 'OT-M-000001' (formato ORDENES DE TRABAJO.ID_OT del Excel
+-- maestro), migración 009.
+CREATE SEQUENCE maintenance_codigo_ot_seq;
+
 CREATE TABLE maintenance (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  codigo_ot          TEXT DEFAULT ('OT-M-' || lpad(nextval('maintenance_codigo_ot_seq')::text, 6, '0')),
   tree_id            UUID NOT NULL REFERENCES trees(id),
   tipo_intervencion    TEXT NOT NULL,             -- 'poda_reduccion', 'extraccion', ...
   prioridad              TEXT,
@@ -761,6 +871,15 @@ CREATE TABLE maintenance (
 
 CREATE INDEX idx_maintenance_tree ON maintenance (tree_id);
 CREATE INDEX idx_maintenance_estado ON maintenance (estado);
+CREATE UNIQUE INDEX uq_maintenance_codigo_ot ON maintenance (codigo_ot);
+-- Columnas agregadas en la migración 008 (nullable):
+--   subtipo_accion: LISTAS:subtipo_accion (CC-004), según tipo_intervencion
+--   (código de LISTAS:accion, tipo_ot = mantenimiento).
+--   created_by: autor del registro, DEFAULT auth.uid().
+ALTER TABLE maintenance ADD COLUMN subtipo_accion TEXT;
+ALTER TABLE maintenance ADD COLUMN created_by UUID REFERENCES user_profiles(id) DEFAULT auth.uid();
+-- Estados (validados en backend): estado_ot del Excel maestro — pendiente,
+-- programada, en_ejecucion, completada, cancelada.
 
 CREATE TRIGGER trg_maintenance_updated_at
   BEFORE UPDATE ON maintenance
@@ -794,8 +913,11 @@ CREATE INDEX idx_photos_tree ON photos (tree_id);
 -- Pendientes explícitos que este esquema NO resuelve (por diseño):
 --   - probability_thresholds: sin filas (rangos numéricos por entregar)
 --   - risk_evaluations: sin lógica de cálculo (impacto/consecuencias/matriz)
---   - trees.ubicacion: sin poblar (geolocalización por entregar)
---   - RLS: políticas a definir en una migración separada
+--   - RLS: definida en migraciones (005, 006, 007, 008, 010, 011), no aquí.
+--     spatial_ref_sys (PostGIS) conserva privilegios de escritura para los
+--     roles de la API: la tabla pertenece a supabase_admin (issue #9).
+--   - M04 (clasificación global de infraestructura) y M05 (prioridad):
+--     sin implementar; tree_infrastructure_assessments guarda datos crudos.
 --   - Inmutabilidad de inspections.estado='completada': enforzada en
 --     services/, no todavía mediante trigger de base de datos
 --   - origen_reporte de incidents: catálogo de valores aún no cerrado,
@@ -809,6 +931,6 @@ CREATE INDEX idx_photos_tree ON photos (tree_id);
 --     incidents_tree_project_fkey) son ahora la única fuente de la garantía
 --     de coherencia de proyecto + existencia del referente.
 --   - Autorización rol global + pertenencia (project_members): se aplica en
---     backend; RLS sigue pendiente de diseño (posterior a 004, ya aplicada)
+--     backend (authorization.service.ts) y RLS como segunda capa (ADR-014).
 --   - CRS/SRID por proyecto: sin columna en projects (ADR-010 'propuesta')
 -- =====================================================================

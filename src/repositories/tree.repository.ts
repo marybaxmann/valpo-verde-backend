@@ -144,6 +144,41 @@ export async function createTreeWithMeasurementRpc(
   return data as unknown as CreateTreeRpcResult;
 }
 
+export interface UpdateTreeFields {
+  species_id?: string;
+  direccion?: string | null;
+  comuna?: string | null;
+  lugar_referencia?: string | null;
+}
+
+/**
+ * Actualiza campos de identidad del árbol (PATCH /api/trees/:treeId). Usa
+ * el JWT del usuario: las mismas policies RLS de UPDATE ya aprobadas
+ * (`trees_update_municipal`, `trees_all_admin`, migración 005) deciden si
+ * la operación procede — no se agrega ninguna regla de autorización nueva.
+ */
+export async function updateTreeFields(
+  accessToken: string,
+  treeId: string,
+  fields: UpdateTreeFields
+): Promise<void> {
+  const supabase = createUserScopedClient(accessToken);
+  // `.select().single()` fuerza a que RLS deniegue con error en vez de
+  // "actualizar 0 filas en silencio" (comportamiento por defecto de
+  // PostgREST ante un UPDATE sin filas visibles para el usuario).
+  const { error } = await supabase.from("trees").update(fields).eq("id", treeId).select("id").single();
+
+  if (error) {
+    if (error.code === "23503" && error.message.includes("species")) {
+      throw new Error("Especie no encontrada");
+    }
+    if (error.code === "PGRST116") {
+      throw new Error("Árbol no encontrado o sin acceso para editarlo");
+    }
+    throw new Error(`Error al actualizar árbol: ${error.message}`);
+  }
+}
+
 /**
  * Consulta un árbol por su identificador único para la ficha de árbol (GET /api/trees/:treeId).
  */

@@ -88,6 +88,13 @@ function authAsAdmin() {
   mockFindUserProfileById.mockResolvedValue(adminProfileRow());
 }
 
+/** Usuario municipal miembro del proyecto: único rol con escritura (CC-022). */
+function authAsWriter() {
+  mockGetAuthUserByToken.mockResolvedValue(fakeAuthUser({ id: MUNICIPAL_ID }));
+  mockFindUserProfileById.mockResolvedValue(municipalProfileRow());
+  mockFindMembership.mockResolvedValue({ id: "m1" });
+}
+
 function authAsMunicipal() {
   mockGetAuthUserByToken.mockResolvedValue(fakeAuthUser({ id: MUNICIPAL_ID }));
   mockFindUserProfileById.mockResolvedValue(municipalProfileRow());
@@ -373,7 +380,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("projectId inválido -> 400", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const res = await request(app)
       .post("/api/projects/no-es-uuid/trees")
@@ -385,7 +392,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("payload sin species_id -> 400", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const invalidPayload = { ...validCreateTreePayload, species_id: undefined };
     const res = await request(app)
@@ -398,7 +405,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("payload con altura_primera_rama_m > altura_total_m no debe rechazarse por regla inventada -> 201", async () => {
-    authAsAdmin();
+    authAsWriter();
     mockFindProjectById.mockResolvedValue(PROJECT);
     mockCreateTreeWithMeasurementRpc.mockResolvedValue({
       tree_id: TREE_ID,
@@ -426,6 +433,30 @@ describe("POST /api/projects/:id/trees", () => {
     expect(res.status).toBe(201);
   });
 
+  it("admin -> 403: solo lectura de los datos del proyecto (CC-022) y no llama al RPC", async () => {
+    authAsAdmin();
+
+    const res = await request(app)
+      .post(`/api/projects/${PROJECT_ID}/trees`)
+      .set(authHeader)
+      .send({
+        species_id: "00000000-0000-0000-0000-0000000000aa",
+        ubicacion: { lon: -71.62, lat: -33.045 },
+        medicion_inicial: {
+          fecha_medicion: "2026-09-01",
+          configuracion_fustes: "monofuste",
+          dap_cm: 30,
+          altura_total_m: 8,
+          diametro_copa_m: 5,
+          altura_primera_rama_m: 2,
+        },
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe("El Administrador tiene acceso de solo lectura a los datos del proyecto");
+    expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
+  });
+
   it("usuario_municipal sin membresía -> 403", async () => {
     authAsMunicipal();
     mockFindMembership.mockResolvedValue(null);
@@ -440,8 +471,8 @@ describe("POST /api/projects/:id/trees", () => {
     expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
   });
 
-  it("admin con proyecto inexistente -> 404", async () => {
-    authAsAdmin();
+  it("usuario_municipal miembro con proyecto inexistente -> 404", async () => {
+    authAsWriter();
     mockFindProjectById.mockResolvedValue(null);
 
     const res = await request(app)
@@ -454,8 +485,8 @@ describe("POST /api/projects/:id/trees", () => {
     expect(mockCreateTreeWithMeasurementRpc).not.toHaveBeenCalled();
   });
 
-  it("admin crea árbol + medición inicial -> 201 y delega al RPC", async () => {
-    authAsAdmin();
+  it("usuario_municipal miembro crea árbol + medición inicial -> 201 y delega al RPC", async () => {
+    authAsWriter();
     mockFindProjectById.mockResolvedValue(PROJECT);
     mockCreateTreeWithMeasurementRpc.mockResolvedValue({
       tree_id: TREE_ID,
@@ -523,7 +554,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("H-1: medición inicial sin ningún diámetro (dap_cm y dap_fustes_cm null) -> 400 Bad Request", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const payloadSinDiametros = {
       ...validCreateTreePayload,
@@ -546,7 +577,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("H-1: alta inicial con solo dap_cm -> 201 exitoso", async () => {
-    authAsAdmin();
+    authAsWriter();
     mockFindProjectById.mockResolvedValue(PROJECT);
     mockCreateTreeWithMeasurementRpc.mockResolvedValue({
       tree_id: TREE_ID,
@@ -577,7 +608,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("H-1: alta inicial con solo dap_fustes_cm coherente -> 201 exitoso", async () => {
-    authAsAdmin();
+    authAsWriter();
     mockFindProjectById.mockResolvedValue(PROJECT);
     mockCreateTreeWithMeasurementRpc.mockResolvedValue({
       tree_id: TREE_ID,
@@ -608,7 +639,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("H-1: alta inicial con ambos dap_cm y dap_fustes_cm -> 201 exitoso sin XOR forzado", async () => {
-    authAsAdmin();
+    authAsWriter();
     mockFindProjectById.mockResolvedValue(PROJECT);
     mockCreateTreeWithMeasurementRpc.mockResolvedValue({
       tree_id: TREE_ID,
@@ -639,7 +670,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("numero_fustes = 1 -> rechazado (400 Bad Request)", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const payload = {
       ...validCreateTreePayload,
@@ -661,7 +692,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("numero_fustes registrado sin dap_fustes_cm -> 400 Bad Request", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const payload = {
       ...validCreateTreePayload,
@@ -682,7 +713,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("dap_fustes_cm con valor 0 o negativo -> 400 Bad Request", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const payload = {
       ...validCreateTreePayload,
@@ -703,7 +734,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("fecha_medicion con día de calendario gregoriano imposible (2026-02-31) -> 400", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const payload = {
       ...validCreateTreePayload,
@@ -723,7 +754,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("fecha_medicion futura -> 400", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const payload = {
       ...validCreateTreePayload,
@@ -743,7 +774,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("clase_edad fuera del dominio aprobado -> 400 Bad Request", async () => {
-    authAsAdmin();
+    authAsWriter();
 
     const payload = {
       ...validCreateTreePayload,
@@ -763,7 +794,7 @@ describe("POST /api/projects/:id/trees", () => {
   });
 
   it("error de RPC por especie no existente mapea a 400 predecible", async () => {
-    authAsAdmin();
+    authAsWriter();
     mockFindProjectById.mockResolvedValue(PROJECT);
     mockCreateTreeWithMeasurementRpc.mockRejectedValue(new Error("Especie no encontrada"));
 
