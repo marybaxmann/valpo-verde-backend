@@ -19,10 +19,18 @@
  * M04 (infraestructura) y M05 (prioridad) NO se implementan aquí —
  * fuera de alcance de este corte vertical.
  *
- * No se calcula nada que no esté en esta fuente. Una variable "No
- * determinado" (p. ej. SL% no calculable y t/R no medido a la vez)
- * nunca se trata como 0: el componente completo queda "No determinado"
- * (CHEQUEO_PUNTAJES, nota N13) y no participa en R04.
+ * No se calcula nada que no esté en esta fuente. Un indicador "No
+ * determinado" (SL% no calculable o t/R no medido, RC/TR-CAV-05 y -08)
+ * nunca se trata como 0 (N1): la probabilidad de falla del componente
+ * queda "No determinada", y con ella su clasificación (M02+M03) y la
+ * clasificación global del árbol (R04 = null, "sin clasificación").
+ * Decisión de la investigadora sobre N13, opción (a) — CC-024. La
+ * clasificación de infraestructura (M04) es independiente y no se
+ * mezcla con esta.
+ *
+ * Los datos condicionales que exigen las reglas se validan antes, en
+ * schemas/treeRiskAssessment.schema.ts: el motor no recibe entradas
+ * incompletas.
  */
 
 export type Severidad = "Despreciable" | "Leve" | "Moderada" | "Severa";

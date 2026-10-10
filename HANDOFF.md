@@ -23,7 +23,19 @@
 
 ## 📋 Planificación post-demo (2026-10-09)
 - Tablero GitHub Projects: https://github.com/users/marybaxmann/projects/5 ("SIVU — Planificación", privado). Issues backend #4–#13, frontend #2–#3.
-- **P0 abierto: backend #4** — RLS en tablas públicas. Migración propuesta `database/migrations/010_rls_hardening_tablas_expuestas.sql` **NO aplicada** (requiere autorización de la investigadora). Repos públicos: no publicar detalles explotables en issues.
+- Backend #4 (RLS en tablas públicas): migración 010 **aplicada**; 011 (CC-022) aplicada. Repos públicos: no publicar detalles explotables en issues.
+
+## 🎨 Diseño del front (2026-10-10)
+- Maquetas: v1 https://claude.ai/artifact/BekBCfnJK5maLnRcsL2Fdq · v2 https://claude.ai/artifact/PyDjwKC5vKJbQ5nHfqzZvk (descartada: muy parecida a Groundzy) · **v3** https://claude.ai/artifact/5u7cmUZjtB4xkceKJqtpcD (cartografía + símbolos proporcionales al DAP, módulos arriba, tabla de registros, ficha técnica).
+- **Rediseño general: PENDIENTE** por decisión de la investigadora. No rediseñar sin su aprobación.
+- **Implementado:** diagnóstico por componente en la ficha (`src/components/RiskComponentDiagram.tsx`, usado en `TreeDetailModal`). Silueta genérica provisoria; solo representa `resultado` del backend y destaca el componente cuyo nivel coincide con R04.
+- **Pendiente:** silueta general o según especie → frontend issue #4.
+- Pines del mapa en gota con color de riesgo (`treePinSymbol` en `InventoryMapView.tsx`); modo claro/oscuro (`useTheme`, botón en el menú lateral). Sin commit.
+
+## 🔎 Auditoría del motor de riesgo (2026-10-10)
+- `treeRisk.ts` coincide con REGLAS_INDICADORES v3, rangos R01–R03, M01–M03 y R04; las 4 evaluaciones guardadas se recalcularon y coinciden.
+- **Corregido:** la API aceptaba datos condicionales vacíos o fuera de rango y el motor asumía severidades (p. ej. grieta sin afectación → Severa). Ahora `schemas/treeRiskAssessment.schema.ts` los rechaza (400) y el asistente del frontend no deja avanzar. Fecha futura validada con hora de Chile. Tests: 185/185.
+- **N13 decidido (CC-024, opción a):** componente "No determinado" → árbol "Sin clasificación", independiente de infraestructura y distinto de "Sin evaluación" (pin blanco en el mapa). Ficha en rama `docs/cc-024-n13-sin-clasificacion` (worktree `../valpo-verde-backend-cc024`, sin commit). Falta sincronizar el Excel (DUDAS N13, DICCIONARIO_CAMPOS). N21 sigue pendiente.
 
 ---
 
