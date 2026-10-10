@@ -22,9 +22,11 @@ Si una decisión nueva contradice una regla vigente:
 
 Este procedimiento es idéntico al descrito en `docs/workflow.md` (§4); ambos documentos deben mantenerlo redactado de la misma forma.
 
-## PR-001 — Referencia funcional del proyecto
-Estado: vigente
+## PR-001 — Referencia funcional del proyecto (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: PR-001 v3.0
+Motivo del reemplazo: definía el prototipo como "referencia funcional actual", lo que permitía que pantallas históricas prevalecieran sobre decisiones posteriores. Origen: CC-021.
 
 El repositorio:
 `marybaxmann/Valpo-Verde-Conecta`
@@ -36,6 +38,27 @@ es la referencia funcional actual para:
 - experiencia de usuario.
 
 No es fuente de metodología, reglas técnicas ni cálculos.
+
+Afecta:
+- frontend
+- UX
+- arquitectura funcional
+
+## PR-001 — Referencia funcional del proyecto (v3.0)
+Estado: vigente
+Versión: 3.0
+Reemplaza: PR-001 v2.0
+Origen: CC-021
+
+Referencias históricas de intención funcional:
+- prototipo navegable `marybaxmann/Valpo-Verde-Conecta`;
+- Figma original de SIVU: pantallas en `valpo-verde-frontend/docs/referencias/figma-original/`.
+
+Sirven para comprender la intención funcional y de producto original: qué quería resolver cada pantalla, qué información debía ver el usuario, cómo se relacionaban los módulos y cómo se esperaba recorrer el sistema.
+
+No son especificación vigente. Pueden contener módulos, campos, categorías, cálculos y flujos que después fueron modificados, reemplazados o eliminados. Conservan valor como evidencia de intención funcional y de producto, pero no pueden restablecer decisiones que posteriormente fueron modificadas, reemplazadas o eliminadas. La presencia de un elemento en ellas no demuestra que siga vigente: toda implementación se reconcilia primero con la metodología, las decisiones controladas y el backend/API vigentes (jerarquía en PR-016 v4.0).
+
+No son fuente de metodología, reglas técnicas, cálculos, estructura de datos ni permisos.
 
 Afecta:
 - frontend
@@ -261,9 +284,11 @@ Afecta:
 - permisos
 - RLS
 
-## PR-003 — Rol Usuario municipal (v5.0)
-Estado: vigente
+## PR-003 — Rol Usuario municipal (v5.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 5.0
+Reemplazada por: PR-003 v6.0
+Motivo del reemplazo: no permitía al Usuario municipal registrar órdenes de trabajo ni actualizar el estado de órdenes e incidencias (CC-022).
 Reemplaza: PR-003 v4.0
 Origen: CC-020
 Motivo: aclarar que el Usuario municipal puede registrar mediciones dendrométricas y que ello no constituye una inspección técnica. Sin otros cambios de permisos respecto de v4.0; no resuelve CC-015.
@@ -311,9 +336,50 @@ Afecta:
 - permisos
 - RLS
 
-## PR-004 — Rol Administrador
+## PR-003 — Rol Usuario municipal (v6.0)
 Estado: vigente
+Versión: 6.0
+Reemplaza: PR-003 v5.0
+Origen: CC-022
+Motivo: el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes de trabajo e incidencias; el Administrador pasa a acceso de solo lectura sobre los datos del proyecto (PR-004 v5.0).
+
+- Identificador interno: `usuario_municipal`
+- Etiqueta de interfaz: `Usuario municipal`
+- "Acceder a su proyecto asignado" significa que exista una fila en `project_members` para ese usuario y proyecto (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- acceder a su proyecto asignado;
+- ver dashboard básico;
+- consultar inventario;
+- registrar nuevos árboles, incluida su medición dendrométrica inicial (PR-006 v7.0);
+- registrar nuevas mediciones dendrométricas de los árboles de su proyecto asignado (PR-006 v7.0);
+- editar datos básicos del árbol permitidos;
+- consultar resultados técnicos;
+- reportar y consultar incidencias, y actualizar su estado (CC-022);
+- registrar órdenes de trabajo y actualizar su estado (CC-022);
+- consultar indicadores básicos.
+
+No realiza:
+- cálculo de severidades;
+- cálculo de puntajes;
+- priorización técnica;
+- modificación manual de resultados calculados.
+
+Pendiente (CC-015, en revisión): si el Usuario municipal es también el Inspector y, por lo tanto, realiza la evaluación técnica (estructural, de vitalidad, de riesgo e infraestructura). La versión 5.0 lo excluía; con PR-004 v5.0 el Administrador ya no realiza evaluaciones, por lo que mientras CC-015 se resuelve el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal (el cálculo lo realiza siempre el motor metodológico y no puede modificarse manualmente). También quedan pendientes en CC-015: el rol "Encargado de mantención" y quién puede corregir datos ya registrados (especie, mediciones, ubicación).
+
+Aclaración (CC-020): registrar una medición dendrométrica no constituye evaluación técnica ni inspección estructural; su relación con la inspección sigue pendiente (ADR-016).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-004 — Rol Administrador (v4.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 4.0
+Reemplazada por: PR-004 v5.0
+Motivo del reemplazo: el Administrador deja de realizar la evaluación y la gestión de inventario, infraestructura, incidencias y mantenimiento; conserva la gestión de proyectos y usuarios y la consulta de solo lectura (CC-022).
 
 Actualización 3.0 (cierre C-4 y C-5): se fijan los identificadores del rol
 y se reemplaza la regla sobre edición de resultados calculados por una
@@ -354,6 +420,38 @@ Afecta:
 - permisos
 - RLS
 - rules-engine
+
+## PR-004 — Rol Administrador (v5.0)
+Estado: vigente
+Versión: 5.0
+Reemplaza: PR-004 v4.0
+Origen: CC-022
+Motivo: decisión de la autora y su equipo (2026-10-09): el Administrador crea proyectos y agrega usuarios, y puede ver el proyecto completo en modo de solo lectura.
+
+- Identificador interno: `admin`
+- Etiqueta de interfaz: `Administrador`
+- Acceso transversal a todos los proyectos en esta versión (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- crear y gestionar proyectos;
+- gestionar los miembros de cada proyecto (`project_members`);
+- consultar, en modo de solo lectura, toda la información de los proyectos: dashboard, inventario, mediciones, fichas, evaluaciones técnicas y de riesgo, infraestructura, mantención, incidencias e indicadores.
+
+No realiza:
+- registro ni edición de árboles o mediciones;
+- evaluaciones técnicas (estructural, vitalidad, riesgo, infraestructura);
+- registro de órdenes de trabajo o incidencias, ni cambios de su estado;
+- modificación manual de resultados calculados.
+
+Los resultados producidos por el motor metodológico no pueden ser modificados manualmente. Cualquier futura excepción deberá definirse como una regla explícita, versionada y trazable. No existe actualmente mecanismo de override manual.
+
+Pendiente (CC-015): quién corrige datos ya registrados (la versión 4.0 permitía al Administrador "completar/corregir datos básicos").
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
 
 ## PR-005 — Proyectos (v2.0 — REEMPLAZADA)
 Estado: reemplazada
@@ -743,13 +841,38 @@ Afecta:
 - rules-engine
 - frontend
 
-## PR-009 — Inspecciones
-Estado: vigente
+## PR-009 — Inspecciones (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-009 v2.0
+Motivo del reemplazo: asignaba las inspecciones al Administrador, que pasa a solo lectura (CC-022).
 
 Las inspecciones:
 - pertenecen a un árbol;
 - son realizadas por Administrador;
+- comienzan como `borrador`;
+- admiten autosave por sección;
+- al completarse quedan inmutables;
+- conservan `rule_version`.
+
+Una inspección completada no se modifica retroactivamente.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- rules-engine
+
+## PR-009 — Inspecciones (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-009 v1.0
+Origen: CC-022
+Motivo: el Administrador pasa a solo lectura (PR-004 v5.0).
+
+Las inspecciones:
+- pertenecen a un árbol;
+- no son realizadas por el Administrador (PR-004 v5.0); el rol que las realiza se define en CC-015 (pendiente);
 - comienzan como `borrador`;
 - admiten autosave por sección;
 - al completarse quedan inmutables;
@@ -922,7 +1045,7 @@ ArcGIS no es fuente de datos ni de cálculo:
 
 Pendiente: seleccionar y validar el mecanismo de acceso/autenticación a los servicios cartográficos ArcGIS requeridos para desarrollo y producción (ADR-015). Debe resolverse antes de implementar el mapa que dependa de dichos servicios.
 
-El objetivo progresivo sigue siendo una experiencia territorial similar conceptualmente a Groundzy (referencia de UX, PR-016):
+El objetivo progresivo es una experiencia territorial que permita:
 - árboles georreferenciados;
 - selección desde mapa;
 - panel contextual;
@@ -966,11 +1089,13 @@ Afecta:
 - frontend
 - UX
 
-## PR-016 — Groundzy (v3.0)
-Estado: vigente
+## PR-016 — Groundzy (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
 Reemplaza: PR-016 v2.0
 Origen: CC-001
+Reemplazada por: PR-016 v4.0
+Motivo del reemplazo: ubicaba el prototipo como primera referencia funcional/UX, por encima de la documentación vigente, y mantenía a Groundzy como referencia visual. Se adopta una jerarquía única de fuentes y una referencia visual principal aprobada. Origen: CC-021.
 
 Groundzy inspira experiencia visual y organización de UX.
 
@@ -992,6 +1117,75 @@ Prioridad de referencias (de mayor a menor autoridad):
 Afecta:
 - frontend
 - UX
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v4.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 4.0
+Reemplazada por: PR-016 v5.0
+Motivo del reemplazo: incorpora referencias visuales complementarias de inspiración UX/UI, entre ellas una de Groundzy, mediante decisión explícita (CC-023).
+Reemplaza: PR-016 v3.0
+Origen: CC-021
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior.
+
+Referencia visual aprobada:
+- Principal y única referencia visual oficial vigente: `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg`. Función exclusivamente visual: composición, lenguaje gráfico, relación mapa–paneles, densidad informativa y paleta. No define funcionalidad ni metodología.
+- Groundzy deja de ser referencia visual oficial, para evitar lenguajes visuales contradictorios. Una idea concreta de Groundzy puede reincorporarse solo mediante decisión explícita.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v5.0)
+Estado: vigente
+Versión: 5.0
+Reemplaza: PR-016 v4.0
+Origen: CC-023
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior.
+
+Referencia visual principal (sin cambio): `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg` — composición, lenguaje gráfico, relación mapa–paneles, densidad informativa y paleta.
+
+Referencias visuales complementarias (inspiración UX/UI, CC-023). Son material de terceros: se conservan fuera del repositorio público y se describen aquí por lo que aportan.
+- Vista de árbol de Groundzy (escritorio y móvil): ficha lateral del ejemplar con pestañas, mediciones con íconos, pines legibles sobre mapa satelital, barra de herramientas sobre el mapa. Se reincorpora como idea concreta, según lo previsto en PR-016 v4.0.
+- Tablero agrícola en tablet (mapa satelital con parcelas): tarjeta de resumen flotante sobre el mapa con barras de estado.
+- Farm Management System: gráficos de dona con porcentajes y tarjetas de indicadores tintadas por categoría.
+- Wisetown (tablero de áreas verdes): barras horizontales ordenadas y gráficos de evolución.
+
+Reglas de uso de las referencias complementarias:
+- Se adaptan a la arquitectura, los módulos y los datos de SIVU; no se copian su identidad, marca, nombres ni composición literal (por ejemplo, el botón verde lima y la barra en píldora de Groundzy).
+- La paleta oficial de riesgo (Bajo `#DCE8A9`, Moderado `#F9B52B`, Alto `#F04A32`, Extremo `#C7252B`) no se modifica y se usa solo para el riesgo. Los colores de módulo evitan esos tonos.
+- No se incorporan elementos que impliquen funciones o resultados que SIVU no calcula (por ejemplo, recomendaciones automáticas tipo "AI insight").
+- Los gráficos se usan solo cuando aportan a la lectura del módulo y siempre con datos reales.
+- Antes de rediseñar la interfaz se valida una maqueta visual con la autora.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
 
 ## PR-017 — Arquitectura técnica
 Estado: vigente

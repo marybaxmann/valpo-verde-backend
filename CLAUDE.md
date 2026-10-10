@@ -24,14 +24,19 @@ Ninguna decisión es permanente.
 
 ## Qué fuente manda según el ámbito
 
-### Funcional / UX
+### Producto, funcional y UX
 
-1. prototipo propio `marybaxmann/Valpo-Verde-Conecta`;
-2. reglas funcionales / documentación vigente del proyecto;
-3. Groundzy — referencia visual/UX secundaria;
-4. otras referencias.
+Jerarquía única de fuentes (PR-016 v4.0, CC-021). Ante contradicción manda el nivel superior:
 
-- `marybaxmann/Valpo-Verde-Conecta` = prototipo navegable / referencia funcional v2.
+1. metodología y fuentes vigentes (PR-002);
+2. decisiones controladas (ADR, PR, CC);
+3. backend + API vigente;
+4. documentación vigente del proyecto;
+5. Figma y prototipo histórico — solo intención funcional (PR-001 v3.0);
+6. referencias visuales aprobadas — solo UX/UI.
+
+- `marybaxmann/Valpo-Verde-Conecta` y el Figma original (`valpo-verde-frontend/docs/referencias/figma-original/`) = referencias históricas de intención funcional; no restablecen decisiones posteriormente modificadas.
+- Referencia visual principal aprobada: `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg`.
 - `valpo-verde-frontend` = nombre previsto para el frontend productivo futuro. No asumir que hoy son el mismo repositorio.
 - El prototipo no define metodología ni estructura definitiva de base de datos.
 

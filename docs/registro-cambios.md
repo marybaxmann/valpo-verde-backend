@@ -41,12 +41,16 @@ hoja VERSION del Excel maestro.
 | CC-012 | Menús dependientes, rangos con nombre y validaciones técnicas de los anexos | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-013 | Cobertura de DICCIONARIO_CAMPOS para entidades operativas y normalización de nombres | 3 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-014 | Eliminar la duplicación de R01–R04 y M01–M05 en DICCIONARIO_CAMPOS | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | Sincronización del paquete 2.0.0 | 2026-10-04 |
-| CC-015 | Consolidación de roles (PR-003, PR-004, PR-009, USUARIOS, "¿Quién lo ingresa?") | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-015 | Consolidación de roles (PR-003, PR-004, PR-009, USUARIOS, "¿Quién lo ingresa?") | 2 | EN REVISIÓN | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-016 | Auditoría y eventual adopción de INDICES | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | CERRADO (sin implementación) | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
 | CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | PENDIENTE DE IMPLEMENTACIÓN | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-021 | Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores (PR-001 v3.0; PR-016 v4.0) | 5 | APROBADO METODOLÓGICAMENTE | Definición del agente frontend-ux y revisión de referencias de producto | — (fuera del paquete) | — | 2026-10-06 |
+| CC-022 | Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0) | 2 | PROBADO | Decisión parcial de CC-015 (autora y equipo) | — (fuera del paquete) | — | 2026-10-09 |
+| CC-023 | Referencias visuales complementarias de inspiración UX/UI, incluida la vista de árbol de Groundzy (PR-016 v5.0) | 5 | APROBADO METODOLÓGICAMENTE | Rediseño visual post-demo | — (fuera del paquete) | — | 2026-10-09 |
+| CC-024 | N13: componente con indicador "No determinado" → árbol sin clasificación de riesgo, independiente de infraestructura | 2 (+4) | APROBADO METODOLÓGICAMENTE | Auditoría del motor de riesgo (2026-10-10) | 2.0.0 (en preparación) | — | 2026-10-10 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -669,7 +673,7 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Auditoría de hojas del Excel maestro (CC-003). |
 | Tipo | 2 |
-| Estado | DETECTADO |
+| Estado | EN REVISIÓN |
 | Regla / campo afectado | PR-003, PR-004, PR-009; hoja USUARIOS; columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS. |
 | Versión anterior | USUARIOS define 4 roles (Administrador, Usuario municipal, Inspector, Encargado de mantención) y dice que el usuario municipal "no registra evaluaciones"; "¿Quién lo ingresa?" usa 9 formas distintas; PR-003/PR-004/PR-009 asignan la evaluación al Administrador. Decisión de la autora pendiente de registrar: usuario municipal e inspector son el mismo rol; el Administrador solo crea proyectos y agrega usuarios. |
 | Versión nueva | Por definir. |
@@ -683,7 +687,7 @@ motivo)
 | Aprobado por / Fecha de aprobación | — |
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
-| Observaciones | Queda explícitamente pendiente decidir si "Encargado de mantención" será un rol independiente. |
+| Observaciones | Queda explícitamente pendiente decidir si "Encargado de mantención" será un rol independiente. **Decisión parcial (2026-10-09) → CC-022:** el Administrador crea proyectos, agrega usuarios y ve el proyecto completo en modo de solo lectura; el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes e incidencias (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0). **Siguen pendientes en este CC:** (1) si el Usuario municipal es también el Inspector y realiza la evaluación técnica (mientras tanto, con el Administrador en solo lectura, el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal); (2) el rol "Encargado de mantención"; (3) quién corrige datos ya registrados (especie, mediciones, ubicación); (4) sincronización de la hoja USUARIOS y de la columna "¿Quién lo ingresa?" del Excel maestro. |
 
 ---
 
@@ -878,3 +882,183 @@ motivo)
 | 2026-10-05 | FUENTE SINCRONIZADA | — | Fuentes actualizadas y verificación §14.9 aprobada en la rama `cc-020-arbol-medicion`, repositorio backend. Pendiente de integración del PR. |
 | 2026-10-05 | FUENTE SINCRONIZADA | marybaxmann | Corrección menor previa al merge (revisión de la aprobadora): `configuracion_fustes`, `numero_fustes` y `dap_fustes_cm` sin altura de referencia fija ni categorías candidatas (criterio/altura de referencia PENDIENTE); `huso` sin zona fija "19S". Verificación repetida y aprobada. |
 | 2026-10-05 | PENDIENTE DE IMPLEMENTACIÓN | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`; commits `6af04ec`, `15c9994`). Especificación de ámbito `operativo` (§14.12). Siguiente: diseño técnico INV-1A; sin implementación de software todavía. |
+
+---
+
+### CC-021 — Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-06 |
+| Origen | Definición del `CLAUDE.md` del frontend y del agente `frontend-ux`; revisión de las referencias de producto (Figma original, prototipo navegable y referencias visuales). |
+| Tipo | 5 — documental (gobernanza de referencias; sin cambio de lógica ni de datos) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | PR-001, PR-016; referencia a Groundzy en PR-015 v2.0; descripción del prototipo en el contexto de ADR-001 v1.1; `CLAUDE.md` (sección de fuentes funcional/UX); `docs/workflow.md` §10; `docs/methodology/00-index.md` (regla de precedencia, flujo funcional/UX). |
+| Versión anterior | PR-001 v2.0: `Valpo-Verde-Conecta` como "referencia funcional actual". PR-016 v3.0: prioridad de referencias con el prototipo en primer lugar para lo funcional/UX, por encima de la documentación, y Groundzy como referencia visual secundaria. |
+| Versión nueva | PR-016 v4.0: jerarquía única — (1) metodología y fuentes vigentes; (2) decisiones controladas ADR/PR/CC; (3) backend y API vigentes; (4) documentación vigente; (5) Figma y prototipo histórico, solo intención funcional; (6) referencias visuales aprobadas, solo UX/UI. Referencia visual principal y única oficial: `03_CityDashboardsButton.jpg`; Groundzy retirada como referencia oficial. PR-001 v3.0: prototipo y Figma original como referencias históricas de intención funcional. |
+| Motivo | Con el prototipo en primer lugar, una pantalla histórica podía contradecir decisiones posteriores (módulos reorganizados, campos y categorías superados). Mantener varias referencias visuales oficiales podía mezclar lenguajes visuales. |
+| Fundamento / fuente | Decisiones de `marybaxmann` del 2026-10-06: aprobación de la jerarquía de seis niveles; el Figma histórico conserva valor como evidencia de intención funcional y de producto, pero no puede restablecer decisiones que posteriormente fueron modificadas, reemplazadas o eliminadas; `03_CityDashboardsButton.jpg` como referencia visual principal aprobada; retiro de Groundzy; los diagramas de decisión metodológicos no son referencias de UI. |
+| Archivos afectados | `docs/project-rules.md`, `docs/architecture-decisions.md`, `CLAUDE.md`, `docs/workflow.md`, `docs/methodology/00-index.md`, `docs/registro-cambios.md`, `HANDOFF.md`. Repositorio frontend (sin versionar todavía): `docs/referencias/figma-original/` (8 pantallas), `docs/referencias/visuales/03_CityDashboardsButton.jpg`. |
+| Impacto en diagramas | Ninguno. Los diagramas de decisión no se copian al frontend ni se usan como referencia de UI. |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Ninguno. |
+| Impacto en backend | Ninguno. |
+| Impacto en API | Ninguno. |
+| Impacto en frontend | Ninguno en código. El `CLAUDE.md` del frontend y el agente `frontend-ux` se rigen por esta jerarquía. |
+| Pruebas necesarias | No aplica (documental). Verificación: ninguna referencia vigente ubica el prototipo o el Figma por encima de la documentación, el backend o la metodología, ni cita a Groundzy como referencia visual vigente. |
+| Dependencias | Ninguna. |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-06 |
+| Fecha de implementación | sin implementación (cambio documental) |
+| Commits / PR asociados | Pendiente (sin commit; cambios en la rama `docs/cc-021-jerarquia-fuentes` del repositorio backend, pendientes de revisión). |
+| Observaciones | PR-015 v2.0: actualización solo referencial, sin nueva versión — "experiencia territorial similar conceptualmente a Groundzy (referencia de UX, PR-016)" pasa a "experiencia territorial que permita:"; la lista de objetivos no cambia. ADR-001 v1.1: actualización solo referencial, sin nueva versión ni cambio de decisión técnica — el prototipo pasa de "referencia funcional v2 (ver PR-001)" a "referencia histórica de intención funcional (ver PR-001 v3.0 y PR-016 v4.0): no constituye fuente funcional vigente ni prevalece sobre decisiones posteriores". Distinción vigente: `clasificacion_prioridad` es un resultado metodológico (M05, versión en preparación) que el frontend podrá representar cuando exista el contrato backend; "Priorización" como módulo independiente del Figma histórico no se reconstruye por su sola presencia allí. Se conservan como historial las menciones a Groundzy y al prototipo en versiones reemplazadas, en `docs/checkpoint-2026-09-16.md` y en `docs/roadmap.md`. Ejemplo que motivó la regla: "Priorización" figura como módulo propio en el Figma histórico; su presencia allí no autoriza a recrearlo como módulo independiente. |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios.
+- [x] REGLAS_INDICADORES — N/A: sin cambios.
+- [x] MATRICES_CALCULO — N/A: sin cambios.
+- [x] DICCIONARIO_CAMPOS — N/A: sin cambios.
+- [x] VERSION — N/A: fuera del paquete metodológico.
+- [x] docs/methodology/ — `00-index.md` (regla de precedencia y flujo funcional/UX).
+- [x] PR / ADR — PR-001 v3.0, PR-016 v4.0; referencias en PR-015 v2.0 y ADR-001 v1.1.
+- [x] Export de texto — N/A.
+- [x] Verificación §14.9 (fuente) — N/A: no se modifican artefactos metodológicos.
+- [x] Migración + schema.sql — N/A.
+- [x] Backend (services/rules) — N/A.
+- [x] API / Zod — N/A.
+- [x] Frontend — N/A en código.
+- [x] Verificación §14.9 (implementación) — N/A.
+- [ ] Revisión final — pendiente: revisión de marybaxmann antes del commit.
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-06 | DETECTADO | — | PR-016 v3.0 y `CLAUDE.md` ubicaban el prototipo por encima de la documentación vigente para lo funcional/UX. |
+| 2026-10-06 | APROBADO METODOLÓGICAMENTE | marybaxmann | Jerarquía de seis niveles, referencia visual principal y retiro de Groundzy aprobados; implementación documental autorizada. Cambios escritos en la rama del repositorio backend, sin commit, pendientes de revisión. Al integrarse: `CERRADO` (sin implementación). |
+| 2026-10-06 | APROBADO METODOLÓGICAMENTE | marybaxmann | Se incorpora la actualización referencial de ADR-001 y el relevo en `HANDOFF.md`. Verificación sin contradicciones activas sobre la jerarquía de fuentes. Preparado para integración mediante PR desde la rama `docs/cc-021-jerarquia-fuentes`; tras el merge se registra el commit y se cierra como `CERRADO` (sin implementación). |
+
+---
+
+### CC-022 — Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-09 |
+| Origen | Decisión parcial de CC-015 (Consolidación de roles), definida por la autora con su equipo durante la auditoría post-demo. |
+| Tipo | 2 — regla de negocio / permisos |
+| Estado | PROBADO |
+| Regla / campo afectado | PR-003, PR-004, PR-009. |
+| Versión anterior | PR-004 v4.0: el Administrador "realiza la evaluación del arbolado" y gestiona inventarios, infraestructura, incidencias y mantenimiento. PR-003 v5.0: el Usuario municipal reporta y consulta incidencias y solo consulta mantenimiento. PR-009 v1.0: las inspecciones las realiza el Administrador. |
+| Versión nueva | PR-004 v5.0: el Administrador crea y gestiona proyectos, gestiona sus miembros y consulta toda la información del proyecto en modo de solo lectura; no registra ni modifica datos de árboles, mediciones, evaluaciones, infraestructura, órdenes ni incidencias. PR-003 v6.0: el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes e incidencias. PR-009 v2.0: las inspecciones no las realiza el Administrador; el rol que las realiza se define en CC-015. |
+| Motivo | Separar la administración de la plataforma (proyectos y usuarios) de la operación técnica del arbolado, que recae en el equipo municipal. |
+| Fundamento / fuente | Decisión de `marybaxmann` y su equipo del 2026-10-09: "para admin está la opción de que vea el proyecto, pero solo eso" (confirmado: todo el proyecto en modo de solo lectura); "el usuario municipal sí puede cambiar y actualizar estados"; el resto de CC-015 queda pendiente. |
+| Archivos afectados | `docs/project-rules.md`, `docs/registro-cambios.md`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Hoja USUARIOS y columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS: pendientes de sincronizar junto con CC-015. |
+| Impacto en BD | RLS: el Administrador pasa de acceso total a solo lectura en `trees`, `tree_risk_assessments`, `tree_infrastructure_assessments`, `maintenance` e `incidents`; el Usuario municipal obtiene UPDATE sobre `maintenance` e `incidents` de su proyecto; `fn_create_tree_with_measurement` deja de aceptar al Administrador. Migración 011. |
+| Impacto en backend | El Administrador recibe 403 en altas y ediciones (árbol, evaluaciones, órdenes, incidencias, estados); el cambio de estado pasa del Administrador al Usuario municipal. |
+| Impacto en API | Mismos endpoints; cambia quién está autorizado. |
+| Impacto en frontend | Para el Administrador se ocultan las acciones de registro, edición y cambio de estado; el Usuario municipal ve la actualización de estados. |
+| Pruebas necesarias | Ejecutadas 2026-10-09: 162/162 tests backend (incluye 403 del Administrador en altas y cambios de estado, y cambio de estado por el Usuario municipal); RLS verificada con simulación de roles en Supabase (Administrador: lectura sí, escritura y alta por RPC rechazadas; Usuario municipal: actualización de órdenes e incidencias y alta de árbol permitidas). Criterios: Administrador: lectura de proyecto, inventario, fichas y módulos; 403 en altas, ediciones y cambios de estado (backend y RLS). Usuario municipal: actualización de estado de órdenes e incidencias de su proyecto; sin acceso a proyectos ajenos. |
+| Dependencias | CC-015 (pendientes: evaluación técnica por el Usuario municipal/Inspector, "Encargado de mantención", corrección de datos, sincronización del Excel). |
+| rule_version | sin cambio (permisos fuera del paquete metodológico) |
+| Aprobado por | marybaxmann (con su equipo) |
+| Fecha de aprobación | 2026-10-09 |
+| Fecha de implementación | 2026-10-09 (desarrollo/pruebas, ADR-013) |
+| Commits / PR asociados | Documentación: rama `docs/cc-022-roles`. Implementación en `feature/demo-sivu`: backend `be1707b` (migración 011, `assertProjectWriter`, tests), frontend `4cef105` (interfaz de solo lectura). |
+| Observaciones | Con el Administrador en solo lectura, ningún rol vigente tiene asignada formalmente la evaluación técnica hasta que se resuelva CC-015; el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal (cálculo siempre por el motor, sin modificación manual). |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios.
+- [x] REGLAS_INDICADORES — N/A: sin cambios.
+- [x] MATRICES_CALCULO — N/A: sin cambios.
+- [ ] DICCIONARIO_CAMPOS — columna "¿Quién lo ingresa?": pendiente (con CC-015).
+- [ ] Hoja USUARIOS — pendiente (con CC-015).
+- [x] VERSION — N/A: fuera del paquete metodológico.
+- [x] PR / ADR — PR-003 v6.0, PR-004 v5.0, PR-009 v2.0.
+
+---
+
+### CC-023 — Referencias visuales complementarias de inspiración UX/UI
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-09 |
+| Origen | Rediseño visual post-demo: la autora aporta referencias de diseño y aprueba una maqueta de prueba. |
+| Tipo | 5 — documental (gobernanza de referencias; sin cambio de lógica ni de datos) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | PR-016. |
+| Versión anterior | PR-016 v4.0: `03_CityDashboardsButton.jpg` como única referencia visual oficial; Groundzy retirada, reincorporable solo mediante decisión explícita. |
+| Versión nueva | PR-016 v5.0: se mantiene la referencia principal y se agregan cuatro referencias complementarias de inspiración UX/UI (vista de árbol de Groundzy, tablero agrícola en tablet, Farm Management System, Wisetown), con reglas de uso: adaptar sin copiar, paleta de riesgo intacta, sin elementos que impliquen funciones inexistentes, gráficos solo con datos reales y validación previa con maqueta. |
+| Motivo | Dar más color y contexto territorial a la interfaz sin perder la identidad de SIVU ni contradecir la jerarquía de fuentes. |
+| Fundamento / fuente | Decisión de `marybaxmann` del 2026-10-09: le gustan los pines, el resumen rápido, la estructura de la ficha y los gráficos por módulo; pide mantener su paleta de riesgo y que el diseño no parezca un plagio de Groundzy, sino una adaptación a la arquitectura de SIVU. |
+| Archivos afectados | `docs/project-rules.md`, `docs/registro-cambios.md`; `valpo-verde-frontend/CLAUDE.md` (tabla de referencias). Las imágenes no se versionan: son material de terceros y el repositorio es público. |
+| Impacto en diagramas · Excel · BD · backend · API | Ninguno. |
+| Impacto en frontend | Ninguno en código hasta aprobar la maqueta v2; el rediseño posterior se rige por las reglas de PR-016 v5.0. |
+| Pruebas necesarias | No aplica (documental). |
+| Dependencias | CC-021 (jerarquía de fuentes). |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-09 |
+| Fecha de implementación | sin implementación (cambio documental) |
+| Commits / PR asociados | Rama `docs/cc-023-referencias-visuales`. |
+| Observaciones | Maqueta de prueba v1 validada por la autora el 2026-10-09; la maqueta v2 incorpora la diferenciación respecto de Groundzy antes del rediseño. |
+
+
+### CC-024 — N13: componente "No determinado" y árbol sin clasificación de riesgo
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-10 |
+| Origen | Auditoría del motor de riesgo (`services/rules/treeRisk.ts`) contra `borrador_reglas_diagramas_v3.xlsx` y el Excel maestro. Resuelve la duda N13 (hoja DUDAS, PENDIENTE). |
+| Tipo | 2 — cambio metodológico: salida cuando un indicador parcial queda "No determinado" (+4 implementación ya existente, + validación de entrada) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | R01, R02 (y R03 por coherencia) → `probabilidad_falla_*`; M02 + M03 → `clasificacion_raices_cuello / _tronco / _copa_ramas`; R04 → `clasificacion_riesgo`. |
+| Versión anterior | N1 define que un indicador parcial "No determinado" no recibe puntaje ni equivale a 0 (RC/TR-CAV-05 y -08). N13 dejaba abierto qué pasa con la probabilidad de falla del componente y con M02, M03 y R04: (a) No determinada, (b) puntaje parcial con advertencia, (c) otra. |
+| Versión nueva | Opción (a). Si un indicador parcial del componente queda "No determinado", la probabilidad de falla del componente es **No determinada**, su clasificación (M02 + M03) también, y el árbol queda **sin clasificación de riesgo** (R04 sin valor) hasta completar la medición. No se usa un puntaje parcial. La clasificación del árbol es independiente de la clasificación de infraestructura (M04): un árbol sin clasificación no la afecta ni se mezcla con ella. En la interfaz se rotula "Sin clasificación" y se distingue de "Sin evaluación" (árbol nunca evaluado). |
+| Motivo | Evitar que el riesgo de un árbol se calcule con información incompleta y mantener separadas la evaluación del árbol y la de infraestructura. |
+| Fundamento / fuente | Decisión de `marybaxmann` del 2026-10-10: "queda sin clasificación, pero diferenciado entre árbol y lo que es infraestructura". |
+| Archivos afectados | Fuente (pendiente de sincronizar): borrador `REGLAS_INDICADORES` / `DUDAS` (N13 → RESUELTA), `DICCIONARIO_CAMPOS` (`probabilidad_falla_*`, `clasificacion_*`, `clasificacion_riesgo`), `docs/methodology/`. Implementación: `src/services/rules/treeRisk.ts` (comentario), `src/schemas/treeRiskAssessment.schema.ts`; frontend `RiskAssessmentModal`, ficha, paneles, mapa y leyenda. |
+| Impacto en diagramas | Agregar la salida "No determinado / sin clasificación" en los diagramas de R01 y R02 al sincronizar el paquete 2.0.0. |
+| Impacto en Excel metodológico | DUDAS: N13 → RESUELTA (opción a). DICCIONARIO_CAMPOS: en `probabilidad_falla_raices_cuello` y `_tronco`, la nota de "No determinado"; en `clasificacion_riesgo`, "Requiere clasificaciones válidas de los tres componentes; si alguna falta, sin clasificación". Sin cambios en MATRICES_CALCULO. |
+| Impacto en BD | Ninguno: `clasificacion_*` y `probabilidad_falla_*` ya admiten NULL (migración 007). |
+| Impacto en backend | El motor ya se comportaba así (R04 = null si un componente es null); solo se corrige el comentario, que decía lo contrario. Además, la validación de entrada rechaza evaluaciones con datos condicionales faltantes o fuera de rango, para que el motor no asuma severidades no observadas (heridas sin condición, grieta sin afectación o dirección, codominancia sin grieta en la unión ni corteza incluida, ramas secas sin porcentaje o con 0 % / >100 %, SL fuera de 0–100, t/R fuera de 0–1) y valida la fecha futura con la hora de Chile. SL% y t/R vacíos siguen permitidos: la regla los resuelve como "No determinado". |
+| Impacto en API | POST `/api/trees/:treeId/risk-assessments` responde 400 con el dato faltante en lugar de guardar un resultado con una severidad asumida. |
+| Impacto en frontend | El asistente no deja avanzar hasta completar los datos condicionales; las preguntas Sí/No condicionales aparecen sin responder. "Sin clasificación" reemplaza "No determinado" como rótulo del riesgo del árbol; el mapa usa un pin blanco con borde neutro para "Sin clasificación", distinto del pin neutro relleno de "Sin evaluación". |
+| Pruebas necesarias | `tests/schemas/treeRiskAssessment.schema.test.ts` (23 casos); suite completa del backend; recálculo de las evaluaciones guardadas. |
+| Dependencias | N1 (resuelta). N21 (M04 sin componentes aplicables) sigue PENDIENTE y no se resuelve aquí. |
+| rule_version | sin cambio (`borrador_reglas_diagramas_v3`; sin versión publicada) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-10 |
+| Fecha de implementación | 2026-10-10 (en `feature/demo-sivu`, sin commit a la fecha de esta ficha) |
+| Commits / PR asociados | Rama `docs/cc-024-n13-sin-clasificacion` (esta ficha). |
+| Observaciones | Auditoría: las reglas de REGLAS_INDICADORES v3, los rangos de R01–R03, las matrices M01–M03 y R04 coinciden con el motor; las 4 evaluaciones guardadas se recalcularon y coinciden. Deuda conocida: el motor implementa el borrador v3 sin paquete publicado (00-index, punto 5), aceptado para la demo. |
+
+**Checklist de sincronización**
+
+- [ ] Diagrama
+- [ ] REGLAS_INDICADORES / DUDAS (N13)
+- [x] MATRICES_CALCULO — N/A (sin cambios)
+- [ ] DICCIONARIO_CAMPOS
+- [ ] VERSION
+- [ ] docs/methodology/
+- [x] PR / ADR — N/A
+- [ ] Export de texto
+- [ ] Verificación §14.9 (fuente)
+- [x] Migración + schema.sql — N/A (las columnas ya admiten NULL)
+- [x] Backend (services/rules) — comentario corregido; comportamiento ya conforme
+- [x] API / Zod — validación de datos condicionales y rangos
+- [x] Frontend — asistente, rótulos, mapa y leyenda
+- [ ] Verificación §14.9 (implementación)
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-10 | DETECTADO | auditoría | Comentario del motor contradice al código; N13 pendiente. |
+| 2026-10-10 | APROBADO METODOLÓGICAMENTE | marybaxmann | Opción (a), árbol diferenciado de infraestructura. |

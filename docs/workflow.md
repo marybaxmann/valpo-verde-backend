@@ -287,13 +287,16 @@ Si una feature depende de una decisión pendiente:
 
 ## 10. Prototipos y referencias
 
-Jerarquía de referencias (de mayor a menor autoridad):
+Jerarquía única de fuentes (PR-016 v4.0, CC-021), de mayor a menor autoridad:
 
-1. **Prototipo propio `marybaxmann/Valpo-Verde-Conecta`** — referencia funcional/UX principal.
-2. **Paquete metodológico (PR-002, `docs/methodology/`)** — fuente técnica.
-3. **Groundzy** — referencia visual/UX secundaria.
+1. **Metodología y fuentes vigentes** — paquete metodológico (PR-002).
+2. **Decisiones controladas** — ADR, PR y CC.
+3. **Backend y API vigentes.**
+4. **Documentación vigente del proyecto.**
+5. **Figma y prototipo histórico** (`marybaxmann/Valpo-Verde-Conecta`; pantallas en `valpo-verde-frontend/docs/referencias/figma-original/`) — solo intención funcional (PR-001 v3.0).
+6. **Referencias visuales aprobadas** — solo UX/UI (`valpo-verde-frontend/docs/referencias/visuales/`).
 
-El frontend `marybaxmann/Valpo-Verde-Conecta` puede utilizarse para comprender:
+El prototipo y el Figma histórico pueden utilizarse para comprender:
 - navegación;
 - jerarquía;
 - pantallas;
@@ -306,7 +309,9 @@ No debe utilizarse para inferir:
 - estructura definitiva de BD;
 - permisos no documentados.
 
-Groundzy inspira experiencia visual y organización de UX. No define lógica, metodología ni estructura de datos, y es secundaria respecto del prototipo propio y de la metodología (ver `project-rules.md` PR-016).
+Su presencia en el prototipo no demuestra que un módulo, campo, categoría, cálculo o flujo siga vigente: conservan valor como evidencia de intención funcional, pero no restablecen decisiones posteriormente modificadas, reemplazadas o eliminadas.
+
+La referencia visual aprobada define solo lenguaje visual (composición, relación mapa–paneles, densidad informativa y paleta); no define lógica, metodología ni estructura de datos. Groundzy dejó de ser referencia visual oficial (PR-016 v4.0).
 
 ---
 
