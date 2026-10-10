@@ -50,6 +50,7 @@ hoja VERSION del Excel maestro.
 | CC-021 | Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores (PR-001 v3.0; PR-016 v4.0) | 5 | APROBADO METODOLÓGICAMENTE | Definición del agente frontend-ux y revisión de referencias de producto | — (fuera del paquete) | — | 2026-10-06 |
 | CC-022 | Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0) | 2 | PROBADO | Decisión parcial de CC-015 (autora y equipo) | — (fuera del paquete) | — | 2026-10-09 |
 | CC-023 | Referencias visuales complementarias de inspiración UX/UI, incluida la vista de árbol de Groundzy (PR-016 v5.0) | 5 | APROBADO METODOLÓGICAMENTE | Rediseño visual post-demo | — (fuera del paquete) | — | 2026-10-09 |
+| CC-024 | N13: componente con indicador "No determinado" → árbol sin clasificación de riesgo, independiente de infraestructura | 2 (+4) | APROBADO METODOLÓGICAMENTE | Auditoría del motor de riesgo (2026-10-10) | 2.0.0 (en preparación) | — | 2026-10-10 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1007,3 +1008,57 @@ motivo)
 | Commits / PR asociados | Rama `docs/cc-023-referencias-visuales`. |
 | Observaciones | Maqueta de prueba v1 validada por la autora el 2026-10-09; la maqueta v2 incorpora la diferenciación respecto de Groundzy antes del rediseño. |
 
+
+### CC-024 — N13: componente "No determinado" y árbol sin clasificación de riesgo
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-10 |
+| Origen | Auditoría del motor de riesgo (`services/rules/treeRisk.ts`) contra `borrador_reglas_diagramas_v3.xlsx` y el Excel maestro. Resuelve la duda N13 (hoja DUDAS, PENDIENTE). |
+| Tipo | 2 — cambio metodológico: salida cuando un indicador parcial queda "No determinado" (+4 implementación ya existente, + validación de entrada) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | R01, R02 (y R03 por coherencia) → `probabilidad_falla_*`; M02 + M03 → `clasificacion_raices_cuello / _tronco / _copa_ramas`; R04 → `clasificacion_riesgo`. |
+| Versión anterior | N1 define que un indicador parcial "No determinado" no recibe puntaje ni equivale a 0 (RC/TR-CAV-05 y -08). N13 dejaba abierto qué pasa con la probabilidad de falla del componente y con M02, M03 y R04: (a) No determinada, (b) puntaje parcial con advertencia, (c) otra. |
+| Versión nueva | Opción (a). Si un indicador parcial del componente queda "No determinado", la probabilidad de falla del componente es **No determinada**, su clasificación (M02 + M03) también, y el árbol queda **sin clasificación de riesgo** (R04 sin valor) hasta completar la medición. No se usa un puntaje parcial. La clasificación del árbol es independiente de la clasificación de infraestructura (M04): un árbol sin clasificación no la afecta ni se mezcla con ella. En la interfaz se rotula "Sin clasificación" y se distingue de "Sin evaluación" (árbol nunca evaluado). |
+| Motivo | Evitar que el riesgo de un árbol se calcule con información incompleta y mantener separadas la evaluación del árbol y la de infraestructura. |
+| Fundamento / fuente | Decisión de `marybaxmann` del 2026-10-10: "queda sin clasificación, pero diferenciado entre árbol y lo que es infraestructura". |
+| Archivos afectados | Fuente (pendiente de sincronizar): borrador `REGLAS_INDICADORES` / `DUDAS` (N13 → RESUELTA), `DICCIONARIO_CAMPOS` (`probabilidad_falla_*`, `clasificacion_*`, `clasificacion_riesgo`), `docs/methodology/`. Implementación: `src/services/rules/treeRisk.ts` (comentario), `src/schemas/treeRiskAssessment.schema.ts`; frontend `RiskAssessmentModal`, ficha, paneles, mapa y leyenda. |
+| Impacto en diagramas | Agregar la salida "No determinado / sin clasificación" en los diagramas de R01 y R02 al sincronizar el paquete 2.0.0. |
+| Impacto en Excel metodológico | DUDAS: N13 → RESUELTA (opción a). DICCIONARIO_CAMPOS: en `probabilidad_falla_raices_cuello` y `_tronco`, la nota de "No determinado"; en `clasificacion_riesgo`, "Requiere clasificaciones válidas de los tres componentes; si alguna falta, sin clasificación". Sin cambios en MATRICES_CALCULO. |
+| Impacto en BD | Ninguno: `clasificacion_*` y `probabilidad_falla_*` ya admiten NULL (migración 007). |
+| Impacto en backend | El motor ya se comportaba así (R04 = null si un componente es null); solo se corrige el comentario, que decía lo contrario. Además, la validación de entrada rechaza evaluaciones con datos condicionales faltantes o fuera de rango, para que el motor no asuma severidades no observadas (heridas sin condición, grieta sin afectación o dirección, codominancia sin grieta en la unión ni corteza incluida, ramas secas sin porcentaje o con 0 % / >100 %, SL fuera de 0–100, t/R fuera de 0–1) y valida la fecha futura con la hora de Chile. SL% y t/R vacíos siguen permitidos: la regla los resuelve como "No determinado". |
+| Impacto en API | POST `/api/trees/:treeId/risk-assessments` responde 400 con el dato faltante en lugar de guardar un resultado con una severidad asumida. |
+| Impacto en frontend | El asistente no deja avanzar hasta completar los datos condicionales; las preguntas Sí/No condicionales aparecen sin responder. "Sin clasificación" reemplaza "No determinado" como rótulo del riesgo del árbol; el mapa usa un pin blanco con borde neutro para "Sin clasificación", distinto del pin neutro relleno de "Sin evaluación". |
+| Pruebas necesarias | `tests/schemas/treeRiskAssessment.schema.test.ts` (23 casos); suite completa del backend; recálculo de las evaluaciones guardadas. |
+| Dependencias | N1 (resuelta). N21 (M04 sin componentes aplicables) sigue PENDIENTE y no se resuelve aquí. |
+| rule_version | sin cambio (`borrador_reglas_diagramas_v3`; sin versión publicada) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-10 |
+| Fecha de implementación | 2026-10-10 (en `feature/demo-sivu`, sin commit a la fecha de esta ficha) |
+| Commits / PR asociados | Rama `docs/cc-024-n13-sin-clasificacion` (esta ficha). |
+| Observaciones | Auditoría: las reglas de REGLAS_INDICADORES v3, los rangos de R01–R03, las matrices M01–M03 y R04 coinciden con el motor; las 4 evaluaciones guardadas se recalcularon y coinciden. Deuda conocida: el motor implementa el borrador v3 sin paquete publicado (00-index, punto 5), aceptado para la demo. |
+
+**Checklist de sincronización**
+
+- [ ] Diagrama
+- [ ] REGLAS_INDICADORES / DUDAS (N13)
+- [x] MATRICES_CALCULO — N/A (sin cambios)
+- [ ] DICCIONARIO_CAMPOS
+- [ ] VERSION
+- [ ] docs/methodology/
+- [x] PR / ADR — N/A
+- [ ] Export de texto
+- [ ] Verificación §14.9 (fuente)
+- [x] Migración + schema.sql — N/A (las columnas ya admiten NULL)
+- [x] Backend (services/rules) — comentario corregido; comportamiento ya conforme
+- [x] API / Zod — validación de datos condicionales y rangos
+- [x] Frontend — asistente, rótulos, mapa y leyenda
+- [ ] Verificación §14.9 (implementación)
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-10 | DETECTADO | auditoría | Comentario del motor contradice al código; N13 pendiente. |
+| 2026-10-10 | APROBADO METODOLÓGICAMENTE | marybaxmann | Opción (a), árbol diferenciado de infraestructura. |
