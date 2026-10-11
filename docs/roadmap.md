@@ -11,6 +11,16 @@ Si hay una diferencia entre lo que dice este archivo y `project-rules.md`,
 Este archivo solo se actualiza tachando o quitando un ítem cuando el
 pendiente correspondiente quede resuelto en su documento de origen.
 
+> **Nota de vigencia (2026-10-11).** Las secciones "Base de datos y
+> migraciones", "Backend", "Frontend productivo" y "Metodología" no se
+> actualizan desde 2026-09-16 y describen como no iniciadas cosas que ya
+> existen en `main` (frontend productivo, endpoints de árboles y módulos,
+> `services/rules/treeRisk.ts`). No se tachan aquí porque su resolución
+> debe confirmarse en el documento de origen (ver contradicciones C1 y C7
+> en `docs/auditorias/2026-10-postauditoria/contradicciones.md`). El
+> registro vigente de pendientes es la sección **"Postauditoría 2026-10"**,
+> al final de este archivo.
+
 ---
 
 ## Base de datos y migraciones
@@ -154,3 +164,86 @@ orden de trabajo previsto, no como progreso:
   + Supertest instalados y configurados (`jest.config.js`,
   `tsconfig.jest.json`); 5 suites / 33 tests PASS (ver README.md "Estado
   actual" y `docs/checkpoint-2026-09-16.md` sección 9).
+
+---
+
+## Postauditoría 2026-10
+
+Registro maestro de pendientes de la auditoría postdemo (2026-10-10 /
+2026-10-11). Cada ítem remite al hallazgo o decisión de origen en
+`docs/auditorias/2026-10-postauditoria/` (H = `hallazgos.md`,
+C = `contradicciones.md`, D = `decisiones.md`). Ningún ítem implica una
+decisión aprobada salvo lo indicado en `decisiones.md`.
+
+Estados: `PENDIENTE DE DECISIÓN` (autora) · `PENDIENTE` · `BLOQUEADO`
+(por otro ítem) · `EN RAMA` (corregido en `feature/demo-sivu`, fuera de
+`main`, sin verificar en navegador).
+
+### Decisiones de la autora
+
+| ID | Pendiente | Origen | Estado | Bloquea |
+|---|---|---|---|---|
+| PA-01 | Tratamiento del motor implementado con reglas de borrador (excepción controlada, publicación 2.0.0 o resultados provisionales); formato de `rule_version` | C1 | PENDIENTE DE DECISIÓN | PA-19, C4 |
+| PA-02 | Tratamiento de ADR-006 frente a CC-022 | C2 | PENDIENTE DE DECISIÓN | — |
+| PA-03 | CC-015: modelo de roles (Administrador, Usuario municipal, Inspector, Mantenimiento; varios roles por persona; rol por proyecto; permisos) | D §2, CC-015 | PENDIENTE DE DECISIÓN | PA-02 (definitiva), PA-05, PA-07, PA-08 |
+| PA-04 | DA-01: implementación concreta (credencial, permisos, revisión de ADR-014 / PR-018) | D §1, §4; S1, S2 | PENDIENTE DE DECISIÓN (principio aprobado) | PA-25, PA-26, PA-27 |
+| PA-05 | DA-02: diseño de INSPECCIONES (Q5 ADR-016, Q6, Q8, Q9) | D §1, §8; X4, X5 | PENDIENTE DE DECISIÓN | PA-26 (inspector) |
+| PA-06 | DA-03: esquema de eventos (D1–D5, D9, D12) | D §1, §6; I2 | PENDIENTE DE DECISIÓN (concepto aprobado) | PA-27 |
+| PA-07 | DA-04: matrices y datos por transición (T-01 a T-13) | D §1, §7; I3, X3 | PENDIENTE DE DECISIÓN | PA-27 |
+| PA-08 | Visibilidad de nombres entre miembros del proyecto (Q7) | I1-b | PENDIENTE DE DECISIÓN | — |
+| PA-09 | CC tipo 1 por `INSPECCIONES.nivel_riesgo` (Q10) | X1 | PENDIENTE DE DECISIÓN | PA-05 |
+| PA-10 | Etiquetas `demo-2026-10-10` (crear / publicar) | D §2 K3 | PENDIENTE DE DECISIÓN | — |
+| PA-11 | Registrar CC-025 y demás candidatos (alcance y estado propuestos) | D §5 | PENDIENTE DE DECISIÓN | — |
+
+### Verificación y entorno
+
+| ID | Pendiente | Origen | Estado | Depende de |
+|---|---|---|---|---|
+| PA-12 | Verificar en navegador la rama del 2026-10-11 (P1–P7) y decidir su PR a `main` | H §1; D §2 K4 | PENDIENTE | — |
+| PA-13 | Reactivar entorno de pruebas aislado y reproducir el esquema (migraciones 001–006 fuera del historial) | E1; D §2 | PENDIENTE DE DECISIÓN (Q3) | — |
+| PA-14 | Ejecutar W1–W12 en el entorno aislado | T1; `escenarios-rls.md` | BLOQUEADO | PA-13 + autorización |
+| PA-15 | Evidencias de solo lectura E-2, E-3, E-5 para DA-01 | D §4 | PENDIENTE | — |
+| PA-16 | Verificar en navegador P3 (pines duplicados), A3 (ancho de teléfono), cascada de peticiones | P3, A3 | PENDIENTE | PA-12 |
+
+### Documentación
+
+| ID | Pendiente | Origen | Estado | Depende de |
+|---|---|---|---|---|
+| PA-17 | Actualizar `README.md` (estado, pruebas, contrato de API) | C6 | PENDIENTE | PA-12 (endpoints de la rama) |
+| PA-18 | Frontend: `docs/frontend-architecture.md` y `.env.example` (rama `docs/` en el repositorio frontend) | C8, C9 | PENDIENTE | — |
+| PA-19 | `docs/methodology/01–05` frente al motor | C4 | BLOQUEADO | PA-01 |
+| PA-20 | Actualizar ADR-014 (alcance real de RLS) junto con su revisión por DA-01 | C3 | BLOQUEADO | PA-04 |
+| PA-21 | Sincronizar el Excel: CC-022 (USUARIOS, "¿Quién lo ingresa?"), CC-024 (DUDAS N13, DICCIONARIO_CAMPOS) | C11 | PENDIENTE | PA-03 (CC-022) |
+| PA-22 | Revisar el issue #6 y el tablero (merges #16 y #17 ya realizados; issue #8 resuelto en rama) | C12, P7 | PENDIENTE | — |
+| PA-23 | Corregir comentarios de código contradictorios con CC-022 (cambio pequeño, sin cambio de comportamiento) | M2, C10 | PENDIENTE | — |
+| PA-24 | Limpieza de ramas `docs/cc-021…024` y del worktree `../valpo-verde-backend-cc024` (destructiva) | Plan de consolidación | PENDIENTE DE DECISIÓN | — |
+
+### Implementación (después de las decisiones)
+
+| ID | Pendiente | Origen | Prior. | Estado | Depende de |
+|---|---|---|---|---|---|
+| PA-25 | Cerrar la escritura directa según la variante de DA-01 que se apruebe | S1, S2 | Alta | BLOQUEADO | PA-04, PA-14 |
+| PA-26 | Registrar el autor (e inspector, si se aprueba) en cada evaluación | I1 | Alta | BLOQUEADO | PA-04, PA-03, PA-05 |
+| PA-27 | Historial de eventos y transiciones de incidencias y OT | I2, I3 | Media | BLOQUEADO | PA-04, PA-06, PA-07 |
+| PA-28 | Error tras guardar no debe ocultar el mapa | F1 | Media | PENDIENTE | PA-12 |
+| PA-29 | Tiempos máximos de petición (frontend y backend) | F2 | Media | PENDIENTE | — |
+| PA-30 | Sesión vencida → login; reflejar cambios de rol | F3 | Baja | PENDIENTE | — |
+| PA-31 | Idempotencia en altas | F4 | Baja | PENDIENTE | — |
+| PA-32 | Accesibilidad: etiquetas asociadas; modales con Escape, foco y `role="dialog"` | A1, A2 | Media | PENDIENTE | — |
+| PA-33 | Consultas por proyecto en infraestructura, mantención e índices | R1 | Media | PENDIENTE | — |
+| PA-34 | Avisos de rendimiento de Supabase (políticas, índices FK) | R2 | Baja | PENDIENTE | PA-04 (políticas) |
+| PA-35 | Errores tipados en lugar de búsqueda por texto | M1 | Media | PENDIENTE | PA-04 |
+| PA-36 | Dividir `ModulePage` (Inspección / Infraestructura) | M3, P5 | Media | PENDIENTE | PA-12 |
+| PA-37 | Pruebas de rutas faltantes, pruebas de frontend, CI | T2 | Media | PENDIENTE | — |
+| PA-38 | Registro de peticiones y diagnóstico sin datos sensibles | T3 | Media | PENDIENTE | — |
+| PA-39 | Endurecimiento menor: funciones ejecutables sin sesión, contraseñas filtradas, `search_path`, cabeceras, límite de tasa | S3, S4, S5 | Baja | PENDIENTE | — |
+| PA-40 | Tablas y columnas del modelo inicial sin uso (borrar requiere autorización) | I4 | Baja | PENDIENTE DE DECISIÓN | PA-05, PA-06 |
+| PA-41 | Validación de fecha en la función de alta con hora de Chile | I5 | Baja | PENDIENTE | PA-04 |
+| PA-42 | Caché global y relectura completa tras editar (aceptados por ahora) | P4d, P4e | Baja | PENDIENTE | — |
+
+### Pendientes previos que siguen abiertos (referencia)
+
+N21 (infraestructura sin componente aplicable) · frontend issue #4
+(silueta del diagnóstico) · rediseño general (pendiente de aprobación de
+la autora) · CC-016 (INDICES) · CC-014 (duplicación en
+DICCIONARIO_CAMPOS) · backlog GitHub #5, #6, #9–#15.
