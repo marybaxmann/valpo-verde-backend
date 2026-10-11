@@ -9,15 +9,41 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-06 (sesión "SIVU demo funcional")
+- **Última actualización:** 2026-10-11 (auditoría postdemo y consolidación documental)
 - **Agente emisor:** Claude Code
-- **Agente receptor sugerido:** Claude Code (nueva sesión — contexto de la anterior agotado)
-- **Rama Git vigente:** `main` en ambos repos (INV-1B ya fue mergeado antes de esta sesión: commit `f7dfe12`)
+- **Agente receptor sugerido:** Claude Code
+- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `7913a13` (PR #16 demo + PR #17 CC-021…CC-024); frontend `main` = `187a90d` (PR #5).
+- **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas) — **fuera de `main` hasta verificar en navegador (K4)**. Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Demo SIVU lista (6 árboles, 4 riesgos vía motor, todos los módulos). Sin commit. Próximo: auditoría post-demo SIN tocar la demo.
-- **Nota rama:** el backend está en `docs/cc-021-jerarquia-fuentes` (no `main`); el trabajo de demo del backend quedó sin commit sobre esa rama.
+- **Resumen:** Auditoría postdemo registrada (57 hallazgos, 42 pendientes). C1/C2 abiertas. DA-01 principio · DA-03 concepto aprobados; DA-02/DA-04 pendientes.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
+
+---
+
+## ▶ Punto de reanudación (2026-10-11) — leer primero
+
+**Dónde está todo:**
+- Auditoría postdemo: `docs/auditorias/2026-10-postauditoria/` (README, informe, hallazgos, contradicciones, decisiones, dependencias, escenarios RLS).
+- Registro maestro de pendientes: `docs/roadmap.md`, sección "Postauditoría 2026-10" (PA-01 a PA-42).
+
+**Decisiones de la autora (estado exacto, ver `decisiones.md`):**
+- DA-01 escrituras solo por el backend: **APROBADA en principio**; implementación (credencial, permisos, RLS) **no aprobada**.
+- DA-02 INSPECCIONES: **PENDIENTE de diseño** (no crear ni modificar tablas).
+- DA-03 historial de eventos: **APROBADA en concepto**; esquema SQL **no aprobado**.
+- DA-04 transiciones: **PENDIENTE de definición** (no asumir flujos).
+- K1–K6 (consolidación): `main` es la base oficial; etiquetas de la demo solo **propuestas**; el commit del 2026-10-11 queda **fuera de `main`**.
+- CC-015 (roles): **pendiente**. Modelo conceptual de referencia: Administrador, Usuario municipal, Inspector, Mantenimiento. **No cambiar el modelo actual.**
+
+**Contradicciones prioritarias abiertas (no resolver cambiando motor ni permisos):**
+- **C1:** motor de riesgo (`treeRisk.ts`, `rule_version = borrador_reglas_diagramas_v3`) implementado con reglas de borrador, contra PR-011 v2.0 y `methodology/00-index.md`.
+- **C2:** ADR-006 v1.1 atribuye la evaluación técnica al administrador, contra CC-022.
+
+**CC:** ninguno nuevo registrado. Próximos libres: CC-025, ADR-017, PR-019. Propuesta de CC-025 (C1) en `decisiones.md` §5, **sin registrar**.
+
+**Prohibido sin autorización expresa:** modificar código, Supabase o migraciones; ejecutar pruebas de escritura (W1–W12 solo en un entorno de pruebas aislado); modificar motor, roles o permisos; borrar ramas, etiquetas o archivos; commit, push, merge o PR. Repos **públicos**: no publicar detalles explotables de S1.
+
+**Siguiente paso esperado:** la autora revisa la rama `docs/postauditoria-2026-10` y autoriza (o no) el commit documental; luego decide PA-01 (C1), PA-03 (CC-015) y PA-13 (entorno de pruebas).
 
 ---
 
@@ -30,12 +56,12 @@
 - **Rediseño general: PENDIENTE** por decisión de la investigadora. No rediseñar sin su aprobación.
 - **Implementado:** diagnóstico por componente en la ficha (`src/components/RiskComponentDiagram.tsx`, usado en `TreeDetailModal`). Silueta genérica provisoria; solo representa `resultado` del backend y destaca el componente cuyo nivel coincide con R04.
 - **Pendiente:** silueta general o según especie → frontend issue #4.
-- Pines del mapa en gota con color de riesgo (`treePinSymbol` en `InventoryMapView.tsx`); modo claro/oscuro (`useTheme`, botón en el menú lateral). Sin commit.
+- Pines del mapa en gota con color de riesgo (`treePinSymbol` en `InventoryMapView.tsx`); modo claro/oscuro (`useTheme`, botón en el menú lateral). En `main` del frontend (PR #5, `ad1c5e2`).
 
 ## 🔎 Auditoría del motor de riesgo (2026-10-10)
 - `treeRisk.ts` coincide con REGLAS_INDICADORES v3, rangos R01–R03, M01–M03 y R04; las 4 evaluaciones guardadas se recalcularon y coinciden.
 - **Corregido:** la API aceptaba datos condicionales vacíos o fuera de rango y el motor asumía severidades (p. ej. grieta sin afectación → Severa). Ahora `schemas/treeRiskAssessment.schema.ts` los rechaza (400) y el asistente del frontend no deja avanzar. Fecha futura validada con hora de Chile. Tests: 185/185.
-- **N13 decidido (CC-024, opción a):** componente "No determinado" → árbol "Sin clasificación", independiente de infraestructura y distinto de "Sin evaluación" (pin blanco en el mapa). Ficha en rama `docs/cc-024-n13-sin-clasificacion` (worktree `../valpo-verde-backend-cc024`, sin commit). Falta sincronizar el Excel (DUDAS N13, DICCIONARIO_CAMPOS). N21 sigue pendiente.
+- **N13 decidido (CC-024, opción a):** componente "No determinado" → árbol "Sin clasificación", independiente de infraestructura y distinto de "Sin evaluación" (pin blanco en el mapa). Ficha registrada y fusionada en `main` (PR #17, 2026-10-10). Falta sincronizar el Excel (DUDAS N13, DICCIONARIO_CAMPOS). N21 sigue pendiente.
 
 ---
 
@@ -200,4 +226,6 @@ Usuario Municipal → Inventario → registrar árbol → aparece en mapa/listad
 
 ## 🚀 Instrucción Directa para el Siguiente Agente (Prompt de arranque)
 
-> *"Hola. Lee `valpo-verde-frontend/CLAUDE.md` y este HANDOFF completo. La demo de SIVU para la tesis quedó terminada el 2026-10-06 y la investigadora quiere **conservarla tal como está** (datos, código y Supabase) hasta después de presentarla. Cuando ella lo indique, haremos una **auditoría post-demo** para que todo funcione bien. Antes de cambiar nada: `git status` en ambos repos, `npm test` (158) y `npx tsc --noEmit` (backend), `npx tsc -b` y `npm run build` (frontend). Puntos a revisar en la auditoría: (1) conflicto PR-003 v5.0 vs RLS que permite al usuario municipal crear evaluaciones de riesgo/infraestructura y órdenes; (2) backend en rama `docs/cc-021-jerarquia-fuentes` con todo el trabajo de demo sin commit (decidir ramas/commits con ella); (3) migraciones 008 y 009 aplicadas en Supabase; (4) casos sintéticos A-000015…18 (limpieza solo con su autorización); (5) documentación desactualizada (frontend-architecture.md, methodology R02/R03); (6) catálogo de especies leído directo de Supabase; (7) CC-016 (INDICES) y catálogos de tipo/origen de incidencias. NO commit/push/merge ni DELETE/DROP sin autorización explícita."*
+> *"Hola. Lee `CLAUDE.md`, la sección '▶ Punto de reanudación' de este HANDOFF y `docs/auditorias/2026-10-postauditoria/README.md`. La auditoría postdemo de SIVU está registrada (57 hallazgos; pendientes PA-01 a PA-42 en `docs/roadmap.md`). Respeta los estados exactos de `decisiones.md`: DA-01 aprobada solo en principio, DA-03 solo en concepto, DA-02 y DA-04 pendientes, CC-015 pendiente. C1 (motor con reglas de borrador) y C2 (ADR-006 vs CC-022) están abiertas: no las resuelvas cambiando el motor ni los permisos. Antes de cambiar nada: `git status` en ambos repos; `main` es la base documental oficial; `feature/demo-sivu` lleva un commit fuera de `main` (`601e9d6` / `8956d6f`) pendiente de verificación en navegador. Backend: `npm test` y `npx tsc --noEmit`; frontend: `npx tsc -b` y `npm run build`. No registres CC sin autorización (próximo libre: CC-025). NO modificar código, Supabase, migraciones, motor, roles ni permisos; NO pruebas de escritura (W1–W12 solo en un entorno de pruebas aislado); NO borrar ramas, etiquetas ni archivos; NO commit/push/merge/PR sin autorización explícita de la investigadora. Repos públicos: no publicar detalles explotables de S1."*
+
+Prompt anterior (2026-10-06, histórico): demo terminada; auditoría postdemo pendiente. Sus siete puntos quedaron cubiertos por la auditoría de octubre (ver `docs/auditorias/2026-10-postauditoria/`).
