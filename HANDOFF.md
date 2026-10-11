@@ -37,6 +37,12 @@
 - **Corregido:** la API aceptaba datos condicionales vacíos o fuera de rango y el motor asumía severidades (p. ej. grieta sin afectación → Severa). Ahora `schemas/treeRiskAssessment.schema.ts` los rechaza (400) y el asistente del frontend no deja avanzar. Fecha futura validada con hora de Chile. Tests: 185/185.
 - **N13 decidido (CC-024, opción a):** componente "No determinado" → árbol "Sin clasificación", independiente de infraestructura y distinto de "Sin evaluación" (pin blanco en el mapa). Ficha en rama `docs/cc-024-n13-sin-clasificacion` (worktree `../valpo-verde-backend-cc024`, sin commit). Falta sincronizar el Excel (DUDAS N13, DICCIONARIO_CAMPOS). N21 sigue pendiente.
 
+## 🕘 Fechas y arquitectura frontend (2026-10-11)
+- **Regla aprobada:** toda fecha "de hoy" y toda fecha mostrada usan **hora de Chile (`America/Santiago`)**. Nunca `toISOString().slice(0,10)` ni `created_at.slice(0,10)` (dan el día UTC: desde las 21:00, o 20:00 en invierno, ya es el día siguiente). Backend: `src/utils/fechaChile.ts` (`hoyEnChile`); frontend: `src/lib/dates.ts` (`hoyChile`, `fechaChile`, `fechaHoraChile`).
+- **Backend:** `GET /api/species` (issue #8); el resumen de riesgo del proyecto filtra por proyecto en la BD (`trees!inner`) y no trae `variables`. Tests 195/195.
+- **Frontend:** el mapa filtra con `layerView.filter` (no reconstruye la capa); las sincronizaciones de la capa son secuenciales (sin pines duplicados); el panel no repite la última evaluación; detalle/historial por árbol en caché; menú lateral sigue el tipo de pantalla; `src/lib/risk.ts` comparte el índice de riesgo.
+- **Pendiente:** separar Inspección e Infraestructura de `ModulePage.tsx` (hacerlo con verificación en navegador); P4d (caché global se vacía en cada escritura) y P4e (relectura completa tras editar un árbol) se mantienen por ahora. Sin verificación en navegador de estos cambios.
+
 ---
 
 ## 🚀 SESIÓN "SIVU DEMO FUNCIONAL" (2026-10-06) — leer esto primero

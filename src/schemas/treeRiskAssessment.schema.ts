@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hoyEnChile } from "../utils/fechaChile";
 
 /**
  * Validación del Body de POST /api/trees/:treeId/risk-assessments.
@@ -108,11 +109,6 @@ export const treeRiskVariablesSchema = z
         "El porcentaje de copa con ramas secas debe ser mayor que 0 y como máximo 100");
     }
   });
-
-/** Fecha de hoy en Chile (AAAA-MM-DD). En UTC, las últimas 3 o 4 horas del día chileno ya son el día siguiente. */
-function hoyEnChile(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(new Date());
-}
 
 export const createTreeRiskAssessmentSchema = z
   .object({
