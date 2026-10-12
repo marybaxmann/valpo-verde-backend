@@ -20,6 +20,20 @@
 
 **Fuente de los campos:** hojas INSPECCIONES, ORDENES DE TRABAJO, MANTENIMIENTO e INCIDENCIA del Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (versión registrada por CC-020). Hoy `DICCIONARIO_CAMPOS` solo define 2 de estos 61 campos (`Accion_solicitada` y `subtipo_accion`).
 
+## Lo que ya define la memoria de tesis
+
+La memoria de tesis (borrador de octubre de 2026) describe el flujo de gestión y responde varias de las preguntas de la sección 4. En esas preguntas basta con **confirmar o corregir** lo que dice la memoria.
+
+1. El usuario municipal registra el árbol con su medición inicial y genera una orden de trabajo.
+2. Orden de inspección: el inspector la ejecuta y registra el acta; la evaluación técnica es otro registro, asociado al árbol.
+3. Orden de mantenimiento: se registra la ejecución y luego su revisión (aprobada o rechazada, con corrección y plazo).
+4. Una incidencia (de un árbol o de una ubicación) sirve de antecedente para una nueva orden.
+5. Riesgo del árbol × afectación de infraestructura → prioridad (matriz M05), que apoya la creación de órdenes.
+
+Según la memoria, los roles son: **Administrador** (solo crea proyectos y agrega usuarios), **Usuario municipal** (ingresa árboles, consulta y genera órdenes de trabajo, sin registrar evaluaciones técnicas), **Inspector** (inspecciona, evalúa y reevalúa) y **Encargado de mantención** (ejecuta y hace seguimiento). Todos pueden consultar toda la información.
+
+> Puntos de la memoria que contradicen el borrador de reglas v3 o la implementación, y que decide la tesista: el tratamiento de «No determinado» frente a «No aplica» en infraestructura (pregunta 19) y el registro de evaluaciones por el usuario municipal, que hoy la plataforma permite de forma provisional (CC-022 / CC-015).
+
 ## 1. Campos a definir
 
 ### 1.1 INSPECCIONES (17 campos)
@@ -139,7 +153,7 @@ Hoy la plataforma permite pasar de cualquier estado a cualquier otro. El Excel d
 
 ## 3. Permisos por tipo de usuario (propuesta)
 
-Modelo conceptual de referencia: Administrador, Usuario municipal, Inspector y Mantenimiento (CC-015, pendiente). Para cada entidad y acción (ver · crear · modificar o corregir · cambiar estado · anular), indicar **Sí / No / Condicional**. La plantilla Excel trae la tabla completa y la situación implementada hoy (CC-022) como referencia.
+Usar como criterio los roles que define la memoria (ver «Lo que ya define la memoria de tesis»); la definición final la valida la tesista (CC-015). Para cada entidad y acción (ver · crear · modificar o corregir · cambiar estado · anular), indicar **Sí / No / Condicional**. La plantilla Excel trae la tabla completa y la situación implementada hoy (CC-022) como referencia.
 
 | Entidad | Situación implementada hoy (referencia, CC-022) |
 |---|---|
@@ -160,31 +174,31 @@ Preguntas adicionales: ¿una persona puede tener más de un rol? · ¿el rol es 
 
 ## 4. Preguntas abiertas
 
-Prioridad 1 = bloquea el diseño · 2 = necesaria para diseñar el módulo · 3 = puede esperar.
+Prioridad 1 = bloquea el diseño · 2 = necesaria para diseñar el módulo · 3 = puede esperar. Las páginas citadas son de la memoria de tesis (borrador de octubre de 2026). Quién responde cada pregunta está en la plantilla Excel y en la página compartida.
 
-| N.º | Componente | Pregunta | Por qué | Quién responde | Prior. |
+| N.º | Componente | Pregunta | Prior. | Estado según la memoria | Lo que dice la memoria (confirmar o corregir) |
 |---|---|---|---|---|---|
-| 1 | Inspecciones | Cuando un inspector visita un árbol y evalúa raíces, tronco, copa, vitalidad e infraestructura el mismo día, ¿es una inspección con varias evaluaciones o cada evaluación es una inspección distinta? | Define cómo se agrupa la información técnica | Tesista (opinión bienvenida) | 1 |
-| 2 | Inspecciones | ¿Toda inspección nace de una orden de trabajo de tipo 'Inspección', o puede registrarse sin orden previa (p. ej. en el primer inventario)? | Define si la orden es obligatoria antes de inspeccionar | Conjunta | 1 |
-| 3 | Inspecciones / Mediciones | Durante una inspección, ¿se usan las medidas del árbol ya registradas o se toman medidas nuevas (o ambas)? | Conecta la inspección con la historia de mediciones | Tesista (opinión bienvenida) | 1 |
-| 4 | Inspecciones | Completar el diccionario de la hoja INSPECCIONES (hoja DICC_INSPECCIONES). | Sin esto no se puede diseñar la inspección | Compañera (valida la tesista) | 1 |
-| 5 | Inspecciones | El campo 'nivel_riesgo' de la inspección, ¿lo escribe el inspector o es el resultado que calcula la plataforma? ¿Con qué escala: Bajo/Moderado/Alto/Extremo o Crítica/Alta/Media/Baja? | Hoy usa la escala de prioridad, no la de riesgo | Tesista (opinión bienvenida) | 1 |
-| 6 | Usuarios | ¿Qué puede hacer cada tipo de usuario con cada entidad? (hoja PERMISOS) | Define los permisos de toda la plataforma | Tesista (la compañera propone) | 1 |
-| 7 | Usuarios | ¿Una persona puede tener más de un rol? ¿El rol es para toda la plataforma o por proyecto? | Cambia cómo se asignan los permisos | Conjunta | 1 |
-| 8 | Responsables | ¿El inspector debe ser siempre un usuario de SIVU o puede ser alguien externo? ¿Se registra por separado de quien ingresa la inspección al sistema? | Identificar al responsable técnico | Conjunta | 1 |
-| 9 | Órdenes de trabajo | Completar el diccionario de ORDENES DE TRABAJO y MANTENIMIENTO (hojas DICC_ORDENES_TRABAJO y DICC_MANTENIMIENTO). | Solo 2 de 31 campos están definidos | Compañera (valida la tesista) | 2 |
-| 10 | Órdenes de trabajo | El responsable de una orden, ¿es un usuario de SIVU o un texto (empresa, cuadrilla)? | El Excel y la plataforma no coinciden | Conjunta | 2 |
-| 11 | Órdenes de trabajo | Al marcar 'Completada', ¿hay que registrar quién ejecutó, cuándo y el resultado? ¿La revisión ocurre antes o después de 'Completada'? | Define qué significa terminar una orden | Conjunta | 2 |
-| 12 | Estados | ¿Desde qué estado se puede pasar a cuál? (hojas TRANSICIONES_OT y TRANSICIONES_INCIDENCIA) | Hoy cualquier estado puede pasar a cualquiera | Conjunta (la compañera propone) | 2 |
-| 13 | Estados | ¿Qué dato se exige en cada cambio (motivo al cancelar o descartar, destino al derivar, fecha al programar)? ¿Se puede reabrir un caso cerrado? | Evita cambios sin justificación | Compañera propone · tesista valida | 2 |
-| 14 | Incidencias | Completar el diccionario de INCIDENCIA. ¿Se registra a quien reporta (vecino, anónimo, organismo) por separado del funcionario que la ingresa? ¿Qué datos del informante se guardan? | Hoy se confunden informante y funcionario; afecta datos personales | Conjunta | 2 |
-| 15 | Historial | ¿Qué cambios de una incidencia u orden deben quedar en su historial y qué se guarda de cada cambio? ¿Una nota se puede corregir o solo agregar otra? | El historial está aprobado como concepto; falta su contenido | Conjunta | 2 |
-| 16 | Catálogos | Los estados, el tipo y origen de incidencia y la prioridad que hoy son listas desplegables de las hojas, ¿pasan al catálogo oficial LISTAS con código y etiqueta? | Hoy no están en el catálogo y la plataforma los trata como texto libre | Compañera propone · tesista valida | 2 |
-| 17 | Prioridad | La prioridad de una orden o incidencia, ¿la escribe una persona o la calcula la plataforma (matriz M05)? | Distingue dato ingresado de dato calculado | Tesista (opinión bienvenida) | 2 |
-| 18 | Relaciones | ¿Una incidencia puede dar origen a una orden de trabajo? ¿Una inspección que 'requiere mantenimiento' crea una orden? | Define cómo se conectan los procesos | Conjunta | 2 |
-| 19 | Datos no disponibles | En datos numéricos de infraestructura, ¿hay que distinguir 'No aplica' de 'No determinado' en vez de dejar vacío? ¿Qué pasa si no hay ningún componente aplicable (N21)? | Hoy ambos casos quedan como vacío | Tesista (la compañera modela) | 2 |
-| 20 | Correcciones | Si un dato ya registrado está mal (especie, medición, ubicación), ¿quién puede corregirlo y qué debe quedar registrado? | Pendiente explícito de CC-015 | Tesista (opinión bienvenida) | 3 |
-| 21 | Árboles / Mediciones | Pendientes ya marcados en el diccionario: categorías de configuración de fustes, DAP equivalente, nombres comunes, catálogo de vitalidad, quién puede anular mediciones. | Necesarios para cerrar el diccionario 2.0.0 | Tesista (opinión bienvenida) | 3 |
+| 1 | Inspecciones | Cuando un inspector visita un árbol y evalúa raíces, tronco, copa, vitalidad e infraestructura el mismo día, ¿es una inspección con varias evaluaciones o cada evaluación es una inspección distinta? | 1 | Parcial — completar | La inspección (acta) y la evaluación técnica son registros distintos: la evaluación se guarda como registro propio del árbol y la orden de trabajo se vincula con la inspección que origina (p. 34–35, 44). No dice cuántas evaluaciones caben en una inspección. |
+| 2 | Inspecciones | ¿Toda inspección nace de una orden de trabajo de tipo 'Inspección', o puede registrarse sin orden previa (p. ej. en el primer inventario)? | 1 | Respondida — confirmar | Sí: el módulo Inspección y Riesgo administra las órdenes de trabajo de evaluación; el usuario municipal genera la orden y el inspector la ejecuta (p. 34). Confirmar si hay excepciones, como el primer inventario. |
+| 3 | Inspecciones / Mediciones | Durante una inspección, ¿se usan las medidas del árbol ya registradas o se toman medidas nuevas (o ambas)? | 1 | Parcial — completar | El inspector registra observaciones, mediciones y condiciones (p. 33); las mediciones sucesivas van en su propia hoja (p. 44). No dice si la inspección crea una medición nueva. |
+| 4 | Inspecciones | Completar el diccionario de la hoja INSPECCIONES (hoja DICC_INSPECCIONES). | 1 | Parcial — completar | Datos del acta: fecha de ejecución, tipo, resultado general, observaciones, fotos y necesidad de mantenimiento o de nueva inspección (p. 31, 35). Faltan definiciones y obligatoriedad. |
+| 5 | Inspecciones | El campo 'nivel_riesgo' de la inspección, ¿lo escribe el inspector o es el resultado que calcula la plataforma? ¿Con qué escala: Bajo/Moderado/Alto/Extremo o Crítica/Alta/Media/Baja? | 1 | Respondida en principio — confirmar | Los resultados calculados no se editan a mano (p. 44) y los campos de riesgo ingresados en paralelo a los calculados se reconocen como una ambigüedad (p. 55): el nivel de riesgo sería el calculado (Bajo / Moderado / Alto / Extremo). Confirmar. |
+| 6 | Usuarios | ¿Qué puede hacer cada tipo de usuario con cada entidad? (hoja PERMISOS) | 1 | Respondida — confirmar | Cuatro roles (p. 32–33): el Administrador solo crea proyectos y usuarios; el Usuario municipal ingresa árboles, consulta y genera órdenes, sin registrar evaluaciones técnicas; el Inspector inspecciona, evalúa y reevalúa; el Encargado de mantención ejecuta y hace seguimiento. Todos pueden consultar todo. Completar la tabla de permisos con este criterio. |
+| 7 | Usuarios | ¿Una persona puede tener más de un rol? ¿El rol es para toda la plataforma o por proyecto? | 1 | Abierta | Cada proyecto tiene su propio equipo (p. 45); no trata varios roles por persona ni el rol por proyecto. |
+| 8 | Responsables | ¿El inspector debe ser siempre un usuario de SIVU o puede ser alguien externo? ¿Se registra por separado de quien ingresa la inspección al sistema? | 1 | Parcial — completar | El inspector es un rol de usuario de la plataforma (p. 33) y cada registro conserva al usuario que lo creó (p. 44). No trata inspectores externos. |
+| 9 | Órdenes de trabajo | Completar el diccionario de ORDENES DE TRABAJO y MANTENIMIENTO (hojas DICC_ORDENES_TRABAJO y DICC_MANTENIMIENTO). | 2 | Parcial — completar | Orden: tipo de acción, motivo, prioridad, responsable y fecha programada. Ejecución: acción, subtipo, fecha, responsable, resultado, observaciones, fotos y seguimiento. Revisión: estado, responsable, fecha, observaciones, corrección y plazo (p. 35). Faltan definiciones. |
+| 10 | Órdenes de trabajo | El responsable de una orden, ¿es un usuario de SIVU o un texto (empresa, cuadrilla)? | 2 | Parcial — completar | Habla de profesionales y responsables asignados (p. 35): apunta a un usuario de SIVU. Confirmar. |
+| 11 | Órdenes de trabajo | Al marcar 'Completada', ¿hay que registrar quién ejecutó, cuándo y el resultado? ¿La revisión ocurre antes o después de 'Completada'? | 2 | Parcial — completar | Secuencia: orden → ejecución → revisión (aprobado o rechazado, con corrección y plazo) (p. 35–36). Falta definir qué estado de la orden corresponde a cada paso. |
+| 12 | Estados | ¿Desde qué estado se puede pasar a cuál? (hojas TRANSICIONES_OT y TRANSICIONES_INCIDENCIA) | 2 | Abierta | Menciona actividades pendientes, programadas, vencidas y realizadas (p. 35), sin reglas de cambio de estado. |
+| 13 | Estados | ¿Qué dato se exige en cada cambio (motivo al cancelar o descartar, destino al derivar, fecha al programar)? ¿Se puede reabrir un caso cerrado? | 2 | Abierta | No lo trata. |
+| 14 | Incidencias | Completar el diccionario de INCIDENCIA. ¿Se registra a quien reporta (vecino, anónimo, organismo) por separado del funcionario que la ingresa? ¿Qué datos del informante se guardan? | 2 | Respondida — confirmar | Se registra la persona que reporta, además del usuario que crea el registro (p. 36, 44). La incidencia puede asociarse a un árbol o solo a una ubicación (p. 36). Confirmar qué datos del informante se guardan. |
+| 15 | Historial | ¿Qué cambios de una incidencia u orden deben quedar en su historial y qué se guarda de cada cambio? ¿Una nota se puede corregir o solo agregar otra? | 2 | Parcial — completar | Registro histórico de evaluaciones, mantenciones e intervenciones, y seguimiento del estado (p. 32, 36); no detalla qué se guarda de cada cambio. |
+| 16 | Catálogos | Los estados, el tipo y origen de incidencia y la prioridad que hoy son listas desplegables de las hojas, ¿pasan al catálogo oficial LISTAS con código y etiqueta? | 2 | Abierta | LISTAS cubre los tipos de acción, los subtipos y la materialidad (p. 43); no menciona estados ni tipo u origen de incidencia. |
+| 17 | Prioridad | La prioridad de una orden o incidencia, ¿la escribe una persona o la calcula la plataforma (matriz M05)? | 2 | Respondida — confirmar | La prioridad del árbol se calcula con la matriz M05: riesgo × afectación; riesgo Extremo = prioridad Crítica (p. 42–43). La prioridad reportada de la incidencia la entrega quien reporta (p. 36). Falta definir si la prioridad de la orden copia la del árbol o se ingresa. |
+| 18 | Relaciones | ¿Una incidencia puede dar origen a una orden de trabajo? ¿Una inspección que 'requiere mantenimiento' crea una orden? | 2 | Respondida — confirmar | Sí, como derivación: la incidencia sirve de antecedente para una orden, y la inspección registra necesidades de mantenimiento o de nueva inspección (p. 35–36). |
+| 19 | Datos no disponibles | En datos numéricos de infraestructura, ¿hay que distinguir 'No aplica' de 'No determinado' en vez de dejar vacío? ¿Qué pasa si no hay ningún componente aplicable (N21)? | 2 | Respondida, pero contradice — decidir | En infraestructura, si el componente no está presente o no se puede establecer su condición, se clasifica como No aplica; si no se pudo evaluar ningún componente, la clasificación global es No aplica (p. 41–42). Resuelve N21, pero el borrador de reglas v3 mantiene separado «No determinado» de «No aplica» (D21): hay que decidir. |
+| 20 | Correcciones | Si un dato ya registrado está mal (especie, medición, ubicación), ¿quién puede corregirlo y qué debe quedar registrado? | 3 | Parcial — completar | Un resultado calculado no se corrige a mano: se revisan los datos de entrada o la regla (p. 44). No dice quién corrige. |
+| 21 | Árboles / Mediciones | Pendientes ya marcados en el diccionario: categorías de configuración de fustes, DAP equivalente, nombres comunes, catálogo de vitalidad, quién puede anular mediciones. | 3 | Abierta | Solo define las clases de defoliación de Michel et al. (2025) (p. 39). |
 
 ## 5. Referencias
 
