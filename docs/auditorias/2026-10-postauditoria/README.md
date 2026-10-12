@@ -25,6 +25,7 @@
 | [decisiones.md](decisiones.md) | DA-01 a DA-04 con su estado exacto, decisiones de consolidación del 2026-10-11, alternativas, preguntas y propuestas de CC |
 | [dependencias.md](dependencias.md) | Matriz de dependencias entre decisiones y prioridades de ejecución |
 | [escenarios-rls.md](escenarios-rls.md) | Escenarios de prueba RLS L1–L5 (ejecutados, solo lectura) y W1–W12 (**NO EJECUTADOS**) |
+| [solicitud-logica-datos.md](solicitud-logica-datos.md) | Solicitud a la responsable de la lógica de datos: campos por definir de inspecciones, órdenes de trabajo, mantenimiento e incidencias; matrices de estados; permisos por rol; preguntas abiertas. Documento de trabajo, no normativo |
 
 El **registro maestro de pendientes** está en [`docs/roadmap.md`](../../roadmap.md), sección "Postauditoría 2026-10", siguiendo la convención de `CLAUDE.md`. El **punto de reanudación** para agentes está en [`HANDOFF.md`](../../../HANDOFF.md).
 
