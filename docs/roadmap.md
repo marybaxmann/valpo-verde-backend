@@ -244,6 +244,7 @@ Estados: `PENDIENTE DE DECISIÓN` (autora) · `PENDIENTE` · `BLOQUEADO`
 ### Pendientes previos que siguen abiertos (referencia)
 
 N21 (infraestructura sin componente aplicable) · frontend issue #4
-(silueta del diagnóstico) · rediseño general (pendiente de aprobación de
-la autora) · CC-016 (INDICES) · CC-014 (duplicación en
+(silueta del diagnóstico) · integración del rediseño según CC-025
+(dirección visual aprobada; integración progresiva, módulo por módulo,
+pendiente) · CC-016 (INDICES) · CC-014 (duplicación en
 DICCIONARIO_CAMPOS) · backlog GitHub #5, #6, #9–#15.

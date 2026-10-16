@@ -51,6 +51,7 @@ hoja VERSION del Excel maestro.
 | CC-022 | Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0) | 2 | PROBADO | Decisión parcial de CC-015 (autora y equipo) | — (fuera del paquete) | — | 2026-10-09 |
 | CC-023 | Referencias visuales complementarias de inspiración UX/UI, incluida la vista de árbol de Groundzy (PR-016 v5.0) | 5 | APROBADO METODOLÓGICAMENTE | Rediseño visual post-demo | — (fuera del paquete) | — | 2026-10-09 |
 | CC-024 | N13: componente con indicador "No determinado" → árbol sin clasificación de riesgo, independiente de infraestructura | 2 (+4) | APROBADO METODOLÓGICAMENTE | Auditoría del motor de riesgo (2026-10-10) | 2.0.0 (en preparación) | — | 2026-10-10 |
+| CC-025 | Prototipo visual "SIVU Territorio" como referencia visual principal del frontend (PR-016 v6.0) | 5 | APROBADO METODOLÓGICAMENTE | Exploración visual UX/UI posterior a CC-023 | — (fuera del paquete) | — | 2026-10-16 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1062,3 +1063,48 @@ motivo)
 |---|---|---|---|
 | 2026-10-10 | DETECTADO | auditoría | Comentario del motor contradice al código; N13 pendiente. |
 | 2026-10-10 | APROBADO METODOLÓGICAMENTE | marybaxmann | Opción (a), árbol diferenciado de infraestructura. |
+
+---
+
+### CC-025 — Prototipo visual "SIVU Territorio" como referencia visual principal del frontend
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-16 |
+| Origen | Exploración visual UX/UI posterior a CC-023 (sesión de diseño del 2026-10-13). La autora aprueba el prototipo "SIVU Territorio" como dirección visual del futuro frontend. |
+| Tipo | 5 — documental (gobernanza de referencias; sin cambio de lógica ni de datos) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | PR-016. |
+| Versión anterior | PR-016 v5.0: `03_CityDashboardsButton.jpg` como referencia visual principal; cuatro referencias complementarias de terceros (CC-023). |
+| Versión nueva | PR-016 v6.0: el prototipo "SIVU Territorio" (repositorio frontend, rama `prototype/sivu-territorio-v1`, commit `c852104`, carpeta `prototypes/sivu-territorio-lab/`) es la referencia visual principal, en el nivel 6 de la jerarquía de fuentes. La aprobación corresponde a la dirección visual, no a cada componente, contenido o interacción. `03_CityDashboardsButton.jpg` pasa a antecedente e inspiración complementaria. Se agregan reglas de integración, roles, datos y cartografía. |
+| Motivo | Fijar una dirección visual concreta y navegable para el rediseño, sin confundirla con una implementación funcional ni con decisiones de datos, metodología o permisos. |
+| Fundamento / fuente | Decisiones de `marybaxmann` del 2026-10-16: adopta la maqueta como diseño de referencia del frontend ("me gustó mucho el diseño moderno"), con detalles por corregir; opción 1 de la decisión B; redacción de la regla 2; precisiones 1 a 5. |
+| Archivos afectados | Backend: `docs/project-rules.md`, `docs/registro-cambios.md`, `docs/roadmap.md`, `CLAUDE.md`, `HANDOFF.md`. Frontend: `CLAUDE.md`, `.claude/agents/frontend-ux.md`. El prototipo y su rama no se modifican. |
+| Impacto en diagramas · Excel · BD · backend · API | Ninguno. |
+| Impacto en frontend | Ninguno en código con este CC. La integración posterior se rige por PR-016 v6.0. |
+| Pruebas necesarias | No aplica (documental). |
+| Dependencias | CC-021 (jerarquía de fuentes), CC-023 (referencias complementarias), CC-015 (roles, EN REVISIÓN), CC-019 / ADR-015 (arquitectura SIG). |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-16 |
+| Fecha de implementación | sin implementación (cambio documental) |
+| Commits / PR asociados | Prototipo: frontend `prototype/sivu-territorio-v1` @ `c852104` (respaldo; sin fusión con `main`, sin PR de integración, sin despliegue). Documentación: rama `docs/cc-025-prototipo-visual` en ambos repositorios. |
+| Observaciones | **Trazabilidad:** maqueta de prueba v1 (2026-10-09, validada, CC-023); v2 (2026-10-10) descartada por su parecido con Groundzy; v3 (2026-10-10) con la diferenciación, cuyas ideas pasaron al código de la demo. El 2026-10-13 la autora pidió una nueva exploración ("Libertad de rediseño UX/UI", "Segunda exploración visual"); de ella surge SIVU Territorio, revisado según la instrucción "Conservación funcional". Se registra como **prototipo de referencia nuevo, sucesor de la línea abierta por CC-023, no como su maqueta v2**. El "v1" de la rama numera la serie SIVU Territorio. **Verificación:** compilar `c852104` con la imagen excluida reproduce byte a byte el JS y el CSS de la publicación revisada por la autora. **Detalles por corregir en la integración:** el aviso "Proyecto piloto" usa el ámbar de Moderado; la ficha muestra "Coordenadas WGS84"; el selector "Ver como" es solo de revisión. |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios.
+- [x] REGLAS_INDICADORES · MATRICES_CALCULO · DICCIONARIO_CAMPOS — N/A: sin cambios; el Excel maestro conserva su autoridad.
+- [x] VERSION · export de texto · docs/methodology/ — N/A: fuera del paquete metodológico.
+- [ ] PR / ADR — PR-016 v6.0.
+- [x] Verificación §14.9 (fuente) — N/A: gobernanza en `docs/`.
+- [x] Migración + schema.sql · Backend · API / Zod — N/A.
+- [ ] Frontend — solo documentación (`CLAUDE.md`, agente `frontend-ux`); sin código.
+- [x] Verificación §14.9 (implementación) — N/A: sin implementación.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-16 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión previa a la ficha (B opción 1; regla 2; precisiones 1–5); pasa directo desde EN REVISIÓN (§14.6). |

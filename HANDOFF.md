@@ -39,7 +39,7 @@
 - **C1:** motor de riesgo (`treeRisk.ts`, `rule_version = borrador_reglas_diagramas_v3`) implementado con reglas de borrador, contra PR-011 v2.0 y `methodology/00-index.md`.
 - **C2:** ADR-006 v1.1 atribuye la evaluación técnica al administrador, contra CC-022.
 
-**CC:** ninguno nuevo registrado. Próximos libres: CC-025, ADR-017, PR-019. Propuesta de CC-025 (C1) en `decisiones.md` §5, **sin registrar**.
+**CC:** CC-025 registrado (2026-10-16): prototipo visual SIVU Territorio como referencia visual principal (PR-016 v6.0). Próximos libres: CC-026, ADR-017, PR-019. La propuesta para C1 (`decisiones.md` §5, redactada como "CC-025") sigue **sin registrar** y recibirá el número libre al registrarse.
 
 **Prohibido sin autorización expresa:** modificar código, Supabase o migraciones; ejecutar pruebas de escritura (W1–W12 solo en un entorno de pruebas aislado); modificar motor, roles o permisos; borrar ramas, etiquetas o archivos; commit, push, merge o PR. Repos **públicos**: no publicar detalles explotables de S1.
 
@@ -53,7 +53,8 @@
 
 ## 🎨 Diseño del front (2026-10-10)
 - Maquetas: v1 https://claude.ai/artifact/BekBCfnJK5maLnRcsL2Fdq · v2 https://claude.ai/artifact/PyDjwKC5vKJbQ5nHfqzZvk (descartada: muy parecida a Groundzy) · **v3** https://claude.ai/artifact/5u7cmUZjtB4xkceKJqtpcD (cartografía + símbolos proporcionales al DAP, módulos arriba, tabla de registros, ficha técnica).
-- **Rediseño general: PENDIENTE** por decisión de la investigadora. No rediseñar sin su aprobación.
+- **2026-10-16 · CC-025:** el prototipo SIVU Territorio (frontend, rama `prototype/sivu-territorio-v1`, `c852104`) es la referencia visual principal (PR-016 v6.0). Es un prototipo nuevo, no la v2 de esta lista.
+- **Dirección visual: APROBADA (CC-025). Integración: PENDIENTE**, progresiva y módulo por módulo, cada uno con aprobación de la autora, sin quitar módulos, campos, rutas, funcionalidades ni permisos.
 - **Implementado:** diagnóstico por componente en la ficha (`src/components/RiskComponentDiagram.tsx`, usado en `TreeDetailModal`). Silueta genérica provisoria; solo representa `resultado` del backend y destaca el componente cuyo nivel coincide con R04.
 - **Pendiente:** silueta general o según especie → frontend issue #4.
 - Pines del mapa en gota con color de riesgo (`treePinSymbol` en `InventoryMapView.tsx`); modo claro/oscuro (`useTheme`, botón en el menú lateral). En `main` del frontend (PR #5, `ad1c5e2`).
