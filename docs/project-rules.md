@@ -1148,9 +1148,11 @@ Afecta:
 - UX
 - documentación
 
-## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v5.0)
-Estado: vigente
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v5.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 5.0
+Reemplazada por: PR-016 v6.0
+Motivo del reemplazo: adopta el prototipo SIVU Territorio como referencia visual principal y fija sus reglas de integración (CC-025).
 Reemplaza: PR-016 v4.0
 Origen: CC-023
 
@@ -1179,6 +1181,72 @@ Reglas de uso de las referencias complementarias:
 - No se incorporan elementos que impliquen funciones o resultados que SIVU no calcula (por ejemplo, recomendaciones automáticas tipo "AI insight").
 - Los gráficos se usan solo cuando aportan a la lectura del módulo y siempre con datos reales.
 - Antes de rediseñar la interfaz se valida una maqueta visual con la autora.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v6.0)
+Estado: vigente
+Versión: 6.0
+Reemplaza: PR-016 v5.0
+Origen: CC-025
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior. El Excel maestro "Base de Datos Valpo Verde" (paquete metodológico, PR-002) conserva su autoridad sobre los campos y las reglas que documenta: ningún elemento de una referencia visual lo sustituye.
+
+Referencia visual principal (CC-025): prototipo "SIVU Territorio" — repositorio `valpo-verde-frontend`, rama `prototype/sivu-territorio-v1`, carpeta `prototypes/sivu-territorio-lab/`. Línea base aprobada: commit `c852104`.
+- Define la dirección visual: composición, lenguaje gráfico, navegación, relación mapa–paneles y estilo de la ficha.
+- La aprobación corresponde a la dirección visual, no a cada componente, contenido o interacción particular.
+- No es una implementación funcional terminada.
+- Sus ajustes visuales posteriores pueden continuar dentro del proceso de diseño, validados con la autora, sin considerarse cambios funcionales aprobados.
+
+Antecedente e inspiración complementaria: `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg` (composición mapa–paneles, densidad informativa).
+
+Referencias visuales complementarias (inspiración UX/UI, CC-023), sin cambio. Son material de terceros: se conservan fuera del repositorio público y se describen aquí por lo que aportan.
+- Vista de árbol de Groundzy (escritorio y móvil): ficha lateral del ejemplar con pestañas, mediciones con íconos, pines legibles sobre mapa satelital, barra de herramientas sobre el mapa. Se reincorpora como idea concreta, según lo previsto en PR-016 v4.0.
+- Tablero agrícola en tablet (mapa satelital con parcelas): tarjeta de resumen flotante sobre el mapa con barras de estado.
+- Farm Management System: gráficos de dona con porcentajes y tarjetas de indicadores tintadas por categoría.
+- Wisetown (tablero de áreas verdes): barras horizontales ordenadas y gráficos de evolución.
+
+Reglas de uso de las referencias complementarias:
+- Se adaptan a la arquitectura, los módulos y los datos de SIVU; no se copian su identidad, marca, nombres ni composición literal (por ejemplo, el botón verde lima y la barra en píldora de Groundzy).
+- La paleta oficial de riesgo (Bajo `#DCE8A9`, Moderado `#F9B52B`, Alto `#F04A32`, Extremo `#C7252B`) no se modifica y se usa solo para el riesgo. Los colores de módulo evitan esos tonos.
+- No se incorporan elementos que impliquen funciones o resultados que SIVU no calcula (por ejemplo, recomendaciones automáticas tipo "AI insight").
+- Los gráficos se usan solo cuando aportan a la lectura del módulo y siempre con datos reales.
+- Antes de rediseñar la interfaz se valida una maqueta visual con la autora.
+
+Reglas de integración del prototipo:
+1. La adaptación es progresiva, módulo por módulo. Cada módulo se integra por separado sobre `main`, con revisión y validación de la autora.
+2. El rediseño UX/UI no modifica por sí mismo módulos, campos, rutas, funcionalidades, permisos ni reglas de negocio.
+   - Se conservan todos los módulos existentes y sus capacidades.
+   - Pueden reorganizarse visualmente o cambiar su nombre visible solo con aprobación previa de la autora.
+   - Las decisiones funcionales pendientes (por ejemplo CC-015, CC-020 o DA-01 a DA-04) evolucionan solo mediante su propio procedimiento de control de cambios.
+3. Si el prototipo muestra un campo, dato, acción o texto que no coincide con lo vigente (por ejemplo, "Coordenadas WGS84"), manda lo vigente. La diferencia se registra como pendiente y no se implementa.
+4. Esta referencia no autoriza a incorporar al frontend productivo datos ficticios, campos no validados ni reglas metodológicas provisionales. Los datos de ejemplo del prototipo (`src/data/mock.ts`) nunca pasan al código productivo; los gráficos y los indicadores se construyen solo con datos de la API.
+5. El código del prototipo no se importa desde la aplicación productiva: se reescribe dentro de su arquitectura.
+
+Roles:
+- Según la autora (2026-10-16), el modelo funcional objetivo de SIVU contempla cuatro roles: Administrador, Usuario municipal, Inspector y Mantenimiento. Su definición sigue en conciliación en CC-015 (varios roles por persona, asignación por proyecto, permisos).
+- El prototipo representa los dos roles implementados hoy (Administrador y Usuario municipal, CC-022). Ese modelo no es la definición funcional definitiva, y el prototipo no lo fija ni sustituye el objetivo.
+- La interfaz integrada se adapta al rol que confirma el backend.
+- El selector "Ver como" es un recurso de revisión del prototipo, no una función.
+
+Cartografía:
+- La imagen aérea del prototipo (Esri/Maxar) es material de terceros. No se versiona en repositorios públicos y su único uso es la revisión local.
+- El frontend productivo usa la cartografía de la arquitectura SIG vigente (ADR-015, CC-019): ArcGIS solo para representar, con la atribución que exige el proveedor, y sin imágenes fijas descargadas.
+- Cualquier imagen o capa nueva debe tener una licencia compatible con un repositorio público, o quedar fuera de él, documentada.
 
 Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
 
