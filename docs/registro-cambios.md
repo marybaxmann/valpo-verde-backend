@@ -35,23 +35,24 @@ hoja VERSION del Excel maestro.
 | CC-006 | Archivos fuente `.drawio` de los diagramas | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-007 | Inconsistencias documentales (README, roadmap, checkpoint, CLAUDE.md, workflow §13, frontend) | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-008 | Columna `ambito` en DICCIONARIO_CAMPOS y ajuste de `workflow.md` §14.10 | 3 (+2) | CERRADO (sin implementación) | Auditoría de hojas del Excel maestro (CC-003); decisión G1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
-| CC-009 | Validación de `clase_edad` en ARBOLES | 1 | CERRADO (sin implementación) | Auditoría de hojas del Excel maestro (CC-003); resuelto junto con CC-020 | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-009 | Validación de `clase_edad` en ARBOLES | 1 | CERRADO (sin implementación; parcialmente reemplazado por CC-026) | Auditoría de hojas del Excel maestro (CC-003); resuelto junto con CC-020 | 2.0.0 (en preparación) | — | 2026-10-05 |
 | CC-010 | `nivel_riesgo` y `resultado_general` manuales en INSPECCIONES frente a `clasificacion_riesgo` (R04) | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-011 | `prioridad_reportada`, Prioridad de OT y `clasificacion_prioridad` (M05) | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-012 | Menús dependientes, rangos con nombre y validaciones técnicas de los anexos | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-013 | Cobertura de DICCIONARIO_CAMPOS para entidades operativas y normalización de nombres | 3 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-014 | Eliminar la duplicación de R01–R04 y M01–M05 en DICCIONARIO_CAMPOS | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | Sincronización del paquete 2.0.0 | 2026-10-04 |
-| CC-015 | Consolidación de roles (PR-003, PR-004, PR-009, USUARIOS, "¿Quién lo ingresa?") | 2 | EN REVISIÓN | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-015 | Consolidación de roles (PR-003, PR-004, PR-009, USUARIOS, "¿Quién lo ingresa?") | 2 | EN REVISIÓN (modelo de roles decidido en CC-026) | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-016 | Auditoría y eventual adopción de INDICES | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | CERRADO (sin implementación) | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
-| CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | PENDIENTE DE IMPLEMENTACIÓN | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | PENDIENTE DE IMPLEMENTACIÓN (parcialmente reemplazado por CC-026) | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
 | CC-021 | Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores (PR-001 v3.0; PR-016 v4.0) | 5 | APROBADO METODOLÓGICAMENTE | Definición del agente frontend-ux y revisión de referencias de producto | — (fuera del paquete) | — | 2026-10-06 |
 | CC-022 | Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0) | 2 | PROBADO | Decisión parcial de CC-015 (autora y equipo) | — (fuera del paquete) | — | 2026-10-09 |
 | CC-023 | Referencias visuales complementarias de inspiración UX/UI, incluida la vista de árbol de Groundzy (PR-016 v5.0) | 5 | APROBADO METODOLÓGICAMENTE | Rediseño visual post-demo | — (fuera del paquete) | — | 2026-10-09 |
 | CC-024 | N13: componente con indicador "No determinado" → árbol sin clasificación de riesgo, independiente de infraestructura | 2 (+4) | APROBADO METODOLÓGICAMENTE | Auditoría del motor de riesgo (2026-10-10) | 2.0.0 (en preparación) | — | 2026-10-10 |
 | CC-025 | Prototipo visual "SIVU Territorio" como referencia visual principal del frontend (PR-016 v6.0) | 5 | APROBADO METODOLÓGICAMENTE | Exploración visual UX/UI posterior a CC-023 | — (fuera del paquete) | — | 2026-10-16 |
+| CC-026 | Auditoría funcional del modelo de datos: roles, alta del árbol, historial, inspección y revisión de mantenimiento (PR-003 v7.0, PR-004 v6.0, PR-006 v8.0, PR-009 v3.0, PR-010 v2.0, PR-019, PR-020, ADR-006 v2.0, ADR-016 v2.0) | 3 (+2, +1) | APROBADO METODOLÓGICAMENTE | Auditoría del modelo de datos (2026-10-18) · AMD-01…AMD-30 | — (Excel maestro pendiente de sincronizar) | — | 2026-10-18 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -540,6 +541,7 @@ motivo)
 | 2026-10-05 | FUENTE SINCRONIZADA | — | Excel actualizado y verificado en la rama `cc-020-arbol-medicion`, repositorio backend. Pendiente de integración del PR. |
 | 2026-10-05 | CERRADO (sin implementación) | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`). Sin implementación. |
 
+| 2026-10-18 | CERRADO (sin implementación) | marybaxmann | Reemplazo parcial por CC-026: `clase_edad` vuelve a ARBOLES como obligatoria, con su validación de 5 valores en la columna correcta (pendiente P5 frente a CC-020). |
 ---
 
 ### CC-010 — `nivel_riesgo` y `resultado_general` manuales en INSPECCIONES frente a `clasificacion_riesgo` (R04)
@@ -688,7 +690,7 @@ motivo)
 | Aprobado por / Fecha de aprobación | — |
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
-| Observaciones | Queda explícitamente pendiente decidir si "Encargado de mantención" será un rol independiente. **Decisión parcial (2026-10-09) → CC-022:** el Administrador crea proyectos, agrega usuarios y ve el proyecto completo en modo de solo lectura; el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes e incidencias (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0). **Siguen pendientes en este CC:** (1) si el Usuario municipal es también el Inspector y realiza la evaluación técnica (mientras tanto, con el Administrador en solo lectura, el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal); (2) el rol "Encargado de mantención"; (3) quién corrige datos ya registrados (especie, mediciones, ubicación); (4) sincronización de la hoja USUARIOS y de la columna "¿Quién lo ingresa?" del Excel maestro. |
+| Observaciones | Queda explícitamente pendiente decidir si "Encargado de mantención" será un rol independiente. **Decisión parcial (2026-10-09) → CC-022:** el Administrador crea proyectos, agrega usuarios y ve el proyecto completo en modo de solo lectura; el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes e incidencias (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0). **Siguen pendientes en este CC:** (1) si el Usuario municipal es también el Inspector y realiza la evaluación técnica (mientras tanto, con el Administrador en solo lectura, el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal); (2) el rol "Encargado de mantención"; (3) quién corrige datos ya registrados (especie, mediciones, ubicación); (4) sincronización de la hoja USUARIOS y de la columna "¿Quién lo ingresa?" del Excel maestro. **Decisión (2026-10-18) → CC-026:** cuatro roles distintos (Administrador, Usuario municipal, Inspector, Encargado de mantención); el Usuario municipal no es el Inspector y no registra datos técnicos; el Inspector corrige los datos registrados mediante OT; "Encargado de mantención" es un rol independiente (PR-019, PR-020). Siguen pendientes los identificadores internos de los roles nuevos, si una persona puede tener varios roles y si el rol es por proyecto. |
 
 ---
 
@@ -884,6 +886,7 @@ motivo)
 | 2026-10-05 | FUENTE SINCRONIZADA | marybaxmann | Corrección menor previa al merge (revisión de la aprobadora): `configuracion_fustes`, `numero_fustes` y `dap_fustes_cm` sin altura de referencia fija ni categorías candidatas (criterio/altura de referencia PENDIENTE); `huso` sin zona fija "19S". Verificación repetida y aprobada. |
 | 2026-10-05 | PENDIENTE DE IMPLEMENTACIÓN | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`; commits `6af04ec`, `15c9994`). Especificación de ámbito `operativo` (§14.12). Siguiente: diseño técnico INV-1A; sin implementación de software todavía. |
 
+| 2026-10-18 | PENDIENTE DE IMPLEMENTACIÓN | marybaxmann | Reemplazo parcial por CC-026: el alta municipal no exige medición; las mediciones las registra el Inspector en la inspección; la vigencia se determina por la OT completada más reciente (`fecha_completada_ot`). ADR-016 v2.0, PR-006 v8.0. |
 ---
 
 ### CC-021 — Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores
@@ -1108,3 +1111,57 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-10-16 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión previa a la ficha (B opción 1; regla 2; precisiones 1–5); pasa directo desde EN REVISIÓN (§14.6). |
+
+---
+
+### CC-026 — Auditoría funcional del modelo de datos: roles, alta del árbol, historial, inspección y revisión de mantenimiento
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-18 |
+| Origen | Auditoría funcional express del modelo de datos SIVU (2026-10-18), sobre `Base de Datos SIVU AUDITAR.xlsx` y el documento de continuidad de la auditoría anterior. Evidencia: `docs/auditorias/2026-10-18-modelo-datos/` (decisiones AMD-01 a AMD-30). |
+| Tipo | 3 — modelo de datos (+2 regla de negocio / roles, +1 corrección de inconsistencias) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | Roles (CC-015); PR-003, PR-004, PR-006, PR-009, PR-010; PR-019 y PR-020 (nuevas); ADR-006, ADR-016; DICCIONARIO_CAMPOS de ARBOLES, REGISTRO_EVALUACION, ORDENES DE TRABAJO, INSPECCIONES, MANTENIMIENTO, LISTAS y CATALOGO_ESPECIES; hoja nueva REGLAS_GENERALES. |
+| Versión anterior | PR-003 v6.0 (el Usuario municipal registra mediciones y evaluaciones en desarrollo); PR-004 v5.0; PR-006 v7.0 (medición inicial obligatoria en el alta; vigencia por `fecha_medicion`); PR-009 v2.0 (rol de inspección pendiente); PR-010 v1.0 (hasta 20 fotos por árbol, sin vistas obligatorias); ADR-006 v1.1 (el Administrador evalúa; contradicción C2); ADR-016 v1.0 (relación medición ↔ inspección pendiente). |
+| Versión nueva | PR-003 v7.0, PR-004 v6.0, PR-006 v8.0, PR-009 v3.0, PR-010 v2.0, PR-019 v1.0 (Inspector), PR-020 v1.0 (Encargado de mantención y revisión de mantenimiento), ADR-006 v2.0, ADR-016 v2.0. Resumen: cuatro roles; el Usuario municipal da de alta el árbol solo con nombre y ubicación; el Inspector registra todos los datos técnicos mediante OT (incluida la OT de Levantamiento); las mediciones se registran en la inspección y se hacen vigentes al completar la OT (`fecha_completada_ot`); `estado_registro` Preguardado / Finalizado; cuatro fotos nuevas por inspección; revisión de mantenimiento opcional definida por el Usuario municipal, obligatoria en Tala y Retiro_tocón. |
+| Motivo | Fijar en la plataforma el modelo de datos auditado. Por decisión de la autora, lo decidido en esta auditoría prevalece sobre las versiones anteriores que lo contradicen. |
+| Fundamento / fuente | Decisiones de `marybaxmann` del 2026-10-18 (AMD-01 a AMD-30, `decisiones.md`) y su instrucción: "lo actualizado en esta sesión es la verdad absoluta de la plataforma". |
+| Archivos afectados | Backend: `docs/project-rules.md`, `docs/architecture-decisions.md`, `docs/registro-cambios.md`, `docs/methodology/modelo-arbol-medicion.md`, `docs/auditorias/2026-10-18-modelo-datos/` (nuevo), `docs/roadmap.md`, `HANDOFF.md`, `CLAUDE.md`. Frontend: `docs/frontend-architecture.md`, `docs/thesis-frontend-development.md`. |
+| Impacto en diagramas | Ninguno (la metodología no se modificó; solo se actualizaron nombres de campo en las referencias). |
+| Impacto en Excel metodológico | **Pendiente (no sincronizado).** La copia auditada (fuera del repositorio) contiene: DICCIONARIO_CAMPOS 249 → 253 filas (6 campos nuevos: `dano_interferencia_alcorque`, `dano_interferencia_red_aerea`, `observaciones_tutorado`, `estado_registro`, `fecha_completada_ot`, `requiere_revision_inspector`; 2 filas duplicadas eliminadas; 281 celdas corregidas); cabeceras de ARBOLES, REGISTRO_EVALUACION, INSPECCIONES y ORDENES DE TRABAJO; LISTAS y sus rangos con nombre; referencias de nombre en MATRICES_CALCULO (T4, Z5); hoja nueva REGLAS_GENERALES. El Excel maestro del repositorio no se modificó: por decisión de la autora, en esta etapa solo se actualiza la documentación. |
+| Impacto en BD | Pendiente de diseño: roles Inspector y Encargado de mantención (RLS); alta sin medición; `estado_registro`; `fecha_completada_ot`; `requiere_revision_inspector`; varios registros de mantenimiento por OT; OT de Levantamiento sin árbol. |
+| Impacto en backend | Pendiente: permisos por rol (el Usuario municipal deja de registrar mediciones y evaluaciones); cierre automático de OT de Mantenimiento; bloqueo de Completada con inspecciones preguardadas. |
+| Impacto en API | Pendiente de diseño. |
+| Impacto en frontend | Pendiente: formularios por rol, alta municipal reducida, cuatro vistas fotográficas, revisión de mantenimiento. |
+| Pruebas necesarias | En implementación: el Usuario municipal no puede registrar datos técnicos; una OT con inspección preguardada no se completa; la evaluación vigente es la de la OT completada más reciente aunque su inspección sea anterior; una OT de Mantenimiento sin revisión se cierra con ejecución y evidencia; Tala y Retiro_tocón no se cierran sin aprobación; un rechazo conserva la OT y agrega un registro nuevo. |
+| Dependencias | CC-015 (decide su modelo de roles); CC-020 y CC-009 (reemplazo parcial); CC-022 (compatible: Administrador sin escritura de datos técnicos; Usuario municipal gestiona estados); CC-004, CC-012, CC-013, CC-018 (avance parcial); CC-017 (pendiente P6); DA-02 y DA-04 de la postauditoría (avance parcial). |
+| rule_version | sin cambio (no se modificó la metodología; especificación de ámbito por asignar, pendiente P8) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-18 |
+| Fecha de implementación | — (sin implementación) |
+| Commits / PR asociados | Rama `docs/cc-026-auditoria-modelo-datos` en ambos repositorios. |
+| Observaciones | **Reemplaza** la nota de CC-015 "usuario municipal e inspector son el mismo rol": son roles distintos (AMD-01). **Reemplaza parcialmente** CC-020 (medición inicial obligatoria en el alta, registro de mediciones por el Usuario municipal y vigencia por `fecha_medicion`) y CC-009 (ubicación de `clase_edad`). **No decide** (pendientes P1–P14 de `pendientes.md`): ubicación canónica WGS84 frente a UTM manual, `nombre_comun` en el árbol o en el catálogo, entidad de mediciones con corrección y anulación, configuración de fustes, identificadores internos de los roles nuevos, columna `ambito`, límite de fotografías, y las preguntas abiertas de INCIDENCIA, SECTORES, proyectos y Hoja4. La implementación en desarrollo (CC-020, CC-022) queda desalineada hasta su implementación. |
+
+**Checklist de sincronización**
+
+- [x] Diagrama — N/A: sin cambios de lógica.
+- [x] REGLAS_INDICADORES · MATRICES_CALCULO — N/A en lógica; solo nombres de campo en la copia auditada.
+- [ ] DICCIONARIO_CAMPOS — pendiente en el Excel maestro (hecho en la copia auditada).
+- [ ] VERSION — pendiente.
+- [x] docs/methodology/ — nota de vigencia en `modelo-arbol-medicion.md`.
+- [x] PR / ADR — PR-003 v7.0, PR-004 v6.0, PR-006 v8.0, PR-009 v3.0, PR-010 v2.0, PR-019 v1.0, PR-020 v1.0, ADR-006 v2.0, ADR-016 v2.0.
+- [ ] Export de texto — pendiente (no existe todavía).
+- [ ] Verificación §14.9 (fuente) — pendiente de la sincronización del Excel maestro. Verificada en la copia auditada: cabeceras = diccionario en el mismo orden, sin campos duplicados, sin referencias a nombres antiguos.
+- [ ] Migración + schema.sql — pendiente.
+- [ ] Backend (services/rules) — pendiente (sin cambios en reglas).
+- [ ] API / Zod — pendiente.
+- [ ] Frontend — pendiente (solo documentación en este CC).
+- [ ] Verificación §14.9 (implementación) — pendiente.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-18 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisiones AMD-01 a AMD-30 tomadas en la auditoría; pasa directo desde EN REVISIÓN (§14.6). Sincronización del Excel maestro e implementación pendientes. |

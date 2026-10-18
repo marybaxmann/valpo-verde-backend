@@ -336,9 +336,11 @@ Afecta:
 - permisos
 - RLS
 
-## PR-003 — Rol Usuario municipal (v6.0)
-Estado: vigente
+## PR-003 — Rol Usuario municipal (v6.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 6.0
+Reemplazada por: PR-003 v7.0
+Motivo del reemplazo: el Usuario municipal registraba mediciones dendrométricas y, en desarrollo, evaluaciones técnicas; CC-026 limita su alta a nombre y ubicación y asigna los datos técnicos al Inspector.
 Reemplaza: PR-003 v5.0
 Origen: CC-022
 Motivo: el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes de trabajo e incidencias; el Administrador pasa a acceso de solo lectura sobre los datos del proyecto (PR-004 v5.0).
@@ -368,6 +370,40 @@ No realiza:
 Pendiente (CC-015, en revisión): si el Usuario municipal es también el Inspector y, por lo tanto, realiza la evaluación técnica (estructural, de vitalidad, de riesgo e infraestructura). La versión 5.0 lo excluía; con PR-004 v5.0 el Administrador ya no realiza evaluaciones, por lo que mientras CC-015 se resuelve el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal (el cálculo lo realiza siempre el motor metodológico y no puede modificarse manualmente). También quedan pendientes en CC-015: el rol "Encargado de mantención" y quién puede corregir datos ya registrados (especie, mediciones, ubicación).
 
 Aclaración (CC-020): registrar una medición dendrométrica no constituye evaluación técnica ni inspección estructural; su relación con la inspección sigue pendiente (ADR-016).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-003 — Rol Usuario municipal (v7.0)
+Estado: vigente
+Versión: 7.0
+Reemplaza: PR-003 v6.0
+Origen: CC-026
+Motivo: auditoría del modelo de datos (2026-10-18): el Usuario municipal no registra datos técnicos; el alta del árbol se limita a nombre y ubicación; los datos técnicos los registra el Inspector mediante OT (PR-019 v1.0).
+
+- Identificador interno: `usuario_municipal`
+- Etiqueta de interfaz: `Usuario municipal`
+- "Acceder a su proyecto asignado" significa que exista una fila en `project_members` para ese usuario y proyecto (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- acceder a su proyecto asignado;
+- ver dashboard básico;
+- consultar inventario, resultados técnicos e indicadores básicos;
+- registrar el alta de un árbol solo con el nombre común o científico y la ubicación: coordenadas, sector y descripción del lugar (PR-006 v8.0);
+- crear órdenes de trabajo, incluidas las OT de Levantamiento, y actualizar su estado (CC-022); las OT de Mantenimiento las completa el Sistema (PR-020 v1.0);
+- definir, al crear una OT de Mantenimiento, si requiere revisión del Inspector (`requiere_revision_inspector`); Tala y Retiro_tocón la exigen siempre;
+- reportar, revisar y consultar incidencias, y actualizar su estado (CC-022).
+
+No realiza:
+- registro ni modificación de datos técnicos del árbol (origen biogeográfico, fustes, DAP, altura, copa, clase de edad) ni evaluaciones técnicas; las modificaciones posteriores al alta las realiza el Inspector mediante OT;
+- revisión de ejecuciones de mantenimiento;
+- cálculo de severidades, puntajes o priorización técnica;
+- modificación manual de resultados calculados.
+
+Pendiente (CC-015, CC-026 P7): identificadores internos de los roles nuevos; si una persona puede tener varios roles; si el rol es por proyecto.
 
 Afecta:
 - frontend
@@ -421,9 +457,11 @@ Afecta:
 - RLS
 - rules-engine
 
-## PR-004 — Rol Administrador (v5.0)
-Estado: vigente
+## PR-004 — Rol Administrador (v5.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 5.0
+Reemplazada por: PR-004 v6.0
+Motivo del reemplazo: no incluía la gestión de la delimitación territorial del proyecto (CC-026).
 Reemplaza: PR-004 v4.0
 Origen: CC-022
 Motivo: decisión de la autora y su equipo (2026-10-09): el Administrador crea proyectos y agrega usuarios, y puede ver el proyecto completo en modo de solo lectura.
@@ -446,6 +484,37 @@ No realiza:
 Los resultados producidos por el motor metodológico no pueden ser modificados manualmente. Cualquier futura excepción deberá definirse como una regla explícita, versionada y trazable. No existe actualmente mecanismo de override manual.
 
 Pendiente (CC-015): quién corrige datos ya registrados (la versión 4.0 permitía al Administrador "completar/corregir datos básicos").
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-004 — Rol Administrador (v6.0)
+Estado: vigente
+Versión: 6.0
+Reemplaza: PR-004 v5.0
+Origen: CC-026
+Motivo: agregar la gestión de la delimitación territorial del proyecto (auditoría del modelo de datos, 2026-10-18). Sin otros cambios respecto de v5.0.
+
+- Identificador interno: `admin`
+- Etiqueta de interfaz: `Administrador`
+- Acceso transversal a todos los proyectos en esta versión (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- crear y gestionar proyectos;
+- gestionar los miembros de cada proyecto (`project_members`);
+- gestionar la delimitación territorial de cada proyecto: un polígono o multipolígono, dibujado o importado desde KML o KMZ de Google Earth (SECTORES). Los árboles heredan el `id_sector` del proyecto;
+- consultar, en modo de solo lectura, toda la información de los proyectos: dashboard, inventario, mediciones, fichas, evaluaciones técnicas y de riesgo, infraestructura, mantención, incidencias e indicadores.
+
+No realiza:
+- registro ni edición de árboles o mediciones;
+- evaluaciones técnicas (estructural, vitalidad, riesgo, infraestructura);
+- registro de órdenes de trabajo o incidencias, ni cambios de su estado;
+- modificación manual de resultados calculados.
+
+Los resultados producidos por el motor metodológico no pueden ser modificados manualmente. No existe mecanismo de override manual.
 
 Afecta:
 - frontend
@@ -703,9 +772,11 @@ Afecta:
 - base de datos
 - permisos
 
-## PR-006 — Registro básico del árbol (v7.0)
-Estado: vigente
+## PR-006 — Registro básico del árbol (v7.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 7.0
+Reemplazada por: PR-006 v8.0
+Motivo del reemplazo: exigía la medición inicial en el alta, permitía al Usuario municipal registrar mediciones y determinaba la vigencia por `fecha_medicion` (CC-026).
 Reemplaza: PR-006 v6.0
 Origen: CC-020
 Motivo: separar la identidad del árbol (ÁRBOL) de sus mediciones dendrométricas fechadas (MEDICIONES_DENDROMETRICAS) para conservar el historial dendrométrico (ADR-016).
@@ -800,6 +871,58 @@ Afecta:
 - base de datos
 - permisos
 
+## PR-006 — Registro básico del árbol (v8.0)
+Estado: vigente
+Versión: 8.0
+Reemplaza: PR-006 v7.0
+Origen: CC-026
+Motivo: auditoría del modelo de datos (2026-10-18): el alta no exige medición; los datos técnicos los registra el Inspector en la inspección; los valores se hacen vigentes al completar la OT (ADR-016 v2.0).
+
+Las listas siguientes describen la información capturada por la interfaz y su contrato funcional (DICCIONARIO_CAMPOS), no columnas físicas de la base de datos.
+
+### Vías de registro
+
+- **Alta municipal:** el Usuario municipal registra el árbol con el nombre común o científico y la ubicación (coordenadas, sector y descripción del lugar). No se exige medición.
+- **Registro en levantamiento:** el Inspector registra árboles nuevos durante una OT de Levantamiento, sin alta municipal previa.
+- Si el árbol ya existe, se reutiliza su identificador y se agrega una nueva evaluación; no se duplica el árbol.
+- Todo árbol registrado comienza como Presente, aunque su evaluación técnica esté pendiente. Sin evaluación vigente, la ficha muestra "Evaluación pendiente".
+
+### Identificación y ubicación
+
+- Código, fecha de registro y registrado por: automáticos.
+- Proyecto e `id_sector`: el árbol hereda la delimitación territorial del proyecto (`id_sector`, no visible en el formulario, usado en los índices territoriales). `sector` es el texto descriptivo del barrio o sector y no se reemplaza por `id_sector`.
+- Coordenadas UTM de ingreso manual (`utm_este`, `utm_norte`) con `huso` y `datum`, y descripción del lugar (`ubicacion_descriptiva`).
+- Las modificaciones posteriores al alta las realiza el Inspector mediante OT y se hacen vigentes al completarla.
+
+### Especie
+
+- En el alta se acepta el nombre común o el científico. Para finalizar la inspección se exigen `especie_cientifica` y `nombre_comun`; no se admiten "Género sp." ni "No determinado".
+- El Inspector confirma o corrige la identificación; la corrección se hace vigente al completar la OT.
+- Solo el Inspector incorpora especies a CATALOGO_ESPECIES (`especie_cientifica`, `genero`, `familia`). El árbol se vincula por `especie_cientifica` normalizada. La ausencia de la especie en el catálogo no bloquea el alta.
+
+### Datos técnicos e historial (ADR-016 v2.0)
+
+- Los registra el Inspector en la inspección, mediante OT: origen biogeográfico, configuración de fustes y DAP, altura total (`altura_total_m` > 0), diámetros de copa norte–sur y este–oeste (el diámetro medio se calcula), altura de primera rama, altura de base de copa viva y clase de edad.
+- Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
+- No se sobrescribe el historial: la ficha muestra el valor vigente y la plataforma conserva cada versión anterior vinculada a la inspección que la registró.
+- Los valores nuevos se hacen vigentes al completar toda la OT. El valor vigente es el de la OT completada más recientemente según `fecha_completada_ot`, aunque su inspección se haya realizado antes que otra.
+- Una medición aplicable pendiente deja la inspección preguardada (PR-009 v3.0); no equivale a cero ni a "No presenta". "No presenta" se usa para características inexistentes y desactiva el valor numérico.
+
+### Pendientes (CC-026, `docs/auditorias/2026-10-18-modelo-datos/pendientes.md`)
+
+- P1: ubicación canónica en WGS84 con PostGIS (ADR-010 v2.0) frente a las coordenadas UTM de ingreso manual.
+- P2: `nombre_comun` como campo del árbol o resuelto solo desde el catálogo de especies.
+- P3: corrección y anulación lógica de una medición ya registrada.
+- P4: categorías de configuración de fustes y regla de DAP equivalente.
+
+Esta PR no modifica `schema.sql`.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+
 ## PR-007 — Estado técnico derivado
 Estado: propuesta
 Versión: 1.0
@@ -863,9 +986,11 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-009 — Inspecciones (v2.0)
-Estado: vigente
+## PR-009 — Inspecciones (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: PR-009 v3.0
+Motivo del reemplazo: no definía el rol que realiza las inspecciones ni su ciclo de preguardado (CC-026).
 Reemplaza: PR-009 v1.0
 Origen: CC-022
 Motivo: el Administrador pasa a solo lectura (PR-004 v5.0).
@@ -886,9 +1011,36 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-010 — Fotografías
+## PR-009 — Inspecciones (v3.0)
 Estado: vigente
+Versión: 3.0
+Reemplaza: PR-009 v2.0
+Origen: CC-026
+Motivo: definir quién realiza las inspecciones, su ciclo de preguardado y su vigencia (auditoría del modelo de datos, 2026-10-18).
+
+Las inspecciones:
+- pertenecen a un árbol y a una OT de Inspección (Evaluación inicial, Reevaluación, Evaluación instrumental, Monitoreo o Levantamiento). Una OT de Levantamiento puede abarcar varios árboles aún no identificados al crearla; su alcance es el proyecto y el área de trabajo descrita en la OT;
+- las realiza el Inspector (PR-019 v1.0); no las realizan el Administrador ni el Usuario municipal;
+- tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado; `Finalizado` cuando están completas. Equivalen a `borrador` y `completada` de ADR-007;
+- admiten guardado parcial;
+- "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
+- exigen cuatro fotografías nuevas (PR-010 v2.0);
+- al finalizar quedan inmutables y conservan `rule_version`;
+- sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada.
+
+Una inspección finalizada no se modifica retroactivamente.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- rules-engine
+
+## PR-010 — Fotografías (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-010 v2.0
+Motivo del reemplazo: no exigía vistas fotográficas por inspección ni evidencia en mantenimiento e incidencias (CC-026).
 
 Cada árbol puede tener hasta 20 fotografías.
 
@@ -901,6 +1053,28 @@ PostgreSQL almacena metadatos.
 El límite debe validarse en frontend y backend.
 
 La asociación directa a inspecciones/incidencias/intervenciones queda pendiente de futuras decisiones.
+
+Afecta:
+- frontend
+- backend
+- storage
+- base de datos
+
+## PR-010 — Fotografías (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-010 v1.0
+Origen: CC-026
+Motivo: vistas fotográficas obligatorias por inspección y evidencia en mantenimiento e incidencias (auditoría del modelo de datos, 2026-10-18).
+
+- Se permiten varias fotografías por árbol y por inspección.
+- Para finalizar una inspección se exigen fotografías nuevas de cuatro vistas: árbol completo, base, tronco y copa. Las fotografías anteriores no cumplen las vistas obligatorias de una nueva inspección.
+- Se conserva el historial fotográfico vinculado a cada inspección.
+- Mantenimiento: la evidencia fotográfica de la ejecución es obligatoria para completar la OT (PR-020 v1.0).
+- Incidencias: el reportante carga al menos una fotografía (textos del diccionario por confirmar, CC-026 P11).
+- Las imágenes viven en Supabase Storage; PostgreSQL almacena metadatos (ADR-011).
+
+Pendiente (CC-026 P9): el límite de 20 fotografías por árbol de la v1.0 no fue confirmado.
 
 Afecta:
 - frontend
@@ -1307,3 +1481,56 @@ Afecta:
 - frontend
 - backend
 - seguridad
+
+## PR-019 — Rol Inspector (v1.0)
+Estado: vigente
+Versión: 1.0
+Origen: CC-026
+Motivo: definir el rol técnico (auditoría del modelo de datos, 2026-10-18; resuelve la parte de CC-015 sobre el Inspector).
+
+- Identificador interno: pendiente (CC-026 P7).
+- Etiqueta de interfaz: `Inspector`. Es el término único del rol técnico; no se usa "Inspector Municipal".
+
+Puede:
+- realizar las inspecciones de las OT de Inspección, incluida la OT de Levantamiento (PR-009 v3.0);
+- registrar árboles nuevos durante una OT de Levantamiento, sin alta municipal previa (PR-006 v8.0);
+- registrar y modificar todos los datos técnicos del árbol y de la evaluación mediante OT;
+- confirmar o corregir la especie e incorporar especies a CATALOGO_ESPECIES;
+- aprobar o rechazar las ejecuciones de mantenimiento cuya OT requiere revisión (PR-020 v1.0).
+
+No realiza:
+- creación de proyectos ni gestión de miembros;
+- creación de órdenes de trabajo;
+- modificación manual de resultados calculados.
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-020 — Rol Encargado de mantención y revisión de mantenimiento (v1.0)
+Estado: vigente
+Versión: 1.0
+Origen: CC-026
+Motivo: definir la ejecución de mantenimiento y cuándo la revisa el Inspector (auditoría del modelo de datos, 2026-10-18; resuelve la parte de CC-015 sobre "Encargado de mantención").
+
+- Identificador interno: pendiente (CC-026 P7).
+- Etiqueta de interfaz: `Encargado de mantención`.
+
+El Encargado de mantención registra la ejecución de las OT de Mantenimiento que tiene asignadas y su evidencia fotográfica, que es obligatoria.
+
+Revisión del Inspector:
+- La define el Usuario municipal al crear la OT (`requiere_revision_inspector`; valor inicial No).
+- Tala y Retiro_tocón exigen siempre revisión; el Sistema fija Sí y no permite cambiarlo.
+- Sin revisión: el Sistema completa la OT al registrarse la ejecución y la evidencia.
+- Con revisión: el Sistema completa la OT cuando el Inspector registra `estado_revision = Aprobado`.
+- Rechazo: la OT vuelve a En ejecución; la corrección se registra como un nuevo registro de MANTENIMIENTO con el mismo `id_ot` y se conservan los anteriores.
+- `estado_presencia` cambia a Talado o Retirado solo después de la aprobación del Inspector.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+- RLS
