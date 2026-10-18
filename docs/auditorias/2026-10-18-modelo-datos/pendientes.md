@@ -12,19 +12,26 @@ Nada de lo listado aquí está decidido. Los conflictos P1–P9 son puntos donde
 | P4 | Configuración de fustes | CC-020: `multifustal` reemplazado por `configuracion_fustes`; fórmula de DAP equivalente pendiente | Conserva `multifustal`, `numero_fustes`, `dap_fustes_cm` y la fórmula de `dap_cm` (no auditada: metodología) |
 | P5 | Clase de edad | CC-009 / CC-020: opcional, en mediciones | Obligatoria en ARBOLES |
 | P6 | Cumplimiento de distancia BT/MT | CC-017 (ubicación de la regla, DETECTADO) | Con varias redes aéreas, la distancia registrada es la menor de todas; si una red no eléctrica está más cerca, el cumplimiento se evalúa con esa distancia (error conservador). No se modificó el umbral |
-| P7 | Identificadores internos de rol | `admin`, `usuario_municipal` | Faltan los de Inspector y Encargado de mantención; tampoco se decidió si una persona puede tener varios roles ni si el rol es por proyecto (CC-015) |
+| P7 | Identificadores internos de rol | `admin`, `usuario_municipal` | Faltan los de Inspector y Encargado de mantención. Resuelto (AMD-31): el rol es global (`USUARIOS.Rol`) y un usuario puede pertenecer a varios proyectos |
 | P8 | Columna `ambito` de DICCIONARIO_CAMPOS | CC-008 | El Excel auditado no tiene esa columna; los campos nuevos de CC-026 no tienen ámbito asignado |
 | P9 | Límite de fotografías | PR-010 v1.0: hasta 20 por árbol | La auditoría no fijó límite (varias por árbol e inspección) |
 
-## Preguntas abiertas de la auditoría
+## Preguntas de la auditoría (resueltas)
 
-| ID | Pregunta |
+| ID | Pregunta | Resolución |
+|---|---|---|
+| P10 | ¿Toda incidencia entra por el código QR de un árbol? | Sí (AMD-34) |
+| P11 | Textos de celda de INCIDENCIA (N4–N11) | Aplicados (AMD-34) |
+| P12 | SECTORES: un único sector por proyecto | Sí (AMD-32) |
+| P13 | Hojas de proyectos y membresía | Agregadas: PROYECTOS y MIEMBROS_PROYECTO (AMD-31) |
+| P14 | Hoja4 | Eliminada (AMD-33) |
+
+## Pendiente de auditoría
+
+| ID | Pendiente |
 |---|---|
-| P10 | INCIDENCIA: ¿toda incidencia entra por el código QR de un árbol? Si sí, `id_arbol` pasa a Obligatorio y la ubicación se obtiene del árbol |
-| P11 | INCIDENCIA: aprobar los textos de celda propuestos (N4–N11) |
-| P12 | SECTORES: un único sector por proyecto (ajustar `nombre_sector` e `id_proyecto`) |
-| P13 | Proyectos y miembros: agregar hojas PROYECTOS y membresía, o dejarlo fuera del modelo de datos de la tesis |
-| P14 | Hoja4 (vacía): eliminar o mantener |
+| P15 | MATRICES_CALCULO (M01–M05, R01–R04): en revisión por la autora; no auditado |
+| P16 | INDICES: en revisión por la autora; la hoja ya fue modificada en el Excel auditado, pero su contenido no se auditó ni se documenta aquí |
 
 ## Sincronizaciones pendientes (CC-026)
 

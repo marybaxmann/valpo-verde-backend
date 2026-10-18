@@ -62,9 +62,9 @@ Todas aprobadas por `marybaxmann` el 2026-10-18 durante la auditoría. Se regist
 | AMD-29 | "Condicionante" se unifica a "Condicional" en la obligatoriedad. Se eliminan las filas duplicadas de `especie_cientifica` (ARBOLES y CATALOGO_ESPECIES). (D20, A5–A6) | — |
 | AMD-30 | LISTAS se mantiene como hoja auxiliar de los menús: se agrega Levantamiento; `Retiro_residuos` queda bajo Manejo fitosanitario; `Otra` bajo Evaluación instrumental; se elimina `Tipos_de_conflicto`; la validación de `clase_edad` pasa a su columna con 5 valores. (L1–L5) | CC-004, CC-009, CC-012 (parcial) |
 
-## 7. INCIDENCIA (decisiones tomadas; textos de celda por confirmar)
+## 7. INCIDENCIA
 
-- La ubicación de la incidencia es la del árbol asociado al código QR escaneado (confirmación pendiente, P10).
+- Toda incidencia entra por el código QR de un árbol: `id_arbol` es Obligatorio y la ubicación es la del árbol (P10 confirmado).
 - La fotografía la carga el ciudadano; al menos una es obligatoria.
 - `observaciones_revision` es opcional.
 - Los campos de revisión son Condicionales (`estado_incidencia` distinto de Ingresada).
@@ -73,3 +73,20 @@ Todas aprobadas por `marybaxmann` el 2026-10-18 durante la auditoría. Se regist
 - `prioridad_municipal` se activa con `resultado_revision = Validada`.
 - Campo nuevo `id_incidencia` en ORDENES DE TRABAJO (Condicional).
 - Se agrega la columna faltante `estado_incidencia` y se corrigen las validaciones mal aplicadas de la hoja.
+
+## 8. Decisiones complementarias (2026-10-18, registradas por la autora en el Excel auditado)
+
+| ID | Decisión | Reemplaza / afecta |
+|---|---|---|
+| AMD-31 | Hojas nuevas **PROYECTOS** (`id_proyecto`, `nombre_proyecto`; solo el Administrador crea proyectos) y **MIEMBROS_PROYECTO** (`id_proyecto`, `id_usuario`). Un usuario puede pertenecer a varios proyectos; el rol es global (`USUARIOS.Rol`). `ARBOLES.id_proyecto` referencia PROYECTOS. | Coincide con PR-005 v3.0 (`projects`, `project_members`, rol global). Resuelve P13 y parte de P7 |
+| AMD-32 | SECTORES: un único sector por proyecto. | Resuelve P12 |
+| AMD-33 | Se elimina Hoja4. | Resuelve P14 |
+| AMD-34 | INCIDENCIA: se aplican los textos N1–N11 (QR, fotografía obligatoria del ciudadano, revisión condicional, origen Comunidad, nombre y RUT obligatorios, prioridad con `Validada`). | Resuelve P10 y P11 |
+| AMD-35 | La hoja INSPECCIONES pasa a llamarse **INSPECCION**. | Nombre de la entidad en el Excel |
+| AMD-36 | El Inspector puede **ajustar** `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad` registrando `justificacion_ajuste_clasificacion` (campo nuevo). Se conservan el valor calculado, el valor ajustado, el Inspector y la fecha. Si se ajusta el riesgo o la infraestructura, la prioridad se calcula con el valor ajustado. | PR-008 v1.0 ("no escribir manualmente resultados calculados salvo una regla futura explícita") → PR-008 v2.0 |
+| AMD-37 | `INSPECCION.nivel_riesgo` se hereda de `clasificacion_riesgo` (incluido su ajuste), con la escala Bajo / Moderado / Alto / Extremo; no es editable. `resultado_general` es texto libre. | CC-010 |
+| AMD-38 | Se elimina `requiere_nueva_inspeccion`. `fecha_proxima_inspeccion` (Obligatoria) y `fecha_proximo_monitoreo` (nueva) las sugiere la plataforma según `nivel_riesgo` y el Inspector puede ajustarlas registrando `justificacion_ajuste_fecha` (nueva). Inicio del rango — inspección: Bajo 24 meses, Moderado 12 meses, Alto 1 a 3 meses, Extremo 1 a 4 semanas; monitoreo: Bajo 12 meses, Moderado 3 a 6 meses, Alto 2 a 4 semanas, Extremo inmediato y continuo. Al llegar la fecha se envía al calendario del módulo. | — |
+| AMD-39 | Prioridad de la OT: si el árbol tiene evaluación vigente, se propone por defecto su `clasificacion_prioridad`; el Usuario municipal puede modificarla. | CC-011 |
+| AMD-40 | `MANTENIMIENTO.resultado` pasa a catálogo: Ejecutado completamente / Ejecutado parcialmente / No ejecutado. El cierre automático de la OT solo procede con Ejecutado completamente. | AMD-21 |
+| AMD-41 | `origen_biogeografico`: el Usuario municipal puede ingresarlo de forma opcional en el alta; el Inspector lo confirma o corrige mediante OT. | Ajusta AMD-03 |
+| AMD-42 | Se eliminan los datos de ejemplo de los anexos. | CC-018 |

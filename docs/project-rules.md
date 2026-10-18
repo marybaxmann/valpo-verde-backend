@@ -392,8 +392,8 @@ Puede:
 - acceder a su proyecto asignado;
 - ver dashboard básico;
 - consultar inventario, resultados técnicos e indicadores básicos;
-- registrar el alta de un árbol solo con el nombre común o científico y la ubicación: coordenadas, sector y descripción del lugar (PR-006 v8.0);
-- crear órdenes de trabajo, incluidas las OT de Levantamiento, y actualizar su estado (CC-022); las OT de Mantenimiento las completa el Sistema (PR-020 v1.0);
+- registrar el alta de un árbol solo con el nombre común o científico y la ubicación: coordenadas, sector y descripción del lugar; puede agregar de forma opcional el origen biogeográfico, que el Inspector confirma o corrige (PR-006 v8.0);
+- crear órdenes de trabajo, incluidas las OT de Levantamiento, y actualizar su estado (CC-022); las OT de Mantenimiento las completa el Sistema (PR-020 v1.0). La prioridad de la OT se propone por defecto desde la `clasificacion_prioridad` vigente del árbol y puede modificarla;
 - definir, al crear una OT de Mantenimiento, si requiere revisión del Inspector (`requiere_revision_inspector`); Tala y Retiro_tocón la exigen siempre;
 - reportar, revisar y consultar incidencias, y actualizar su estado (CC-022).
 
@@ -403,7 +403,7 @@ No realiza:
 - cálculo de severidades, puntajes o priorización técnica;
 - modificación manual de resultados calculados.
 
-Pendiente (CC-015, CC-026 P7): identificadores internos de los roles nuevos; si una persona puede tener varios roles; si el rol es por proyecto.
+Pendiente (CC-026 P7): identificadores internos de los roles nuevos. El rol es global y un usuario puede pertenecer a varios proyectos (PR-005 v3.0).
 
 Afecta:
 - frontend
@@ -514,7 +514,7 @@ No realiza:
 - registro de órdenes de trabajo o incidencias, ni cambios de su estado;
 - modificación manual de resultados calculados.
 
-Los resultados producidos por el motor metodológico no pueden ser modificados manualmente. No existe mecanismo de override manual.
+El Administrador no modifica resultados calculados. El único ajuste permitido es el del Inspector, con justificación y trazabilidad (PR-008 v2.0).
 
 Afecta:
 - frontend
@@ -882,7 +882,7 @@ Las listas siguientes describen la información capturada por la interfaz y su c
 
 ### Vías de registro
 
-- **Alta municipal:** el Usuario municipal registra el árbol con el nombre común o científico y la ubicación (coordenadas, sector y descripción del lugar). No se exige medición.
+- **Alta municipal:** el Usuario municipal registra el árbol con el nombre común o científico y la ubicación (coordenadas, sector y descripción del lugar). Puede agregar de forma opcional el origen biogeográfico, que el Inspector confirma o corrige mediante OT. No se exige medición.
 - **Registro en levantamiento:** el Inspector registra árboles nuevos durante una OT de Levantamiento, sin alta municipal previa.
 - Si el árbol ya existe, se reutiliza su identificador y se agrega una nueva evaluación; no se duplica el árbol.
 - Todo árbol registrado comienza como Presente, aunque su evaluación técnica esté pendiente. Sin evaluación vigente, la ficha muestra "Evaluación pendiente".
@@ -941,9 +941,11 @@ Afecta:
 - backend
 - frontend
 
-## PR-008 — Separación observado → calculado → decisión
-Estado: vigente
+## PR-008 — Separación observado → calculado → decisión (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-008 v2.0
+Motivo del reemplazo: la "regla futura explícita" para ajustar resultados calculados quedó definida en CC-026.
 
 La arquitectura metodológica debe mantener:
 
@@ -957,6 +959,35 @@ El backend aplica reglas.
 La plataforma devuelve resultados.
 
 No permitir escribir manualmente resultados calculados salvo una regla futura explícita.
+
+Afecta:
+- base de datos
+- backend
+- rules-engine
+- frontend
+
+## PR-008 — Separación observado → calculado → decisión (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-008 v1.0
+Origen: CC-026
+Motivo: define la regla explícita de ajuste de clasificaciones por el Inspector (auditoría del modelo de datos, 2026-10-18).
+
+La arquitectura metodológica mantiene:
+
+dato observado
+→ resultado calculado
+→ evaluación agregada
+→ decisión de gestión
+
+El Inspector ingresa observaciones y mediciones; el backend aplica las reglas y la plataforma devuelve los resultados.
+
+Ajuste justificado (única excepción):
+- El Inspector puede ajustar `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad`.
+- Todo ajuste exige `justificacion_ajuste_clasificacion`.
+- Se conservan el valor calculado, el valor ajustado, el Inspector y la fecha del ajuste.
+- Si se ajusta el riesgo o la infraestructura, la prioridad se calcula con el valor ajustado.
+- Ningún otro resultado calculado se escribe manualmente, y ningún otro rol ajusta clasificaciones.
 
 Afecta:
 - base de datos
@@ -1026,7 +1057,11 @@ Las inspecciones:
 - "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
 - exigen cuatro fotografías nuevas (PR-010 v2.0);
 - al finalizar quedan inmutables y conservan `rule_version`;
-- sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada.
+- sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
+- `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
+- la plataforma sugiere `fecha_proxima_inspeccion` y `fecha_proximo_monitoreo` según `nivel_riesgo` (inicio del rango — inspección: Bajo 24 meses, Moderado 12 meses, Alto 1 a 3 meses, Extremo 1 a 4 semanas; monitoreo: Bajo 12 meses, Moderado 3 a 6 meses, Alto 2 a 4 semanas, Extremo inmediato y continuo). El Inspector puede ajustarlas registrando `justificacion_ajuste_fecha`. Al llegar la fecha de inicio, se envía al calendario del módulo.
+
+En el Excel auditado la entidad se llama INSPECCION.
 
 Una inspección finalizada no se modifica retroactivamente.
 
@@ -1496,12 +1531,14 @@ Puede:
 - registrar árboles nuevos durante una OT de Levantamiento, sin alta municipal previa (PR-006 v8.0);
 - registrar y modificar todos los datos técnicos del árbol y de la evaluación mediante OT;
 - confirmar o corregir la especie e incorporar especies a CATALOGO_ESPECIES;
-- aprobar o rechazar las ejecuciones de mantenimiento cuya OT requiere revisión (PR-020 v1.0).
+- aprobar o rechazar las ejecuciones de mantenimiento cuya OT requiere revisión (PR-020 v1.0);
+- ajustar `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad` con justificación (PR-008 v2.0);
+- ajustar las fechas sugeridas de próxima inspección y monitoreo con justificación (PR-009 v3.0).
 
 No realiza:
 - creación de proyectos ni gestión de miembros;
 - creación de órdenes de trabajo;
-- modificación manual de resultados calculados.
+- modificación de resultados calculados fuera del ajuste justificado de PR-008 v2.0.
 
 Afecta:
 - frontend
@@ -1523,7 +1560,7 @@ El Encargado de mantención registra la ejecución de las OT de Mantenimiento qu
 Revisión del Inspector:
 - La define el Usuario municipal al crear la OT (`requiere_revision_inspector`; valor inicial No).
 - Tala y Retiro_tocón exigen siempre revisión; el Sistema fija Sí y no permite cambiarlo.
-- Sin revisión: el Sistema completa la OT al registrarse la ejecución y la evidencia.
+- Sin revisión: el Sistema completa la OT al registrarse la ejecución con `resultado` = Ejecutado completamente y la evidencia. Con Ejecutado parcialmente o No ejecutado, la OT permanece En ejecución.
 - Con revisión: el Sistema completa la OT cuando el Inspector registra `estado_revision = Aprobado`.
 - Rechazo: la OT vuelve a En ejecución; la corrección se registra como un nuevo registro de MANTENIMIENTO con el mismo `id_ot` y se conservan los anteriores.
 - `estado_presencia` cambia a Talado o Retirado solo después de la aprobación del Inspector.

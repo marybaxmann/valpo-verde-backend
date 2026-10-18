@@ -7,15 +7,15 @@
 ## Alcance
 
 - **Archivo auditado:** `Base de Datos SIVU AUDITAR.xlsx` (Excel de la tesis, carpeta `Anexos/`), contrastado con el documento de continuidad de la auditoría anterior.
-- **Hojas auditadas:** ARBOLES, REGISTRO_EVALUACION, ORDENES DE TRABAJO, INSPECCIONES, MANTENIMIENTO, LISTAS, CATALOGO_ESPECIES (filas duplicadas), INCIDENCIA (en curso) y, en DICCIONARIO_CAMPOS, las filas de todas ellas.
-- **Fuera de alcance:** metodología (M01–M05, R01–R04, índices, umbrales y notas "REVISAR"); REGLAS_INDICADORES y VERSION del Excel maestro del repositorio.
+- **Hojas auditadas:** ARBOLES, REGISTRO_EVALUACION, ORDENES DE TRABAJO, INSPECCION (antes INSPECCIONES), MANTENIMIENTO, LISTAS, CATALOGO_ESPECIES, INCIDENCIA, SECTORES, USUARIOS, PROYECTOS y MIEMBROS_PROYECTO (nuevas) y, en DICCIONARIO_CAMPOS, las filas de todas ellas.
+- **Fuera de alcance (pendiente):** MATRICES_CALCULO e INDICES, en revisión por la autora; REGLAS_INDICADORES y VERSION del Excel maestro del repositorio.
 - **Resultado:** copia auditada `Base de Datos SIVU AUDITADO (2026-10-18).xlsx`, generada sin modificar el original y verificada (abre en Excel; cabeceras = diccionario en el mismo orden; sin campos duplicados; sin referencias a nombres antiguos).
 
 ## Estado
 
 | Elemento | Estado |
 |---|---|
-| Decisiones de la autora | Aprobadas (ver [decisiones.md](decisiones.md)); INCIDENCIA, SECTORES, proyectos y Hoja4 con preguntas abiertas |
+| Decisiones de la autora | Aprobadas: AMD-01 a AMD-42 (ver [decisiones.md](decisiones.md)). Solo quedan pendientes MATRICES_CALCULO e INDICES |
 | CC | **CC-026** — `APROBADO METODOLÓGICAMENTE` |
 | Excel maestro del repositorio (`docs/excel/Base de Datos Valpo Verde.xlsx`) | **No modificado.** Su sincronización con la copia auditada queda pendiente (decisión de la autora: actualizar solo la documentación) |
 | Código, BD, RLS, migraciones | **No modificados.** La implementación vigente en desarrollo (CC-020, CC-022) no coincide con CC-026 y queda como implementación pendiente |
@@ -24,7 +24,7 @@
 
 | Archivo | Finalidad |
 |---|---|
-| [decisiones.md](decisiones.md) | Decisiones AMD-01 a AMD-30 con su origen en la auditoría y lo que reemplazan |
+| [decisiones.md](decisiones.md) | Decisiones AMD-01 a AMD-42 con su origen en la auditoría y lo que reemplazan |
 | [pendientes.md](pendientes.md) | Preguntas abiertas, conflictos por confirmar y sincronizaciones pendientes |
 
 ## Identificadores
