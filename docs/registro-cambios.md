@@ -53,6 +53,7 @@ hoja VERSION del Excel maestro.
 | CC-024 | N13: componente con indicador "No determinado" → árbol sin clasificación de riesgo, independiente de infraestructura | 2 (+4) | APROBADO METODOLÓGICAMENTE | Auditoría del motor de riesgo (2026-10-10) | 2.0.0 (en preparación) | — | 2026-10-10 |
 | CC-025 | Prototipo visual "SIVU Territorio" como referencia visual principal del frontend (PR-016 v6.0) | 5 | APROBADO METODOLÓGICAMENTE | Exploración visual UX/UI posterior a CC-023 | — (fuera del paquete) | — | 2026-10-16 |
 | CC-026 | Auditoría funcional del modelo de datos: roles, alta del árbol, historial, inspección y revisión de mantenimiento (PR-003 v7.0, PR-004 v6.0, PR-006 v8.0, PR-009 v3.0, PR-010 v2.0, PR-019, PR-020, PR-008 v2.0, ADR-006 v2.0, ADR-016 v2.0) | 3 (+2, +1) | APROBADO METODOLÓGICAMENTE | Auditoría del modelo de datos (2026-10-18) · AMD-01…AMD-42 | — (Excel maestro pendiente de sincronizar) | — | 2026-10-18 |
+| CC-027 | Sincronización del motor de riesgo con MATRICES_CALCULO y REGLAS_INDICADORES del Excel auditado (R03, cavidades, etiquetas, M04, M05) | 2 (+4) | APROBADO METODOLÓGICAMENTE | Revisión de matrices e índices (2026-10-18) · DM-01…DM-09 | — (Excel maestro pendiente de sincronizar) | C1 (postauditoría) | 2026-10-18 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1166,3 +1167,54 @@ motivo)
 |---|---|---|---|
 | 2026-10-18 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisiones AMD-01 a AMD-30 tomadas en la auditoría; pasa directo desde EN REVISIÓN (§14.6). Sincronización del Excel maestro e implementación pendientes. |
 | 2026-10-18 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisiones complementarias AMD-31 a AMD-42, registradas por la autora en el Excel auditado: responden P7 (parcial) y P10–P14; agregan PR-008 v2.0. Quedan sin auditar MATRICES_CALCULO e INDICES. |
+
+---
+
+### CC-027 — Sincronización del motor de riesgo con MATRICES_CALCULO y REGLAS_INDICADORES del Excel auditado
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-18 |
+| Origen | Revisión de MATRICES_CALCULO, REGLAS_INDICADORES e INDICES del Excel auditado (sesión "SIVU auditoría funcional", 2026-10-18), pendiente P15–P16 de CC-026. Evidencia: `docs/auditorias/2026-10-18-modelo-datos/diferencias-motor.md` (DM-01 a DM-09). |
+| Tipo | 2 — metodológico (+4 implementación) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | R02, R03, R04, M02, M04, M05; reglas RC-CAV y TR-CAV 01 a 10, CR-DEF-01 a 04, IN-*; etiquetas de consecuencia y de M02; INDICES. |
+| Versión anterior | Motor del backend (`treeRisk.ts`, migración 007): `borrador_reglas_diagramas_v3` + Excel del 2026-10-06. R03 con máximo 5 y sin defoliación; t/R cuando cavidad externa = No; etiquetas "Despreciable" e "Improbable"; M04 y M05 sin implementar. |
+| Versión nueva | Fuente vigente (decisión de la autora, M1 = a): `Base de Datos SIVU AUDITADO (2026-10-18).xlsx` — MATRICES_CALCULO, REGLAS_INDICADORES (98 reglas), DICCIONARIO_CAMPOS e INDICES. R03 con máximo 8 e incluye la defoliación; cavidades con SL (externa = Sí), t/R (interna = Sí), reglas 09 y 10 y validación de pudrición; etiquetas del maestro "Insignificante" y "Poco probable" (M3); M04 y M05 definidas. R02 y "No determinado" (CC-024) ya coinciden con el código. |
+| Motivo | El motor implementa una versión anterior de las reglas (contradicción C1 de la postauditoría). |
+| Fundamento / fuente | Decisiones de la autora M1 = a (fuente vigente) y M3 = mantener las etiquetas del maestro, transmitidas por la sesión "SIVU auditoría funcional" el 2026-10-18. A confirmar en la revisión del PR. |
+| Archivos afectados | `docs/registro-cambios.md`, `docs/auditorias/2026-10-18-modelo-datos/` (`diferencias-motor.md`, `pendientes.md`, `README.md`), `docs/roadmap.md`, `HANDOFF.md`. |
+| Impacto en diagramas | Por verificar al sincronizar (R03 con defoliación; cavidades 09 y 10). |
+| Impacto en Excel metodológico | Excel maestro del repositorio pendiente de sincronizar con el auditado (AM-01 de CC-026). |
+| Impacto en BD | Pendiente: `rule_version` y almacenamiento de M04, M05 y los ajustes del Inspector. |
+| Impacto en backend | Pendiente: actualizar R03, etiquetas y cavidades (DM-02 a DM-04); implementar M04 y M05 (DM-06, DM-07). Sin cambios en esta ficha. |
+| Impacto en API | Pendiente. |
+| Impacto en frontend | Pendiente: etiquetas y resultados de infraestructura y prioridad. |
+| Pruebas necesarias | En implementación: valores borde de R03 (0–2, 3–4, 5–6, 7–8) y de las clases de defoliación; cavidades con externa e interna en todas las combinaciones, incluido "Requiere evaluación instrumental"; M04 con componentes excluidos (No aplica, No determinado) y umbrales de P_I%; M05. |
+| Dependencias | C1 de la postauditoría (formato de `rule_version` y publicación del paquete); CC-024; CC-026 (DM-08); CC-014 (duplicación de reglas en DICCIONARIO_CAMPOS). |
+| rule_version | por definir (`borrador_reglas_diagramas_v3` → versión del paquete auditado) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-18 |
+| Fecha de implementación | — (sin implementación) |
+| Commits / PR asociados | Rama `docs/cc-026-auditoria-modelo-datos` (PR #20). |
+| Observaciones | Solo registro: no se modificaron código, Supabase ni migraciones. INDICES queda pendiente de una revisión posterior (DM-09). |
+
+**Checklist de sincronización**
+
+- [ ] Diagrama — por verificar.
+- [ ] REGLAS_INDICADORES · MATRICES_CALCULO · DICCIONARIO_CAMPOS — pendientes en el Excel maestro del repositorio.
+- [ ] VERSION · export de texto · docs/methodology/ — pendientes.
+- [x] PR / ADR — N/A.
+- [ ] Verificación §14.9 (fuente) — pendiente.
+- [ ] Migración + schema.sql — pendiente.
+- [ ] Backend (services/rules) — pendiente.
+- [ ] API / Zod — pendiente.
+- [ ] Frontend — pendiente.
+- [ ] Verificación §14.9 (implementación) — pendiente.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-18 | APROBADO METODOLÓGICAMENTE | marybaxmann | Fuente vigente definida (M1 = a; M3). Diferencias DM-01 a DM-09 registradas; implementación no autorizada. |

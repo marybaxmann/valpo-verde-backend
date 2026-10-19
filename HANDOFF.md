@@ -28,7 +28,8 @@
 - **Nuevas versiones:** PR-003 v7.0, PR-004 v6.0, PR-006 v8.0, PR-008 v2.0 (ajuste justificado de clasificaciones por el Inspector), PR-009 v3.0, PR-010 v2.0, PR-019 v1.0, PR-020 v1.0, ADR-006 v2.0 (cierra C2 en la documentación), ADR-016 v2.0.
 - **Decisiones complementarias AMD-31 a AMD-42:** PROYECTOS y MIEMBROS_PROYECTO, INSPECCION, fechas sugeridas de reinspección y monitoreo, `resultado` de mantenimiento en catálogo, Prioridad de OT propuesta desde `clasificacion_prioridad`. Solo quedan sin auditar MATRICES_CALCULO e INDICES.
 - **No modificado:** Excel maestro (sincronización pendiente, AM-01), código, Supabase, migraciones, RLS y motor. La implementación de desarrollo (CC-020, CC-022) queda desalineada con CC-026 hasta su implementación (AM-04).
-- **Próximos libres:** CC-027, ADR-017, PR-021.
+- **CC-027 `APROBADO METODOLÓGICAMENTE`:** el motor (`treeRisk.ts`) difiere del Excel auditado en R03 (máximo 8 con defoliación), etiquetas, cavidades (reglas 09 y 10) y no implementa M04 ni M05. Detalle en `docs/auditorias/2026-10-18-modelo-datos/diferencias-motor.md`. **No modificar el motor sin autorización.**
+- **Próximos libres:** CC-028, ADR-017, PR-021.
 
 ## ▶ Punto de reanudación (2026-10-11) — leer primero
 
@@ -48,7 +49,7 @@
 - **C1:** motor de riesgo (`treeRisk.ts`, `rule_version = borrador_reglas_diagramas_v3`) implementado con reglas de borrador, contra PR-011 v2.0 y `methodology/00-index.md`.
 - **C2:** ADR-006 v1.1 atribuye la evaluación técnica al administrador, contra CC-022. **Resuelta en la documentación por ADR-006 v2.0 (CC-026, 2026-10-18).**
 
-**CC:** CC-025 registrado (2026-10-16): prototipo visual SIVU Territorio como referencia visual principal (PR-016 v6.0). Próximos libres (actualizado 2026-10-18): CC-027, ADR-017, PR-021. La propuesta para C1 (`decisiones.md` §5, redactada como "CC-025") sigue **sin registrar** y recibirá el número libre al registrarse.
+**CC:** CC-025 registrado (2026-10-16): prototipo visual SIVU Territorio como referencia visual principal (PR-016 v6.0). Próximos libres (actualizado 2026-10-18): CC-028, ADR-017, PR-021. La propuesta para C1 (`decisiones.md` §5, redactada como "CC-025") sigue **sin registrar** y recibirá el número libre al registrarse.
 
 **Prohibido sin autorización expresa:** modificar código, Supabase o migraciones; ejecutar pruebas de escritura (W1–W12 solo en un entorno de pruebas aislado); modificar motor, roles o permisos; borrar ramas, etiquetas o archivos; commit, push, merge o PR. Repos **públicos**: no publicar detalles explotables de S1.
 

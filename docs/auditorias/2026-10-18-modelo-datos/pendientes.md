@@ -30,8 +30,8 @@ Nada de lo listado aquí está decidido. Los conflictos P1–P9 son puntos donde
 
 | ID | Pendiente |
 |---|---|
-| P15 | MATRICES_CALCULO (M01–M05, R01–R04): en revisión por la autora; no auditado |
-| P16 | INDICES: en revisión por la autora; la hoja ya fue modificada en el Excel auditado, pero su contenido no se auditó ni se documenta aquí |
+| P15 | MATRICES_CALCULO y REGLAS_INDICADORES: revisados; fuente vigente el Excel auditado. Diferencias con el motor registradas en CC-027 ([diferencias-motor.md](diferencias-motor.md), DM-01 a DM-08) |
+| P16 | INDICES: agrupación, área de copa y estado metodológico registrados (DM-09); los índices quedan pendientes de una revisión posterior |
 
 ## Sincronizaciones pendientes (CC-026)
 

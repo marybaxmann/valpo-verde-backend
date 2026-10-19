@@ -15,7 +15,7 @@
 
 | Elemento | Estado |
 |---|---|
-| Decisiones de la autora | Aprobadas: AMD-01 a AMD-42 (ver [decisiones.md](decisiones.md)). Solo quedan pendientes MATRICES_CALCULO e INDICES |
+| Decisiones de la autora | Aprobadas: AMD-01 a AMD-42 (ver [decisiones.md](decisiones.md)). Matrices y reglas: CC-027 ([diferencias-motor.md](diferencias-motor.md)); INDICES pendiente de revisión posterior |
 | CC | **CC-026** — `APROBADO METODOLÓGICAMENTE` |
 | Excel maestro del repositorio (`docs/excel/Base de Datos Valpo Verde.xlsx`) | **No modificado.** Su sincronización con la copia auditada queda pendiente (decisión de la autora: actualizar solo la documentación) |
 | Código, BD, RLS, migraciones | **No modificados.** La implementación vigente en desarrollo (CC-020, CC-022) no coincide con CC-026 y queda como implementación pendiente |
@@ -26,6 +26,7 @@
 |---|---|
 | [decisiones.md](decisiones.md) | Decisiones AMD-01 a AMD-42 con su origen en la auditoría y lo que reemplazan |
 | [pendientes.md](pendientes.md) | Preguntas abiertas, conflictos por confirmar y sincronizaciones pendientes |
+| [diferencias-motor.md](diferencias-motor.md) | Diferencias entre MATRICES_CALCULO / REGLAS_INDICADORES del Excel auditado y el motor del backend (CC-027) |
 
 ## Identificadores
 
