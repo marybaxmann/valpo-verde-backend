@@ -4,7 +4,7 @@
 
 ## Fuente vigente
 
-Por decisión de la autora (M1 = a), la fuente vigente es `Anexos/Base de Datos SIVU AUDITADO (2026-10-18).xlsx`, en sus hojas MATRICES_CALCULO, REGLAS_INDICADORES (hoja nueva, 98 reglas), DICCIONARIO_CAMPOS e INDICES.
+Por decisión de la autora (M1 = a), la fuente vigente es `Anexos/Base de Datos SIVU AUDITADO (2026-10-18).xlsx`, en sus hojas MATRICES_CALCULO, REGLAS_INDICADORES (hoja nueva, 98 reglas), DICCIONARIO_CAMPOS e INDICES. Desde CC-028, ese contenido es el Excel maestro del repositorio: `docs/excel/Base de Datos Valpo Verde.xlsx`.
 
 El backend (`src/services/rules/treeRisk.ts`, migración 007) implementa una versión anterior: `borrador_reglas_diagramas_v3` más el Excel del 2026-10-06 (contradicción C1 de la postauditoría).
 

@@ -15,7 +15,7 @@
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `7913a13` (PR #16 demo + PR #17 CC-021…CC-024); frontend `main` = `187a90d` (PR #5).
 - **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas) — **fuera de `main` hasta verificar en navegador (K4)**. Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** CC-026 aprobado (4 roles, alta sin medición, vigencia por OT completada). Excel maestro e implementación pendientes.
+- **Resumen:** CC-026/027/028 aprobados; el Excel auditado es la única fuente. Implementación pendiente (AM-04, AM-06).
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -27,10 +27,10 @@
 - **Prevalece** sobre lo que contradiga: cuatro roles (Administrador, Usuario municipal, Inspector, Encargado de mantención); el Usuario municipal da de alta el árbol solo con nombre y ubicación y no registra datos técnicos; el Inspector registra los datos técnicos mediante OT (incluida la OT de Levantamiento); vigencia por la OT completada más reciente (`fecha_completada_ot`); `estado_registro` Preguardado / Finalizado; revisión de mantenimiento definida por el Usuario municipal y obligatoria en Tala y Retiro_tocón.
 - **Nuevas versiones:** PR-003 v7.0, PR-004 v6.0, PR-006 v8.0, PR-008 v2.0 (ajuste justificado de clasificaciones por el Inspector), PR-009 v3.0, PR-010 v2.0, PR-019 v1.0, PR-020 v1.0, ADR-006 v2.0 (cierra C2 en la documentación), ADR-016 v2.0.
 - **Decisiones complementarias AMD-31 a AMD-42:** PROYECTOS y MIEMBROS_PROYECTO, INSPECCION, fechas sugeridas de reinspección y monitoreo, `resultado` de mantenimiento en catálogo, Prioridad de OT propuesta desde `clasificacion_prioridad`. Solo quedan sin auditar MATRICES_CALCULO e INDICES.
-- **Excel auditado incorporado (2026-10-18):** `docs/excel/Base de Datos SIVU AUDITADO (2026-10-18).xlsx` es la fuente vigente (CC-026, CC-027). El Excel anterior se conserva por sus hojas VERSION y MEDICIONES_DENDROMETRICAS; su integración sigue pendiente (AM-01).
+- **CC-028 `APROBADO METODOLÓGICAMENTE` (2026-10-18):** el Excel auditado es la **única fuente metodológica**. `docs/excel/Base de Datos Valpo Verde.xlsx` (nombre fijo) contiene ahora el Excel auditado más la hoja VERSION; se eliminó la copia con fecha y el contenido anterior queda solo en git. P1–P9 resueltos a favor del Excel auditado (sin MEDICIONES_DENDROMETRICAS ni columna `ambito`). Textos contradichos por actualizar: AM-07.
 - **No modificado:** código, Supabase, migraciones, RLS y motor. La implementación de desarrollo (CC-020, CC-022) queda desalineada con CC-026 hasta su implementación (AM-04).
 - **CC-027 `APROBADO METODOLÓGICAMENTE`:** el motor (`treeRisk.ts`) difiere del Excel auditado en R03 (máximo 8 con defoliación), etiquetas, cavidades (reglas 09 y 10) y no implementa M04 ni M05. Detalle en `docs/auditorias/2026-10-18-modelo-datos/diferencias-motor.md`. **No modificar el motor sin autorización.**
-- **Próximos libres:** CC-028, ADR-017, PR-021.
+- **Próximos libres:** CC-029, ADR-017, PR-021.
 
 ## ▶ Punto de reanudación (2026-10-11) — leer primero
 

@@ -17,7 +17,7 @@
 |---|---|
 | Decisiones de la autora | Aprobadas: AMD-01 a AMD-42 (ver [decisiones.md](decisiones.md)). Matrices y reglas: CC-027 ([diferencias-motor.md](diferencias-motor.md)); INDICES pendiente de revisión posterior |
 | CC | **CC-026** — `APROBADO METODOLÓGICAMENTE` |
-| Excel maestro del repositorio (`docs/excel/Base de Datos Valpo Verde.xlsx`) | **No modificado.** Su sincronización con la copia auditada queda pendiente (decisión de la autora: actualizar solo la documentación) |
+| Excel maestro del repositorio (`docs/excel/Base de Datos Valpo Verde.xlsx`) | **Reemplazado por el Excel auditado (CC-028)**, con la hoja VERSION. Es la única fuente metodológica |
 | Código, BD, RLS, migraciones | **No modificados.** La implementación vigente en desarrollo (CC-020, CC-022) no coincide con CC-026 y queda como implementación pendiente |
 
 ## Contenido
