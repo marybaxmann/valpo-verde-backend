@@ -335,10 +335,12 @@ PR-006
 
 ---
 
-## ADR-006 — Alcance de roles
-Estado: vigente
+## ADR-006 — Alcance de roles (v1.1 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.1
 Fecha: 2026-08
+Reemplazada por: ADR-006 v2.0
+Motivo del reemplazo: atribuía la evaluación técnica al Administrador (contradicción C2 de la postauditoría) y no reconocía los roles Inspector y Encargado de mantención (CC-026).
 
 ### Contexto
 El prototipo v2 separa captura municipal de evaluación técnica.
@@ -372,6 +374,44 @@ Sí.
 ### Reglas relacionadas
 PR-003
 PR-004
+
+---
+
+## ADR-006 — Alcance de roles (v2.0)
+Estado: vigente
+Versión: 2.0
+Fecha: 2026-10
+Reemplaza: ADR-006 v1.1
+Origen: CC-026
+
+### Contexto
+ADR-006 v1.1 asignaba la evaluación técnica al Administrador, en contradicción con CC-022 (C2 de la postauditoría 2026-10). La auditoría del modelo de datos (2026-10-18) definió cuatro roles.
+
+La definición funcional de permisos vive en las PR; este ADR no la reemplaza.
+
+### Decisión
+Roles:
+
+- **Administrador** (`admin`): proyectos, miembros y delimitación territorial; consulta de solo lectura (PR-004 v6.0).
+- **Usuario municipal** (`usuario_municipal`): alta del árbol con nombre y ubicación; órdenes de trabajo y sus estados; incidencias (PR-003 v7.0).
+- **Inspector**: datos técnicos, inspecciones, levantamiento, catálogo de especies y revisión de mantenimiento (PR-019 v1.0).
+- **Encargado de mantención**: ejecución de mantenimiento y su evidencia (PR-020 v1.0).
+
+El Usuario municipal no es inspector técnico. Ni el Administrador ni el Usuario municipal registran datos técnicos.
+
+Pendiente (CC-026 P7, CC-015): identificadores internos de Inspector y Encargado de mantención; si una persona puede tener varios roles; si el rol es por proyecto.
+
+### Consecuencias
+Los permisos deben aplicarse en backend y en RLS (ADR-014). La implementación vigente en desarrollo, en la que el Usuario municipal registra mediciones y evaluaciones, queda desalineada hasta implementar CC-026.
+
+### Puede cambiar
+Sí.
+
+### Reglas relacionadas
+PR-003 v7.0
+PR-004 v6.0
+PR-019 v1.0
+PR-020 v1.0
 
 ---
 
@@ -800,10 +840,12 @@ ADR-014
 
 ---
 
-## ADR-016 — Árbol y medición dendrométrica como conceptos distintos
-Estado: vigente
+## ADR-016 — Árbol y medición dendrométrica como conceptos distintos (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
 Fecha: 2026-10
+Reemplazada por: ADR-016 v2.0
+Motivo del reemplazo: exigía la medición inicial en el alta, determinaba la vigencia por `fecha_medicion` y dejaba pendiente la relación medición ↔ inspección (CC-026).
 Origen: CC-020
 
 ### Contexto
@@ -846,4 +888,45 @@ PR-006 v7.0
 PR-009
 ADR-007
 ADR-010 v2.0
+ADR-012
+
+---
+
+## ADR-016 — Árbol y medición dendrométrica como conceptos distintos (v2.0)
+Estado: vigente
+Versión: 2.0
+Fecha: 2026-10
+Reemplaza: ADR-016 v1.0
+Origen: CC-026
+
+### Contexto
+ADR-016 v1.0 separó la identidad del árbol de sus mediciones fechadas. La auditoría del modelo de datos (2026-10-18) decidió quién registra las mediciones, cómo se relacionan con la inspección y cuándo se hacen vigentes.
+
+### Decisión
+1. ÁRBOL representa la identidad y la caracterización relativamente estable del ejemplar: identificación, proyecto, ubicación y especie.
+2. Las dimensiones y características dendrométricas (origen biogeográfico, configuración de fustes, DAP, altura total, diámetros de copa, alturas de primera rama y de base de copa viva, clase de edad) son datos técnicos con historial: cada versión queda vinculada a la inspección que la registró.
+3. Las registra el Inspector en la inspección, mediante OT. Registrar o confirmar una medición forma parte de la inspección (relación B de v1.0: la inspección genera la medición).
+4. El alta municipal no exige medición: el árbol se considera presente con "Evaluación pendiente" hasta su primera evaluación vigente.
+5. Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
+6. No se sobrescribe el historial.
+7. Vigencia: los valores se hacen vigentes al completar toda la OT. El valor vigente es el de la OT completada más recientemente según `fecha_completada_ot`, aunque la inspección se haya realizado antes que otra. La fecha de registro no determina la vigencia.
+8. El valor vigente se deriva; no es un segundo dato editable independiente.
+9. Una modificación posterior de la especie es una corrección de identificación, no una nueva medición.
+
+Pendiente (CC-026 P3, P4): corrección y anulación lógica de una medición ya registrada; categorías de configuración de fustes y regla de DAP equivalente.
+
+Esta ADR no define el esquema físico.
+
+### Consecuencias
+- Se conserva con qué dimensiones se hizo cada evaluación.
+- La tabla `trees` y la función de alta con medición (CC-020) no se ajustan a esta versión; su adaptación requiere diseño y migración posteriores.
+
+### Puede cambiar
+Sí, preservando la trazabilidad histórica de árboles, mediciones e inspecciones.
+
+### Reglas relacionadas
+PR-006 v8.0
+PR-009 v3.0
+PR-019 v1.0
+ADR-007
 ADR-012

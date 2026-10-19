@@ -32,7 +32,7 @@ Hasta su publicación rige el siguiente estado de transición (CC-001):
 6. Las decisiones metodológicas ya tomadas y aún no sincronizadas se registran como CC en `docs/registro-cambios.md`. No se incorporan a estos documentos fuera de su CC.
 7. La hoja INDICES es un módulo metodológico en propuesta (CC-016): no es fuente normativa vigente y sus fórmulas no son implementables. Las hojas ARBOLES, MEDICIONES_DENDROMETRICAS, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO y USUARIOS son anexos operativos no normativos (PR-002 v2.2, CC-003); las contradicciones detectadas en ellas están registradas como CC y no se corrigen fuera de su CC.
 8. Desde CC-008, DICCIONARIO_CAMPOS registra el ámbito de cada campo (`operativo` o `metodologico`). Las especificaciones de ámbito `operativo` pueden pasar a implementación desde `FUENTE SINCRONIZADA`, sin esperar la publicación del paquete (`docs/workflow.md` §14.12). Esto no habilita ninguna regla metodológica: el punto 5 se mantiene.
-9. El modelo conceptual ÁRBOL / MEDICIONES_DENDROMETRICAS (CC-020, ADR-016) está documentado en `modelo-arbol-medicion.md`. Forma parte del paquete 2.0.0 en preparación; no es contenido transitorio.
+9. El modelo conceptual ÁRBOL / MEDICIONES_DENDROMETRICAS (CC-020, ADR-016; actualizado por CC-026 y ADR-016 v2.0, ver la nota al inicio del documento) está documentado en `modelo-arbol-medicion.md`. Forma parte del paquete 2.0.0 en preparación; no es contenido transitorio.
 
 ---
 

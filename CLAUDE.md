@@ -67,9 +67,9 @@ Jerarquía única de fuentes (PR-016 v6.0; CC-021, CC-023, CC-025). Ante contrad
 
 ## Roles
 
-Identificadores internos: `admin`, `usuario_municipal`.
+Roles (CC-026): Administrador, Usuario municipal, Inspector y Encargado de mantención (ADR-006 v2.0). Identificadores internos vigentes: `admin`, `usuario_municipal`; los de Inspector y Encargado de mantención están pendientes.
 
-La definición vigente de permisos vive en `docs/project-rules.md` (PR-003 y PR-004).
+La definición vigente de permisos vive en `docs/project-rules.md` (PR-003, PR-004, PR-019 y PR-020).
 
 ---
 

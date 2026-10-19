@@ -241,6 +241,18 @@ Estados: `PENDIENTE DE DECISIÓN` (autora) · `PENDIENTE` · `BLOQUEADO`
 | PA-41 | Validación de fecha en la función de alta con hora de Chile | I5 | Baja | PENDIENTE | PA-04 |
 | PA-42 | Caché global y relectura completa tras editar (aceptados por ahora) | P4d, P4e | Baja | PENDIENTE | — |
 
+### Auditoría del modelo de datos 2026-10-18 (CC-026)
+
+Decisiones aprobadas en CC-026 (`docs/auditorias/2026-10-18-modelo-datos/`). Resuelven en parte PA-02 (ADR-006 v2.0), PA-03 (cuatro roles; quedan identificadores, roles múltiples y rol por proyecto) y PA-05 / PA-07 (inspección con `estado_registro`; cierre de OT de Mantenimiento).
+
+| ID | Pendiente | Origen | Estado | Depende de |
+|---|---|---|---|---|
+| AM-01 | Sincronizar el Excel maestro con la copia auditada, conservando REGLAS_INDICADORES y VERSION | CC-026 | PENDIENTE | Autorización de la autora |
+| AM-02 | Confirmar los conflictos P1–P9 (WGS84/UTM, `nombre_comun`, entidad de mediciones, fustes, clase de edad, BT/MT, identificadores de rol, `ambito`, límite de fotos) | CC-026 `pendientes.md` | PENDIENTE DE DECISIÓN | — |
+| AM-03 | ~~Responder las preguntas abiertas P10–P14 (INCIDENCIA, SECTORES, proyectos, Hoja4)~~ Resuelto (AMD-31 a AMD-34) | CC-026 `pendientes.md` | RESUELTO | — |
+| AM-05 | Auditar MATRICES_CALCULO e INDICES (P15, P16) | CC-026 `pendientes.md` | PENDIENTE | Revisión de la autora |
+| AM-04 | Implementar CC-026: roles Inspector y Encargado de mantención, alta sin medición, `estado_registro`, `fecha_completada_ot`, `requiere_revision_inspector` | CC-026 | BLOQUEADO | AM-01, AM-02, PA-04 |
+
 ### Pendientes previos que siguen abiertos (referencia)
 
 N21 (infraestructura sin componente aplicable) · frontend issue #4

@@ -1,5 +1,7 @@
 # Modelo conceptual: ÁRBOL y MEDICIONES_DENDROMETRICAS
 
+> **Actualizado por CC-026 (2026-10-18).** ADR-016 v2.0 y PR-006 v8.0 reemplazan parte de este modelo: el alta municipal no exige medición; las mediciones las registra el Inspector en la inspección mediante OT y se hacen vigentes al completar la OT (OT completada más reciente según `fecha_completada_ot`, no la `fecha_medicion` más reciente). Lo que sigue describe la versión de CC-020 y se conserva como antecedente donde contradiga a CC-026. Pendientes: `docs/auditorias/2026-10-18-modelo-datos/pendientes.md`.
+
 Origen: CC-020 (aprobado por `marybaxmann`, 2026-10-05). Forma parte del
 paquete metodológico 2.0.0, todavía **en preparación**: no está publicado y no
 define `rule_version`. Decisión arquitectónica: ADR-016. Regla funcional:
