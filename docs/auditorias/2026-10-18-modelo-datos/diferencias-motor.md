@@ -21,6 +21,20 @@ El backend (`src/services/rules/treeRisk.ts`, migración 007) implementa una ver
 | DM-07 | M05 Prioridad | Definida en el maestro | No implementada | **Implementar** |
 | DM-08 | Otros cambios con efecto en el backend | Ver la sección siguiente | No implementados | **Implementar** (con CC-026) |
 | DM-09 | INDICES | Ver la sección "INDICES" | — | Pendiente de revisión posterior |
+| DM-10 | Valores que ya coinciden | Ver la sección "Valores que ya coinciden" | Iguales | Coincide (acota lo que cambia al implementar) |
+
+### Alcance del cambio de etiquetas (DM-03)
+
+El cambio no se limita al motor. "Despreciable" e "Improbable" también aparecen en:
+
+- **Backend:** `src/schemas/treeRiskAssessment.schema.ts`, `tests/services/rules/treeRisk.test.ts` y `docs/project-rules.md`.
+- **Frontend** (`valpo-verde-frontend`): `src/types/treeRisk.ts` y `src/components/RiskAssessmentModal.tsx`.
+- **Diagrama:** `docs/excel/diagramas/EV. Riesgo - consolidacion (R01-R04, M01-M03).drawio`.
+
+"Despreciable" tiene dos usos distintos:
+
+- Como etiqueta de **consecuencia**, pasa a "Insignificante".
+- Como **categoría parcial** de los indicadores (Despreciable / Leve / Moderada / Severa), se mantiene, porque el maestro también la usa en ese sentido.
 
 ### Decisiones clave de M04 (DM-06)
 
@@ -47,3 +61,17 @@ Ya registrados en CC-026:
 - **Área de copa:** elíptica (diámetro norte–sur × diámetro este–oeste); los árboles sin copa cuentan como 0.
 - **Columnas:** se eliminó "Datos faltantes"; el estado metodológico es Pendiente o Resuelto.
 - **Estado:** los índices quedan pendientes de una revisión posterior.
+
+### Valores que ya coinciden (DM-10)
+
+Verificados entre el maestro auditado y `treeRisk.ts`. No requieren cambios al implementar:
+
+- **R01:** tramos 0–1 / 2–4 / 5 / 6–9.
+- **M01:** completa.
+- **M02 y M03:** los valores coinciden; solo difieren las etiquetas (DM-03).
+- **Reglas parciales:**
+  - RC-EST: 15° / 30° / 45°, con y sin levantamiento.
+  - RC-REX 01 a 05.
+  - Umbrales de SL (< 20 / 20–< 33 / ≥ 33 %) y de t/R (≤ 0,3 Severa; > 0,3 Moderada) en RC-CAV y TR-CAV 02 a 08.
+  - TR-HER, TR-COR (Sí = Moderada), TR-EXU (Sí = Leve), TR-GRI y TR-COD.
+  - CR-RSE (< 10 / 10–50 / > 50 %, y No determinado si no hay %), CR-RQU y CR-DES (Sí = Leve).
