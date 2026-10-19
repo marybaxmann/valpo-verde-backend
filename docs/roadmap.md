@@ -247,7 +247,7 @@ Decisiones aprobadas en CC-026 (`docs/auditorias/2026-10-18-modelo-datos/`). Res
 
 | ID | Pendiente | Origen | Estado | Depende de |
 |---|---|---|---|---|
-| AM-01 | Sincronizar el Excel maestro con la copia auditada, conservando REGLAS_INDICADORES y VERSION | CC-026 | PENDIENTE | Autorización de la autora |
+| AM-01 | Sincronizar el Excel maestro con la copia auditada, conservando REGLAS_INDICADORES y VERSION. Avance 2026-10-18: copia auditada incorporada en `docs/excel/Base de Datos SIVU AUDITADO (2026-10-18).xlsx` (autorizado por la autora); falta integrar las hojas VERSION y MEDICIONES_DENDROMETRICAS del Excel anterior | CC-026 | EN CURSO | Decisión de la autora sobre VERSION y MEDICIONES_DENDROMETRICAS |
 | AM-02 | Confirmar los conflictos P1–P9 (WGS84/UTM, `nombre_comun`, entidad de mediciones, fustes, clase de edad, BT/MT, identificadores de rol, `ambito`, límite de fotos) | CC-026 `pendientes.md` | PENDIENTE DE DECISIÓN | — |
 | AM-03 | ~~Responder las preguntas abiertas P10–P14 (INCIDENCIA, SECTORES, proyectos, Hoja4)~~ Resuelto (AMD-31 a AMD-34) | CC-026 `pendientes.md` | RESUELTO | — |
 | AM-05 | ~~Auditar MATRICES_CALCULO~~ registrado en CC-027; INDICES pendiente de revisión posterior (P16) | CC-026 / CC-027 | PENDIENTE (INDICES) | Revisión de la autora |

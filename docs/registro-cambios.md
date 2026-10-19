@@ -1185,7 +1185,7 @@ motivo)
 | Fundamento / fuente | Decisiones de la autora M1 = a (fuente vigente) y M3 = mantener las etiquetas del maestro, transmitidas por la sesión "SIVU auditoría funcional" el 2026-10-18. A confirmar en la revisión del PR. |
 | Archivos afectados | `docs/registro-cambios.md`, `docs/auditorias/2026-10-18-modelo-datos/` (`diferencias-motor.md`, `pendientes.md`, `README.md`), `docs/roadmap.md`, `HANDOFF.md`. |
 | Impacto en diagramas | Por verificar al sincronizar (R03 con defoliación; cavidades 09 y 10). |
-| Impacto en Excel metodológico | Excel maestro del repositorio pendiente de sincronizar con el auditado (AM-01 de CC-026). |
+| Impacto en Excel metodológico | Copia auditada incorporada en `docs/excel/Base de Datos SIVU AUDITADO (2026-10-18).xlsx` (2026-10-18, autorizado por la autora). Falta integrar VERSION y MEDICIONES_DENDROMETRICAS del Excel anterior (AM-01 de CC-026). |
 | Impacto en BD | Pendiente: `rule_version` y almacenamiento de M04, M05 y los ajustes del Inspector. |
 | Impacto en backend | Pendiente: actualizar R03, etiquetas y cavidades (DM-02 a DM-04); implementar M04 y M05 (DM-06, DM-07). Sin cambios en esta ficha. |
 | Impacto en API | Pendiente. |
