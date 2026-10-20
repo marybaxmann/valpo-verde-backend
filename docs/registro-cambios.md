@@ -65,6 +65,7 @@ hoja VERSION del Excel maestro.
 | CC-036 | Incidencias ciudadanas por QR: formulario público, visibilidad y conservación del nombre y el RUT (PR-022 v1.0, PR-010 v3.0) | 3 (+4) | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 9 | 2.0.0 (en preparación) | — | 2026-10-20 |
 | CC-037 | Recordatorio de próxima inspección y monitoreo en lugar de agenda automática (AMD-38; PR-009 v4.0) | 3 (+5) | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 10 | 2.0.0 (en preparación) | — | 2026-10-20 |
 | CC-038 | Datos simulados fuera de la base de producción: producción nueva y vacía; seed solo para desarrollo | 4 | APROBADO METODOLÓGICAMENTE | Fase 1 · respuesta 0 | — (fuera del paquete) | — | 2026-10-20 |
+| CC-039 | Catálogo botánico: `persistencia_follaje`, `tipo_hoja` y `origen_biogeografico` en CATALOGO_ESPECIES; `rango_edad_estimada_anios` en ARBOLES | 2 (+3) | APROBADO METODOLÓGICAMENTE | Decisión de la autora (2026-10-20) | 2.0.0 (en preparación) | — | 2026-10-20 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1725,3 +1726,41 @@ motivo)
 | 2026-10-20 | PENDIENTE DE DECISIÓN | — | Plan propuesto; las migraciones 008 y 009 no contienen datos. |
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | No existe producción todavía; se creará más adelante, vacía. Ahora no se borra nada. |
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Todo es simulado, incluidos A-000013/14, proyectos y usuarios de la demo; la limpieza aplica solo a las bases de prueba, con autorización. |
+
+### CC-039 — Catálogo botánico en CATALOGO_ESPECIES y edad estimada del árbol
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Solicitud de la autora: automatizar las características botánicas mediante `especie_cientifica`, sin ingresarlas por ejemplar, y registrar la edad cronológica estimada del árbol. |
+| Tipo | 2 — metodológico (+3 modelo de datos) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | ARBOLES: `rango_edad_estimada_anios` (nuevo) y `origen_biogeografico` (eliminado). CATALOGO_ESPECIES: `origen_biogeografico`, `persistencia_follaje` y `tipo_hoja` (nuevos). INDICES: proporción de árboles nativos e introducidos. REGLAS_GENERALES: rol del Usuario municipal. |
+| Versión anterior | `origen_biogeografico` era un campo de ARBOLES, ingresado por ejemplar y opcional para el Usuario municipal en el alta (AMD-41). El catálogo solo tenía `especie_cientifica`, `genero` y `familia`. No existía la edad cronológica estimada. |
+| Versión nueva | 1. **`rango_edad_estimada_anios`** (ARBOLES): intervalo de edad cronológica estimada, en tramos de 5 años desde 0–5 hasta 96–100 y "Más de 100 años", sin declarar incertidumbre. Lo estima el Inspector en la inspección de Evaluación inicial o de Levantamiento; Obligatorio (pendiente de validar su factibilidad). No se deriva de `clase_edad` ni únicamente del DAP. No hay IA integrada a la plataforma. 2. **`persistencia_follaje`** (CATALOGO_ESPECIES): Perennifolia / Caducifolia / Semicaducifolia, comportamiento habitual de la especie en el clima de Valparaíso. 3. **`tipo_hoja`** (CATALOGO_ESPECIES): Latifoliada / Acicular / Escuamiforme / Palmera, sin categoría "Otra"; se asigna la más cercana. 4. **`origen_biogeografico`** pasa de ARBOLES a CATALOGO_ESPECIES: se registra una vez por especie, con categorías excluyentes (Nativa = nativa no endémica). 5. Las tres características se recuperan por `especie_cientifica`, no se duplican en ARBOLES y no se muestran si el árbol no tiene especie vigente (origen: "Origen no determinado"). Reemplaza a AMD-41 en lo relativo a `origen_biogeografico`. |
+| Motivo | Registrar las características de la especie una sola vez, evitar el ingreso por ejemplar y disponer de las entradas que requieren los índices de transpiración, emisiones biogénicas y energía. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20. Fuentes de consulta: Rodríguez et al. (2018), Catálogo de las plantas vasculares de Chile, Gayana Botánica 75(1); Baldini, Árboles urbanos de Chile (CONAF); Nowak (2024), Understanding i-Tree (GTR NRS-200-2023). No se exige fuente por especie (acuerdo vigente). |
+| Archivos afectados | `docs/excel/Base de Datos Valpo Verde.xlsx`; `docs/registro-cambios.md`; `docs/roadmap.md`; `HANDOFF.md`. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | DICCIONARIO_CAMPOS: se elimina la fila de `ARBOLES.origen_biogeografico`; filas nuevas de `rango_edad_estimada_anios` (tras `clase_edad`) y de `origen_biogeografico`, `persistencia_follaje` y `tipo_hoja` (tras `familia`). Cabeceras de ARBOLES y CATALOGO_ESPECIES; validación de `clase_edad` desplazada a la columna X. INDICES D9, D10, F9, F10; REGLAS_GENERALES B16, C16; VERSION E4. |
+| Impacto en BD | Pendiente (AM-04): columnas nuevas en el catálogo de especies y en el árbol. `origen_biogeografico` no existía en la base. |
+| Impacto en backend | Pendiente (AM-04): validación de los catálogos nuevos y recuperación por especie. |
+| Impacto en API | Pendiente (AM-04). |
+| Impacto en frontend | Pendiente (AM-04): mostrar las características en la ficha del árbol sin pedirlas en el alta; campo de edad estimada en la inspección. |
+| Pruebas necesarias | En implementación: características vacías cuando el árbol no tiene especie; proporción de nativos e introducidos con origen tomado del catálogo. |
+| Dependencias | CC-026 (AMD-41), CC-028, AM-08 (2.0.0). |
+| rule_version | sin cambios (no publica 2.0.0) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — (sin implementación) |
+| Commits / PR asociados | Rama `docs/cc-039-catalogo-botanico`. |
+| Observaciones | Pendiente metodológico (AM-11): cómo evaluar la defoliación y la clorosis en especies caducifolias durante su período sin hojas. No se modificaron código, migraciones, RLS ni Supabase. |
+
+**Checklist de sincronización**
+
+- [x] Excel maestro — DICCIONARIO_CAMPOS, cabeceras, INDICES, REGLAS_GENERALES y VERSION.
+- [ ] Migración + schema.sql — pendiente (AM-04).
+- [ ] Backend — pendiente (AM-04).
+- [ ] API / Zod — pendiente (AM-04).
+- [ ] Frontend — pendiente (AM-04).
+- [ ] Revisión final

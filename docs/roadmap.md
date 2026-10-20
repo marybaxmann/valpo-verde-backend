@@ -259,6 +259,7 @@ Decisiones aprobadas en CC-026 (`docs/auditorias/2026-10-18-modelo-datos/`). Res
 | AM-08 | Publicar el paquete 2.0.0 antes de la Fase 4: verificación §14.9, VERSION, `00-index.md`, `01–05` como reemplazados, tag `metodologia-v2.0.0`. Los diagramas quedan fuera del paquete (CC-030, opción B) | CC-030 | PENDIENTE | AM-10 (Excel actualizado por la autora); aprobación explícita |
 | AM-09 | Datos simulados (todo es simulado, incluidos A-000013/14 y los proyectos y usuarios de la demo): inventario de solo lectura y limpieza de las bases de prueba con autorización; seed solo para desarrollo en `database/seeds/dev/`. La base de producción se creará vacía cuando la plataforma esté lista (ADR-013) | CC-038 | PENDIENTE | Autorización de la autora |
 | AM-10 | Actualizar el Excel maestro con los textos propuestos en CC-031 (anulación y sus tres campos), CC-032 (`utm_este`, `utm_norte`), CC-036 (nombre, RUT y `resultado_revision`) y CC-037 (recordatorio) | CC-031, CC-032, CC-036, CC-037 | PENDIENTE (lo hace la autora) | Fusión del PR #24 |
+| AM-11 | Definir cómo se evalúan la defoliación y la clorosis en especies caducifolias durante su período sin hojas (`persistencia_follaje`, CC-039) | CC-039 | PENDIENTE | Decisión metodológica de la autora |
 
 ### Pendientes previos que siguen abiertos (referencia)
 
