@@ -1887,9 +1887,9 @@ Ingreso:
 - El RUT se valida en estructura y dígito verificador.
 - El endpoint público limita la cantidad de solicitudes y valida las fotografías. Escribe por el backend con la credencial de servicio (PR-018 v3.0).
 
-Visibilidad del RUT:
-- Solo lo ve el Usuario municipal miembro del proyecto del árbol.
-- No lo ven el Administrador, el Inspector ni el Encargado de mantención. La API no lo entrega en sus respuestas a esos roles, ni aparece en exportaciones ni registros.
+Visibilidad del nombre y del RUT:
+- Solo los ve el Usuario municipal miembro del proyecto del árbol.
+- No los ven el Administrador, el Inspector ni el Encargado de mantención. La API no los entrega en sus respuestas a esos roles, ni aparecen en exportaciones ni registros.
 
 Conservación del nombre y del RUT:
 - Se conservan hasta que la incidencia se aprueba o se rechaza (`resultado_revision` = Validada o Descartada), y en ese momento se eliminan los dos.
@@ -1898,7 +1898,7 @@ Conservación del nombre y del RUT:
 
 Requiere antecedentes:
 - No significa pedirle información al reportante: el Inspector confirma en terreno el estado del árbol.
-- El Usuario municipal crea una OT de Inspección del árbol vinculada a la incidencia mediante `id_incidencia`. Con el resultado de esa inspección registra Validada o Descartada.
+- El Usuario municipal crea una OT de Inspección del árbol vinculada a la incidencia mediante `id_incidencia`; elige la `Accion_solicitada` entre las de Inspección (no se fija). Con el resultado de esa inspección registra Validada o Descartada.
 - Si la incidencia validada requiere mantenimiento, la OT de Mantenimiento también se vincula con `id_incidencia`.
 
 Afecta:
