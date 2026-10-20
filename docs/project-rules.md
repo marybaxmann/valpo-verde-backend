@@ -439,9 +439,11 @@ Afecta:
 - permisos
 - RLS
 
-## PR-003 — Rol Usuario municipal (v7.0)
-Estado: vigente
+## PR-003 — Rol Usuario municipal (v7.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 7.0
+Reemplazada por: PR-003 v8.0
+Motivo del reemplazo: le permitía ingresar el origen biogeográfico en el alta, que CC-039 trasladó al catálogo de especies; dejaba pendientes los identificadores de rol (CC-032).
 Reemplaza: PR-003 v6.0
 Origen: CC-026
 Motivo: auditoría del modelo de datos (2026-10-18): el Usuario municipal no registra datos técnicos; el alta del árbol se limita a nombre y ubicación; los datos técnicos los registra el Inspector mediante OT (PR-019 v1.0).
@@ -466,6 +468,41 @@ No realiza:
 - modificación manual de resultados calculados.
 
 Pendiente (CC-026 P7): identificadores internos de los roles nuevos. El rol es global y un usuario puede pertenecer a varios proyectos (PR-005 v3.0).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-003 — Rol Usuario municipal (v8.0)
+Estado: vigente
+Versión: 8.0
+Reemplaza: PR-003 v7.0
+Origen: CC-026, CC-032, CC-039
+Motivo: el origen biogeográfico pasa al catálogo de especies y ya no se ingresa en el alta (CC-039); identificadores de rol definidos (CC-032).
+
+- Identificador interno: `usuario_municipal`
+- Etiqueta de interfaz: `Usuario municipal`
+- "Acceder a su proyecto asignado" significa que exista una fila en `project_members` para ese usuario y proyecto (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- acceder a su proyecto asignado;
+- ver dashboard básico;
+- consultar inventario, resultados técnicos e indicadores básicos;
+- registrar el alta de un árbol solo con el nombre común o científico y la ubicación: coordenadas UTM, sector y descripción del lugar (PR-006 v10.0). No ingresa características de la especie: se obtienen del catálogo (CC-039);
+- crear órdenes de trabajo, incluidas las OT de Levantamiento, y actualizar su estado (CC-022); las OT de Mantenimiento las completa el Sistema (PR-020 v1.0). La prioridad de la OT se propone por defecto desde la `clasificacion_prioridad` vigente del árbol y puede modificarla;
+- definir, al crear una OT de Mantenimiento, si requiere revisión del Inspector (`requiere_revision_inspector`); Tala y Retiro_tocón la exigen siempre;
+- reportar, revisar y consultar incidencias, y actualizar su estado (CC-022).
+
+No realiza:
+- registro ni modificación de datos técnicos del árbol (fustes, DAP, altura, copa, clase de edad, edad estimada) ni evaluaciones técnicas; las modificaciones posteriores al alta las realiza el Inspector mediante OT;
+- revisión de ejecuciones de mantenimiento;
+- registro ni modificación del catálogo de especies ni de sus características (PR-019 v1.2);
+- cálculo de severidades, puntajes o priorización técnica;
+- modificación manual de resultados calculados.
+
+Identificadores de los demás roles: `admin`, `inspector` y `encargado_mantencion` (CC-032). El rol es global y un usuario puede pertenecer a varios proyectos (PR-005 v3.0).
 
 Afecta:
 - frontend
@@ -987,9 +1024,11 @@ Afecta:
 - base de datos
 - permisos
 
-## PR-006 — Registro básico del árbol (v9.0)
-Estado: vigente
+## PR-006 — Registro básico del árbol (v9.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 9.0
+Reemplazada por: PR-006 v10.0
+Motivo del reemplazo: ubicaba el origen biogeográfico en el árbol; CC-039 lo trasladó al catálogo de especies y agregó la edad estimada.
 Reemplaza: PR-006 v8.0
 Origen: CC-028, CC-031, CC-032
 Motivo: cerrar los pendientes P1 a P4 de la v8.0 con las resoluciones de CC-028 y las decisiones de la Fase 1 (2026-10-20).
@@ -1030,6 +1069,57 @@ Las listas siguientes describen la información capturada por la interfaz y su c
 - Una medición aplicable pendiente deja la inspección preguardada (PR-009 v4.0); no equivale a cero ni a "No presenta". "No presenta" se usa para características inexistentes y desactiva el valor numérico.
 
 Esta PR no modifica `schema.sql`. El modelo físico se diseña en la Fase 3 (CC-032).
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+
+## PR-006 — Registro básico del árbol (v10.0)
+Estado: vigente
+Versión: 10.0
+Reemplaza: PR-006 v9.0
+Origen: CC-039
+Motivo: el origen biogeográfico, la persistencia del follaje y el tipo de hoja son características de la especie en el catálogo; se agrega el rango de edad estimada del árbol (CC-039).
+
+Las listas siguientes describen la información capturada por la interfaz y su contrato funcional (DICCIONARIO_CAMPOS), no columnas físicas de la base de datos.
+
+### Vías de registro
+
+- **Alta municipal:** el Usuario municipal registra el árbol con el nombre común o científico y la ubicación (coordenadas UTM, sector y descripción del lugar). No ingresa características de la especie. No se exige medición.
+- **Registro en levantamiento:** el Inspector registra árboles nuevos durante una OT de Levantamiento, sin alta municipal previa.
+- Si el árbol ya existe, se reutiliza su identificador y se agrega una nueva evaluación; no se duplica el árbol.
+- Todo árbol registrado comienza como Presente, aunque su evaluación técnica esté pendiente. Sin evaluación vigente, la ficha muestra "Evaluación pendiente".
+
+### Identificación y ubicación
+
+- Código, fecha de registro y registrado por: automáticos.
+- Proyecto e `id_sector`: el árbol hereda la delimitación territorial del proyecto (`id_sector`, no visible en el formulario, usado en los índices territoriales). `sector` es el texto descriptivo del barrio o sector y no se reemplaza por `id_sector`.
+- Coordenadas UTM de ingreso manual y obligatorio (`utm_este`, `utm_norte`). `huso` = 19S y `datum` = WGS84 son fijos y los asigna el Sistema (CC-028 P1). Descripción del lugar en `ubicacion_descriptiva`.
+- Como ayuda, al marcar el punto en el mapa del formulario la plataforma rellena `utm_este` y `utm_norte`, que siguen siendo editables; se guardan las coordenadas UTM del formulario (CC-032).
+- La geometría para el mapa y las consultas espaciales se deriva de las coordenadas UTM y es de solo lectura (ADR-010 v3.0).
+- `estado_presencia` (Presente / Talado / Retirado) y `fecha_cambio_estado_presencia` se derivan de las OT completadas y de los MANTENIMIENTO aprobados (PR-020); no son datos editables del árbol.
+- Las modificaciones posteriores al alta las realiza el Inspector mediante OT y se hacen vigentes al completarla.
+
+### Especie
+
+- `nombre_comun` es un dato del árbol (CC-028 P2).
+- En el alta se acepta el nombre común o el científico. Para finalizar la inspección se exigen `especie_cientifica` y `nombre_comun`; no se admiten "Género sp." ni "No determinado".
+- El Inspector confirma o corrige la identificación; la corrección se hace vigente al completar la OT.
+- Solo el Inspector incorpora especies a CATALOGO_ESPECIES (`especie_cientifica`, `genero`, `familia`) y completa sus características: `origen_biogeografico`, `persistencia_follaje` y `tipo_hoja` (CC-039). Si una característica aún no se conoce, queda vacía; no se inventa ni bloquea el registro del árbol.
+- Las características de la especie se obtienen del catálogo mediante `especie_cientifica`; no se ingresan ni se duplican en el árbol. Si el árbol no tiene especie vigente, no se muestran (origen: "Origen no determinado"). El árbol se vincula por `especie_cientifica` normalizada. La ausencia de la especie en el catálogo no bloquea el alta.
+
+### Datos técnicos e historial (ADR-016 v3.0)
+
+- Los registra el Inspector en la inspección, mediante OT: `multifustal`, `numero_fustes`, `dap_fustes_cm` y `dap_cm` según la fórmula de DICCIONARIO_CAMPOS (CC-028 P4; no se usa `configuracion_fustes`), altura total (`altura_total_m` > 0), diámetros de copa norte–sur y este–oeste (el diámetro medio se calcula), altura de primera rama, altura de base de copa viva, clase de edad, que es obligatoria (CC-028 P5), y `rango_edad_estimada_anios` en la Evaluación inicial o el Levantamiento, que es **opcional** mientras no se valide su factibilidad (CC-039) y no se exige para finalizar la inspección. La edad estimada no se deriva de la clase de edad ni solo del DAP.
+- Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
+- No se sobrescribe el historial: la ficha muestra el valor vigente y la plataforma conserva cada versión anterior vinculada a la inspección que la registró.
+- Los valores nuevos se hacen vigentes al completar toda la OT. El valor vigente es el de la OT completada más recientemente según `fecha_completada_ot` cuya inspección no esté anulada, aunque se haya realizado antes que otra.
+- Corrección y anulación: según `estado_registro` de la inspección (PR-009 v4.0, CC-031).
+- Una medición aplicable pendiente deja la inspección preguardada (PR-009 v4.0); no equivale a cero ni a "No presenta". "No presenta" se usa para características inexistentes y desactiva el valor numérico.
+
+Esta PR no modifica `schema.sql`. El modelo físico se diseña en la Fase 3 (CC-032, CC-039).
 
 Afecta:
 - frontend
@@ -1761,9 +1851,11 @@ Afecta:
 - permisos
 - RLS
 
-## PR-019 — Rol Inspector (v1.1)
-Estado: vigente
+## PR-019 — Rol Inspector (v1.1 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.1
+Reemplazada por: PR-019 v1.2
+Motivo del reemplazo: no incluía las características de la especie en el catálogo ni la edad estimada (CC-039).
 Reemplaza: PR-019 v1.0
 Origen: CC-031, CC-032
 Motivo: fijar el identificador interno del rol (CC-032) y la anulación de inspecciones (CC-031).
@@ -1778,6 +1870,39 @@ Puede:
 - registrar y modificar todos los datos técnicos del árbol y de la evaluación mediante OT;
 - anular una inspección finalizada, con motivo (PR-009 v4.0);
 - confirmar o corregir la especie e incorporar especies a CATALOGO_ESPECIES;
+- aprobar o rechazar las ejecuciones de mantenimiento cuya OT requiere revisión (PR-020 v1.1);
+- ajustar `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad` con justificación (PR-008 v2.0);
+- ajustar las fechas sugeridas de próxima inspección y monitoreo con justificación (PR-009 v4.0).
+
+No realiza:
+- creación de proyectos ni gestión de miembros;
+- creación de órdenes de trabajo;
+- modificación de resultados calculados fuera del ajuste justificado de PR-008 v2.0.
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-019 — Rol Inspector (v1.2)
+Estado: vigente
+Versión: 1.2
+Reemplaza: PR-019 v1.1
+Origen: CC-031, CC-032, CC-039
+Motivo: el Inspector completa las características de la especie en el catálogo y estima la edad del árbol (CC-039).
+
+- Identificador interno: `inspector`.
+- Etiqueta de interfaz: `Inspector`. Es el término único del rol técnico; no se usa "Inspector Municipal".
+- Rol global: un usuario tiene un solo rol (AMD-31).
+
+Puede:
+- realizar las inspecciones de las OT de Inspección, incluida la OT de Levantamiento (PR-009 v4.0);
+- registrar árboles nuevos durante una OT de Levantamiento, sin alta municipal previa (PR-006 v10.0);
+- registrar y modificar todos los datos técnicos del árbol y de la evaluación mediante OT;
+- anular una inspección finalizada, con motivo (PR-009 v4.0);
+- confirmar o corregir la especie e incorporar especies a CATALOGO_ESPECIES, completando `genero`, `familia`, `origen_biogeografico`, `persistencia_follaje` y `tipo_hoja` cuando se conozcan (CC-039);
+- estimar `rango_edad_estimada_anios` en la Evaluación inicial o el Levantamiento (opcional mientras no se valide su factibilidad, CC-039);
 - aprobar o rechazar las ejecuciones de mantenimiento cuya OT requiere revisión (PR-020 v1.1);
 - ajustar `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad` con justificación (PR-008 v2.0);
 - ajustar las fechas sugeridas de próxima inspección y monitoreo con justificación (PR-009 v4.0).
