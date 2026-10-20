@@ -28,7 +28,7 @@ La autora conduce la actualización del backend y el frontend con un protocolo p
 - **Fases 0 y 1 cerradas** (2026-10-20). `main` incluye la rama de la demo (K4 verificado; PR #23 backend y #9 frontend).
 - **Fase 2 (esta rama, `docs/fase2-am07-decisiones`), solo documentación:** CC-030 a CC-038 registrados; PR-002 v3.0, PR-006 v9.0, PR-009 v4.0, PR-010 v3.0, PR-018 v3.0, PR-019 v1.1, PR-020 v1.1, PR-021 v1.0 (catálogos), PR-022 v1.0 (incidencias ciudadanas); ADR-010 v3.0 (UTM canónica), ADR-014 v2.0 (escrituras solo por el backend), ADR-016 v3.0; `workflow.md` §14.12 sin efecto (CC-035); CC-008, CC-009 y CC-020 reemplazados; AM-07 resuelto.
 - **Bloqueo principal:** toda implementación espera la publicación de 2.0.0 (CC-030, CC-035 → AM-08), que requiere decidir los diagramas (opción A o B) y la aprobación explícita de la autora.
-- **Pendientes de la autora:** CC-030 (diagramas), CC-036 (RUT con "Requiere antecedentes"; nombre del reportante; contacto), CC-038 (A-000013/14 son reales; entornos; proyectos y usuarios de la demo), CC-032 (punto en el mapa como ayuda para UTM), CC-031 (reinspección en la misma OT), AM-10 (textos del Excel).
+- **Pendientes de la autora:** CC-030 (diagramas), CC-036 (RUT con "Requiere antecedentes"; nombre del reportante; contacto), CC-038 (A-000013/14 son reales: ¿se cargan en la producción futura?; la producción se crea más adelante, vacía; `valpo-verde-conecta` es solo de pruebas), CC-032 (punto en el mapa como ayuda para UTM), CC-031 (reinspección en la misma OT), AM-10 (textos del Excel).
 - **Hallazgo:** las migraciones 008 y 009 no cargan datos; los datos simulados entraron por script o por la aplicación (CC-038).
 - **Próximos libres:** CC-039, ADR-017, PR-023.
 

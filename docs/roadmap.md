@@ -257,7 +257,7 @@ Decisiones aprobadas en CC-026 (`docs/auditorias/2026-10-18-modelo-datos/`). Res
 | AM-06 | Implementar CC-027 y CC-029: R03 con defoliación, etiquetas del maestro, cavidades 09 y 10, M04 y M05 | CC-027 | BLOQUEADO | AM-08 (publicación de 2.0.0), autorización |
 | AM-04 | Implementar CC-026 y CC-031 a CC-037: roles Inspector y Encargado de mantención, alta sin medición, `estado_registro` y anulación, `fecha_completada_ot`, `requiere_revision_inspector`, escrituras por el backend, catálogos, incidencias por QR, recordatorios | CC-026 | BLOQUEADO | AM-08 (publicación de 2.0.0), AM-09, PA-13, autorización |
 | AM-08 | Publicar el paquete 2.0.0: decidir los diagramas (CC-030, opción A o B), verificación §14.9, VERSION, `00-index.md`, `01–05` como reemplazados, tag `metodologia-v2.0.0` | CC-030 | PENDIENTE DE DECISIÓN | Excel actualizado por la autora con los textos de CC-031, CC-036 y CC-037; aprobación explícita |
-| AM-09 | Datos simulados: inventario de solo lectura, seed solo para desarrollo y limpieza de la base de producción | CC-038 | PENDIENTE DE DECISIÓN | Respuestas de la autora (A-000013/14, entornos, proyectos y usuarios de la demo) |
+| AM-09 | Datos simulados: seed solo para desarrollo (`database/seeds/dev/`); la base de producción se crea más adelante, vacía, solo con migraciones validadas (ADR-013); decidir si A-000013 y A-000014 (datos reales) se cargan en ella | CC-038 | PENDIENTE | Creación de la producción |
 | AM-10 | Actualizar el Excel maestro con los textos propuestos en CC-031 (anulación), CC-036 (RUT y nombre del reportante) y CC-037 (recordatorio) | CC-031, CC-036, CC-037 | PENDIENTE (lo hace la autora) | — |
 
 ### Pendientes previos que siguen abiertos (referencia)

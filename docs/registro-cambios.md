@@ -64,7 +64,7 @@ hoja VERSION del Excel maestro.
 | CC-035 | Eliminación del ámbito operativo / metodológico de los campos (`workflow.md` §14.12; PR-002 v3.0) | 5 | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 6; CC-028 P8 | 2.0.0 (en preparación) | — | 2026-10-20 |
 | CC-036 | Incidencias ciudadanas por QR: formulario público, visibilidad y conservación del RUT (PR-022 v1.0, PR-010 v3.0) | 3 (+4) | PENDIENTE DE DECISIÓN (conservación con "Requiere antecedentes" por confirmar) | Fase 1 · decisión 9 | 2.0.0 (en preparación) | — | 2026-10-20 |
 | CC-037 | Recordatorio de próxima inspección y monitoreo en lugar de agenda automática (AMD-38; PR-009 v4.0) | 3 (+5) | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 10 | 2.0.0 (en preparación) | — | 2026-10-20 |
-| CC-038 | Datos simulados fuera de la base de producción: seed solo para desarrollo y plan de limpieza | 4 | PENDIENTE DE DECISIÓN | Fase 1 · respuesta 0 | — (fuera del paquete) | Respuestas de la autora (A-000013/14, entornos) | 2026-10-20 |
+| CC-038 | Datos simulados fuera de la base de producción: producción nueva y vacía; seed solo para desarrollo | 4 | APROBADO METODOLÓGICAMENTE | Fase 1 · respuesta 0 | — (fuera del paquete) | — | 2026-10-20 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1672,41 +1672,42 @@ motivo)
 
 ---
 
-### CC-038 — Datos simulados fuera de la base de producción: seed solo para desarrollo y plan de limpieza
+### CC-038 — Datos simulados fuera de la base de producción: producción nueva y vacía; seed solo para desarrollo
 
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-20 |
 | Origen | Fase 1, respuesta 0 de la autora: los datos de la demo son simulados, se descartan y la base de producción debe quedar sin ellos. |
 | Tipo | 4 — operación de datos |
-| Estado | PENDIENTE DE DECISIÓN |
+| Estado | APROBADO METODOLÓGICAMENTE (técnicamente; tipo 4) |
 | Regla / campo afectado | Datos de las tablas `trees`, `tree_measurements`, `tree_risk_assessments`, `tree_infrastructure_assessments`, `maintenance`, `incidents` y relacionadas. |
 | Hallazgo | **Las migraciones 008 y 009 no cargan datos.** Solo contienen estructura: la tabla `tree_infrastructure_assessments`, columnas y RLS de `maintenance` (008) y secuencias de códigos `OT-M-` e `INC-` (009). El código vigente las necesita y no hay nada que sacar de ellas. Los datos simulados entraron de dos formas, ninguna en el repositorio: (a) los árboles sintéticos A-000015 a A-000018 (`lugar_referencia LIKE 'Caso de demostración%'`), con sus mediciones y evaluaciones, cargados el 2026-10-06 con un script temporal; (b) registros creados desde la aplicación durante la demo (OT, incidencias, evaluaciones). **A-000013 y A-000014 no son simulados:** son el levantamiento histórico del 10-08-2026 (A004 y A005, `legacy_id`). |
-| Plan propuesto | 1. **Inventario de solo lectura** de la base de producción: conteo por tabla y por proyecto, con la marca de cada fila (sintética, creada durante la demo, real). Se entrega a la autora para que confirme qué se borra. 2. **Seed solo para desarrollo:** carpeta `database/seeds/dev/`, fuera de `database/migrations/`, con datos ficticios marcados como tales. Se aplica solo con un script manual que se niega a ejecutarse si la URL de la base no es la del entorno de desarrollo (ADR-013, PA-13). Nunca se ejecuta en producción. 3. **Limpieza de producción:** un script SQL explícito, en una transacción, en orden de claves foráneas, con conteos antes y después y un respaldo previo. Se ejecuta solo con autorización expresa, después de revisar el inventario. 4. La limpieza conviene antes de las migraciones de la Fase 4, porque CC-032 retira `tree_measurements` y las tablas de 001. |
+| Entornos (respuesta de la autora, 2026-10-20) | **No existe todavía una base de producción.** `valpo-verde-conecta` (`ytcxswbulsmboucardxa`) es el entorno de desarrollo y pruebas (ADR-013), aunque el panel de Supabase lo muestre como `main / PRODUCTION`; ahí están todos los datos actuales. `valpo-verde-conecta-pruebas` (`gmlbmyreoxgoqrolhyxo`) está inactivo (PA-13). La autora decidió que, por ahora, solo existe el entorno de prueba y que la producción se crea más adelante. |
+| Decisión | 1. **La base de producción se crea más adelante como un proyecto Supabase nuevo y vacío**, solo con las migraciones validadas en desarrollo (ADR-013). Nace sin datos simulados: no hay que limpiar ninguna base de producción. 2. **Ahora no se borra nada.** `valpo-verde-conecta` sigue siendo el entorno de desarrollo y pruebas, con sus datos actuales. 3. **Seed solo para desarrollo:** carpeta `database/seeds/dev/`, fuera de `database/migrations/`, con datos ficticios marcados como tales. Se aplica solo con un script manual que se niega a ejecutarse contra cualquier proyecto que no sea el de desarrollo. Nunca se ejecuta en producción. 4. Si en algún momento conviene limpiar los datos simulados del entorno de desarrollo (por ejemplo, antes de las migraciones de la Fase 4, que retiran `tree_measurements`), se entrega primero un inventario de solo lectura y un script explícito, y se ejecuta solo con autorización. |
 | Motivo | La base de producción no debe contener datos simulados. |
 | Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20, Fase 1, respuesta 0. |
 | Archivos afectados | Esta ficha. En la implementación: `database/seeds/dev/` y el script de limpieza. |
 | Impacto en diagramas | Ninguno. |
 | Impacto en Excel metodológico | Ninguno. |
-| Impacto en BD | Borrado de datos simulados (con autorización); sin cambios de estructura. |
+| Impacto en BD | Ninguno ahora. La producción futura se crea solo con migraciones. |
 | Impacto en backend | Ninguno. |
 | Impacto en API | Ninguno. |
 | Impacto en frontend | Ninguno. |
 | Pruebas necesarias | Conteos antes y después; cero filas huérfanas; los datos reales intactos. |
 | Dependencias | CC-030 (descarte de los resultados del borrador), CC-032; PA-13 (entorno de desarrollo). |
 | rule_version | no aplica |
-| Aprobado por | — |
-| Fecha de aprobación | — |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
 | Fecha de implementación | — |
 | Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
-| Observaciones | **Preguntas:** (a) ¿A-000013 y A-000014, que son reales, se conservan y se migran al modelo nuevo? (b) ¿Cuál es la base de producción y cuál la de desarrollo (ADR-013; PA-13)? (c) ¿Se conservan los proyectos y usuarios creados para la demo? No se borra nada sin autorización. |
+| Observaciones | **Pregunta pendiente, no bloqueante:** A-000013 y A-000014 son datos **reales** (levantamiento del 10-08-2026, A004 y A005). ¿Se cargan en la base de producción cuando se cree, convertidos al modelo nuevo? Se decide antes de crear la producción. |
 
 **Checklist de sincronización**
 
-- [ ] Respuestas de la autora (a, b y c).
-- [ ] Inventario de solo lectura.
-- [ ] Seed de desarrollo.
-- [ ] Limpieza autorizada.
+- [x] Decisión sobre los entornos.
+- [ ] Seed de desarrollo — Fase 4.
+- [ ] Destino de A-000013 y A-000014 en la producción futura.
+- [ ] Creación de la base de producción (ADR-013 v2.0) — más adelante.
 - [ ] Revisión final
 
 **Historial de estados**
@@ -1714,3 +1715,4 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-10-20 | PENDIENTE DE DECISIÓN | — | Plan propuesto; las migraciones 008 y 009 no contienen datos. |
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | No existe producción todavía; se creará más adelante, vacía. Ahora no se borra nada. |
