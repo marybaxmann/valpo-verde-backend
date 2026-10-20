@@ -19,7 +19,7 @@ No inferir ni completar metodología faltante.
 
 ## Versión vigente
 
-Versión vigente del paquete metodológico: **2.0.0** (`rule_version` **2.0**), publicada el [FECHA DE PUBLICACIÓN], tag `metodologia-v2.0.0` (CC-030).
+Versión vigente del paquete metodológico: **2.0.0** (`rule_version` **2.0**), publicada el 2026-10-20, tag `metodologia-v2.0.0` (CC-030).
 
 - **Fuente única:** el Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (PR-002 v3.0). Su export de texto está en `docs/excel/export/`.
 - **Reglas vigentes:** todas las de REGLAS_INDICADORES (98), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0).

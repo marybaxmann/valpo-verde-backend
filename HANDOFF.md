@@ -15,7 +15,7 @@
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `7913a13` (PR #16 demo + PR #17 CC-021…CC-024); frontend `main` = `187a90d` (PR #5).
 - **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); PR a `main`: backend #23, frontend #9, pendientes de fusión por la autora (PA-12 resuelto). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** 2.0.0 lista para publicar (PR #27, borrador); falta la aprobación de la autora. Luego Fase 3.
+- **Resumen:** 2.0.0 publicada (2026-10-20; tag tras el merge del PR #27). Siguiente: respaldo de la base, prueba de restauración y Fase 3.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -23,7 +23,7 @@
 
 ## ▶ Novedad 2026-10-20 — AM-08, publicación de 2.0.0 (leer primero)
 
-- **Estado:** PR #27 (borrador) con todo lo necesario para publicar 2.0.0. Verificación §14.9 sobre el Excel de `main` con AM-10 (PR #28): **0 hallazgos** automáticos (`scripts/metodologia/verificar_14_9.py`) y revisión manual de activaciones y cobertura. Export de texto en `docs/excel/export/` (solo hojas del paquete).
+- **Estado:** **2.0.0 publicada el 2026-10-20** con aprobación expresa de la autora (VERSION fila 5, PR #30; PR #27). El tag `metodologia-v2.0.0` se crea sobre el commit de `main` que fusiona el PR #27. Verificación §14.9 sobre el Excel de `main` con AM-10 (PR #28): **0 hallazgos** automáticos (`scripts/metodologia/verificar_14_9.py`) y revisión manual de activaciones y cobertura. Export de texto en `docs/excel/export/` (solo hojas del paquete).
 - **Fichas en `FUENTE SINCRONIZADA`:** CC-024, CC-026 a CC-032, CC-034 a CC-037 y CC-039 (las de la fila 5 de VERSION).
 - **No publicar sin aprobación expresa de la autora.** Al aprobar: la autora completa VERSION (fila 5); se reemplaza `[FECHA DE PUBLICACIÓN]` en `00-index.md` y `01–05`; se crea el tag `metodologia-v2.0.0`.
 - **Después:** respaldo de la base y prueba de restauración (obligatorios) y Fase 3 (diseño del modelo, incluido CC-039).
