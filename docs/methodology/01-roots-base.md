@@ -1,6 +1,8 @@
 # Evaluación de raíces y base
 
-Estado metodológico: vigente parcial
+> **REEMPLAZADO por el paquete metodológico 2.0.0 ([FECHA DE PUBLICACIÓN]).** Este documento es historial de la metodología textual previa (v1.1) y no se usa para implementar. La fuente única es el Excel maestro (PR-002 v3.0; `docs/methodology/00-index.md`).
+
+Estado metodológico: reemplazado (2.0.0)
 Versión metodológica: 1.1
 
 ## Historial

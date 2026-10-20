@@ -1315,9 +1315,11 @@ Afecta:
 - backend
 - rules-engine
 
-## PR-011 — Motor de reglas (v2.0)
-Estado: vigente
+## PR-011 — Motor de reglas (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: PR-011 v3.0
+Motivo del reemplazo: exigía la columna `estado_regla` en REGLAS_INDICADORES, que el Excel maestro no tiene (decisión B de AM-08, CC-030).
 Reemplaza: PR-011 v1.0
 Origen: CC-001
 
@@ -1334,9 +1336,34 @@ Afecta:
 - backend
 - rules-engine
 
-## PR-012 — Probabilidad de falla
-Estado: pendiente
+## PR-011 — Motor de reglas (v3.0)
+Estado: vigente
+Versión: 3.0
+Reemplaza: PR-011 v2.0
+Origen: CC-030 (decisión B de AM-08, 2026-10-20)
+Motivo: el estado de las reglas se determina por la versión publicada del paquete, sin columnas de estado en el Excel.
+
+Las reglas técnicas se implementan en `services/rules/`.
+
+Cada cambio metodológico se registra como CC y se versiona según `docs/workflow.md` §14. `rule_version` corresponde a `MAJOR.MINOR` de la versión publicada del paquete metodológico (PR-002) y se guarda en cada resultado calculado; un ajuste del Inspector conserva la `rule_version` del valor calculado al que se aplica (CC-030).
+
+Estado de las reglas:
+- Todas las reglas de REGLAS_INDICADORES, MATRICES_CALCULO y REGLAS_GENERALES de una versión publicada son **vigentes** en esa versión, según su fila de la hoja VERSION.
+- El Excel no usa las columnas `estado_regla` ni `max_indicador`. `max_indicador` se calcula a partir de los puntajes de las reglas de cada indicador (verificación §14.9).
+- Una regla deja de ser vigente solo mediante una nueva versión publicada que la modifique o la elimine. Las versiones anteriores quedan en el historial de git y en su tag `metodologia-vX.Y.Z`.
+- INDICES no forma parte de las reglas implementables mientras siga en propuesta (CC-016; DM-09).
+
+Solo se implementan reglas de una versión publicada.
+
+Afecta:
+- backend
+- rules-engine
+
+## PR-012 — Probabilidad de falla (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-012 v2.0
+Motivo del reemplazo: la conversión de puntaje a probabilidad de falla quedó definida en el Excel maestro 2.0.0 (R01, R02 y R03).
 
 Las reglas individuales de severidad/puntaje de raíces, tronco y copa pueden estar definidas en metodología.
 
@@ -1347,6 +1374,21 @@ No implementar rangos definitivos hasta que sean marcados como vigentes en metod
 Afecta:
 - rules-engine
 - probability_thresholds
+
+## PR-012 — Probabilidad de falla (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-012 v1.0
+Origen: CC-027, CC-030
+
+La conversión del puntaje total de cada componente a probabilidad de falla está definida en MATRICES_CALCULO del paquete 2.0.0 (R01 raíces y cuello, R02 tronco, R03 copa y ramas) y en las reglas parciales de REGLAS_INDICADORES. Esta PR no repite los tramos: el motor los toma del paquete publicado.
+
+Si algún indicador parcial queda No determinado, la probabilidad de falla del componente queda No determinada; nunca se sustituye por 0 (CC-024).
+
+La tabla `probability_thresholds` de `schema.sql` refleja una decisión anterior y no es fuente.
+
+Afecta:
+- rules-engine
 
 ## PR-013 — SL y agravantes
 Estado: vigente
@@ -1366,9 +1408,11 @@ Afecta:
 - metodología raíces
 - metodología tronco
 
-## PR-014 — Impacto, consecuencias y riesgo final
-Estado: pendiente
+## PR-014 — Impacto, consecuencias y riesgo final (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-014 v2.0
+Motivo del reemplazo: la probabilidad de impacto, las consecuencias y el riesgo final quedaron definidos en el Excel maestro 2.0.0 (M01, M02, M03 y R04).
 
 No implementar todavía:
 - probabilidad de impacto;
@@ -1383,6 +1427,21 @@ Afecta:
 - backend
 - frontend
 - risk_evaluations
+
+## PR-014 — Impacto, consecuencias y riesgo final (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-014 v1.0
+Origen: CC-027, CC-029, CC-030
+
+La probabilidad de impacto (M01), la probabilidad de falla e impacto (M02), la clasificación de riesgo por componente (M03), el riesgo global del árbol (R04), la afectación a infraestructura (M04) y la prioridad (M05) están definidos en MATRICES_CALCULO del paquete 2.0.0. Esta PR no repite las matrices: el motor las toma del paquete publicado.
+
+Las consecuencias por componente las ingresa el Inspector. Los resultados calculados solo se modifican mediante el ajuste justificado del Inspector (PR-008 v2.0).
+
+Afecta:
+- rules-engine
+- backend
+- frontend
 
 ## PR-015 — Geolocalización (v1.0 — REEMPLAZADA)
 Estado: reemplazada
