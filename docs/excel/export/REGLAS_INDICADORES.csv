@@ -94,6 +94,6 @@ IN-RSU-01,M04 Infraestructura,Red subterránea,red_subterranea_presente,red_subt
 IN-RSU-02,M04 Infraestructura,Red subterránea,red_subterranea_presente,red_subterranea_presente = No determinado,No determinado,Se excluye
 IN-RSU-03,M04 Infraestructura,Red subterránea,compromete_funcionalidad_red_subterranea,"compromete_funcionalidad_red_subterranea = Sí, con o sin afectación física",Severa,3
 IN-RSU-04,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = Sí y compromete_funcionalidad_red_subterranea = No,Moderada,2
-IN-RSU-05,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = Sí y compromete_funcionalidad_red_subterranea = No determinado,Leve,1
+IN-RSU-05,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = Sí y compromete_funcionalidad_red_subterranea = No determinado,Moderada,2
 IN-RSU-06,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = No y compromete_funcionalidad_red_subterranea = No,Sin afectación,0
 IN-RSU-07,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = No y compromete_funcionalidad_red_subterranea = No determinado,No determinado,Se excluye
