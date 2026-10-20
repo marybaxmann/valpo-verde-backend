@@ -9,19 +9,30 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-20 (K4 verificado; PA-12 resuelto; PA-43 y PA-44 registrados)
+- **Última actualización:** 2026-10-20 (Fase 2 de la implementación de CC-026 a CC-029: documentación AM-07 y CC-030 a CC-038; sin código)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `7913a13` (PR #16 demo + PR #17 CC-021…CC-024); frontend `main` = `187a90d` (PR #5).
 - **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); PR a `main`: backend #23, frontend #9, pendientes de fusión por la autora (PA-12 resuelto). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** CC-026/027/028 aprobados; el Excel auditado es la única fuente. Implementación pendiente (AM-04, AM-06).
+- **Resumen:** Fase 2 (docs) en revisión: CC-030…038; falta publicar 2.0.0 (AM-08) antes de implementar.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
 ---
 
-## ▶ Novedad 2026-10-18 — CC-026 (leer antes que el punto de reanudación)
+## ▶ Novedad 2026-10-20 — Implementación de CC-026 a CC-029, Fase 2 (leer primero)
+
+La autora conduce la actualización del backend y el frontend con un protocolo por fases (0 reconocimiento · 1 decisiones · 2 documentación · 3 diseño del modelo · 4 base de datos · 5 motor · 6 backend · 7 frontend · 8 verificación). **No se avanza de fase sin su aprobación.**
+
+- **Fases 0 y 1 cerradas** (2026-10-20). `main` incluye la rama de la demo (K4 verificado; PR #23 backend y #9 frontend).
+- **Fase 2 (esta rama, `docs/fase2-am07-decisiones`), solo documentación:** CC-030 a CC-038 registrados; PR-002 v3.0, PR-006 v9.0, PR-009 v4.0, PR-010 v3.0, PR-018 v3.0, PR-019 v1.1, PR-020 v1.1, PR-021 v1.0 (catálogos), PR-022 v1.0 (incidencias ciudadanas); ADR-010 v3.0 (UTM canónica), ADR-014 v2.0 (escrituras solo por el backend), ADR-016 v3.0; `workflow.md` §14.12 sin efecto (CC-035); CC-008, CC-009 y CC-020 reemplazados; AM-07 resuelto.
+- **Bloqueo principal:** toda implementación espera la publicación de 2.0.0 (CC-030, CC-035 → AM-08), que requiere decidir los diagramas (opción A o B) y la aprobación explícita de la autora.
+- **Pendientes de la autora:** CC-030 (diagramas), CC-036 (RUT con "Requiere antecedentes"; nombre del reportante; contacto), CC-038 (A-000013/14 son reales; entornos; proyectos y usuarios de la demo), CC-032 (punto en el mapa como ayuda para UTM), CC-031 (reinspección en la misma OT), AM-10 (textos del Excel).
+- **Hallazgo:** las migraciones 008 y 009 no cargan datos; los datos simulados entraron por script o por la aplicación (CC-038).
+- **Próximos libres:** CC-039, ADR-017, PR-023.
+
+## ▶ Novedad 2026-10-18 — CC-026
 
 - **CC-026 `APROBADO METODOLÓGICAMENTE`** (marybaxmann): auditoría funcional del modelo de datos. Evidencia en `docs/auditorias/2026-10-18-modelo-datos/` (decisiones AMD-01 a AMD-42, pendientes P1–P9 y P15–P16).
 - **Prevalece** sobre lo que contradiga: cuatro roles (Administrador, Usuario municipal, Inspector, Encargado de mantención); el Usuario municipal da de alta el árbol solo con nombre y ubicación y no registra datos técnicos; el Inspector registra los datos técnicos mediante OT (incluida la OT de Levantamiento); vigencia por la OT completada más reciente (`fecha_completada_ot`); `estado_registro` Preguardado / Finalizado; revisión de mantenimiento definida por el Usuario municipal y obligatoria en Tala y Retiro_tocón.
@@ -31,7 +42,7 @@
 - **No modificado:** código, Supabase, migraciones, RLS y motor. La implementación de desarrollo (CC-020, CC-022) queda desalineada con CC-026 hasta su implementación (AM-04).
 - **CC-027 `APROBADO METODOLÓGICAMENTE`:** el motor (`treeRisk.ts`) difiere del Excel auditado en R03 (máximo 8 con defoliación), etiquetas, cavidades (reglas 09 y 10) y no implementa M04 ni M05. Detalle en `docs/auditorias/2026-10-18-modelo-datos/diferencias-motor.md`. **No modificar el motor sin autorización.**
 - **CC-029 `APROBADO METODOLÓGICAMENTE` (2026-10-20):** M05 devuelve `clasificacion_prioridad` = No determinado cuando `clasificacion_riesgo` = No determinado (Excel maestro actualizado).
-- **Próximos libres:** CC-030, ADR-017, PR-021.
+- **Próximos libres (actualizado 2026-10-20):** CC-039, ADR-017, PR-023.
 
 ## ▶ Punto de reanudación (2026-10-11) — leer primero
 
