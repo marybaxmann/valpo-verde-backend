@@ -149,6 +149,18 @@ Inventario de árboles del proyecto para el mapa (ADR-015). Autorización:
   inexistente · 500 si una ubicación llega con formato inesperado (nunca se
   descarta un punto en silencio).
 
+### `GET /api/species`
+
+Catálogo de especies para registrar y editar árboles. Requiere sesión; se
+lee con el JWT del usuario (RLS `species_select_authenticated`).
+
+```json
+{ "data": [{ "id": "<uuid>", "nombre_cientifico": "…", "nombre_comun": "…" }] }
+```
+
+- Ordenado por `nombre_cientifico`. Errores: 401 sin token · 500 si falla
+  la lectura (sin catálogo de respaldo).
+
 ## Variables de entorno
 
 Ver `.env.example`. La `SUPABASE_SERVICE_ROLE_KEY` nunca debe usarse en

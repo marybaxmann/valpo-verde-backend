@@ -5,8 +5,9 @@ import { listProjectTreesForUser } from "./tree.service";
 import {
   createTreeRiskAssessment,
   findRiskAssessmentsByTreeId,
-  findRiskAssessmentsByTreeIds,
+  findProjectRiskSummaryRows,
   TreeRiskAssessmentRow,
+  TreeRiskSummaryRow,
 } from "../repositories/treeRiskAssessment.repository";
 import { evaluarRiesgo } from "./rules/treeRisk";
 import { CreateTreeRiskAssessmentBody } from "../schemas/treeRiskAssessment.schema";
@@ -41,6 +42,15 @@ export interface TreeRiskAssessmentDTO {
 }
 
 function toDTO(row: TreeRiskAssessmentRow): TreeRiskAssessmentDTO {
+  return toSummaryDTO({
+    ...row,
+    consecuencia_raices_cuello: row.variables.consecuencia_raices_cuello,
+    consecuencia_tronco: row.variables.consecuencia_tronco,
+    consecuencia_copa_ramas: row.variables.consecuencia_copa_ramas,
+  });
+}
+
+function toSummaryDTO(row: TreeRiskSummaryRow): TreeRiskAssessmentDTO {
   return {
     id: row.id,
     tree_id: row.tree_id,
@@ -57,9 +67,9 @@ function toDTO(row: TreeRiskAssessmentRow): TreeRiskAssessmentDTO {
       clasificacion_tronco: row.clasificacion_tronco,
       clasificacion_copa_ramas: row.clasificacion_copa_ramas,
       clasificacion_riesgo: row.clasificacion_riesgo,
-      consecuencia_raices_cuello: row.variables.consecuencia_raices_cuello,
-      consecuencia_tronco: row.variables.consecuencia_tronco,
-      consecuencia_copa_ramas: row.variables.consecuencia_copa_ramas,
+      consecuencia_raices_cuello: row.consecuencia_raices_cuello,
+      consecuencia_tronco: row.consecuencia_tronco,
+      consecuencia_copa_ramas: row.consecuencia_copa_ramas,
     },
     rule_version: row.rule_version,
     created_by: row.created_by,
@@ -142,16 +152,18 @@ export async function getProjectRiskSummaryForUser(
   accessToken: string
 ): Promise<{ data: Record<string, TreeRiskAssessmentDTO> }> {
   const inventory = await listProjectTreesForUser(user, projectId, accessToken);
-  const treeIds = inventory.data.features.map((f) => f.properties.id);
+  // Mismo universo que el inventario (árboles con ubicación), para que el
+  // conteo "sin evaluación" del frontend cuadre con el mapa.
+  const inventoryIds = new Set(inventory.data.features.map((f) => f.properties.id));
 
-  const rows = await findRiskAssessmentsByTreeIds(accessToken, treeIds);
+  const rows = await findProjectRiskSummaryRows(accessToken, projectId);
 
   // Las filas ya vienen ordenadas (fecha_evaluacion desc, created_at desc):
   // nos quedamos con la primera aparición de cada tree_id (la vigente).
   const latestByTreeId: Record<string, TreeRiskAssessmentDTO> = {};
   for (const row of rows) {
-    if (!latestByTreeId[row.tree_id]) {
-      latestByTreeId[row.tree_id] = toDTO(row);
+    if (inventoryIds.has(row.tree_id) && !latestByTreeId[row.tree_id]) {
+      latestByTreeId[row.tree_id] = toSummaryDTO(row);
     }
   }
   return { data: latestByTreeId };

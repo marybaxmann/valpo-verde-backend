@@ -9,11 +9,11 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-18 (CC-026: auditoría del modelo de datos, solo documentación)
+- **Última actualización:** 2026-10-20 (K4 verificado; PA-12 resuelto; PA-43 y PA-44 registrados)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `7913a13` (PR #16 demo + PR #17 CC-021…CC-024); frontend `main` = `187a90d` (PR #5).
-- **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas) — **fuera de `main` hasta verificar en navegador (K4)**. Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
+- **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); PR a `main`: backend #23, frontend #9, pendientes de fusión por la autora (PA-12 resuelto). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Resumen:** CC-026/027/028 aprobados; el Excel auditado es la única fuente. Implementación pendiente (AM-04, AM-06).
 
@@ -37,7 +37,7 @@
 
 **Dónde está todo:**
 - Auditoría postdemo: `docs/auditorias/2026-10-postauditoria/` (README, informe, hallazgos, contradicciones, decisiones, dependencias, escenarios RLS).
-- Registro maestro de pendientes: `docs/roadmap.md`, sección "Postauditoría 2026-10" (PA-01 a PA-42).
+- Registro maestro de pendientes: `docs/roadmap.md`, sección "Postauditoría 2026-10" (PA-01 a PA-44).
 
 **Decisiones de la autora (estado exacto, ver `decisiones.md`):**
 - DA-01 escrituras solo por el backend: **APROBADA en principio**; implementación (credencial, permisos, RLS) **no aprobada**.
@@ -75,6 +75,12 @@
 - `treeRisk.ts` coincide con REGLAS_INDICADORES v3, rangos R01–R03, M01–M03 y R04; las 4 evaluaciones guardadas se recalcularon y coinciden.
 - **Corregido:** la API aceptaba datos condicionales vacíos o fuera de rango y el motor asumía severidades (p. ej. grieta sin afectación → Severa). Ahora `schemas/treeRiskAssessment.schema.ts` los rechaza (400) y el asistente del frontend no deja avanzar. Fecha futura validada con hora de Chile. Tests: 185/185.
 - **N13 decidido (CC-024, opción a):** componente "No determinado" → árbol "Sin clasificación", independiente de infraestructura y distinto de "Sin evaluación" (pin blanco en el mapa). Ficha registrada y fusionada en `main` (PR #17, 2026-10-10). Falta sincronizar el Excel (DUDAS N13, DICCIONARIO_CAMPOS). N21 sigue pendiente.
+
+## 🕘 Fechas y arquitectura frontend (2026-10-11)
+- **Regla aprobada:** toda fecha "de hoy" y toda fecha mostrada usan **hora de Chile (`America/Santiago`)**. Nunca `toISOString().slice(0,10)` ni `created_at.slice(0,10)` (dan el día UTC: desde las 21:00, o 20:00 en invierno, ya es el día siguiente). Backend: `src/utils/fechaChile.ts` (`hoyEnChile`); frontend: `src/lib/dates.ts` (`hoyChile`, `fechaChile`, `fechaHoraChile`).
+- **Backend:** `GET /api/species` (issue #8); el resumen de riesgo del proyecto filtra por proyecto en la BD (`trees!inner`) y no trae `variables`. Tests 195/195.
+- **Frontend:** el mapa filtra con `layerView.filter` (no reconstruye la capa); las sincronizaciones de la capa son secuenciales (sin pines duplicados); el panel no repite la última evaluación; detalle/historial por árbol en caché; menú lateral sigue el tipo de pantalla; `src/lib/risk.ts` comparte el índice de riesgo.
+- **Pendiente:** separar Inspección e Infraestructura de `ModulePage.tsx` (hacerlo con verificación en navegador); P4d (caché global se vacía en cada escritura) y P4e (relectura completa tras editar un árbol) se mantienen por ahora. Sin verificación en navegador de estos cambios.
 
 ---
 

@@ -93,25 +93,41 @@ export async function findRiskAssessmentsByTreeId(
 }
 
 /**
- * Todas las evaluaciones de un conjunto de árboles (más recientes primero).
- * El servicio se queda solo con la primera fila por `tree_id` (la vigente),
- * evitando N consultas — una sola consulta para todo el proyecto.
+ * Fila liviana para el resumen de riesgo del proyecto: el resultado ya
+ * calculado y solo las tres consecuencias observadas, sin el JSON completo de
+ * `variables` (que el resumen no usa).
  */
-export async function findRiskAssessmentsByTreeIds(
+export type TreeRiskSummaryRow = Omit<TreeRiskAssessmentRow, "variables"> & {
+  consecuencia_raices_cuello: string;
+  consecuencia_tronco: string;
+  consecuencia_copa_ramas: string;
+};
+
+const SUMMARY_COLUMNS =
+  "id, tree_id, fecha_evaluacion, puntaje_raices_cuello, probabilidad_falla_raices_cuello, puntaje_tronco, probabilidad_falla_tronco, puntaje_copa_ramas, probabilidad_falla_copa_ramas, probabilidad_impacto, clasificacion_raices_cuello, clasificacion_tronco, clasificacion_copa_ramas, clasificacion_riesgo, rule_version, created_by, created_at, user_profiles(nombre), " +
+  "consecuencia_raices_cuello:variables->>consecuencia_raices_cuello, consecuencia_tronco:variables->>consecuencia_tronco, consecuencia_copa_ramas:variables->>consecuencia_copa_ramas, " +
+  "trees!inner(project_id)";
+
+/**
+ * Evaluaciones de los árboles de un proyecto (más recientes primero), en una
+ * sola consulta filtrada por proyecto en la base de datos. No envía la lista
+ * de ids de árboles en la URL (no crece con el inventario) ni el JSON de
+ * `variables`. El servicio se queda con la primera fila por `tree_id`.
+ */
+export async function findProjectRiskSummaryRows(
   accessToken: string,
-  treeIds: string[]
-): Promise<TreeRiskAssessmentRow[]> {
-  if (treeIds.length === 0) return [];
+  projectId: string
+): Promise<TreeRiskSummaryRow[]> {
   const supabase = createUserScopedClient(accessToken);
   const { data, error } = await supabase
     .from("tree_risk_assessments")
-    .select(COLUMNS)
-    .in("tree_id", treeIds)
+    .select(SUMMARY_COLUMNS)
+    .eq("trees.project_id", projectId)
     .order("fecha_evaluacion", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(`Error al listar evaluaciones del proyecto: ${error.message}`);
   }
-  return (data ?? []) as unknown as TreeRiskAssessmentRow[];
+  return (data ?? []) as unknown as TreeRiskSummaryRow[];
 }

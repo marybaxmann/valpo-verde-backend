@@ -1,5 +1,6 @@
 import { AuthenticatedUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
+import { hoyEnChile } from "../utils/fechaChile";
 import { findTreeById } from "../repositories/tree.repository";
 import { listAllProjectTreeRowsForUser, resolveCurrentMeasurement } from "./tree.service";
 import { findValidMeasurementsByTreeIds, TreeMeasurementRow } from "../repositories/treeMeasurement.repository";
@@ -237,7 +238,7 @@ export async function updateIncidentStateForUser(
   const nota = body.observacion?.trim();
   const etiqueta = INCIDENT_STATES.find((s) => s.codigo === body.estado)?.etiqueta ?? body.estado;
   const bitacora = nota
-    ? [incident.observacion, `[${new Date().toISOString().slice(0, 10)} · ${etiqueta}] ${nota}`].filter(Boolean).join("\n")
+    ? [incident.observacion, `[${hoyEnChile()} · ${etiqueta}] ${nota}`].filter(Boolean).join("\n")
     : incident.observacion;
   const updated = await updateIncidentState(accessToken, incidentId, body.estado, bitacora ?? null, user.id);
   if (!updated) throw new AppError("No tiene permiso para actualizar esta incidencia", 403);

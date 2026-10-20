@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { INCIDENT_STATES, INFRA_DOMAINS, MAINTENANCE_ACTIONS, MAINTENANCE_STATES } from "../services/rules/moduleCatalogs";
+import { hoyEnChile } from "../utils/fechaChile";
 
 /**
  * Validación de Infraestructura (datos crudos), órdenes de trabajo e
@@ -14,7 +15,7 @@ const fecha = (campo: string) =>
     .regex(/^\d{4}-\d{2}-\d{2}$/, `${campo} debe tener formato AAAA-MM-DD`);
 
 const fechaNoFutura = (campo: string) =>
-  fecha(campo).refine((val) => val <= new Date().toISOString().slice(0, 10), {
+  fecha(campo).refine((val) => val <= hoyEnChile(), {
     message: `${campo} no puede ser una fecha futura`,
   });
 

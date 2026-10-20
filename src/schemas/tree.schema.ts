@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hoyEnChile } from "../utils/fechaChile";
 
 /**
  * Dominio aprobado de clase_edad (DICCIONARIO_CAMPOS fila 26).
@@ -41,8 +42,7 @@ export const initialMeasurementSchema = z
       )
       .refine(
         (val) => {
-          const today = new Date().toISOString().slice(0, 10);
-          return val <= today;
+          return val <= hoyEnChile();
         },
         {
           message: "fecha_medicion no puede ser una fecha futura",
