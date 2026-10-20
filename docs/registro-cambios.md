@@ -34,8 +34,8 @@ hoja VERSION del Excel maestro.
 | CC-005 | Datos personales en la hoja USUARIOS | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-006 | Archivos fuente `.drawio` de los diagramas | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
 | CC-007 | Inconsistencias documentales (README, roadmap, checkpoint, CLAUDE.md, workflow §13, frontend) | 5 | DETECTADO | Diagnóstico de documentación y control de cambios | — | — | 2026-10-04 |
-| CC-008 | Columna `ambito` en DICCIONARIO_CAMPOS y ajuste de `workflow.md` §14.10 | 3 (+2) | CERRADO (sin implementación) | Auditoría de hojas del Excel maestro (CC-003); decisión G1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
-| CC-009 | Validación de `clase_edad` en ARBOLES | 1 | CERRADO (sin implementación; parcialmente reemplazado por CC-026) | Auditoría de hojas del Excel maestro (CC-003); resuelto junto con CC-020 | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-008 | Columna `ambito` en DICCIONARIO_CAMPOS y ajuste de `workflow.md` §14.10 | 3 (+2) | REEMPLAZADO (CC-028, CC-035) | Auditoría de hojas del Excel maestro (CC-003); decisión G1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-009 | Validación de `clase_edad` en ARBOLES | 1 | REEMPLAZADO (CC-026, CC-028) | Auditoría de hojas del Excel maestro (CC-003); resuelto junto con CC-020 | 2.0.0 (en preparación) | — | 2026-10-05 |
 | CC-010 | `nivel_riesgo` y `resultado_general` manuales en INSPECCIONES frente a `clasificacion_riesgo` (R04) | 2 | DETECTADO (decidido en CC-026) | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-011 | `prioridad_reportada`, Prioridad de OT y `clasificacion_prioridad` (M05) | 2 | DETECTADO (Prioridad de OT decidida en CC-026) | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-012 | Menús dependientes, rangos con nombre y validaciones técnicas de los anexos | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
@@ -46,7 +46,7 @@ hoja VERSION del Excel maestro.
 | CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO (ejemplos eliminados en el Excel auditado, CC-026) | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | CERRADO (sin implementación) | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
-| CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | PENDIENTE DE IMPLEMENTACIÓN (parcialmente reemplazado por CC-026) | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
+| CC-020 | Separación entre identidad del árbol y medición dendrométrica (ADR-016; PR-006 v7.0; PR-003 v5.0; PR-002 v2.2) | 3 (+1) | REEMPLAZADO (CC-026, CC-028, CC-031, CC-032) | Auditoría árbol / medición previa a INV-1 (2026-10-05) | 2.0.0 (en preparación) | — | 2026-10-05 |
 | CC-021 | Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores (PR-001 v3.0; PR-016 v4.0) | 5 | APROBADO METODOLÓGICAMENTE | Definición del agente frontend-ux y revisión de referencias de producto | — (fuera del paquete) | — | 2026-10-06 |
 | CC-022 | Alcance del Administrador (solo lectura) y gestión de estados por el Usuario municipal (PR-003 v6.0, PR-004 v5.0, PR-009 v2.0) | 2 | PROBADO | Decisión parcial de CC-015 (autora y equipo) | — (fuera del paquete) | — | 2026-10-09 |
 | CC-023 | Referencias visuales complementarias de inspiración UX/UI, incluida la vista de árbol de Groundzy (PR-016 v5.0) | 5 | APROBADO METODOLÓGICAMENTE | Rediseño visual post-demo | — (fuera del paquete) | — | 2026-10-09 |
@@ -56,6 +56,15 @@ hoja VERSION del Excel maestro.
 | CC-027 | Sincronización del motor de riesgo con MATRICES_CALCULO y REGLAS_INDICADORES del Excel auditado (R03, cavidades, etiquetas, M04, M05) | 2 (+4) | APROBADO METODOLÓGICAMENTE | Revisión de matrices e índices (2026-10-18) · DM-01…DM-09 | 2.0.0 (en preparación) | C1 (postauditoría) | 2026-10-18 |
 | CC-028 | El Excel auditado es la única fuente metodológica; se elimina el Excel anterior y se resuelven P1–P9 a su favor | 2 (+3) | APROBADO METODOLÓGICAMENTE | Decisión de la autora (2026-10-18) | 2.0.0 (en preparación) | — | 2026-10-18 |
 | CC-029 | M05: `clasificacion_prioridad` = No determinado cuando `clasificacion_riesgo` = No determinado | 2 | APROBADO METODOLÓGICAMENTE | Decisión de la autora (2026-10-20), Fase 0 de la implementación | 2.0.0 (en preparación) | — | 2026-10-20 |
+| CC-030 | Publicación del paquete 2.0.0 antes de implementar; `rule_version` en cada resultado calculado (C1 / PA-01) | 2 (+5) | PENDIENTE DE DECISIÓN (decisión de fondo aprobada; diagramas y autorización de publicación pendientes) | Fase 1 de la implementación de CC-026 a CC-029 · decisión 1 | 2.0.0 (en preparación) | — | 2026-10-20 |
+| CC-031 | Corrección y anulación de una inspección según su `estado_registro` (P3) | 3 (+2) | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 2 (P3 de CC-026, sin regla tras CC-028) | 2.0.0 (en preparación) | — | 2026-10-20 |
+| CC-032 | Transición del modelo físico: UTM canónica, retiro de `tree_measurements` y de las tablas de inspección de 001, identificadores de rol (ADR-010 v3.0, ADR-016 v3.0, PR-006 v9.0, PR-019 v1.1, PR-020 v1.1) | 3 (+4) | APROBADO METODOLÓGICAMENTE | Fase 1 · decisiones 3, 4 y 5; respuestas de la Fase 0 | 2.0.0 (en preparación) | — | 2026-10-20 |
+| CC-033 | Escrituras solo por el backend con credencial de servicio; RLS sin escritura directa (DA-01 / PA-04; ADR-014 v2.0, PR-018 v3.0) | 3 (+4) | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 8; postauditoría DA-01 | — (fuera del paquete) | — | 2026-10-20 |
+| CC-034 | Códigos de catálogo definidos en el backend, sin tabla de códigos en LISTAS (PR-021 v1.0) | 5 (+4) | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 7; Fase 0 · contradicción 1 | 2.0.0 (en preparación) | — | 2026-10-20 |
+| CC-035 | Eliminación del ámbito operativo / metodológico de los campos (`workflow.md` §14.12; PR-002 v3.0) | 5 | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 6; CC-028 P8 | 2.0.0 (en preparación) | — | 2026-10-20 |
+| CC-036 | Incidencias ciudadanas por QR: formulario público, visibilidad y conservación del RUT (PR-022 v1.0, PR-010 v3.0) | 3 (+4) | PENDIENTE DE DECISIÓN (conservación con "Requiere antecedentes" por confirmar) | Fase 1 · decisión 9 | 2.0.0 (en preparación) | — | 2026-10-20 |
+| CC-037 | Recordatorio de próxima inspección y monitoreo en lugar de agenda automática (AMD-38; PR-009 v4.0) | 3 (+5) | APROBADO METODOLÓGICAMENTE | Fase 1 · decisión 10 | 2.0.0 (en preparación) | — | 2026-10-20 |
+| CC-038 | Datos simulados fuera de la base de producción: seed solo para desarrollo y plan de limpieza | 4 | PENDIENTE DE DECISIÓN | Fase 1 · respuesta 0 | — (fuera del paquete) | Respuestas de la autora (A-000013/14, entornos) | 2026-10-20 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -485,6 +494,7 @@ motivo)
 | 2026-10-05 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión G1: distinción entre inventario operativo/estructural y reglas metodológicas. |
 | 2026-10-05 | FUENTE SINCRONIZADA | — | Excel, `workflow.md`, PR-002 v2.2 y `00-index.md` actualizados y verificados en la rama `cc-020-arbol-medicion`, repositorio backend. Pendiente de integración del PR. |
 | 2026-10-05 | CERRADO (sin implementación) | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`; commits `6af04ec`, `15c9994`). Sin implementación en BD, backend, API ni frontend. |
+| 2026-10-20 | REEMPLAZADO | marybaxmann | CC-028 (P8) eliminó la columna `ambito` del Excel maestro y CC-035 elimina la excepción operativa de `workflow.md` §14.12. AM-07. |
 
 ---
 
@@ -545,6 +555,7 @@ motivo)
 | 2026-10-05 | CERRADO (sin implementación) | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`). Sin implementación. |
 
 | 2026-10-18 | CERRADO (sin implementación) | marybaxmann | Reemplazo parcial por CC-026: `clase_edad` vuelve a ARBOLES como obligatoria, con su validación de 5 valores en la columna correcta (pendiente P5 frente a CC-020). |
+| 2026-10-20 | REEMPLAZADO | marybaxmann | CC-028 (P5): `clase_edad` es obligatoria en ARBOLES; ya no existe la hoja MEDICIONES_DENDROMETRICAS. AM-07. |
 ---
 
 ### CC-010 — `nivel_riesgo` y `resultado_general` manuales en INSPECCIONES frente a `clasificacion_riesgo` (R04)
@@ -890,6 +901,7 @@ motivo)
 | 2026-10-05 | PENDIENTE DE IMPLEMENTACIÓN | marybaxmann | PR #3 revisado e integrado en `main` (merge `637db1a`; commits `6af04ec`, `15c9994`). Especificación de ámbito `operativo` (§14.12). Siguiente: diseño técnico INV-1A; sin implementación de software todavía. |
 
 | 2026-10-18 | PENDIENTE DE IMPLEMENTACIÓN | marybaxmann | Reemplazo parcial por CC-026: el alta municipal no exige medición; las mediciones las registra el Inspector en la inspección; la vigencia se determina por la OT completada más reciente (`fecha_completada_ot`). ADR-016 v2.0, PR-006 v8.0. |
+| 2026-10-20 | REEMPLAZADO | marybaxmann | CC-028 (P1, P3, P4, P5) dejó sin efecto la entidad MEDICIONES_DENDROMETRICAS, `configuracion_fustes` y la ubicación canónica WGS84 de ingreso; CC-031 define la corrección y anulación, y CC-032 el retiro físico de `tree_measurements` y de la función de alta con medición. No se implementa. AM-07. |
 ---
 
 ### CC-021 — Jerarquía de fuentes de producto: el prototipo histórico no prevalece sobre decisiones posteriores
@@ -1297,3 +1309,408 @@ motivo)
 - [ ] API / Zod — pendiente (AM-06).
 - [ ] Frontend — pendiente (AM-06).
 - [ ] Revisión final
+
+---
+
+### CC-030 — Publicación del paquete 2.0.0 antes de implementar; `rule_version` en cada resultado calculado
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 1 de la implementación de CC-026 a CC-029, decisión 1. Contradicción C1 de la postauditoría (PA-01): el motor (`treeRisk.ts`, migración 007) guarda `rule_version = borrador_reglas_diagramas_v3`, que no es una versión publicada. |
+| Tipo | 2 — metodológico, gobernanza de versión (+5 documental) |
+| Estado | PENDIENTE DE DECISIÓN. La decisión de fondo está aprobada; quedan pendientes el tratamiento de los diagramas y la autorización de la publicación. |
+| Regla / campo afectado | `rule_version` de todo resultado calculado; hoja VERSION; tag `metodologia-v2.0.0`; `docs/methodology/00-index.md`; diagramas de decisión. |
+| Versión anterior | El formato de `rule_version` ya estaba definido (`workflow.md` §14.10: `MAJOR.MINOR` de la versión publicada), pero no había ninguna versión publicada. Se proponían tres caminos: excepción controlada, publicación de 2.0.0 o resultados provisionales. |
+| Versión nueva | 1. **Se publica el paquete 2.0.0 antes de implementar** cualquier especificación del paquete. Con CC-035 desaparece la excepción operativa, así que la publicación es previa a la Fase 4 (base de datos) y no solo a la Fase 5 (motor). 2. Todo resultado calculado nuevo guarda `rule_version = "2.0"`: riesgo (R01–R04, M01–M03), infraestructura (M04) y prioridad (M05). 3. Un ajuste del Inspector (PR-008 v2.0) conserva la `rule_version` del valor calculado al que se aplica. 4. Propuesta, sin decidir: guardar también `motor_commit` (hash del código que calculó) para rastrear errores de implementación. 5. Los resultados guardados con `borrador_reglas_diagramas_v3` son datos de la demo y se descartan con ellos (CC-038); no se re-marcan como 2.0. 6. **La publicación requiere la aprobación explícita de la autora**: verificación §14.9 sobre el Excel maestro, fila de VERSION con fecha de publicación, tag de git, `00-index.md` actualizado y documentos `01–05` marcados como reemplazados (PA-19). |
+| Motivo | Cerrar C1: ningún resultado puede quedar asociado a reglas de un borrador no publicado (PR-011 v2.0). |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20, Fase 1: "recomendaciones OK" en la decisión 1, con el matiz de los diagramas. |
+| Decisión pendiente: diagramas | Los artefactos del paquete deben representar la misma versión (PR-002). Hoy solo hay un archivo fuente (`EV. Riesgo - consolidacion (R01-R04, M01-M03).drawio`); los diagramas por componente son imágenes `.jpg` sin fuente. Ninguno incluye R03 con defoliación, las reglas 09 y 10 de cavidades ni M04/M05. **Opción A, sincronizar:** actualizar el `.drawio` de consolidación (R03, etiquetas DM-03), dibujar de nuevo los diagramas de raíces y tronco (cavidades 09 y 10), copa (defoliación) e infraestructura (M04) y agregar M05. **Opción B, declararlos fuera del paquete 2.0.0:** el Excel maestro es la única fuente (CC-028) y los diagramas pasan a ser ilustraciones históricas, sin autoridad. Requiere PR-002 v3.1. **Recomendación: B**, porque no hay archivos fuente para la mayoría y CC-028 ya hizo del Excel la única fuente. |
+| Archivos afectados | Esta ficha. Al publicar: Excel (VERSION), `docs/methodology/00-index.md`, `docs/methodology/01–05`, PR-002 (si se elige B) y tag de git. |
+| Impacto en diagramas | Según la decisión pendiente. |
+| Impacto en Excel metodológico | Al publicar: fila de VERSION con `rule_version` 2.0, estado publicado, fecha y tag. |
+| Impacto en BD | Fase 3: columna `rule_version` en cada tabla de resultados calculados (y `motor_commit`, si se aprueba). |
+| Impacto en backend | Fase 5: el motor declara `RULE_VERSION = "2.0"` y la guarda en cada resultado. |
+| Impacto en API | Exponer `rule_version` junto a cada resultado. |
+| Impacto en frontend | Mostrar con qué versión se calculó cada resultado. |
+| Pruebas necesarias | Cada resultado calculado se guarda con `rule_version` 2.0; un ajuste conserva la versión del valor calculado. |
+| Dependencias | CC-024 a CC-029 sincronizados en el Excel; CC-035; CC-038 (descarte de los resultados del borrador). Resuelve PA-01 y desbloquea PA-19. |
+| rule_version | 2.0 (al publicar) |
+| Aprobado por | marybaxmann (decisión de fondo) |
+| Fecha de aprobación | 2026-10-20 (decisión de fondo) |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | No se publica nada sin aprobación explícita. |
+
+**Checklist de sincronización**
+
+- [ ] Decisión sobre los diagramas (A o B).
+- [ ] Verificación §14.9 del Excel maestro.
+- [ ] VERSION, `00-index.md`, `01–05` y tag — al publicar.
+- [ ] Migración + schema.sql (columna `rule_version`) — Fase 3/4.
+- [ ] Backend, API y frontend — Fases 5 a 7.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | PENDIENTE DE DECISIÓN | marybaxmann | Decisión de fondo aprobada (publicar 2.0.0 antes de implementar; `rule_version` en cada resultado). Pendientes: diagramas (A/B) y autorización de la publicación. |
+
+---
+
+### CC-031 — Corrección y anulación de una inspección según su `estado_registro`
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 1, decisión 2. Pendiente P3 de CC-026: CC-028 eliminó MEDICIONES_DENDROMETRICAS y dejó sin regla la corrección y anulación de una medición. |
+| Tipo | 3 — modelo de datos (+2) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | INSPECCION (`estado_registro`, campos nuevos de anulación); REGLAS_GENERALES ("Historial y vigencia"); vigencia de los datos técnicos (ADR-016, PR-009). |
+| Versión anterior | ADR-016 v1.0 (CC-020) permitía corregir un dato de una medición con auditoría y anular lógicamente una medición. CC-028 dejó esa regla sin efecto y P3 quedó abierta. |
+| Versión nueva | 1. Mientras la inspección está **Preguardado**, el Inspector la modifica libremente, incluidos los datos técnicos del árbol registrados en ella. 2. Una inspección **Finalizado** no se edita. Si contiene un error, el Inspector la **anula**: anulación lógica de la inspección completa, con motivo, autor y fecha. 3. La inspección anulada permanece en el historial con todos sus valores, pero deja de contar para la vigencia: el valor vigente pasa a ser el de la OT completada más reciente cuya inspección no esté anulada. 4. Los datos correctos se registran en una nueva inspección, en una nueva OT. 5. **Solo el Inspector anula.** El Usuario municipal, el Administrador y el Encargado de mantención no anulan. |
+| Texto propuesto para el Excel (lo actualiza la autora) | **REGLAS_GENERALES, fila nueva** · A: `Historial y vigencia` · B: `Mientras una inspección está Preguardado, el Inspector puede modificar todos sus datos. Una inspección Finalizado no se modifica: si contiene un error, el Inspector la anula registrando motivo_anulacion. La inspección anulada se conserva en el historial y deja de considerarse para la vigencia; los datos correctos se registran en una nueva inspección mediante una nueva OT. Solo el Inspector anula inspecciones.` · C: `estado_registro; motivo_anulacion; anulado_por; fecha_anulacion` · D: `INSPECCION; ARBOLES; REGISTRO_EVALUACION`. **DICCIONARIO_CAMPOS, `estado_registro`:** H `Preguardado / Finalizado / Anulado`; J `Finalizado cuando están completos todos los campos obligatorios y los condicionales activados de la inspección. Anulado solo desde Finalizado, por el Inspector, con motivo_anulacion.` **Filas nuevas en INSPECCION:** `motivo_anulacion` (Texto · Inspector · Condicional · activación `estado_registro = Anulado`); `anulado_por` (Identificador · Sistema · Condicional · misma activación); `fecha_anulacion` (Fecha y hora · Sistema · Condicional · misma activación). |
+| Motivo | Mantener el historial inmutable (ADR-012) y coherente con el preguardado y con la vigencia por OT completada (CC-026). |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20, Fase 1: opción B; "El Usuario municipal no puede anular". |
+| Archivos afectados | Esta ficha; PR-009 v4.0; ADR-016 v3.0; `docs/registro-cambios.md`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Fila nueva en REGLAS_GENERALES y cambios en DICCIONARIO_CAMPOS (texto propuesto arriba). |
+| Impacto en BD | Fase 3: estado Anulado y campos de anulación en la inspección; la vigencia excluye las inspecciones anuladas. |
+| Impacto en backend | Fase 6: edición solo en Preguardado; endpoint de anulación solo para el Inspector; vigencia sin anuladas. |
+| Impacto en API | Endpoint de anulación con motivo obligatorio. |
+| Impacto en frontend | Acción "Anular inspección" solo para el Inspector, con motivo. |
+| Pruebas necesarias | Edición permitida en Preguardado y rechazada en Finalizado; anulación solo por el Inspector y con motivo; la vigencia retrocede a la OT completada anterior; los demás roles reciben 403. |
+| Dependencias | CC-026, CC-028; PR-019 (rol Inspector). |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | Queda por definir si una inspección anulada dentro de una OT que todavía no está completada puede reemplazarse con una nueva inspección en la misma OT. La regla aprobada dice "una nueva OT"; se consulta antes de la Fase 6. |
+
+**Checklist de sincronización**
+
+- [x] PR-009 v4.0 y ADR-016 v3.0.
+- [ ] Excel maestro (REGLAS_GENERALES y DICCIONARIO_CAMPOS) — lo actualiza la autora con el texto propuesto.
+- [ ] Migración + schema.sql — Fase 3/4.
+- [ ] Backend, API y frontend — Fases 6 y 7.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Opción B de la Fase 1. |
+
+---
+
+### CC-032 — Transición del modelo físico: UTM canónica, retiro de `tree_measurements` y de las tablas de inspección de 001, identificadores de rol
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 1, decisiones 3, 4 y 5, y respuestas de la autora a la Fase 0 (2026-10-20). |
+| Tipo | 3 — modelo de datos (+4) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | `trees.ubicacion`; `tree_measurements` y `fn_create_tree_with_measurement` (006); tablas `inspections`, `defect_observations`, `defect_results`, `component_assessments`, `probability_thresholds`, `vitality_assessments` y `risk_evaluations` (001); tabla `roles`; `estado_presencia` y `fecha_cambio_estado_presencia`; `origen_biogeografico`. |
+| Versión anterior | ADR-010 v2.0: ubicación canónica `geography(Point,4326)`, con el CRS de captura pendiente. ADR-016 v2.0 y CC-020: mediciones en `tree_measurements`. Migración 001: modelo de inspección por defecto que nunca se usó. PR-019 y PR-020 v1.0: identificadores de rol pendientes. |
+| Versión nueva | 1. **Ubicación:** las coordenadas canónicas son `utm_este` y `utm_norte` en UTM 19S (EPSG:32719, datum WGS84), de ingreso manual y obligatorio (CC-028 P1). La geometría `geography(Point,4326)` para el mapa y las consultas espaciales se **deriva** de la UTM con una transformación estándar (PostGIS `ST_Transform` 32719 → 4326) y es de solo lectura. No es regla metodológica (ADR-010 v3.0). 2. **`tree_measurements`:** se deja de escribir. Sus filas son datos de la demo y se descartan (CC-038). La tabla y `fn_create_tree_with_measurement` se retiran en una migración posterior, con autorización expresa. 3. **Dimensiones:** viven en el árbol, con una versión por inspección (CC-028 P3; ADR-016 v3.0). El diseño físico se define en la Fase 3. 4. **Inspección:** `inspections` (001) se reutiliza como INSPECCION (`estado` → `estado_registro`, más `id_ot` y los campos de CC-026). REGISTRO_EVALUACION es una fila por inspección: variables en JSONB y resultados en columnas. **Las validaciones siguen exactamente DICCIONARIO_CAMPOS** (obligatoriedad, condición de activación, dominio, unidad y rango); que el almacenamiento sea JSONB no relaja ninguna validación. Las otras seis tablas de 001 se retiran después de verificar que están vacías, en una migración aparte con autorización (PA-40). 5. **Roles:** identificadores internos `inspector` y `encargado_mantencion`. Cada usuario tiene un solo rol global (AMD-31). 6. **Valores derivados:** `estado_presencia` y `fecha_cambio_estado_presencia` no son columnas físicas de ARBOLES; se derivan de las OT completadas y de los MANTENIMIENTO aprobados (PR-020). 7. **`origen_biogeografico`:** opcional en el alta municipal y obligatorio para finalizar la inspección (REGLAS_GENERALES, "Preguardado y finalización", primera regla). |
+| Motivo | Alinear la base con CC-026 y CC-028 sin mantener dos modelos de medición ni dos modelos de inspección. |
+| Fundamento / fuente | Decisiones de la autora (marybaxmann), 2026-10-20 (Fase 0, respuestas 2, 3, 5 y 7; Fase 1, "recomendaciones OK" en las decisiones 3, 4 y 5, con el matiz de que las validaciones siguen exactamente DICCIONARIO_CAMPOS). |
+| Archivos afectados | Esta ficha; ADR-010 v3.0; ADR-016 v3.0; PR-006 v9.0; PR-019 v1.1; PR-020 v1.1; `CLAUDE.md` (Roles); `docs/methodology/modelo-arbol-medicion.md` (nota de reemplazo). |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Fase 3/4: columnas UTM y geometría derivada; modelo de versiones de dimensiones; adaptación de `inspections`; roles nuevos; retiro de tablas (migraciones aparte, con autorización). |
+| Impacto en backend | Fase 6: alta con UTM; validación de REGISTRO_EVALUACION con DICCIONARIO_CAMPOS; roles nuevos en `authorization.service.ts`. |
+| Impacto en API | Coordenadas UTM de entrada; longitud y latitud derivadas, de solo lectura, en la salida. |
+| Impacto en frontend | Formulario de alta con UTM; el mapa usa la geometría derivada. |
+| Pruebas necesarias | Conversión UTM → WGS84 con puntos conocidos; validaciones de REGISTRO_EVALUACION por campo, contra DICCIONARIO_CAMPOS; permisos de los cuatro roles. |
+| Dependencias | CC-026, CC-028, CC-030 (publicación previa), CC-033 (RLS), CC-038 (datos). Resuelve PA-03 (identificadores y rol único) y la decisión de PA-40. |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | **Por confirmar:** hoy el alta permite marcar el punto en el mapa. Con UTM de ingreso manual (CC-028 P1), ¿el punto del mapa puede seguir como ayuda que rellena los campos UTM (convertidos y editables), o se elimina? Ninguna fuente lo resuelve. |
+
+**Checklist de sincronización**
+
+- [x] ADR-010 v3.0, ADR-016 v3.0, PR-006 v9.0, PR-019 v1.1, PR-020 v1.1, `CLAUDE.md`.
+- [ ] Diseño físico — Fase 3.
+- [ ] Migraciones + schema.sql — Fase 4.
+- [ ] Backend, API y frontend — Fases 6 y 7.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisiones 3, 4 y 5 de la Fase 1 y respuestas de la Fase 0. |
+
+---
+
+### CC-033 — Escrituras solo por el backend con credencial de servicio; RLS sin escritura directa
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 1, decisión 8. Postauditoría: DA-01 (principio aprobado el 2026-10-11) y PA-04 (implementación pendiente). |
+| Tipo | 3 — arquitectura de datos y permisos (+4) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | ADR-014; PR-018; políticas RLS de escritura de todas las tablas de datos. |
+| Versión anterior | ADR-014 v1.0 y PR-018 v2.0: el backend consulta y escribe con el JWT del usuario y las RLS permiten escribir a los roles autorizados, por lo que una escritura también puede llegar a la base sin pasar por las validaciones del backend (hallazgo S1). |
+| Versión nueva | 1. **Toda escritura pasa por el backend.** Después de su autorización funcional y de las validaciones (DICCIONARIO_CAMPOS, PR por rol), el backend escribe con la credencial de servicio. 2. **Las RLS no permiten escrituras directas** a los roles de sesión (`authenticated`, `anon`) en las tablas de datos. 3. **Las lecturas mantienen ADR-014:** el backend lee con el JWT del usuario y las RLS filtran por proyecto y rol (dos capas). 4. **Autor explícito:** el backend registra quién crea o modifica cada fila con el usuario autenticado, sin depender de valores por defecto de la sesión. 5. **La credencial de servicio nunca llega al frontend ni queda en el repositorio:** vive solo en las variables de entorno del servidor; no aparece en el código, en `.env.example`, en registros ni en respuestas de la API. 6. El formulario ciudadano (PR-022) es un endpoint público del backend que escribe con la misma credencial, después de validar y limitar las solicitudes. |
+| Motivo | Cerrar S1: que ninguna escritura evite las validaciones y la autorización del backend. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20, Fase 1: "recomendaciones OK" en la decisión 8, con el matiz de que la credencial nunca llega al frontend ni queda en el repositorio. |
+| Archivos afectados | Esta ficha; ADR-014 v2.0; PR-018 v3.0. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Fase 3/4: políticas RLS de escritura reemplazadas por denegación a los roles de sesión; se mantienen las de lectura. |
+| Impacto en backend | Fase 6: cliente de escritura con la credencial de servicio, usado solo después de la autorización; autor explícito. |
+| Impacto en API | Ninguno visible. |
+| Impacto en frontend | Ninguno: el frontend ya no escribe en Supabase. |
+| Pruebas necesarias | Escenarios W1–W12 (`escenarios-rls.md`) en un entorno aislado (PA-13, PA-14): ninguna escritura directa con una sesión de usuario prospera; las lecturas siguen filtradas por proyecto. Búsqueda en el repositorio y en el paquete del frontend que confirme que la credencial no aparece. |
+| Dependencias | PA-13 (entorno de pruebas aislado). Resuelve PA-04; desbloquea PA-20, PA-25, PA-26 y PA-35. |
+| rule_version | no aplica |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | El repositorio es público: esta ficha describe el tipo de protección, no escenarios de explotación. |
+
+**Checklist de sincronización**
+
+- [x] ADR-014 v2.0 y PR-018 v3.0.
+- [ ] RLS y migración — Fase 3/4.
+- [ ] Backend — Fase 6.
+- [ ] Pruebas W1–W12 en entorno aislado.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Opción A de la decisión 8 de la Fase 1. |
+
+---
+
+### CC-034 — Códigos de catálogo definidos en el backend, sin tabla de códigos en LISTAS
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 0, contradicción 1: el Excel auditado no tiene la tabla de códigos de LISTAS (columnas P:X, CC-004). Fase 1, decisión 7. La autora no tiene ni quiere esa tabla en el Excel. |
+| Tipo | 5 — documental (+4) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | Códigos persistentes de todos los catálogos; `docs/methodology/convenciones-catalogos.md` (CC-004); `workflow.md` §14.2 y §14.9 (catálogos); `src/services/rules/moduleCatalogs.ts`. |
+| Versión anterior | CC-004: LISTAS (P:X) era la fuente de `id_catalogo`, `codigo`, `etiqueta`, `orden`, jerarquía, `estado_valor` y `cc`; DICCIONARIO_CAMPOS la referenciaba con `LISTAS:<id_catalogo>`. |
+| Versión nueva | PR-021 v1.0. 1. El Excel (DICCIONARIO_CAMPOS, "Unidad / valores", y los menús de LISTAS) define los valores permitidos y sus etiquetas. 2. El backend define el **código persistente** de cada valor en un único registro de catálogos, que reemplaza a `moduleCatalogs.ts`. 3. **Los códigos ya guardados en la base no cambian.** 4. Un test automático compara las etiquetas del registro con el Excel del repositorio y falla si difieren; el sistema nunca lee el Excel mientras funciona. 5. El frontend obtiene los catálogos desde la API. |
+| Motivo | Mantener códigos estables sin depender de una tabla que el Excel ya no tiene. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20: Fase 1, "recomendaciones OK" en la decisión 7; "no existe ni se restaurará una tabla de códigos en el Excel". |
+| Archivos afectados | Esta ficha; PR-021 v1.0; PR-002 v3.0; `docs/methodology/convenciones-catalogos.md` (nota de reemplazo); `docs/workflow.md` §14.2 y §14.9. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno: LISTAS queda como hoja de menús (AMD-30). |
+| Impacto en BD | Fase 3: validación de los códigos (CHECK o clave foránea). |
+| Impacto en backend | Fase 6: registro de catálogos y test de consistencia con el Excel. |
+| Impacto en API | Endpoint de catálogos con código y etiqueta. |
+| Impacto en frontend | Los catálogos se leen desde la API; no se escriben en el código. |
+| Pruebas necesarias | Test de consistencia de etiquetas con el Excel; los códigos existentes se conservan. |
+| Dependencias | CC-004 (lo reemplaza en lo relativo a códigos), CC-028. ADR-015 cita `convenciones-catalogos.md` como mecanismo de códigos: la referencia se entiende hecha a PR-021. |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | — |
+
+**Checklist de sincronización**
+
+- [x] PR-021 v1.0, PR-002 v3.0, `convenciones-catalogos.md`, `workflow.md`.
+- [ ] Backend (registro y test) — Fase 6.
+- [ ] Frontend — Fase 7.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Opción A de la decisión 7 de la Fase 1. |
+
+---
+
+### CC-035 — Eliminación del ámbito operativo / metodológico de los campos
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 1, decisión 6. CC-028 (P8) eliminó la columna `ambito` de DICCIONARIO_CAMPOS; sin ella, la regla 1 de §14.12 trataba todo campo como metodológico. |
+| Tipo | 5 — documental (gobernanza) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | `docs/workflow.md` §14.4, §14.7, §14.9, §14.10 y §14.12; PR-002; `docs/methodology/00-index.md` (punto 8). |
+| Versión anterior | CC-008: DICCIONARIO_CAMPOS registraba el ámbito de cada campo y las especificaciones operativas podían implementarse desde `FUENTE SINCRONIZADA`, sin esperar la publicación del paquete. |
+| Versión nueva | Se elimina la distinción y su excepción. Toda implementación de una especificación del paquete requiere una versión publicada (CC-030). §14.12 queda marcada como reemplazada; su texto se conserva como historial. |
+| Motivo | La columna ya no existe (CC-028) y CC-030 publica 2.0.0 antes de implementar, así que la excepción no tiene uso. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20, Fase 1: "recomendaciones OK" en la decisión 6 (opción A). |
+| Archivos afectados | Esta ficha; `docs/workflow.md`; PR-002 v3.0; `docs/methodology/00-index.md`; ADR-016 v3.0. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno (la columna ya no está). |
+| Impacto en BD | Ninguno. |
+| Impacto en backend | Ninguno. |
+| Impacto en API | Ninguno. |
+| Impacto en frontend | Ninguno. |
+| Pruebas necesarias | N/A (documental). |
+| Dependencias | CC-008 (lo reemplaza), CC-028, CC-030. |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — (sin implementación) |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | Consecuencia: la Fase 4 (base de datos) también espera la publicación de 2.0.0, no solo la Fase 5. |
+
+**Checklist de sincronización**
+
+- [x] `workflow.md`, PR-002 v3.0, `00-index.md`, ADR-016 v3.0.
+- [ ] Revisión final (merge del PR) → `CERRADO` (sin implementación).
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Opción A de la decisión 6 de la Fase 1. |
+
+---
+
+### CC-036 — Incidencias ciudadanas por QR: formulario público, visibilidad y conservación del RUT
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 1, decisión 9. El Excel exige nombre y RUT del reportante (AMD-34) sin definir si existe una cuenta ciudadana, quién ve el RUT ni cuánto tiempo se conserva. |
+| Tipo | 3 — modelo de datos y permisos (+4) |
+| Estado | PENDIENTE DE DECISIÓN (solo la conservación con "Requiere antecedentes"; el resto está aprobado) |
+| Regla / campo afectado | INCIDENCIA: `rut_reportante`, `nombre_reportante`, `evidencia_fotografica`, `resultado_revision`; endpoint público; RLS de `incidents`. |
+| Versión anterior | AMD-34 / P10–P11: toda incidencia entra por el QR del árbol; nombre y RUT obligatorios; al menos una fotografía. Sin regla de cuenta, visibilidad ni conservación. |
+| Versión nueva | PR-022 v1.0. 1. **Formulario público sin cuenta**, al que se accede por el QR del árbol, con nombre, RUT, tipo, descripción y al menos una fotografía. 2. **Límite de solicitudes** y **validación del dígito verificador** del RUT. 3. **El RUT solo lo ve el Usuario municipal** miembro del proyecto: ni el Administrador ni los demás roles. 4. **El RUT se conserva hasta que la incidencia se aprueba o se rechaza** (`resultado_revision` = Validada o Descartada), y en ese momento se elimina. 5. **Con "Requiere antecedentes"**, propuesta de la autora, **por confirmar**: el RUT se conserva hasta la resolución final (Validada o Descartada). |
+| Texto propuesto para el Excel (lo actualiza la autora) | **DICCIONARIO_CAMPOS, `rut_reportante` (fila 179):** E `Mediante el ingreso del RUT de la persona que comunica la incidencia en el formulario ciudadano público, al que se accede por el código QR del árbol.` · F `Identificador tributario de la persona natural que reporta. Es un dato personal: solo lo ve el Usuario municipal y se conserva únicamente mientras se revisa la incidencia.` · I `Obligatorio al reportar` · L `Validar estructura y dígito verificador del RUT. Visible solo para el Usuario municipal. Se elimina cuando resultado_revision = Validada o Descartada; con Requiere antecedentes se conserva hasta el resultado final.` **`nombre_reportante` (fila 178):** E `Mediante el ingreso del nombre de la persona que comunica la incidencia en el formulario ciudadano público, al que se accede por el código QR del árbol.` (se quita "durante el registro municipal del reporte", porque toda incidencia entra por el QR, AMD-34). |
+| Motivo | Proteger un dato personal: minimizar quién lo ve y cuánto tiempo se guarda. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20, Fase 1, decisión 9. |
+| Archivos afectados | Esta ficha; PR-022 v1.0; PR-010 v3.0; PR-018 v3.0 (endpoint público). |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | DICCIONARIO_CAMPOS, filas 178 y 179 (texto propuesto arriba). |
+| Impacto en BD | Fase 3: el RUT en una tabla o columna que solo puede leer el Usuario municipal; eliminación al cerrar la revisión; `tree_id` obligatorio. |
+| Impacto en backend | Fase 6: endpoint público con límite de solicitudes, validación del RUT y de las fotografías; eliminación del RUT al registrar Validada o Descartada. |
+| Impacto en API | Endpoint público de incidencias; el RUT solo aparece en las respuestas al Usuario municipal. |
+| Impacto en frontend | Página pública del QR; vista del RUT solo para el Usuario municipal. |
+| Pruebas necesarias | RUT con dígito verificador inválido rechazado; límite de solicitudes; el Administrador, el Inspector y el Encargado no reciben el RUT; el RUT se elimina con Validada y con Descartada y se conserva con Requiere antecedentes. |
+| Dependencias | CC-026 (AMD-34), CC-033. |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann (puntos 1 a 4) |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | **Para confirmar:** (a) el punto 5; (b) el nombre del reportante no tiene regla de eliminación (solo se decidió sobre el RUT); (c) INCIDENCIA no tiene un dato de contacto, así que con "Requiere antecedentes" el municipio no tiene cómo pedírselos al reportante. |
+
+**Checklist de sincronización**
+
+- [x] PR-022 v1.0, PR-010 v3.0, PR-018 v3.0.
+- [ ] Excel (filas 178 y 179) — lo actualiza la autora.
+- [ ] Migración + RLS — Fase 3/4.
+- [ ] Backend, API y frontend — Fases 6 y 7.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | PENDIENTE DE DECISIÓN | marybaxmann | Puntos 1 a 4 aprobados; el punto 5 queda por confirmar. |
+
+---
+
+### CC-037 — Recordatorio de próxima inspección y monitoreo en lugar de agenda automática
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 1, decisión 10. AMD-38 y REGLAS_GENERALES ("Reinspección y monitoreo") decían que la fecha "se envía al calendario del módulo para agendarla", pero no existía ese calendario ni la fuente lo definía. |
+| Tipo | 3 — comportamiento funcional (+5) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | REGLAS_GENERALES (fila 25); DICCIONARIO_CAMPOS `fecha_proxima_inspeccion` y `fecha_proximo_monitoreo` (filas 202 y 203, columna L); AMD-38; PR-009. |
+| Versión anterior | "Al llegar el inicio de cada rango, la fecha se envía al calendario del módulo para agendarla." |
+| Versión nueva | SIVU **no agenda automáticamente**. Cuando llega el inicio del rango sugerido, **avisa**: la fecha aparece como recordatorio en una **lista de próximas inspecciones y monitoreos por proyecto**, con el inicio y el término del rango, y desde esa lista el Usuario municipal crea y programa la OT. El término del rango se obtiene de la misma tabla de plazos; cuando el plazo es un solo valor (por ejemplo, Bajo 24 meses), inicio y término coinciden, y "inmediato y continuo" no tiene término. |
+| Texto propuesto para el Excel (lo actualiza la autora) | **REGLAS_GENERALES, fila 25, columna B:** `SIVU sugiere, según nivel_riesgo, el rango de la próxima inspección técnica y del próximo monitoreo: Bajo 24 meses y 12 meses; Moderado 12 meses y 3 a 6 meses; Alto 1 a 3 meses y 2 a 4 semanas; Extremo reevaluación dentro de 1 a 4 semanas y monitoreo inmediato y continuo mientras persista el peligro. SIVU no agenda automáticamente: al llegar el inicio de cada rango, muestra un recordatorio en la lista de próximas inspecciones y monitoreos del proyecto, con el inicio y el término del rango, desde la cual el Usuario municipal crea y programa la OT. El Inspector puede ajustar la fecha registrando justificacion_ajuste_fecha.` **DICCIONARIO_CAMPOS, fila 202, columna L:** `Posterior a fecha_inspeccion. Mostrar el rango sugerido. Al llegar la fecha de inicio, SIVU la muestra como recordatorio en la lista de próximas inspecciones del proyecto, desde la cual el Usuario municipal crea y programa la OT; SIVU no agenda automáticamente. Si el Inspector la modifica, exigir justificacion_ajuste_fecha.` **Fila 203, columna L:** `Igual o posterior a fecha_inspeccion. Mostrar el rango sugerido. Al llegar la fecha de inicio, SIVU la muestra como recordatorio en la lista de próximos monitoreos del proyecto, desde la cual el Usuario municipal crea y programa la OT; SIVU no agenda automáticamente. Si el Inspector la modifica, exigir justificacion_ajuste_fecha.` |
+| Motivo | La agenda la decide el municipio; SIVU solo recuerda. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20, Fase 1, decisión 10. |
+| Archivos afectados | Esta ficha; PR-009 v4.0; `docs/auditorias/2026-10-18-modelo-datos/decisiones.md` (nota en AMD-38). |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | REGLAS_GENERALES B25; DICCIONARIO_CAMPOS L202 y L203 (texto propuesto arriba). |
+| Impacto en BD | Ninguno adicional: se usan `fecha_proxima_inspeccion` y `fecha_proximo_monitoreo` (la fecha ajustada, si existe). |
+| Impacto en backend | Fase 6: consulta de próximas inspecciones y monitoreos por proyecto, con su rango. |
+| Impacto en API | Endpoint de la lista por proyecto. |
+| Impacto en frontend | Fase 7: lista con recordatorio y acción "Crear OT". |
+| Pruebas necesarias | Rango correcto por nivel de riesgo; la fecha ajustada reemplaza a la sugerida; el recordatorio aparece desde el inicio del rango. |
+| Dependencias | CC-026 (AMD-38). |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | — |
+
+**Checklist de sincronización**
+
+- [x] PR-009 v4.0; nota en AMD-38.
+- [ ] Excel (B25, L202, L203) — lo actualiza la autora.
+- [ ] Backend, API y frontend — Fases 6 y 7.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión 10 de la Fase 1. |
+
+---
+
+### CC-038 — Datos simulados fuera de la base de producción: seed solo para desarrollo y plan de limpieza
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 1, respuesta 0 de la autora: los datos de la demo son simulados, se descartan y la base de producción debe quedar sin ellos. |
+| Tipo | 4 — operación de datos |
+| Estado | PENDIENTE DE DECISIÓN |
+| Regla / campo afectado | Datos de las tablas `trees`, `tree_measurements`, `tree_risk_assessments`, `tree_infrastructure_assessments`, `maintenance`, `incidents` y relacionadas. |
+| Hallazgo | **Las migraciones 008 y 009 no cargan datos.** Solo contienen estructura: la tabla `tree_infrastructure_assessments`, columnas y RLS de `maintenance` (008) y secuencias de códigos `OT-M-` e `INC-` (009). El código vigente las necesita y no hay nada que sacar de ellas. Los datos simulados entraron de dos formas, ninguna en el repositorio: (a) los árboles sintéticos A-000015 a A-000018 (`lugar_referencia LIKE 'Caso de demostración%'`), con sus mediciones y evaluaciones, cargados el 2026-10-06 con un script temporal; (b) registros creados desde la aplicación durante la demo (OT, incidencias, evaluaciones). **A-000013 y A-000014 no son simulados:** son el levantamiento histórico del 10-08-2026 (A004 y A005, `legacy_id`). |
+| Plan propuesto | 1. **Inventario de solo lectura** de la base de producción: conteo por tabla y por proyecto, con la marca de cada fila (sintética, creada durante la demo, real). Se entrega a la autora para que confirme qué se borra. 2. **Seed solo para desarrollo:** carpeta `database/seeds/dev/`, fuera de `database/migrations/`, con datos ficticios marcados como tales. Se aplica solo con un script manual que se niega a ejecutarse si la URL de la base no es la del entorno de desarrollo (ADR-013, PA-13). Nunca se ejecuta en producción. 3. **Limpieza de producción:** un script SQL explícito, en una transacción, en orden de claves foráneas, con conteos antes y después y un respaldo previo. Se ejecuta solo con autorización expresa, después de revisar el inventario. 4. La limpieza conviene antes de las migraciones de la Fase 4, porque CC-032 retira `tree_measurements` y las tablas de 001. |
+| Motivo | La base de producción no debe contener datos simulados. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20, Fase 1, respuesta 0. |
+| Archivos afectados | Esta ficha. En la implementación: `database/seeds/dev/` y el script de limpieza. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Borrado de datos simulados (con autorización); sin cambios de estructura. |
+| Impacto en backend | Ninguno. |
+| Impacto en API | Ninguno. |
+| Impacto en frontend | Ninguno. |
+| Pruebas necesarias | Conteos antes y después; cero filas huérfanas; los datos reales intactos. |
+| Dependencias | CC-030 (descarte de los resultados del borrador), CC-032; PA-13 (entorno de desarrollo). |
+| rule_version | no aplica |
+| Aprobado por | — |
+| Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
+| Observaciones | **Preguntas:** (a) ¿A-000013 y A-000014, que son reales, se conservan y se migran al modelo nuevo? (b) ¿Cuál es la base de producción y cuál la de desarrollo (ADR-013; PA-13)? (c) ¿Se conservan los proyectos y usuarios creados para la demo? No se borra nada sin autorización. |
+
+**Checklist de sincronización**
+
+- [ ] Respuestas de la autora (a, b y c).
+- [ ] Inventario de solo lectura.
+- [ ] Seed de desarrollo.
+- [ ] Limpieza autorizada.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | PENDIENTE DE DECISIÓN | — | Plan propuesto; las migraciones 008 y 009 no contienen datos. |
