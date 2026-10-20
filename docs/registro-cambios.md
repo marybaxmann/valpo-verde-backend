@@ -55,6 +55,7 @@ hoja VERSION del Excel maestro.
 | CC-026 | Auditoría funcional del modelo de datos: roles, alta del árbol, historial, inspección y revisión de mantenimiento (PR-003 v7.0, PR-004 v6.0, PR-006 v8.0, PR-009 v3.0, PR-010 v2.0, PR-019, PR-020, PR-008 v2.0, ADR-006 v2.0, ADR-016 v2.0) | 3 (+2, +1) | APROBADO METODOLÓGICAMENTE | Auditoría del modelo de datos (2026-10-18) · AMD-01…AMD-42 | 2.0.0 (en preparación) | — | 2026-10-18 |
 | CC-027 | Sincronización del motor de riesgo con MATRICES_CALCULO y REGLAS_INDICADORES del Excel auditado (R03, cavidades, etiquetas, M04, M05) | 2 (+4) | APROBADO METODOLÓGICAMENTE | Revisión de matrices e índices (2026-10-18) · DM-01…DM-09 | 2.0.0 (en preparación) | C1 (postauditoría) | 2026-10-18 |
 | CC-028 | El Excel auditado es la única fuente metodológica; se elimina el Excel anterior y se resuelven P1–P9 a su favor | 2 (+3) | APROBADO METODOLÓGICAMENTE | Decisión de la autora (2026-10-18) | 2.0.0 (en preparación) | — | 2026-10-18 |
+| CC-029 | M05: `clasificacion_prioridad` = No determinado cuando `clasificacion_riesgo` = No determinado | 2 | APROBADO METODOLÓGICAMENTE | Decisión de la autora (2026-10-20), Fase 0 de la implementación | 2.0.0 (en preparación) | — | 2026-10-20 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1257,4 +1258,42 @@ motivo)
 - [ ] Backend — pendiente (AM-04).
 - [ ] API / Zod — pendiente (AM-04).
 - [ ] Frontend — pendiente (AM-04).
+- [ ] Revisión final
+
+### CC-029 — M05: prioridad No determinado cuando el riesgo es No determinado
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 0 de la implementación de CC-026 a CC-028: M05 no definía el caso `clasificacion_riesgo` = No determinado (CC-024). |
+| Tipo | 2 — metodológico |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | M05 (MATRICES_CALCULO AW5); `clasificacion_prioridad` (DICCIONARIO_CAMPOS fila 172, columnas H, J y L); VERSION. |
+| Versión anterior | `clasificacion_prioridad` solo admitía Baja / Media / Alta / Crítica. M05 definía el caso `clasificacion_infraestructura` = No aplica (columna Bajo), pero no el de riesgo No determinado. |
+| Versión nueva | Si `clasificacion_riesgo` = No determinado, `clasificacion_prioridad` = No determinado. Valores permitidos: Baja / Media / Alta / Crítica / No determinado. Mismo criterio que CC-024: "No determinado" nunca se sustituye por otra categoría. |
+| Motivo | Completar M05 para que un árbol sin clasificación de riesgo no reciba una prioridad calculada. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20. |
+| Archivos afectados | `docs/excel/Base de Datos Valpo Verde.xlsx` (DICCIONARIO_CAMPOS H172, J172, L172; MATRICES_CALCULO AW5; VERSION E4); `docs/registro-cambios.md`; `HANDOFF.md`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | 5 celdas, indicadas en Archivos afectados. |
+| Impacto en BD | Pendiente (AM-06): el valor No determinado debe ser admitido donde se almacene `clasificacion_prioridad`. |
+| Impacto en backend | Pendiente (AM-06, DM-07): implementar M05 con este caso. |
+| Impacto en API | Pendiente (AM-06). |
+| Impacto en frontend | Pendiente (AM-06): mostrar la prioridad No determinado. |
+| Pruebas necesarias | En implementación: M05 con riesgo No determinado e infraestructura en todas sus categorías, incluida No aplica. |
+| Dependencias | CC-024, CC-027 (DM-07), CC-028. |
+| rule_version | sin cambios (no publica 2.0.0; C1 pendiente) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — (sin implementación) |
+| Commits / PR asociados | Rama `docs/cc-029-prioridad-no-determinado`. |
+| Observaciones | No se modificaron código, migraciones, RLS ni Supabase. |
+
+**Checklist de sincronización**
+
+- [x] Excel maestro — M05, DICCIONARIO_CAMPOS y VERSION.
+- [ ] Migración + schema.sql — pendiente (AM-06).
+- [ ] Backend — pendiente (AM-06).
+- [ ] API / Zod — pendiente (AM-06).
+- [ ] Frontend — pendiente (AM-06).
 - [ ] Revisión final

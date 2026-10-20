@@ -30,7 +30,8 @@
 - **CC-028 `APROBADO METODOLÓGICAMENTE` (2026-10-18):** el Excel auditado es la **única fuente metodológica**. `docs/excel/Base de Datos Valpo Verde.xlsx` (nombre fijo) contiene ahora el Excel auditado más la hoja VERSION; se eliminó la copia con fecha y el contenido anterior queda solo en git. P1–P9 resueltos a favor del Excel auditado (sin MEDICIONES_DENDROMETRICAS ni columna `ambito`). Textos contradichos por actualizar: AM-07.
 - **No modificado:** código, Supabase, migraciones, RLS y motor. La implementación de desarrollo (CC-020, CC-022) queda desalineada con CC-026 hasta su implementación (AM-04).
 - **CC-027 `APROBADO METODOLÓGICAMENTE`:** el motor (`treeRisk.ts`) difiere del Excel auditado en R03 (máximo 8 con defoliación), etiquetas, cavidades (reglas 09 y 10) y no implementa M04 ni M05. Detalle en `docs/auditorias/2026-10-18-modelo-datos/diferencias-motor.md`. **No modificar el motor sin autorización.**
-- **Próximos libres:** CC-029, ADR-017, PR-021.
+- **CC-029 `APROBADO METODOLÓGICAMENTE` (2026-10-20):** M05 devuelve `clasificacion_prioridad` = No determinado cuando `clasificacion_riesgo` = No determinado (Excel maestro actualizado).
+- **Próximos libres:** CC-030, ADR-017, PR-021.
 
 ## ▶ Punto de reanudación (2026-10-11) — leer primero
 
