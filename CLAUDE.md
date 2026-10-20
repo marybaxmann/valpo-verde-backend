@@ -42,7 +42,7 @@ Jerarquía única de fuentes (PR-016 v6.0; CC-021, CC-023, CC-025). Ante contrad
 
 ### Metodología técnica
 
-- Fuente de verdad: el paquete metodológico versionado definido en PR-002 (Excel maestro con MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES y VERSION; diagramas de decisión de la misma versión; `docs/methodology/`). No hay precedencia interna: una contradicción entre artefactos es una inconsistencia y se trata como cambio CC (`docs/workflow.md` §14).
+- Fuente de verdad: el Excel maestro del paquete metodológico versionado definido en PR-002 v3.0 (DICCIONARIO_CAMPOS, REGLAS_GENERALES, REGLAS_INDICADORES, MATRICES_CALCULO y VERSION). `docs/methodology/` lo documenta; si difieren, manda el Excel y se corrige mediante CC (`docs/workflow.md` §14). Los diagramas de decisión no forman parte del paquete (CC-030).
 - La implementación (BD, backend, API, frontend) deriva del paquete y nunca lo define.
 - La versión vigente y el estado de transición se consultan **siempre** en `docs/methodology/00-index.md`. No duplicarlos aquí.
 
@@ -67,7 +67,7 @@ Jerarquía única de fuentes (PR-016 v6.0; CC-021, CC-023, CC-025). Ante contrad
 
 ## Roles
 
-Roles (CC-026): Administrador, Usuario municipal, Inspector y Encargado de mantención (ADR-006 v2.0). Identificadores internos vigentes: `admin`, `usuario_municipal`; los de Inspector y Encargado de mantención están pendientes.
+Roles (CC-026): Administrador, Usuario municipal, Inspector y Encargado de mantención (ADR-006 v2.0). Identificadores internos: `admin`, `usuario_municipal`, `inspector` y `encargado_mantencion` (CC-032). Cada usuario tiene un solo rol global (AMD-31).
 
 La definición vigente de permisos vive en `docs/project-rules.md` (PR-003, PR-004, PR-019 y PR-020).
 

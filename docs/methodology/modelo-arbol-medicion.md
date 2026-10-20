@@ -1,5 +1,7 @@
 # Modelo conceptual: ÁRBOL y MEDICIONES_DENDROMETRICAS
 
+> **REEMPLAZADO por CC-028 (2026-10-18) y CC-031 / CC-032 (2026-10-20).** Ya no existe la entidad MEDICIONES_DENDROMETRICAS: las dimensiones son datos técnicos del árbol con una versión por inspección (ADR-016 v3.0, PR-006 v9.0); se usa `multifustal` en lugar de `configuracion_fustes`; `clase_edad` es obligatoria; la corrección y anulación se hacen sobre la inspección completa (PR-009 v4.0); no existe el ámbito `operativo` (CC-035). Este documento se conserva solo como historial de CC-020.
+
 > **Actualizado por CC-026 (2026-10-18).** ADR-016 v2.0 y PR-006 v8.0 reemplazan parte de este modelo: el alta municipal no exige medición; las mediciones las registra el Inspector en la inspección mediante OT y se hacen vigentes al completar la OT (OT completada más reciente según `fecha_completada_ot`, no la `fecha_medicion` más reciente). Lo que sigue describe la versión de CC-020 y se conserva como antecedente donde contradiga a CC-026. Pendientes: `docs/auditorias/2026-10-18-modelo-datos/pendientes.md`.
 
 Origen: CC-020 (aprobado por `marybaxmann`, 2026-10-05). Forma parte del

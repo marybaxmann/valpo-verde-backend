@@ -182,9 +182,11 @@ Afecta:
 - tests
 - documentación
 
-## PR-002 — Fuente de metodología (v2.2)
-Estado: vigente
+## PR-002 — Fuente de metodología (v2.2 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.2
+Reemplazada por: PR-002 v3.0
+Motivo del reemplazo: incluía MEDICIONES_DENDROMETRICAS, la tabla de códigos de LISTAS y el ámbito de los campos, que dejaron de formar parte del Excel maestro (CC-028, CC-034, CC-035).
 Reemplaza: PR-002 v2.1
 Origen: CC-008, CC-020
 Motivo: incorporar el anexo MEDICIONES_DENDROMETRICAS a la composición del Excel maestro (CC-020) y el ámbito `operativo` / `metodologico` de cada campo a la autoridad de DICCIONARIO_CAMPOS (CC-008). Sin otros cambios respecto de v2.1.
@@ -222,6 +224,66 @@ Los diagramas de decisión y `docs/methodology/` forman parte del paquete como d
 - MATRICES_CALCULO combina resultados parciales previamente obtenidos. No define umbrales sobre variables crudas.
 - Catálogos: "un catálogo, un solo lugar". DICCIONARIO_CAMPOS indica qué catálogo utiliza cada campo; los valores de catálogos jerárquicos, compartidos o suficientemente extensos pueden residir en LISTAS; los mismos valores no se mantienen simultáneamente y de forma independiente en DICCIONARIO_CAMPOS y LISTAS.
 - Roles y permisos: solo las PR correspondientes (PR-003, PR-004). Ni la hoja USUARIOS ni la columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS son fuente de roles.
+- Cada pieza de lógica existe en un único lugar; los demás artefactos la referencian mediante su identificador.
+
+### Relación con el modelo de datos
+
+El modelo de datos de la plataforma debe implementar de forma consistente el contrato funcional definido por el paquete metodológico. DICCIONARIO_CAMPOS define el significado y comportamiento funcional de los campos, pero no constituye por sí solo el esquema físico de la base de datos. PK, FK, normalización, relaciones, índices, constraints técnicos, autenticación y otros elementos pertenecen al diseño de datos/backend. Las hojas operativas tampoco constituyen el esquema físico de la base de datos.
+
+Versionado, aprobación y control de cambios: `docs/workflow.md` §14. Estado de transición hasta la primera versión publicada (2.0.0): `docs/methodology/00-index.md`.
+
+Afecta:
+- rules-engine
+- backend
+- base de datos
+- frontend
+- tests
+- documentación
+
+## PR-002 — Fuente de metodología (v3.0)
+Estado: vigente
+Versión: 3.0
+Reemplaza: PR-002 v2.2
+Origen: CC-028, CC-030, CC-034, CC-035
+Motivo: el Excel auditado es la única fuente metodológica y cambió su composición (CC-028); los diagramas de decisión quedan fuera del paquete (CC-030); LISTAS ya no contiene una tabla de códigos (CC-034); DICCIONARIO_CAMPOS ya no registra el ámbito de cada campo (CC-028 P8, CC-035).
+
+La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
+
+- Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (nombre fijo), con la composición indicada más abajo. Desde CC-028 contiene el Excel auditado el 2026-10-18 y es la única fuente metodológica: no se mantienen copias ni versiones paralelas;
+- documentación metodológica en `docs/methodology/` (versión vigente, explicación e historial), que documenta la versión sin definir reglas.
+
+**El Excel maestro es la única fuente de verdad.** Si `docs/methodology/` difiere del Excel, manda el Excel y la documentación se corrige mediante un CC (`docs/workflow.md` §14).
+
+Los diagramas de decisión (`docs/excel/diagramas/`) **no forman parte del paquete** desde 2.0.0 (CC-030, opción B). Pueden actualizarse a partir del Excel como ilustración, pero no son fuente: si un diagrama difiere del Excel, manda el Excel.
+
+La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define. No son fuente metodológica: el código, `database/schema.sql`, el prototipo `marybaxmann/Valpo-Verde-Conecta` ni Groundzy. Las referencias técnicas externas (p. ej. ISA, Smiley y Fraedrich) son fundamento citado dentro del paquete, no fuente directa.
+
+`docs/methodology/` documenta solo la versión vigente. Las versiones anteriores se conservan como historial marcadas como reemplazadas y nunca se interpretan como vigentes.
+
+Solo se implementan especificaciones y reglas de una versión publicada del paquete (CC-030, CC-035). No se inventan umbrales, categorías, ramas de decisión, fórmulas ni matrices.
+
+### Composición del Excel maestro
+
+| Categoría | Hojas | Carácter |
+|---|---|---|
+| Núcleo normativo / metodológico | DICCIONARIO_CAMPOS, REGLAS_GENERALES, REGLAS_INDICADORES, MATRICES_CALCULO | Fuente de verdad metodológica. REGLAS_GENERALES reúne las reglas transversales de registro (preguardado y finalización, ausencia, historial y vigencia, roles, revisión de mantenimiento, reinspección), que no se repiten campo por campo (AMD-15). |
+| Gobernanza | VERSION | Registro de versiones del paquete. |
+| Menús auxiliares | LISTAS | Valores de los menús desplegables y su jerarquía (AMD-30). No contiene códigos: los códigos persistentes los define el backend (PR-021, CC-034). |
+| Módulo metodológico en propuesta | INDICES | Pendiente de revisión (CC-016; CC-027 DM-09). No es fuente normativa vigente; sus fórmulas no son implementables hasta adoptarse mediante un CC específico. Mientras permanezca en propuesta, sus cambios no modifican `rule_version`. |
+| Anexos / modelos operativos no normativos | ARBOLES, REGISTRO_EVALUACION, INSPECCION, ORDENES DE TRABAJO, MANTENIMIENTO, INCIDENCIA, USUARIOS, PROYECTOS, MIEMBROS_PROYECTO, SECTORES, CATALOGO_ESPECIES | Representan la captura y organización operacional de la información. No son fuente de verdad para reglas, dominios, roles ni resultados calculados. Deben conformarse al núcleo normativo; sus cambios no generan versión del paquete. |
+
+Ya no forman parte del Excel maestro: MEDICIONES_DENDROMETRICAS (CC-028 P3), Hoja4 (AMD-33), la tabla de códigos de LISTAS (columnas P:X de CC-004) y la columna `ambito` de DICCIONARIO_CAMPOS (CC-028 P8).
+
+`docs/methodology/` documenta y referencia las reglas ejecutables del Excel; no las duplica.
+
+### Autoridad
+
+- DICCIONARIO_CAMPOS es la autoridad funcional sobre cada campo: definición, tipo de dato funcional, dominio y etiquetas de sus valores, unidad, obligatoriedad, condición de activación, origen manual o calculado, dependencias y fórmula aritmética de variables derivadas cuando corresponda. No repite umbrales de clasificación (REGLAS_INDICADORES), rangos de agregación (MATRICES_CALCULO) ni definiciones de roles y permisos (PR correspondientes). Cuando un resultado depende de R01–R04, M01–M05 u otra regla agregadora, referencia su ID sin volver a escribir la lógica.
+- REGLAS_GENERALES contiene las reglas transversales de registro, historial y flujo que aplican a varios campos u hojas.
+- REGLAS_INDICADORES contiene las condiciones o umbrales sobre variables que producen una clasificación parcial (Despreciable / Sin afectación, Leve, Moderada, Severa, No determinado, No aplica) y los ajustes de clasificación cuando correspondan.
+- MATRICES_CALCULO combina resultados parciales previamente obtenidos. No define umbrales sobre variables crudas.
+- Catálogos: "un catálogo, un solo lugar". DICCIONARIO_CAMPOS define los valores permitidos y sus etiquetas; LISTAS los organiza para los menús. El código persistente de cada valor lo define el backend (PR-021) y no se mantiene en el Excel.
+- Roles y permisos: solo las PR correspondientes (PR-003, PR-004, PR-019, PR-020). Ni la hoja USUARIOS ni la columna "¿Quién lo ingresa?" de DICCIONARIO_CAMPOS son fuente de roles.
 - Cada pieza de lógica existe en un único lugar; los demás artefactos la referencian mediante su identificador.
 
 ### Relación con el modelo de datos
@@ -871,9 +933,11 @@ Afecta:
 - base de datos
 - permisos
 
-## PR-006 — Registro básico del árbol (v8.0)
-Estado: vigente
+## PR-006 — Registro básico del árbol (v8.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 8.0
+Reemplazada por: PR-006 v9.0
+Motivo del reemplazo: sus pendientes P1 a P4 quedaron resueltos por CC-028, CC-031 y CC-032.
 Reemplaza: PR-006 v7.0
 Origen: CC-026
 Motivo: auditoría del modelo de datos (2026-10-18): el alta no exige medición; los datos técnicos los registra el Inspector en la inspección; los valores se hacen vigentes al completar la OT (ADR-016 v2.0).
@@ -916,6 +980,56 @@ Las listas siguientes describen la información capturada por la interfaz y su c
 - P4: categorías de configuración de fustes y regla de DAP equivalente.
 
 Esta PR no modifica `schema.sql`.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+
+## PR-006 — Registro básico del árbol (v9.0)
+Estado: vigente
+Versión: 9.0
+Reemplaza: PR-006 v8.0
+Origen: CC-028, CC-031, CC-032
+Motivo: cerrar los pendientes P1 a P4 de la v8.0 con las resoluciones de CC-028 y las decisiones de la Fase 1 (2026-10-20).
+
+Las listas siguientes describen la información capturada por la interfaz y su contrato funcional (DICCIONARIO_CAMPOS), no columnas físicas de la base de datos.
+
+### Vías de registro
+
+- **Alta municipal:** el Usuario municipal registra el árbol con el nombre común o científico y la ubicación (coordenadas UTM, sector y descripción del lugar). Puede agregar de forma opcional el origen biogeográfico, que el Inspector confirma o corrige mediante OT. No se exige medición.
+- **Registro en levantamiento:** el Inspector registra árboles nuevos durante una OT de Levantamiento, sin alta municipal previa.
+- Si el árbol ya existe, se reutiliza su identificador y se agrega una nueva evaluación; no se duplica el árbol.
+- Todo árbol registrado comienza como Presente, aunque su evaluación técnica esté pendiente. Sin evaluación vigente, la ficha muestra "Evaluación pendiente".
+
+### Identificación y ubicación
+
+- Código, fecha de registro y registrado por: automáticos.
+- Proyecto e `id_sector`: el árbol hereda la delimitación territorial del proyecto (`id_sector`, no visible en el formulario, usado en los índices territoriales). `sector` es el texto descriptivo del barrio o sector y no se reemplaza por `id_sector`.
+- Coordenadas UTM de ingreso manual y obligatorio (`utm_este`, `utm_norte`). `huso` = 19S y `datum` = WGS84 son fijos y los asigna el Sistema (CC-028 P1). Descripción del lugar en `ubicacion_descriptiva`.
+- Como ayuda, al marcar el punto en el mapa del formulario la plataforma rellena `utm_este` y `utm_norte`, que siguen siendo editables; se guardan las coordenadas UTM del formulario (CC-032).
+- La geometría para el mapa y las consultas espaciales se deriva de las coordenadas UTM y es de solo lectura (ADR-010 v3.0).
+- `estado_presencia` (Presente / Talado / Retirado) y `fecha_cambio_estado_presencia` se derivan de las OT completadas y de los MANTENIMIENTO aprobados (PR-020); no son datos editables del árbol.
+- Las modificaciones posteriores al alta las realiza el Inspector mediante OT y se hacen vigentes al completarla.
+
+### Especie
+
+- `nombre_comun` es un dato del árbol (CC-028 P2).
+- En el alta se acepta el nombre común o el científico. Para finalizar la inspección se exigen `especie_cientifica` y `nombre_comun`; no se admiten "Género sp." ni "No determinado".
+- El Inspector confirma o corrige la identificación; la corrección se hace vigente al completar la OT.
+- Solo el Inspector incorpora especies a CATALOGO_ESPECIES (`especie_cientifica`, `genero`, `familia`). El árbol se vincula por `especie_cientifica` normalizada. La ausencia de la especie en el catálogo no bloquea el alta.
+
+### Datos técnicos e historial (ADR-016 v3.0)
+
+- Los registra el Inspector en la inspección, mediante OT: origen biogeográfico (opcional en el alta, obligatorio para finalizar la inspección), `multifustal`, `numero_fustes`, `dap_fustes_cm` y `dap_cm` según la fórmula de DICCIONARIO_CAMPOS (CC-028 P4; no se usa `configuracion_fustes`), altura total (`altura_total_m` > 0), diámetros de copa norte–sur y este–oeste (el diámetro medio se calcula), altura de primera rama, altura de base de copa viva y clase de edad, que es obligatoria (CC-028 P5).
+- Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
+- No se sobrescribe el historial: la ficha muestra el valor vigente y la plataforma conserva cada versión anterior vinculada a la inspección que la registró.
+- Los valores nuevos se hacen vigentes al completar toda la OT. El valor vigente es el de la OT completada más recientemente según `fecha_completada_ot` cuya inspección no esté anulada, aunque se haya realizado antes que otra.
+- Corrección y anulación: según `estado_registro` de la inspección (PR-009 v4.0, CC-031).
+- Una medición aplicable pendiente deja la inspección preguardada (PR-009 v4.0); no equivale a cero ni a "No presenta". "No presenta" se usa para características inexistentes y desactiva el valor numérico.
+
+Esta PR no modifica `schema.sql`. El modelo físico se diseña en la Fase 3 (CC-032).
 
 Afecta:
 - frontend
@@ -1042,9 +1156,11 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-009 — Inspecciones (v3.0)
-Estado: vigente
+## PR-009 — Inspecciones (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
+Reemplazada por: PR-009 v4.0
+Motivo del reemplazo: no definía la corrección ni la anulación de una inspección (CC-031) y enviaba las fechas a un "calendario del módulo" que no existe (CC-037).
 Reemplaza: PR-009 v2.0
 Origen: CC-026
 Motivo: definir quién realiza las inspecciones, su ciclo de preguardado y su vigencia (auditoría del modelo de datos, 2026-10-18).
@@ -1060,6 +1176,44 @@ Las inspecciones:
 - sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
 - `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
 - la plataforma sugiere `fecha_proxima_inspeccion` y `fecha_proximo_monitoreo` según `nivel_riesgo` (inicio del rango — inspección: Bajo 24 meses, Moderado 12 meses, Alto 1 a 3 meses, Extremo 1 a 4 semanas; monitoreo: Bajo 12 meses, Moderado 3 a 6 meses, Alto 2 a 4 semanas, Extremo inmediato y continuo). El Inspector puede ajustarlas registrando `justificacion_ajuste_fecha`. Al llegar la fecha de inicio, se envía al calendario del módulo.
+
+En el Excel auditado la entidad se llama INSPECCION.
+
+Una inspección finalizada no se modifica retroactivamente.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- rules-engine
+
+## PR-009 — Inspecciones (v4.0)
+Estado: vigente
+Versión: 4.0
+Reemplaza: PR-009 v3.0
+Origen: CC-031, CC-037
+Motivo: definir la corrección y anulación de una inspección (CC-031) y reemplazar el envío al "calendario del módulo" por un recordatorio (CC-037).
+
+Las inspecciones:
+- pertenecen a un árbol y a una OT de Inspección (Evaluación inicial, Reevaluación, Evaluación instrumental, Monitoreo o Levantamiento). Una OT de Levantamiento puede abarcar varios árboles aún no identificados al crearla; su alcance es el proyecto y el área de trabajo descrita en la OT;
+- las realiza el Inspector (PR-019 v1.1); no las realizan el Administrador ni el Usuario municipal;
+- tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado; `Finalizado` cuando están completas; `Anulado` cuando el Inspector anula una inspección finalizada (CC-031). Preguardado y Finalizado equivalen a `borrador` y `completada` de ADR-007;
+- admiten guardado parcial;
+- "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
+- exigen cuatro fotografías nuevas (PR-010 v3.0);
+- al finalizar quedan inmutables y conservan `rule_version`;
+- sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
+- `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
+- la plataforma sugiere `fecha_proxima_inspeccion` y `fecha_proximo_monitoreo` según `nivel_riesgo` (inicio del rango — inspección: Bajo 24 meses, Moderado 12 meses, Alto 1 a 3 meses, Extremo 1 a 4 semanas; monitoreo: Bajo 12 meses, Moderado 3 a 6 meses, Alto 2 a 4 semanas, Extremo inmediato y continuo). El Inspector puede ajustarlas registrando `justificacion_ajuste_fecha`.
+
+Recordatorio (CC-037): SIVU no agenda automáticamente. Al llegar el inicio del rango, la fecha (la ajustada, si existe) aparece como recordatorio en la lista de próximas inspecciones y monitoreos del proyecto, con el inicio y el término del rango. Desde esa lista el Usuario municipal crea y programa la OT.
+
+Corrección y anulación (CC-031):
+- Mientras la inspección está Preguardado, el Inspector modifica libremente todos sus datos, incluidos los datos técnicos del árbol registrados en ella.
+- Una inspección Finalizado no se modifica. Si contiene un error, el Inspector la anula registrando el motivo; el Sistema registra quién y cuándo.
+- La inspección anulada se conserva en el historial con todos sus valores y deja de considerarse para la vigencia.
+- Los datos correctos se registran en una nueva inspección: en la misma OT si todavía no está completada; si lo está, en una nueva OT.
+- Solo el Inspector anula inspecciones. El Usuario municipal, el Administrador y el Encargado de mantención no anulan.
 
 En el Excel auditado la entidad se llama INSPECCION.
 
@@ -1095,9 +1249,11 @@ Afecta:
 - storage
 - base de datos
 
-## PR-010 — Fotografías (v2.0)
-Estado: vigente
+## PR-010 — Fotografías (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: PR-010 v3.0
+Motivo del reemplazo: CC-028 (P9) resolvió el límite de fotografías y CC-036 definió la fotografía del reporte ciudadano.
 Reemplaza: PR-010 v1.0
 Origen: CC-026
 Motivo: vistas fotográficas obligatorias por inspección y evidencia en mantenimiento e incidencias (auditoría del modelo de datos, 2026-10-18).
@@ -1110,6 +1266,26 @@ Motivo: vistas fotográficas obligatorias por inspección y evidencia en manteni
 - Las imágenes viven en Supabase Storage; PostgreSQL almacena metadatos (ADR-011).
 
 Pendiente (CC-026 P9): el límite de 20 fotografías por árbol de la v1.0 no fue confirmado.
+
+Afecta:
+- frontend
+- backend
+- storage
+- base de datos
+
+## PR-010 — Fotografías (v3.0)
+Estado: vigente
+Versión: 3.0
+Reemplaza: PR-010 v2.0
+Origen: CC-028, CC-036
+Motivo: CC-028 (P9) resolvió que no hay un límite fijo de fotografías y CC-036 definió la fotografía del reporte ciudadano.
+
+- Se permiten varias fotografías por árbol y por inspección, sin un límite fijo (CC-028 P9).
+- Para finalizar una inspección se exigen fotografías nuevas de cuatro vistas: árbol completo, base, tronco y copa. Las fotografías anteriores no cumplen las vistas obligatorias de una nueva inspección.
+- Se conserva el historial fotográfico vinculado a cada inspección.
+- Mantenimiento: la evidencia fotográfica de la ejecución es obligatoria para completar la OT (PR-020 v1.1).
+- Incidencias: el reportante carga al menos una fotografía (jpg o png) en el formulario ciudadano público (PR-022 v1.0).
+- Las imágenes viven en Supabase Storage; PostgreSQL almacena metadatos (ADR-011).
 
 Afecta:
 - frontend
@@ -1482,9 +1658,11 @@ El backend es fuente de verdad para lógica de negocio y cálculos.
 Afecta:
 - arquitectura completa
 
-## PR-018 — Autenticación
-Estado: vigente
+## PR-018 — Autenticación (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: PR-018 v3.0
+Motivo del reemplazo: permitía que las escrituras llegaran a la base con el JWT del usuario; desde CC-033 (DA-01) las escrituras pasan solo por el backend.
 
 Login mediante Supabase Auth desde frontend.
 
@@ -1517,9 +1695,46 @@ Afecta:
 - backend
 - seguridad
 
-## PR-019 — Rol Inspector (v1.0)
+## PR-018 — Autenticación (v3.0)
 Estado: vigente
+Versión: 3.0
+Reemplaza: PR-018 v2.0
+Origen: CC-033
+Motivo: las escrituras pasan solo por el backend (DA-01), que escribe con la credencial de servicio después de autorizar (ADR-014 v2.0).
+
+Login mediante Supabase Auth desde frontend.
+
+No implementar `POST /api/auth/login` en Express.
+
+Backend valida JWT recibido.
+
+La autorización tiene dos capas: backend (`authorization.service.ts`) y RLS en Supabase/Postgres.
+
+- **Lecturas:** el backend consulta Supabase con el JWT del usuario (`createUserScopedClient`) y las RLS filtran por proyecto y rol.
+- **Escrituras:** solo por el backend. Después de su autorización funcional y de las validaciones, el backend escribe con la credencial de servicio. Las RLS no permiten escrituras directas a los roles de sesión (`authenticated`, `anon`) en las tablas de datos.
+- **Autor:** el backend registra explícitamente quién crea o modifica cada fila con el usuario autenticado; no depende de valores por defecto de la sesión.
+- **Formulario ciudadano (PR-022):** endpoint público del backend, sin sesión, que escribe con la credencial de servicio después de validar y limitar las solicitudes.
+
+`SUPABASE_SERVICE_ROLE_KEY` (credencial de servicio) solo existe en las variables de entorno del servidor del backend. Nunca llega al frontend y nunca queda en el repositorio: no aparece en el código, en `.env.example`, en registros ni en respuestas de la API.
+
+Contrato del frontend (repositorio separado, `valpo-verde-frontend`):
+- obtiene su sesión/JWT mediante Supabase Auth directamente;
+- envía `Authorization: Bearer <JWT>` al backend en cada request;
+- NUNCA usa ni contiene la credencial de servicio; puede usar la `anon`/publishable key para su propia sesión de Supabase Auth;
+- no escribe directamente en Supabase: toda escritura pasa por la API;
+- el backend determina `req.user` y los permisos; el frontend no decide seguridad, solo adapta la UI según el rol confirmado (p. ej. vía `GET /api/auth/me`).
+
+Afecta:
+- frontend
+- backend
+- seguridad
+- RLS
+
+## PR-019 — Rol Inspector (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-019 v1.1
+Motivo del reemplazo: dejaba pendiente el identificador interno (CC-032) y no incluía la anulación de inspecciones (CC-031).
 Origen: CC-026
 Motivo: definir el rol técnico (auditoría del modelo de datos, 2026-10-18; resuelve la parte de CC-015 sobre el Inspector).
 
@@ -1546,9 +1761,43 @@ Afecta:
 - permisos
 - RLS
 
-## PR-020 — Rol Encargado de mantención y revisión de mantenimiento (v1.0)
+## PR-019 — Rol Inspector (v1.1)
 Estado: vigente
+Versión: 1.1
+Reemplaza: PR-019 v1.0
+Origen: CC-031, CC-032
+Motivo: fijar el identificador interno del rol (CC-032) y la anulación de inspecciones (CC-031).
+
+- Identificador interno: `inspector`.
+- Etiqueta de interfaz: `Inspector`. Es el término único del rol técnico; no se usa "Inspector Municipal".
+- Rol global: un usuario tiene un solo rol (AMD-31).
+
+Puede:
+- realizar las inspecciones de las OT de Inspección, incluida la OT de Levantamiento (PR-009 v4.0);
+- registrar árboles nuevos durante una OT de Levantamiento, sin alta municipal previa (PR-006 v9.0);
+- registrar y modificar todos los datos técnicos del árbol y de la evaluación mediante OT;
+- anular una inspección finalizada, con motivo (PR-009 v4.0);
+- confirmar o corregir la especie e incorporar especies a CATALOGO_ESPECIES;
+- aprobar o rechazar las ejecuciones de mantenimiento cuya OT requiere revisión (PR-020 v1.1);
+- ajustar `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad` con justificación (PR-008 v2.0);
+- ajustar las fechas sugeridas de próxima inspección y monitoreo con justificación (PR-009 v4.0).
+
+No realiza:
+- creación de proyectos ni gestión de miembros;
+- creación de órdenes de trabajo;
+- modificación de resultados calculados fuera del ajuste justificado de PR-008 v2.0.
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-020 — Rol Encargado de mantención y revisión de mantenimiento (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-020 v1.1
+Motivo del reemplazo: dejaba pendiente el identificador interno (CC-032).
 Origen: CC-026
 Motivo: definir la ejecución de mantenimiento y cuándo la revisa el Inspector (auditoría del modelo de datos, 2026-10-18; resuelve la parte de CC-015 sobre "Encargado de mantención").
 
@@ -1564,6 +1813,93 @@ Revisión del Inspector:
 - Con revisión: el Sistema completa la OT cuando el Inspector registra `estado_revision = Aprobado`.
 - Rechazo: la OT vuelve a En ejecución; la corrección se registra como un nuevo registro de MANTENIMIENTO con el mismo `id_ot` y se conservan los anteriores.
 - `estado_presencia` cambia a Talado o Retirado solo después de la aprobación del Inspector.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+- RLS
+
+## PR-020 — Rol Encargado de mantención y revisión de mantenimiento (v1.1)
+Estado: vigente
+Versión: 1.1
+Reemplaza: PR-020 v1.0
+Origen: CC-032
+Motivo: fijar el identificador interno del rol (CC-032).
+
+- Identificador interno: `encargado_mantencion`.
+- Etiqueta de interfaz: `Encargado de mantención`.
+- Rol global: un usuario tiene un solo rol (AMD-31).
+
+El Encargado de mantención registra la ejecución de las OT de Mantenimiento que tiene asignadas y su evidencia fotográfica, que es obligatoria.
+
+Revisión del Inspector:
+- La define el Usuario municipal al crear la OT (`requiere_revision_inspector`; valor inicial No).
+- Tala y Retiro_tocón exigen siempre revisión; el Sistema fija Sí y no permite cambiarlo.
+- Sin revisión: el Sistema completa la OT al registrarse la ejecución con `resultado` = Ejecutado completamente y la evidencia. Con Ejecutado parcialmente o No ejecutado, la OT permanece En ejecución.
+- Con revisión: el Sistema completa la OT cuando el Inspector registra `estado_revision = Aprobado`.
+- Rechazo: la OT vuelve a En ejecución; la corrección se registra como un nuevo registro de MANTENIMIENTO con el mismo `id_ot` y se conservan los anteriores.
+- `estado_presencia` cambia a Talado o Retirado solo después de la aprobación del Inspector. Es un valor derivado, no un dato editable del árbol (PR-006 v9.0).
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+- RLS
+
+## PR-021 — Catálogos y códigos persistentes (v1.0)
+Estado: vigente
+Versión: 1.0
+Origen: CC-034
+Motivo: el Excel maestro ya no contiene la tabla de códigos de LISTAS (CC-004) y no la tendrá; los códigos persistentes se definen en el backend.
+
+- El Excel maestro define los valores permitidos de cada campo y sus etiquetas (DICCIONARIO_CAMPOS, columna "Unidad / valores"; LISTAS para los menús y su jerarquía).
+- El backend define el **código persistente** de cada valor, en un único registro de catálogos que reemplaza a `src/services/rules/moduleCatalogs.ts`. Cada valor registra: catálogo, código, etiqueta, orden (solo escalas), valor padre (solo catálogos jerárquicos), estado (`vigente`, `reemplazado` o `descartado`) y el CC que lo creó o modificó.
+- Formato del código: snake_case ASCII (`^[a-z0-9_]+$`), único dentro de su catálogo. Un código nunca se reutiliza ni se renombra.
+- **Los códigos ya guardados en la base de datos no cambian** (por ejemplo, las acciones de mantenimiento y los estados de OT e incidencias).
+- Un cambio de etiqueta en el Excel no cambia el código. Un valor que deja de usarse se marca `reemplazado` o `descartado`; no se borra mientras haya datos que lo referencien.
+- Un test automático compara las etiquetas del registro con DICCIONARIO_CAMPOS y LISTAS del Excel del repositorio y falla si difieren. El sistema no lee el Excel mientras funciona.
+- La base de datos valida los códigos guardados (diseño físico en la Fase 3).
+- El frontend obtiene los catálogos desde la API; no los escribe en su código.
+- **Sí/No** es un dominio base, no un catálogo.
+
+Reemplaza a `docs/methodology/convenciones-catalogos.md` (CC-004) en lo relativo a la tabla de códigos de LISTAS y a las referencias `LISTAS:<id_catalogo>`.
+
+Afecta:
+- backend
+- base de datos
+- API
+- frontend
+- tests
+
+## PR-022 — Incidencias ciudadanas y datos del reportante (v1.0)
+Estado: vigente
+Versión: 1.0
+Origen: CC-036
+Motivo: definir el canal de reporte ciudadano, la protección de los datos del reportante y el tratamiento de "Requiere antecedentes" (Fases 1 y 2, 2026-10-20).
+
+Ingreso:
+- Toda incidencia entra por el código QR de un árbol (AMD-34), mediante un formulario público, sin cuenta ciudadana.
+- `id_arbol` y `ubicacion` se obtienen del árbol del QR. `origen_reporte` = Comunidad.
+- El reportante ingresa nombre (máximo 100 caracteres), RUT, tipo de incidencia, descripción y al menos una fotografía (PR-010 v3.0).
+- El RUT se valida en estructura y dígito verificador.
+- El endpoint público limita la cantidad de solicitudes y valida las fotografías. Escribe por el backend con la credencial de servicio (PR-018 v3.0).
+
+Visibilidad del nombre y del RUT:
+- Solo los ve el Usuario municipal miembro del proyecto del árbol.
+- No los ven el Administrador, el Inspector ni el Encargado de mantención. La API no los entrega en sus respuestas a esos roles, ni aparecen en exportaciones ni registros.
+
+Conservación del nombre y del RUT:
+- Se conservan hasta que la incidencia se aprueba o se rechaza (`resultado_revision` = Validada o Descartada), y en ese momento se eliminan los dos.
+- Con `resultado_revision` = Requiere antecedentes se conservan hasta la resolución final (Validada o Descartada).
+- No se registra ningún dato de contacto del reportante.
+
+Requiere antecedentes:
+- No significa pedirle información al reportante: el Inspector confirma en terreno el estado del árbol.
+- El Usuario municipal crea una OT de Inspección del árbol vinculada a la incidencia mediante `id_incidencia`; elige la `Accion_solicitada` entre las de Inspección (no se fija). Con el resultado de esa inspección registra Validada o Descartada.
+- Si la incidencia validada requiere mantenimiento, la OT de Mantenimiento también se vincula con `id_incidencia`.
 
 Afecta:
 - frontend

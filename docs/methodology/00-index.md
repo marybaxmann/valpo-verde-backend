@@ -2,15 +2,14 @@
 
 ## Propósito
 
-Este directorio documenta la metodología técnica de Valpo Verde y su versión, como parte del paquete metodológico definido en PR-002 v2.2.
+Este directorio documenta la metodología técnica de Valpo Verde y su versión, como parte del paquete metodológico definido en PR-002 v3.0.
 
 La fuente de verdad metodológica es un paquete versionado y sincronizado compuesto por:
 
-- Excel maestro (nombre fijo); la composición y el carácter de cada hoja (núcleo normativo, gobernanza, catálogo subordinado, módulo en propuesta y anexos operativos no normativos) se definen en PR-002 v2.2, sección "Composición del Excel maestro";
-- diagramas de decisión de la misma versión;
-- la documentación metodológica de este directorio.
+- Excel maestro (nombre fijo), **única fuente de verdad**; la composición y el carácter de cada hoja se definen en PR-002 v3.0, sección "Composición del Excel maestro";
+- la documentación metodológica de este directorio, que documenta la versión sin definir reglas.
 
-No existe precedencia entre estos artefactos. Una contradicción entre ellos es una inconsistencia: se abre un CC (`docs/workflow.md` §14), se determina cuál representa la decisión metodológica aprobada y se sincronizan todos los artefactos afectados.
+Si esta documentación difiere del Excel, manda el Excel y la documentación se corrige mediante un CC (`docs/workflow.md` §14). Los diagramas de decisión no forman parte del paquete (CC-030): son ilustraciones que pueden actualizarse a partir del Excel.
 
 La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define.
 
@@ -24,16 +23,16 @@ Versión vigente del paquete metodológico: **ninguna publicada todavía**. La p
 
 Hasta su publicación rige el siguiente estado de transición (CC-001):
 
-1. El Excel maestro (`docs/excel/Base de Datos Valpo Verde.xlsx`) contiene, desde CC-028, el Excel auditado el 2026-10-18 y es la única fuente metodológica. Incluye REGLAS_GENERALES, REGLAS_INDICADORES (98 reglas) y la hoja VERSION, que registra el 2.0.0 en preparación sin versión publicada. No existe una `rule_version` publicada (C1 pendiente). El contenido anterior del Excel queda solo en el historial de git.
-2. Los diagramas disponibles en `docs/excel/diagramas/` son exportaciones en imagen; los archivos fuente `.drawio` no están en el repositorio.
+1. El Excel maestro (`docs/excel/Base de Datos Valpo Verde.xlsx`) contiene, desde CC-028, el Excel auditado el 2026-10-18 y es la única fuente metodológica. Incluye REGLAS_GENERALES, REGLAS_INDICADORES (98 reglas) y la hoja VERSION, que registra el 2.0.0 en preparación sin versión publicada. No existe una `rule_version` publicada. CC-030 decidió publicar 2.0.0 (`rule_version` 2.0) antes de implementar; la publicación requiere la aprobación explícita de la autora. El contenido anterior del Excel queda solo en el historial de git.
+2. En `docs/excel/diagramas/` solo el diagrama de consolidación (R01–R04, M01–M03) tiene archivo fuente `.drawio`; los diagramas por componente son imágenes sin fuente. Ninguno refleja todavía CC-027 (R03 con defoliación, cavidades 09 y 10, M04 y M05). Quedan fuera del paquete 2.0.0 (CC-030, opción B): son ilustraciones, no fuente.
 3. Los documentos `01-roots-base.md` a `05-infrastructure.md` (versión 1.1) y las secciones de este índice marcadas como **CONTENIDO TRANSITORIO** corresponden a la metodología textual previa. No incorporan decisiones metodológicas posteriores ni el Excel maestro. Se conservarán como historial, marcados como reemplazados, cuando se publique el paquete 2.0.0.
 4. Las frases de esos documentos que declaran que la especificación textual prevalece sobre el diagrama quedan sin efecto por PR-002 (v2.0 y siguientes).
 5. Mientras no exista una versión publicada no hay reglas vigentes implementables: no se implementa metodología en `services/rules/` (PR-002 v2.2, PR-011 v2.0).
 6. Las decisiones metodológicas ya tomadas y aún no sincronizadas se registran como CC en `docs/registro-cambios.md`. No se incorporan a estos documentos fuera de su CC.
-7. La hoja INDICES es un módulo metodológico en propuesta (CC-016): no es fuente normativa vigente y sus fórmulas no son implementables. Las hojas ARBOLES, MEDICIONES_DENDROMETRICAS, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO y USUARIOS son anexos operativos no normativos (PR-002 v2.2, CC-003); las contradicciones detectadas en ellas están registradas como CC y no se corrigen fuera de su CC.
-8. Desde CC-008, DICCIONARIO_CAMPOS registra el ámbito de cada campo (`operativo` o `metodologico`). Las especificaciones de ámbito `operativo` pueden pasar a implementación desde `FUENTE SINCRONIZADA`, sin esperar la publicación del paquete (`docs/workflow.md` §14.12). Esto no habilita ninguna regla metodológica: el punto 5 se mantiene.
-9. El modelo conceptual ÁRBOL / MEDICIONES_DENDROMETRICAS (CC-020, ADR-016; actualizado por CC-026 y ADR-016 v2.0, ver la nota al inicio del documento) está documentado en `modelo-arbol-medicion.md`. Forma parte del paquete 2.0.0 en preparación; no es contenido transitorio.
-10. CC-028 resuelve a favor del Excel auditado los conflictos P1–P9 de CC-026: entre otros, la hoja MEDICIONES_DENDROMETRICAS y la columna `ambito` de DICCIONARIO_CAMPOS ya no forman parte del Excel maestro. Los puntos 7 a 9 y los documentos que los desarrollan quedan reemplazados en lo que contradigan, hasta su actualización (AM-07).
+7. La hoja INDICES es un módulo metodológico en propuesta (CC-016): no es fuente normativa vigente y sus fórmulas no son implementables. Las hojas ARBOLES, REGISTRO_EVALUACION, INSPECCION, ORDENES DE TRABAJO, MANTENIMIENTO, INCIDENCIA, USUARIOS, PROYECTOS, MIEMBROS_PROYECTO, SECTORES y CATALOGO_ESPECIES son anexos operativos no normativos (PR-002 v3.0, CC-003); las contradicciones detectadas en ellas están registradas como CC y no se corrigen fuera de su CC.
+8. ~~Desde CC-008, DICCIONARIO_CAMPOS registra el ámbito de cada campo y las especificaciones operativas pueden implementarse antes de publicar.~~ Sin efecto por CC-028 (P8) y CC-035: no hay columna `ambito` ni excepción operativa. Ninguna especificación ni regla se implementa antes de publicar 2.0.0 (CC-030).
+9. El modelo conceptual ÁRBOL / datos técnicos con historial por inspección está en ADR-016 v3.0 y PR-006 v9.0 (CC-026, CC-028, CC-031). `modelo-arbol-medicion.md` describe el modelo anterior de CC-020 y se conserva como historial (reemplazado).
+10. CC-028 resuelve a favor del Excel auditado los conflictos P1–P9 de CC-026: entre otros, la hoja MEDICIONES_DENDROMETRICAS y la columna `ambito` de DICCIONARIO_CAMPOS ya no forman parte del Excel maestro. Los puntos 7 a 9 y los documentos que los desarrollan se actualizaron en AM-07 (Fase 2, 2026-10-20).
 
 ---
 
@@ -261,7 +260,7 @@ La metodología técnica tiene su propia regla (abajo). Para producto, funcional
 
 ### Metodología técnica
 
-Fuente única: el paquete metodológico vigente (PR-002 v2.0). Sus artefactos (MATRICES_CALCULO, DICCIONARIO_CAMPOS, REGLAS_INDICADORES, VERSION, diagramas de decisión y este directorio) no tienen precedencia entre sí: una contradicción entre ellos se trata como inconsistencia mediante un CC (`docs/workflow.md` §14).
+Fuente única: el Excel maestro del paquete vigente (PR-002 v3.0). Este directorio lo documenta; los diagramas de decisión no forman parte del paquete (CC-030). Una diferencia con el Excel se corrige mediante un CC (`docs/workflow.md` §14).
 
 No son fuente metodológica:
 
@@ -290,7 +289,7 @@ Jerarquía única (PR-016 v4.0, CC-021): metodología y fuentes vigentes → dec
 - salida consolidada para `SL < 33 %` (raíces/base y tronco);
 - fórmula exacta de `SL` (pendiente de validación);
 - fórmula de agregación del puntaje del tronco (no explícita en su diagrama; en raíces/base, copa/ramas e infraestructura es suma simple vigente);
-- formato definitivo de `rule_version`.
+- ~~formato definitivo de `rule_version`~~ (resuelto: `workflow.md` §14.10 y CC-030).
 
 La estructura actual de `database/schema.sql` respecto de `probability_thresholds` refleja una decisión anterior y no debe utilizarse como fuente para cerrar la conversión puntaje → probabilidad de falla. Esa decisión permanece pendiente hasta consolidar la metodología.
 

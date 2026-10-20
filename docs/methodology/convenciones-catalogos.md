@@ -1,5 +1,7 @@
 # Convenciones de catálogos (LISTAS ↔ DICCIONARIO_CAMPOS)
 
+> **Reemplazado en lo relativo a códigos por PR-021 (CC-034, 2026-10-20).** El Excel maestro ya no contiene la tabla de códigos de LISTAS (columnas P:X) ni las referencias `LISTAS:<id_catalogo>`: los códigos persistentes los define el backend (PR-021) y LISTAS queda como hoja de menús (AMD-30). Lo que sigue se conserva como historial de CC-004.
+
 Origen: CC-004 (aprobado por `marybaxmann`, 2026-10-04). Forma parte del
 paquete metodológico 2.0.0, todavía **en preparación**: no está publicado y no
 define `rule_version`.

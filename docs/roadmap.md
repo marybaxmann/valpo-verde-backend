@@ -183,10 +183,10 @@ Estados: `PENDIENTE DE DECISIÓN` (autora) · `PENDIENTE` · `BLOQUEADO`
 
 | ID | Pendiente | Origen | Estado | Bloquea |
 |---|---|---|---|---|
-| PA-01 | Tratamiento del motor implementado con reglas de borrador (excepción controlada, publicación 2.0.0 o resultados provisionales); formato de `rule_version` | C1 | PENDIENTE DE DECISIÓN | PA-19, C4 |
+| PA-01 | Tratamiento del motor implementado con reglas de borrador (excepción controlada, publicación 2.0.0 o resultados provisionales); formato de `rule_version` — decidido en CC-030: publicar 2.0.0 antes de implementar; `rule_version` 2.0 en cada resultado; diagramas y autorización de publicación pendientes | C1 | RESUELTO (decisión; publicación pendiente) | PA-19, C4 |
 | PA-02 | Tratamiento de ADR-006 frente a CC-022 | C2 | PENDIENTE DE DECISIÓN | — |
-| PA-03 | CC-015: modelo de roles (Administrador, Usuario municipal, Inspector, Mantenimiento; varios roles por persona; rol por proyecto; permisos) | D §2, CC-015 | PENDIENTE DE DECISIÓN | PA-02 (definitiva), PA-05, PA-07, PA-08 |
-| PA-04 | DA-01: implementación concreta (credencial, permisos, revisión de ADR-014 / PR-018) | D §1, §4; S1, S2 | PENDIENTE DE DECISIÓN (principio aprobado) | PA-25, PA-26, PA-27 |
+| PA-03 | CC-015: modelo de roles (Administrador, Usuario municipal, Inspector, Mantenimiento; varios roles por persona; rol por proyecto; permisos) — cerrado por CC-026 (cuatro roles) y CC-032 (identificadores `inspector` y `encargado_mantencion`; un rol global por usuario, AMD-31) | D §2, CC-015 | RESUELTO | PA-02 (definitiva), PA-05, PA-07, PA-08 |
+| PA-04 | DA-01: implementación concreta (credencial, permisos, revisión de ADR-014 / PR-018) — decidido en CC-033: escrituras solo por el backend con credencial de servicio; RLS sin escritura directa (ADR-014 v2.0, PR-018 v3.0) | D §1, §4; S1, S2 | RESUELTO (decisión) | PA-25, PA-26, PA-27 |
 | PA-05 | DA-02: diseño de INSPECCIONES (Q5 ADR-016, Q6, Q8, Q9) | D §1, §8; X4, X5 | PENDIENTE DE DECISIÓN | PA-26 (inspector) |
 | PA-06 | DA-03: esquema de eventos (D1–D5, D9, D12) | D §1, §6; I2 | PENDIENTE DE DECISIÓN (concepto aprobado) | PA-27 |
 | PA-07 | DA-04: matrices y datos por transición (T-01 a T-13) | D §1, §7; I3, X3 | PENDIENTE DE DECISIÓN | PA-27 |
@@ -237,7 +237,7 @@ Estados: `PENDIENTE DE DECISIÓN` (autora) · `PENDIENTE` · `BLOQUEADO`
 | PA-37 | Pruebas de rutas faltantes, pruebas de frontend, CI | T2 | Media | PENDIENTE | — |
 | PA-38 | Registro de peticiones y diagnóstico sin datos sensibles | T3 | Media | PENDIENTE | — |
 | PA-39 | Endurecimiento menor: funciones ejecutables sin sesión, contraseñas filtradas, `search_path`, cabeceras, límite de tasa | S3, S4, S5 | Baja | PENDIENTE | — |
-| PA-40 | Tablas y columnas del modelo inicial sin uso (borrar requiere autorización) | I4 | Baja | PENDIENTE DE DECISIÓN | PA-05, PA-06 |
+| PA-40 | Tablas y columnas del modelo inicial sin uso (borrar requiere autorización) — decidido en CC-032: `inspections` se reutiliza como INSPECCION; las otras seis tablas de 001 se retiran tras verificar que están vacías, en migración aparte con autorización | I4 | Baja | RESUELTO (decisión) | PA-05, PA-06 |
 | PA-41 | Validación de fecha en la función de alta con hora de Chile | I5 | Baja | PENDIENTE | PA-04 |
 | PA-42 | Caché global y relectura completa tras editar (aceptados por ahora) | P4d, P4e | Baja | PENDIENTE | — |
 | PA-43 | Pantalla del mapa en anchos de 860 px o menos: el menú pasa arriba y la pantalla del mapa (`height: 100vh`, `overflow: hidden`) pierde la parte inferior (`global.css:1297`, frontend). Ya existía en `main`; no la introduce `feature/demo-sivu` | K4 · P6 (2026-10-20) | Por definir | PENDIENTE | — |
@@ -245,17 +245,20 @@ Estados: `PENDIENTE DE DECISIÓN` (autora) · `PENDIENTE` · `BLOQUEADO`
 
 ### Auditoría del modelo de datos 2026-10-18 (CC-026)
 
-Decisiones aprobadas en CC-026 (`docs/auditorias/2026-10-18-modelo-datos/`). Resuelven en parte PA-02 (ADR-006 v2.0), PA-03 (cuatro roles; quedan identificadores, roles múltiples y rol por proyecto) y PA-05 / PA-07 (inspección con `estado_registro`; cierre de OT de Mantenimiento).
+Decisiones aprobadas en CC-026 (`docs/auditorias/2026-10-18-modelo-datos/`). Resuelven en parte PA-02 (ADR-006 v2.0), PA-03 (cuatro roles; identificadores y rol único cerrados por CC-032) y PA-05 / PA-07 (inspección con `estado_registro`; cierre de OT de Mantenimiento).
 
 | ID | Pendiente | Origen | Estado | Depende de |
 |---|---|---|---|---|
 | AM-01 | ~~Sincronizar el Excel maestro con la copia auditada~~ Resuelto por CC-028: el Excel maestro (`docs/excel/Base de Datos Valpo Verde.xlsx`) es el Excel auditado, con REGLAS_INDICADORES y VERSION | CC-026 / CC-028 | RESUELTO | — |
 | AM-02 | ~~Confirmar los conflictos P1–P9~~ Resuelto por CC-028: prevalece el Excel auditado (la corrección y anulación de mediciones queda sin regla) | CC-026 / CC-028 | RESUELTO | — |
-| AM-07 | Actualizar los textos contradichos por CC-028: CC-008, CC-009, CC-020, ADR-010 v2.0, ADR-016 v1.0, PR-006 v7.0, PR-010 v1.0, `docs/methodology/modelo-arbol-medicion.md` y `docs/workflow.md` §14.12 (columna `ambito`) | CC-028 | PENDIENTE | — |
+| AM-07 | ~~Actualizar los textos contradichos por CC-028~~ Resuelto en la Fase 2 (2026-10-20): CC-008, CC-009 y CC-020 reemplazados; PR-002 v3.0, PR-006 v9.0, PR-010 v3.0, ADR-010 v3.0, ADR-016 v3.0; `modelo-arbol-medicion.md` marcado como historial; `workflow.md` §14.12 sin efecto (CC-035) | CC-028 | RESUELTO | — |
 | AM-03 | ~~Responder las preguntas abiertas P10–P14 (INCIDENCIA, SECTORES, proyectos, Hoja4)~~ Resuelto (AMD-31 a AMD-34) | CC-026 `pendientes.md` | RESUELTO | — |
 | AM-05 | ~~Auditar MATRICES_CALCULO~~ registrado en CC-027; INDICES pendiente de revisión posterior (P16) | CC-026 / CC-027 | PENDIENTE (INDICES) | Revisión de la autora |
-| AM-06 | Implementar CC-027: R03 con defoliación, etiquetas del maestro, cavidades 09 y 10, M04 y M05 | CC-027 | BLOQUEADO | C1 (`rule_version`), AM-01, autorización |
-| AM-04 | Implementar CC-026: roles Inspector y Encargado de mantención, alta sin medición, `estado_registro`, `fecha_completada_ot`, `requiere_revision_inspector` | CC-026 | BLOQUEADO | AM-01, AM-02, PA-04 |
+| AM-06 | Implementar CC-027 y CC-029: R03 con defoliación, etiquetas del maestro, cavidades 09 y 10, M04 y M05 | CC-027 | BLOQUEADO | AM-08 (publicación de 2.0.0), autorización |
+| AM-04 | Implementar CC-026 y CC-031 a CC-037: roles Inspector y Encargado de mantención, alta sin medición, `estado_registro` y anulación, `fecha_completada_ot`, `requiere_revision_inspector`, escrituras por el backend, catálogos, incidencias por QR, recordatorios | CC-026 | BLOQUEADO | AM-08 (publicación de 2.0.0), AM-09, PA-13, autorización |
+| AM-08 | Publicar el paquete 2.0.0 antes de la Fase 4: verificación §14.9, VERSION, `00-index.md`, `01–05` como reemplazados, tag `metodologia-v2.0.0`. Los diagramas quedan fuera del paquete (CC-030, opción B) | CC-030 | PENDIENTE | AM-10 (Excel actualizado por la autora); aprobación explícita |
+| AM-09 | Datos simulados (todo es simulado, incluidos A-000013/14 y los proyectos y usuarios de la demo): inventario de solo lectura y limpieza de las bases de prueba con autorización; seed solo para desarrollo en `database/seeds/dev/`. La base de producción se creará vacía cuando la plataforma esté lista (ADR-013) | CC-038 | PENDIENTE | Autorización de la autora |
+| AM-10 | Actualizar el Excel maestro con los textos propuestos en CC-031 (anulación y sus tres campos), CC-032 (`utm_este`, `utm_norte`), CC-036 (nombre, RUT y `resultado_revision`) y CC-037 (recordatorio) | CC-031, CC-032, CC-036, CC-037 | PENDIENTE (lo hace la autora) | Fusión del PR #24 |
 
 ### Pendientes previos que siguen abiertos (referencia)
 
