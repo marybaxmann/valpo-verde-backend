@@ -1,6 +1,6 @@
 # Pendientes — Auditoría del modelo de datos 2026-10-18
 
-Nada de lo listado aquí está decidido. Los conflictos P1–P9 son puntos donde una regla vigente del repositorio no coincide con el Excel auditado, pero la auditoría no tomó una decisión explícita sobre ellos.
+Los conflictos P1–P9 eran puntos donde una regla vigente del repositorio no coincidía con el Excel auditado. **Quedaron resueltos por CC-028 (2026-10-18): prevalece el Excel auditado** en cada uno (ver la ficha en `docs/registro-cambios.md`). La corrección y anulación lógica de una medición (P3) queda sin regla y pendiente.
 
 ## Conflictos por confirmar
 
@@ -30,11 +30,11 @@ Nada de lo listado aquí está decidido. Los conflictos P1–P9 son puntos donde
 
 | ID | Pendiente |
 |---|---|
-| P15 | MATRICES_CALCULO (M01–M05, R01–R04): en revisión por la autora; no auditado |
-| P16 | INDICES: en revisión por la autora; la hoja ya fue modificada en el Excel auditado, pero su contenido no se auditó ni se documenta aquí |
+| P15 | MATRICES_CALCULO y REGLAS_INDICADORES: revisados; fuente vigente el Excel auditado. Diferencias con el motor registradas en CC-027 ([diferencias-motor.md](diferencias-motor.md), DM-01 a DM-08) |
+| P16 | INDICES: agrupación, área de copa y estado metodológico registrados (DM-09); los índices quedan pendientes de una revisión posterior |
 
 ## Sincronizaciones pendientes (CC-026)
 
-- Excel maestro del repositorio (`docs/excel/Base de Datos Valpo Verde.xlsx`): incorporar lo auditado conservando REGLAS_INDICADORES y VERSION. Por decisión de la autora, en esta etapa solo se actualiza la documentación.
+- ~~Excel maestro del repositorio~~ Resuelto por CC-028: `docs/excel/Base de Datos Valpo Verde.xlsx` es el Excel auditado, con REGLAS_INDICADORES y VERSION.
 - Implementación (BD, RLS, backend, frontend): permisos por rol según AMD-01 a AMD-05; alta municipal sin medición; inspección con `estado_registro`; vigencia por `fecha_completada_ot`; revisión de mantenimiento. No autorizada todavía.
 - Metodología: sin cambios; sigue rigiendo C1 de la postauditoría.

@@ -24,7 +24,7 @@ Versión vigente del paquete metodológico: **ninguna publicada todavía**. La p
 
 Hasta su publicación rige el siguiente estado de transición (CC-001):
 
-1. El Excel maestro actual (`docs/excel/Base de Datos Valpo Verde.xlsx`) no tiene versión formal. Contiene inconsistencias internas detectadas en la auditoría de diagramas (por ejemplo, rangos de R02 y R03 distintos entre MATRICES_CALCULO y DICCIONARIO_CAMPOS). Desde CC-002 incluye la hoja REGLAS_INDICADORES, con su estructura pero sin reglas metodológicas cargadas (0 reglas), y la hoja VERSION, que contiene únicamente el registro "previa a 2.0.0 — sin versión formal". El paquete 2.0.0 no está publicado, no existe una `rule_version` publicada y la metodología técnica todavía no se ha sincronizado mediante los CC posteriores.
+1. El Excel maestro (`docs/excel/Base de Datos Valpo Verde.xlsx`) contiene, desde CC-028, el Excel auditado el 2026-10-18 y es la única fuente metodológica. Incluye REGLAS_GENERALES, REGLAS_INDICADORES (98 reglas) y la hoja VERSION, que registra el 2.0.0 en preparación sin versión publicada. No existe una `rule_version` publicada (C1 pendiente). El contenido anterior del Excel queda solo en el historial de git.
 2. Los diagramas disponibles en `docs/excel/diagramas/` son exportaciones en imagen; los archivos fuente `.drawio` no están en el repositorio.
 3. Los documentos `01-roots-base.md` a `05-infrastructure.md` (versión 1.1) y las secciones de este índice marcadas como **CONTENIDO TRANSITORIO** corresponden a la metodología textual previa. No incorporan decisiones metodológicas posteriores ni el Excel maestro. Se conservarán como historial, marcados como reemplazados, cuando se publique el paquete 2.0.0.
 4. Las frases de esos documentos que declaran que la especificación textual prevalece sobre el diagrama quedan sin efecto por PR-002 (v2.0 y siguientes).
@@ -33,6 +33,7 @@ Hasta su publicación rige el siguiente estado de transición (CC-001):
 7. La hoja INDICES es un módulo metodológico en propuesta (CC-016): no es fuente normativa vigente y sus fórmulas no son implementables. Las hojas ARBOLES, MEDICIONES_DENDROMETRICAS, REGISTRO_EVALUACION, INCIDENCIA, INSPECCIONES, MANTENIMIENTO, ORDENES DE TRABAJO y USUARIOS son anexos operativos no normativos (PR-002 v2.2, CC-003); las contradicciones detectadas en ellas están registradas como CC y no se corrigen fuera de su CC.
 8. Desde CC-008, DICCIONARIO_CAMPOS registra el ámbito de cada campo (`operativo` o `metodologico`). Las especificaciones de ámbito `operativo` pueden pasar a implementación desde `FUENTE SINCRONIZADA`, sin esperar la publicación del paquete (`docs/workflow.md` §14.12). Esto no habilita ninguna regla metodológica: el punto 5 se mantiene.
 9. El modelo conceptual ÁRBOL / MEDICIONES_DENDROMETRICAS (CC-020, ADR-016; actualizado por CC-026 y ADR-016 v2.0, ver la nota al inicio del documento) está documentado en `modelo-arbol-medicion.md`. Forma parte del paquete 2.0.0 en preparación; no es contenido transitorio.
+10. CC-028 resuelve a favor del Excel auditado los conflictos P1–P9 de CC-026: entre otros, la hoja MEDICIONES_DENDROMETRICAS y la columna `ambito` de DICCIONARIO_CAMPOS ya no forman parte del Excel maestro. Los puntos 7 a 9 y los documentos que los desarrollan quedan reemplazados en lo que contradigan, hasta su actualización (AM-07).
 
 ---
 
