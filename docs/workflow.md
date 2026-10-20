@@ -392,8 +392,9 @@ metodológica ni la implementación.
    modifica la metodología.
 2. Los artefactos de la fuente metodológica (MATRICES_CALCULO,
    DICCIONARIO_CAMPOS, REGLAS_GENERALES, REGLAS_INDICADORES, VERSION,
-   LISTAS como hoja de menús, diagramas de decisión y `docs/methodology/`)
-   representan una misma versión metodológica (PR-002 v3.0). Ninguno
+   LISTAS como hoja de menús, y `docs/methodology/`) representan una misma
+   versión metodológica (PR-002 v3.0). El Excel maestro es la única fuente
+   de verdad; los diagramas de decisión quedan fuera del paquete (CC-030). Ninguno
    prevalece automáticamente sobre otro; una contradicción entre LISTAS y
    DICCIONARIO_CAMPOS también se trata mediante control de cambios. Los
    códigos persistentes de los catálogos no forman parte del Excel: los
@@ -405,7 +406,7 @@ metodológica ni la implementación.
    termina en `CERRADO`, después de verificar la sincronización de todo
    lo afectado (14.9).
 5. Un CC que no está `APROBADO METODOLÓGICAMENTE` no autoriza modificar
-   el Excel maestro, los diagramas ni el código. Una decisión pendiente
+   el Excel maestro ni el código. Una decisión pendiente
    no se implementa (§9).
 6. No se borran versiones anteriores: se marcan como reemplazadas (§4).
 
@@ -492,7 +493,6 @@ el entorno productivo (ADR-013) se agregará un estado de despliegue.
 2. FUENTE METODOLÓGICA — un solo paquete, una sola versión:
      DICCIONARIO_CAMPOS (los campos deben existir antes de usarse)
      → REGLAS_INDICADORES y MATRICES_CALCULO
-     → diagramas de decisión
      → docs/methodology/ (versión, explicación, historial)
      → hoja VERSION + export de texto + verificación 14.9
      → publicación de la versión (tag de git)
@@ -511,12 +511,15 @@ Los cambios tipo 4 empiezan en el paso 3, sobre una versión publicada.
 La excepción operativa de CC-008 (§14.12) quedó sin efecto por CC-035:
 toda implementación de la fuente parte de una versión publicada.
 
-Los cambios al Excel maestro y a los diagramas se hacen en una rama y se
-integran mediante pull request que cita el CC; no se suben directo a `main`.
+Los cambios al Excel maestro se hacen en una rama y se integran mediante pull request que cita el CC; no se suben directo a `main`.
 
 ### 14.8 Matriz de impacto
 
 ● obligatorio · ○ si corresponde · — no aplica
+
+Desde CC-030 los diagramas no forman parte del paquete: la columna
+"Diagrama" no es obligatoria; si se mantienen como ilustración, se
+actualizan a partir del Excel.
 
 | Cambio | Diagrama | REGLAS_IND. | MATRICES | DICCIONARIO | docs/methodology | PR/ADR | BD / migración | Backend (rules) | API / Zod | Frontend | Pruebas | rule_version |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -537,15 +540,14 @@ integran mediante pull request que cita el CC; no se suben directo a `main`.
 
 Un CC solo pasa a `FUENTE SINCRONIZADA` si se cumple todo lo que aplica:
 
-- [ ] La misma versión figura en la hoja VERSION, los diagramas y
+- [ ] La misma versión figura en la hoja VERSION y en
       `docs/methodology/00-index.md`.
-- [ ] Todo campo citado en REGLAS_INDICADORES (`campos_utilizados`),
-      MATRICES_CALCULO y diagramas existe en DICCIONARIO_CAMPOS con el
-      mismo nombre.
+- [ ] Todo campo citado en REGLAS_INDICADORES y MATRICES_CALCULO existe en
+      DICCIONARIO_CAMPOS con el mismo nombre.
 - [ ] Las condiciones de activación del DICCIONARIO son coherentes con el
-      orden de evaluación del diagrama.
-- [ ] Cada camino del diagrama tiene una regla vigente y cada regla
-      vigente tiene un camino; ningún nodo queda sin salida.
+      orden de evaluación de REGLAS_INDICADORES.
+- [ ] Cada indicador tiene reglas vigentes que cubren todos sus casos y
+      ninguna regla vigente queda sin indicador.
 - [ ] `max_indicador` = mayor puntaje de las reglas vigentes del indicador.
 - [ ] Máximo de cada regla agregadora = suma de los `max_indicador` que
       aportan a ella, y coincide en MATRICES (tabla y texto) y DICCIONARIO

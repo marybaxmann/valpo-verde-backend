@@ -244,16 +244,17 @@ Afecta:
 Estado: vigente
 Versión: 3.0
 Reemplaza: PR-002 v2.2
-Origen: CC-028, CC-034, CC-035
-Motivo: el Excel auditado es la única fuente metodológica y cambió su composición (CC-028); LISTAS ya no contiene una tabla de códigos (CC-034); DICCIONARIO_CAMPOS ya no registra el ámbito de cada campo (CC-028 P8, CC-035).
+Origen: CC-028, CC-030, CC-034, CC-035
+Motivo: el Excel auditado es la única fuente metodológica y cambió su composición (CC-028); los diagramas de decisión quedan fuera del paquete (CC-030); LISTAS ya no contiene una tabla de códigos (CC-034); DICCIONARIO_CAMPOS ya no registra el ámbito de cada campo (CC-028 P8, CC-035).
 
 La fuente de verdad metodológica de Valpo Verde es un PAQUETE VERSIONADO compuesto por:
 
 - Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (nombre fijo), con la composición indicada más abajo. Desde CC-028 contiene el Excel auditado el 2026-10-18 y es la única fuente metodológica: no se mantienen copias ni versiones paralelas;
-- diagramas de decisión de la misma versión (archivo fuente + exportación). Su permanencia en el paquete 2.0.0 está pendiente de decisión (CC-030); mientras no se decida, siguen formando parte del paquete;
-- documentación metodológica en `docs/methodology/` (versión vigente, explicación e historial).
+- documentación metodológica en `docs/methodology/` (versión vigente, explicación e historial), que documenta la versión sin definir reglas.
 
-Todos representan una misma versión metodológica y deben mantenerse sincronizados. No existe precedencia entre ellos. Una contradicción entre artefactos es una inconsistencia: se abre un CC (`docs/workflow.md` §14), se determina cuál representa la decisión metodológica aprobada y se sincronizan todos los artefactos afectados.
+**El Excel maestro es la única fuente de verdad.** Si `docs/methodology/` difiere del Excel, manda el Excel y la documentación se corrige mediante un CC (`docs/workflow.md` §14).
+
+Los diagramas de decisión (`docs/excel/diagramas/`) **no forman parte del paquete** desde 2.0.0 (CC-030, opción B). Pueden actualizarse a partir del Excel como ilustración, pero no son fuente: si un diagrama difiere del Excel, manda el Excel.
 
 La implementación (base de datos, backend, API, frontend) deriva del paquete y nunca lo define. No son fuente metodológica: el código, `database/schema.sql`, el prototipo `marybaxmann/Valpo-Verde-Conecta` ni Groundzy. Las referencias técnicas externas (p. ej. ISA, Smiley y Fraedrich) son fundamento citado dentro del paquete, no fuente directa.
 
@@ -273,7 +274,7 @@ Solo se implementan especificaciones y reglas de una versión publicada del paqu
 
 Ya no forman parte del Excel maestro: MEDICIONES_DENDROMETRICAS (CC-028 P3), Hoja4 (AMD-33), la tabla de códigos de LISTAS (columnas P:X de CC-004) y la columna `ambito` de DICCIONARIO_CAMPOS (CC-028 P8).
 
-Los diagramas de decisión y `docs/methodology/` forman parte del paquete como documentación y representación de la metodología: documentan y referencian las reglas ejecutables, no las duplican.
+`docs/methodology/` documenta y referencia las reglas ejecutables del Excel; no las duplica.
 
 ### Autoridad
 
@@ -1007,6 +1008,7 @@ Las listas siguientes describen la información capturada por la interfaz y su c
 - Código, fecha de registro y registrado por: automáticos.
 - Proyecto e `id_sector`: el árbol hereda la delimitación territorial del proyecto (`id_sector`, no visible en el formulario, usado en los índices territoriales). `sector` es el texto descriptivo del barrio o sector y no se reemplaza por `id_sector`.
 - Coordenadas UTM de ingreso manual y obligatorio (`utm_este`, `utm_norte`). `huso` = 19S y `datum` = WGS84 son fijos y los asigna el Sistema (CC-028 P1). Descripción del lugar en `ubicacion_descriptiva`.
+- Como ayuda, al marcar el punto en el mapa del formulario la plataforma rellena `utm_este` y `utm_norte`, que siguen siendo editables; se guardan las coordenadas UTM del formulario (CC-032).
 - La geometría para el mapa y las consultas espaciales se deriva de las coordenadas UTM y es de solo lectura (ADR-010 v3.0).
 - `estado_presencia` (Presente / Talado / Retirado) y `fecha_cambio_estado_presencia` se derivan de las OT completadas y de los MANTENIMIENTO aprobados (PR-020); no son datos editables del árbol.
 - Las modificaciones posteriores al alta las realiza el Inspector mediante OT y se hacen vigentes al completarla.
@@ -1210,7 +1212,7 @@ Corrección y anulación (CC-031):
 - Mientras la inspección está Preguardado, el Inspector modifica libremente todos sus datos, incluidos los datos técnicos del árbol registrados en ella.
 - Una inspección Finalizado no se modifica. Si contiene un error, el Inspector la anula registrando el motivo; el Sistema registra quién y cuándo.
 - La inspección anulada se conserva en el historial con todos sus valores y deja de considerarse para la vigencia.
-- Los datos correctos se registran en una nueva inspección, mediante una nueva OT.
+- Los datos correctos se registran en una nueva inspección: en la misma OT si todavía no está completada; si lo está, en una nueva OT.
 - Solo el Inspector anula inspecciones. El Usuario municipal, el Administrador y el Encargado de mantención no anulan.
 
 En el Excel auditado la entidad se llama INSPECCION.
@@ -1876,7 +1878,7 @@ Afecta:
 Estado: vigente
 Versión: 1.0
 Origen: CC-036
-Motivo: definir el canal de reporte ciudadano y la protección del RUT del reportante (Fase 1, 2026-10-20).
+Motivo: definir el canal de reporte ciudadano, la protección de los datos del reportante y el tratamiento de "Requiere antecedentes" (Fases 1 y 2, 2026-10-20).
 
 Ingreso:
 - Toda incidencia entra por el código QR de un árbol (AMD-34), mediante un formulario público, sin cuenta ciudadana.
@@ -1889,9 +1891,15 @@ Visibilidad del RUT:
 - Solo lo ve el Usuario municipal miembro del proyecto del árbol.
 - No lo ven el Administrador, el Inspector ni el Encargado de mantención. La API no lo entrega en sus respuestas a esos roles, ni aparece en exportaciones ni registros.
 
-Conservación del RUT:
-- Se conserva hasta que la incidencia se aprueba o se rechaza (`resultado_revision` = Validada o Descartada), y en ese momento se elimina.
-- Con `resultado_revision` = Requiere antecedentes: **pendiente de confirmación** (propuesta de la autora: se conserva hasta la resolución final). Ver CC-036.
+Conservación del nombre y del RUT:
+- Se conservan hasta que la incidencia se aprueba o se rechaza (`resultado_revision` = Validada o Descartada), y en ese momento se eliminan los dos.
+- Con `resultado_revision` = Requiere antecedentes se conservan hasta la resolución final (Validada o Descartada).
+- No se registra ningún dato de contacto del reportante.
+
+Requiere antecedentes:
+- No significa pedirle información al reportante: el Inspector confirma en terreno el estado del árbol.
+- El Usuario municipal crea una OT de Inspección del árbol vinculada a la incidencia mediante `id_incidencia`. Con el resultado de esa inspección registra Validada o Descartada.
+- Si la incidencia validada requiere mantenimiento, la OT de Mantenimiento también se vincula con `id_incidencia`.
 
 Afecta:
 - frontend

@@ -630,7 +630,7 @@ La v2.0 adoptó `trees.ubicacion geography(Point,4326)` como ubicación canónic
 - La conversión es una operación técnica, no una regla metodológica.
 - Se cierran los pendientes de la v2.0: el CRS de captura es EPSG:32719, fijo en el alcance actual; la coordenada original de levantamiento son las propias coordenadas UTM; la transformación se hace en la base de datos.
 
-Pendiente: hoy el alta permite elegir el punto en el mapa. Si se conserva como ayuda que rellena los campos UTM (convertidos y editables), se registra en CC-032 antes de implementarla.
+- Como ayuda, al marcar el punto en el mapa del formulario de alta la plataforma convierte la posición de EPSG:4326 a EPSG:32719 y rellena `utm_este` y `utm_norte`, que siguen siendo editables. Lo que se guarda son las coordenadas UTM del formulario (CC-032).
 
 ### Consecuencias
 - La UI y el almacenamiento no usan el mismo CRS: se ingresa en UTM y se muestra en WGS84.
@@ -1037,7 +1037,7 @@ La v2.0 dejó pendientes la corrección y anulación de una medición (P3) y las
 5. Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
 6. No se sobrescribe el historial.
 7. Vigencia: los valores se hacen vigentes al completar toda la OT. El valor vigente es el de la OT completada más recientemente según `fecha_completada_ot` cuya inspección no esté anulada.
-8. Corrección y anulación (CC-031): mientras la inspección está Preguardado se corrige libremente; una inspección Finalizado solo se anula completa, por el Inspector y con motivo, y los datos correctos se registran en una nueva inspección.
+8. Corrección y anulación (CC-031): mientras la inspección está Preguardado se corrige libremente; una inspección Finalizado solo se anula completa, por el Inspector y con motivo, y los datos correctos se registran en una nueva inspección (en la misma OT si todavía no está completada; si lo está, en una nueva OT).
 9. El valor vigente se deriva; no es un segundo dato editable independiente.
 10. Una modificación posterior de la especie es una corrección de identificación, no una nueva medición.
 
