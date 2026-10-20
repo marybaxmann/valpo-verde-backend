@@ -559,9 +559,11 @@ PR-015
 
 ---
 
-## ADR-010 — Geolocalización canónica (v2.0)
-Estado: vigente
+## ADR-010 — Geolocalización canónica (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: ADR-010 v3.0
+Motivo del reemplazo: CC-028 (P1) fijó las coordenadas UTM de ingreso manual y CC-032 cerró los pendientes de CRS y transformación.
 Fecha: 2026-10
 Reemplaza: ADR-010 v1.0
 Origen: CC-019
@@ -604,6 +606,43 @@ Sí. Los pendientes se cierran en una nueva versión de esta ADR.
 ### Reglas relacionadas
 PR-005
 PR-006 v7.0
+PR-015 v2.0
+ADR-015
+
+---
+
+## ADR-010 — Geolocalización canónica (v3.0)
+Estado: vigente
+Versión: 3.0
+Fecha: 2026-10
+Reemplaza: ADR-010 v2.0
+Origen: CC-028, CC-032
+Motivo: CC-028 (P1) fijó las coordenadas UTM de ingreso manual como dato del árbol, y la autora decidió cómo obtener la geometría del mapa (Fase 0 y Fase 1, 2026-10-20).
+Capas afectadas: base de datos, backend, frontend, documentación.
+
+### Contexto
+La v2.0 adoptó `trees.ubicacion geography(Point,4326)` como ubicación canónica y dejó pendientes el CRS de captura, su configuración, la coordenada original y el mecanismo de transformación. El Excel auditado (CC-028, P1) define que las coordenadas UTM se ingresan manualmente y son obligatorias, con `huso` 19S y `datum` WGS84 fijos.
+
+### Decisión
+- Las coordenadas canónicas del árbol son `utm_este` y `utm_norte` en UTM zona 19 sur (EPSG:32719, datum WGS84), de ingreso manual y obligatorio. `huso` y `datum` los asigna el Sistema.
+- La geometría `geography(Point,4326)` para el mapa y las consultas espaciales se **deriva** de las coordenadas UTM con una transformación estándar (PostGIS `ST_Transform` de 32719 a 4326). Es de solo lectura y no es un segundo dato editable.
+- La API entrega la longitud y la latitud derivadas como datos de solo lectura.
+- La conversión es una operación técnica, no una regla metodológica.
+- Se cierran los pendientes de la v2.0: el CRS de captura es EPSG:32719, fijo en el alcance actual; la coordenada original de levantamiento son las propias coordenadas UTM; la transformación se hace en la base de datos.
+
+Pendiente: hoy el alta permite elegir el punto en el mapa. Si se conserva como ayuda que rellena los campos UTM (convertidos y editables), se registra en CC-032 antes de implementarla.
+
+### Consecuencias
+- La UI y el almacenamiento no usan el mismo CRS: se ingresa en UTM y se muestra en WGS84.
+- Un proyecto fuera del huso 19S requeriría un CC (el Excel fija 19S).
+- El esquema físico se diseña en la Fase 3 (CC-032).
+
+### Puede cambiar
+Sí, mediante una nueva versión de esta ADR.
+
+### Reglas relacionadas
+PR-005
+PR-006 v9.0
 PR-015 v2.0
 ADR-015
 
@@ -722,9 +761,11 @@ PR-005 v3.0
 
 ---
 
-## ADR-014 — RLS como segunda barrera + cutover del backend a JWT de usuario
-Estado: vigente
+## ADR-014 — RLS como segunda barrera + cutover del backend a JWT de usuario (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: ADR-014 v2.0
+Motivo del reemplazo: las RLS permitían escrituras directas con el JWT del usuario; desde CC-033 (DA-01) las escrituras pasan solo por el backend.
 Fecha: 2026-09
 
 ### Contexto
@@ -788,6 +829,49 @@ PR-004 v4.0
 PR-018
 ADR-002
 ADR-005 v2.1
+ADR-013
+
+---
+
+## ADR-014 — RLS como segunda barrera; escrituras solo por el backend (v2.0)
+Estado: vigente
+Versión: 2.0
+Fecha: 2026-10
+Reemplaza: ADR-014 v1.0
+Origen: CC-033
+Motivo: DA-01 (postauditoría, principio aprobado el 2026-10-11) y decisión de implementación de la autora (Fase 1, 2026-10-20).
+
+### Contexto
+La v1.0 hizo que el backend actuara con el JWT del usuario para que las RLS se evaluaran como ese usuario. Como las RLS también permitían escribir a los roles autorizados, una escritura podía llegar a la base sin pasar por las validaciones del backend (hallazgo S1 de la postauditoría). DA-01 decidió que todas las escrituras pasen por el backend.
+
+### Decisión
+**Lecturas (sin cambios respecto de la v1.0):** el backend consulta Supabase con el JWT del usuario (`createUserScopedClient`) y las RLS filtran por proyecto y rol. Las dos capas coexisten.
+
+**Escrituras:**
+1. Solo las realiza el backend, después de su autorización funcional (`authorization.service.ts`) y de las validaciones de datos (DICCIONARIO_CAMPOS).
+2. El backend escribe con la credencial de servicio.
+3. Las RLS no permiten escrituras directas a los roles de sesión (`authenticated`, `anon`) en las tablas de datos: ninguna escritura llega a la base sin pasar por el backend.
+4. El backend registra explícitamente el autor de cada escritura con el usuario autenticado.
+5. El formulario ciudadano de incidencias (PR-022) es un endpoint público del backend que escribe de la misma forma, después de validar y limitar las solicitudes.
+
+**Credencial de servicio:** vive solo en las variables de entorno del servidor del backend. Nunca llega al frontend y nunca queda en el repositorio (ni en el código, ni en `.env.example`, ni en registros ni en respuestas de la API).
+
+**Contrato para el frontend:** el mismo de la v1.0 (PR-018 v3.0), y además el frontend no escribe directamente en Supabase.
+
+### Consecuencias
+- Las políticas RLS de escritura se reemplazan por denegación a los roles de sesión; las de lectura se mantienen (Fase 3/4).
+- Los repositorios usan un cliente de lectura con el JWT del usuario y un cliente de escritura con la credencial de servicio. Este último solo se usa después de la autorización.
+- Los valores por defecto basados en la sesión (`auth.uid()`) ya no sirven para registrar el autor de una escritura.
+- Las pruebas W1–W12 (`docs/auditorias/2026-10-postauditoria/escenarios-rls.md`) se ejecutan en un entorno aislado (PA-13, PA-14).
+
+### Puede cambiar
+Sí, preservando que ninguna escritura evite el backend.
+
+### Reglas relacionadas
+PR-018 v3.0
+PR-022 v1.0
+ADR-002
+ADR-005 v2.0
 ADR-013
 
 ---
@@ -892,9 +976,11 @@ ADR-012
 
 ---
 
-## ADR-016 — Árbol y medición dendrométrica como conceptos distintos (v2.0)
-Estado: vigente
+## ADR-016 — Árbol y medición dendrométrica como conceptos distintos (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: ADR-016 v3.0
+Motivo del reemplazo: sus pendientes P3 y P4 quedaron resueltos por CC-028 y CC-031.
 Fecha: 2026-10
 Reemplaza: ADR-016 v1.0
 Origen: CC-026
@@ -929,4 +1015,46 @@ PR-006 v8.0
 PR-009 v3.0
 PR-019 v1.0
 ADR-007
+ADR-012
+
+---
+
+## ADR-016 — Árbol y medición dendrométrica como conceptos distintos (v3.0)
+Estado: vigente
+Versión: 3.0
+Fecha: 2026-10
+Reemplaza: ADR-016 v2.0
+Origen: CC-028, CC-031, CC-032, CC-035
+
+### Contexto
+La v2.0 dejó pendientes la corrección y anulación de una medición (P3) y las categorías de fustes (P4). CC-028 eliminó la entidad MEDICIONES_DENDROMETRICAS y `configuracion_fustes`, y CC-031 definió la corrección y anulación.
+
+### Decisión
+1. ÁRBOL representa la identidad y la caracterización relativamente estable del ejemplar: identificación, proyecto, ubicación (ADR-010 v3.0) y especie, incluido `nombre_comun` (CC-028 P2).
+2. Las dimensiones y características dendrométricas (origen biogeográfico, `multifustal`, `numero_fustes`, `dap_fustes_cm`, `dap_cm`, altura total, diámetros de copa, alturas de primera rama y de base de copa viva, clase de edad) son datos técnicos del árbol con historial: cada versión queda vinculada a la inspección que la registró. No existe una entidad de mediciones separada (CC-028 P3).
+3. Las registra el Inspector en la inspección, mediante OT.
+4. El alta municipal no exige medición: el árbol se considera presente con "Evaluación pendiente" hasta su primera evaluación vigente.
+5. Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
+6. No se sobrescribe el historial.
+7. Vigencia: los valores se hacen vigentes al completar toda la OT. El valor vigente es el de la OT completada más recientemente según `fecha_completada_ot` cuya inspección no esté anulada.
+8. Corrección y anulación (CC-031): mientras la inspección está Preguardado se corrige libremente; una inspección Finalizado solo se anula completa, por el Inspector y con motivo, y los datos correctos se registran en una nueva inspección.
+9. El valor vigente se deriva; no es un segundo dato editable independiente.
+10. Una modificación posterior de la especie es una corrección de identificación, no una nueva medición.
+
+Esta ADR no define el esquema físico (Fase 3, CC-032).
+
+### Consecuencias
+- Se conserva con qué dimensiones se hizo cada evaluación.
+- `tree_measurements` y `fn_create_tree_with_measurement` (CC-020) dejan de usarse y se retiran con autorización (CC-032).
+- La implementación requiere la versión publicada del paquete (CC-030, CC-035).
+
+### Puede cambiar
+Sí, preservando la trazabilidad histórica de árboles, mediciones e inspecciones.
+
+### Reglas relacionadas
+PR-006 v9.0
+PR-009 v4.0
+PR-019 v1.1
+ADR-007
+ADR-010 v3.0
 ADR-012

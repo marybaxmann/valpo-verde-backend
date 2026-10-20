@@ -391,11 +391,13 @@ metodológica ni la implementación.
    backend, API, frontend) deriva. Un cambio de implementación nunca
    modifica la metodología.
 2. Los artefactos de la fuente metodológica (MATRICES_CALCULO,
-   DICCIONARIO_CAMPOS, REGLAS_INDICADORES, VERSION, LISTAS como catálogo
-   subordinado, diagramas de decisión y `docs/methodology/`) representan
-   una misma versión metodológica. Ninguno prevalece automáticamente sobre
-   otro; una contradicción entre LISTAS y DICCIONARIO_CAMPOS también se
-   trata mediante control de cambios.
+   DICCIONARIO_CAMPOS, REGLAS_GENERALES, REGLAS_INDICADORES, VERSION,
+   LISTAS como hoja de menús, diagramas de decisión y `docs/methodology/`)
+   representan una misma versión metodológica (PR-002 v3.0). Ninguno
+   prevalece automáticamente sobre otro; una contradicción entre LISTAS y
+   DICCIONARIO_CAMPOS también se trata mediante control de cambios. Los
+   códigos persistentes de los catálogos no forman parte del Excel: los
+   define el backend (PR-021, CC-034).
 3. Una contradicción entre artefactos es una inconsistencia. No se
    resuelve eligiendo uno: se abre un CC, se determina cuál representa la
    decisión metodológica aprobada y se sincronizan todos los afectados.
@@ -433,7 +435,7 @@ No requieren CC (siguen §6, "cambio pequeño y localizado"):
 | 1. Corrección de inconsistencia | Artefactos que deben decir lo mismo no lo dicen, o hay un error matemático. Si ningún artefacto refleja la decisión aprobada, el CC pasa a tipo 2. | R02 decía 8–18 en MATRICES_CALCULO; el máximo real es 14. |
 | 2. Cambio metodológico | Cambia un umbral, clasificación, fórmula, agregación o salida. | Nueva salida "No determinado". |
 | 3. Cambio de modelo de datos | Cambia la estructura de campos o tablas. Requiere ADR si es transversal. | Permitir múltiples redes por árbol. |
-| 4. Cambio de implementación | Código que implementa una regla o una especificación ya aprobada. Una regla metodológica requiere que esté en una versión publicada del paquete; una especificación de ámbito `operativo` requiere que su CC esté en `FUENTE SINCRONIZADA` (§14.12). | El backend calcula R02. |
+| 4. Cambio de implementación | Código que implementa una regla o una especificación ya aprobada. Requiere que la regla o la especificación esté en una versión publicada del paquete (CC-030, CC-035). | El backend calcula R02. |
 | 5. Cambio documental | Sin cambio de lógica ni de datos. | Actualizar un diagrama desactualizado. |
 
 Un CC puede afectar más de un tipo: se registra un tipo principal y los
@@ -506,10 +508,8 @@ el entorno productivo (ADR-013) se agregará un estado de despliegue.
 El paso 2 es atómico: los artefactos de la fuente no se publican por
 separado. Los cambios tipo 5 recorren 0 → 1 (si corresponde) → 2 → 7.
 Los cambios tipo 4 empiezan en el paso 3, sobre una versión publicada.
-Excepción reglada (CC-008, §14.12): un CC cuyo alcance de implementación
-se limita a especificaciones de ámbito `operativo` puede pasar al paso 3
-desde `FUENTE SINCRONIZADA`, sin esperar la publicación de la versión
-(tag) del paso 2. Las reglas metodológicas no tienen esta excepción.
+La excepción operativa de CC-008 (§14.12) quedó sin efecto por CC-035:
+toda implementación de la fuente parte de una versión publicada.
 
 Los cambios al Excel maestro y a los diagramas se hacen en una rama y se
 integran mediante pull request que cita el CC; no se suben directo a `main`.
@@ -557,27 +557,27 @@ Un CC solo pasa a `FUENTE SINCRONIZADA` si se cumple todo lo que aplica:
 - [ ] Export de texto regenerado desde el Excel.
 - [ ] La ficha CC registra la versión del paquete y `rule_version`.
 
-Catálogos (LISTAS ↔ DICCIONARIO_CAMPOS; convenciones en
-`docs/methodology/convenciones-catalogos.md`, CC-004):
+Catálogos (DICCIONARIO_CAMPOS ↔ LISTAS ↔ registro de catálogos del
+backend; PR-021, CC-034):
 
-- [ ] Toda referencia `LISTAS:<id_catalogo>` existe en LISTAS.
-- [ ] Ningún dominio se mantiene en dos fuentes editables.
-- [ ] Los códigos son únicos dentro de su catálogo.
-- [ ] Las relaciones padre-hijo referencian códigos existentes.
-- [ ] Todo código usado por el contrato funcional existe en LISTAS.
+- [ ] Los valores de LISTAS coinciden con el dominio de su campo en
+      DICCIONARIO_CAMPOS.
+- [ ] Ningún dominio se mantiene en dos fuentes editables del Excel.
 - [ ] Las escalas de LISTAS son consistentes con REGLAS_INDICADORES y
       MATRICES_CALCULO, sin que LISTAS redefina su lógica.
+- [ ] El test de consistencia del registro de catálogos del backend pasa
+      contra el Excel de la versión (etiquetas iguales; códigos únicos y
+      sin cambios para los valores existentes).
 
 Para pasar a `PROBADO`:
 
 - [ ] Pruebas por regla, incluidos los valores borde de cada intervalo.
 - [ ] El backend declara la `rule_version` que implementa y coincide con
-      una versión publicada. N/A en implementaciones limitadas a ámbito
-      `operativo` (§14.12): no ejecutan reglas metodológicas; la ficha CC
-      registra la versión del paquete (publicada o en preparación) que
-      contiene la especificación.
+      una versión publicada.
 - [ ] La implementación usa solo reglas `vigente` de esa versión.
-- [ ] Ningún resultado calculado puede editarse manualmente (PR-008).
+- [ ] Ningún resultado calculado puede editarse manualmente, salvo el
+      ajuste justificado del Inspector (PR-008 v2.0), que conserva el valor
+      calculado.
 
 Para cambios que no tocan la fuente metodológica (por ejemplo, cambios de
 gobernanza en `docs/`), los puntos que no aplican se marcan `N/A` en la
@@ -587,7 +587,7 @@ ficha con su motivo.
 
 | Elemento | Formato | Regla |
 |---|---|---|
-| Versión del paquete metodológico | `MAJOR.MINOR.PATCH` | MAJOR: cambia la estructura de la evaluación (componentes, agregaciones, matrices nuevas). MINOR: cambia algún resultado calculable, o el conjunto o significado de los campos de ámbito `metodologico`. PATCH: no cambia resultados ni campos de ámbito `metodologico` (redacción, forma de diagramas, notas, cambios limitados a campos de ámbito `operativo`; §14.12). |
+| Versión del paquete metodológico | `MAJOR.MINOR.PATCH` | MAJOR: cambia la estructura de la evaluación (componentes, agregaciones, matrices nuevas). MINOR: cambia algún resultado calculable, o el conjunto o significado de los campos que entran en una regla o resultan de ella (REGLAS_INDICADORES, MATRICES_CALCULO o fórmulas de DICCIONARIO_CAMPOS). PATCH: no cambia resultados ni esos campos (redacción, forma de diagramas, notas, campos que no participan en ninguna regla). |
 | `rule_version` | `MAJOR.MINOR` | Igual a la versión del paquete sin PATCH. Un PATCH no genera nueva `rule_version`. Se guarda en cada resultado calculado. |
 | Tag de git | `metodologia-vMAJOR.MINOR.PATCH` | Se crea al publicar cada versión. |
 | Excel maestro | nombre fijo | No se crea una copia por versión: el historial está en git y los tags. |
@@ -598,8 +598,8 @@ ficha con su motivo.
   previo se registra como "previa a 2.0.0 — sin versión formal".
 - Tipo de CC → versión: tipo 2 → MINOR (MAJOR si cambia la estructura);
   tipo 1 → MINOR si altera algún resultado posible, si no PATCH; tipo 3 →
-  MINOR si cambia campos de ámbito `metodologico` del DICCIONARIO, PATCH si
-  solo cambia campos de ámbito `operativo` (§14.12); tipo 4 → sin cambio de versión;
+  MINOR si cambia campos que entran en una regla o resultan de ella,
+  PATCH si solo cambia campos que no participan en ninguna regla; tipo 4 → sin cambio de versión;
   tipo 5 → PATCH (o ninguno si está fuera del paquete).
 - La implementación de una `rule_version` usa solo las reglas `vigente`
   del paquete publicado con esa versión. Las reglas `reemplazada` son
@@ -615,9 +615,14 @@ ficha con su motivo.
   sección.
 - §9 (estados pendientes) se aplica sin cambios.
 
-### 14.12 Ámbito de los campos: operativo y metodológico (CC-008)
+### 14.12 Ámbito de los campos: operativo y metodológico (CC-008) — REEMPLAZADA
 
-DICCIONARIO_CAMPOS registra en la columna `ambito` el ámbito de cada campo:
+> **Sin efecto desde CC-035 (2026-10-20).** CC-028 (P8) eliminó la columna
+> `ambito` de DICCIONARIO_CAMPOS y CC-035 eliminó la excepción operativa:
+> toda implementación de la fuente parte de una versión publicada del
+> paquete (CC-030). El texto siguiente se conserva solo como historial.
+
+DICCIONARIO_CAMPOS registraba en la columna `ambito` el ámbito de cada campo:
 
 | Valor | Definición |
 |---|---|
