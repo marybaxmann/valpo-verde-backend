@@ -22,9 +22,11 @@ Si una decisión nueva contradice una regla vigente:
 
 Este procedimiento es idéntico al descrito en `docs/workflow.md` (§4); ambos documentos deben mantenerlo redactado de la misma forma.
 
-## PR-001 — Referencia funcional del proyecto
-Estado: vigente
+## PR-001 — Referencia funcional del proyecto (v2.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 2.0
+Reemplazada por: PR-001 v3.0
+Motivo del reemplazo: definía el prototipo como "referencia funcional actual", lo que permitía que pantallas históricas prevalecieran sobre decisiones posteriores. Origen: CC-021.
 
 El repositorio:
 `marybaxmann/Valpo-Verde-Conecta`
@@ -36,6 +38,27 @@ es la referencia funcional actual para:
 - experiencia de usuario.
 
 No es fuente de metodología, reglas técnicas ni cálculos.
+
+Afecta:
+- frontend
+- UX
+- arquitectura funcional
+
+## PR-001 — Referencia funcional del proyecto (v3.0)
+Estado: vigente
+Versión: 3.0
+Reemplaza: PR-001 v2.0
+Origen: CC-021
+
+Referencias históricas de intención funcional:
+- prototipo navegable `marybaxmann/Valpo-Verde-Conecta`;
+- Figma original de SIVU: pantallas en `valpo-verde-frontend/docs/referencias/figma-original/`.
+
+Sirven para comprender la intención funcional y de producto original: qué quería resolver cada pantalla, qué información debía ver el usuario, cómo se relacionaban los módulos y cómo se esperaba recorrer el sistema.
+
+No son especificación vigente. Pueden contener módulos, campos, categorías, cálculos y flujos que después fueron modificados, reemplazados o eliminados. Conservan valor como evidencia de intención funcional y de producto, pero no pueden restablecer decisiones que posteriormente fueron modificadas, reemplazadas o eliminadas. La presencia de un elemento en ellas no demuestra que siga vigente: toda implementación se reconcilia primero con la metodología, las decisiones controladas y el backend/API vigentes (jerarquía en PR-016 v4.0).
+
+No son fuente de metodología, reglas técnicas, cálculos, estructura de datos ni permisos.
 
 Afecta:
 - frontend
@@ -261,9 +284,11 @@ Afecta:
 - permisos
 - RLS
 
-## PR-003 — Rol Usuario municipal (v5.0)
-Estado: vigente
+## PR-003 — Rol Usuario municipal (v5.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 5.0
+Reemplazada por: PR-003 v6.0
+Motivo del reemplazo: no permitía al Usuario municipal registrar órdenes de trabajo ni actualizar el estado de órdenes e incidencias (CC-022).
 Reemplaza: PR-003 v4.0
 Origen: CC-020
 Motivo: aclarar que el Usuario municipal puede registrar mediciones dendrométricas y que ello no constituye una inspección técnica. Sin otros cambios de permisos respecto de v4.0; no resuelve CC-015.
@@ -311,9 +336,86 @@ Afecta:
 - permisos
 - RLS
 
-## PR-004 — Rol Administrador
+## PR-003 — Rol Usuario municipal (v6.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 6.0
+Reemplazada por: PR-003 v7.0
+Motivo del reemplazo: el Usuario municipal registraba mediciones dendrométricas y, en desarrollo, evaluaciones técnicas; CC-026 limita su alta a nombre y ubicación y asigna los datos técnicos al Inspector.
+Reemplaza: PR-003 v5.0
+Origen: CC-022
+Motivo: el Usuario municipal registra órdenes de trabajo y actualiza el estado de órdenes de trabajo e incidencias; el Administrador pasa a acceso de solo lectura sobre los datos del proyecto (PR-004 v5.0).
+
+- Identificador interno: `usuario_municipal`
+- Etiqueta de interfaz: `Usuario municipal`
+- "Acceder a su proyecto asignado" significa que exista una fila en `project_members` para ese usuario y proyecto (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- acceder a su proyecto asignado;
+- ver dashboard básico;
+- consultar inventario;
+- registrar nuevos árboles, incluida su medición dendrométrica inicial (PR-006 v7.0);
+- registrar nuevas mediciones dendrométricas de los árboles de su proyecto asignado (PR-006 v7.0);
+- editar datos básicos del árbol permitidos;
+- consultar resultados técnicos;
+- reportar y consultar incidencias, y actualizar su estado (CC-022);
+- registrar órdenes de trabajo y actualizar su estado (CC-022);
+- consultar indicadores básicos.
+
+No realiza:
+- cálculo de severidades;
+- cálculo de puntajes;
+- priorización técnica;
+- modificación manual de resultados calculados.
+
+Pendiente (CC-015, en revisión): si el Usuario municipal es también el Inspector y, por lo tanto, realiza la evaluación técnica (estructural, de vitalidad, de riesgo e infraestructura). La versión 5.0 lo excluía; con PR-004 v5.0 el Administrador ya no realiza evaluaciones, por lo que mientras CC-015 se resuelve el entorno de desarrollo conserva el registro de evaluaciones por el Usuario municipal (el cálculo lo realiza siempre el motor metodológico y no puede modificarse manualmente). También quedan pendientes en CC-015: el rol "Encargado de mantención" y quién puede corregir datos ya registrados (especie, mediciones, ubicación).
+
+Aclaración (CC-020): registrar una medición dendrométrica no constituye evaluación técnica ni inspección estructural; su relación con la inspección sigue pendiente (ADR-016).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-003 — Rol Usuario municipal (v7.0)
 Estado: vigente
+Versión: 7.0
+Reemplaza: PR-003 v6.0
+Origen: CC-026
+Motivo: auditoría del modelo de datos (2026-10-18): el Usuario municipal no registra datos técnicos; el alta del árbol se limita a nombre y ubicación; los datos técnicos los registra el Inspector mediante OT (PR-019 v1.0).
+
+- Identificador interno: `usuario_municipal`
+- Etiqueta de interfaz: `Usuario municipal`
+- "Acceder a su proyecto asignado" significa que exista una fila en `project_members` para ese usuario y proyecto (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- acceder a su proyecto asignado;
+- ver dashboard básico;
+- consultar inventario, resultados técnicos e indicadores básicos;
+- registrar el alta de un árbol solo con el nombre común o científico y la ubicación: coordenadas, sector y descripción del lugar; puede agregar de forma opcional el origen biogeográfico, que el Inspector confirma o corrige (PR-006 v8.0);
+- crear órdenes de trabajo, incluidas las OT de Levantamiento, y actualizar su estado (CC-022); las OT de Mantenimiento las completa el Sistema (PR-020 v1.0). La prioridad de la OT se propone por defecto desde la `clasificacion_prioridad` vigente del árbol y puede modificarla;
+- definir, al crear una OT de Mantenimiento, si requiere revisión del Inspector (`requiere_revision_inspector`); Tala y Retiro_tocón la exigen siempre;
+- reportar, revisar y consultar incidencias, y actualizar su estado (CC-022).
+
+No realiza:
+- registro ni modificación de datos técnicos del árbol (origen biogeográfico, fustes, DAP, altura, copa, clase de edad) ni evaluaciones técnicas; las modificaciones posteriores al alta las realiza el Inspector mediante OT;
+- revisión de ejecuciones de mantenimiento;
+- cálculo de severidades, puntajes o priorización técnica;
+- modificación manual de resultados calculados.
+
+Pendiente (CC-026 P7): identificadores internos de los roles nuevos. El rol es global y un usuario puede pertenecer a varios proyectos (PR-005 v3.0).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-004 — Rol Administrador (v4.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 4.0
+Reemplazada por: PR-004 v5.0
+Motivo del reemplazo: el Administrador deja de realizar la evaluación y la gestión de inventario, infraestructura, incidencias y mantenimiento; conserva la gestión de proyectos y usuarios y la consulta de solo lectura (CC-022).
 
 Actualización 3.0 (cierre C-4 y C-5): se fijan los identificadores del rol
 y se reemplaza la regla sobre edición de resultados calculados por una
@@ -354,6 +456,71 @@ Afecta:
 - permisos
 - RLS
 - rules-engine
+
+## PR-004 — Rol Administrador (v5.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 5.0
+Reemplazada por: PR-004 v6.0
+Motivo del reemplazo: no incluía la gestión de la delimitación territorial del proyecto (CC-026).
+Reemplaza: PR-004 v4.0
+Origen: CC-022
+Motivo: decisión de la autora y su equipo (2026-10-09): el Administrador crea proyectos y agrega usuarios, y puede ver el proyecto completo en modo de solo lectura.
+
+- Identificador interno: `admin`
+- Etiqueta de interfaz: `Administrador`
+- Acceso transversal a todos los proyectos en esta versión (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- crear y gestionar proyectos;
+- gestionar los miembros de cada proyecto (`project_members`);
+- consultar, en modo de solo lectura, toda la información de los proyectos: dashboard, inventario, mediciones, fichas, evaluaciones técnicas y de riesgo, infraestructura, mantención, incidencias e indicadores.
+
+No realiza:
+- registro ni edición de árboles o mediciones;
+- evaluaciones técnicas (estructural, vitalidad, riesgo, infraestructura);
+- registro de órdenes de trabajo o incidencias, ni cambios de su estado;
+- modificación manual de resultados calculados.
+
+Los resultados producidos por el motor metodológico no pueden ser modificados manualmente. Cualquier futura excepción deberá definirse como una regla explícita, versionada y trazable. No existe actualmente mecanismo de override manual.
+
+Pendiente (CC-015): quién corrige datos ya registrados (la versión 4.0 permitía al Administrador "completar/corregir datos básicos").
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-004 — Rol Administrador (v6.0)
+Estado: vigente
+Versión: 6.0
+Reemplaza: PR-004 v5.0
+Origen: CC-026
+Motivo: agregar la gestión de la delimitación territorial del proyecto (auditoría del modelo de datos, 2026-10-18). Sin otros cambios respecto de v5.0.
+
+- Identificador interno: `admin`
+- Etiqueta de interfaz: `Administrador`
+- Acceso transversal a todos los proyectos en esta versión (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- crear y gestionar proyectos;
+- gestionar los miembros de cada proyecto (`project_members`);
+- gestionar la delimitación territorial de cada proyecto: un polígono o multipolígono, dibujado o importado desde KML o KMZ de Google Earth (SECTORES). Los árboles heredan el `id_sector` del proyecto;
+- consultar, en modo de solo lectura, toda la información de los proyectos: dashboard, inventario, mediciones, fichas, evaluaciones técnicas y de riesgo, infraestructura, mantención, incidencias e indicadores.
+
+No realiza:
+- registro ni edición de árboles o mediciones;
+- evaluaciones técnicas (estructural, vitalidad, riesgo, infraestructura);
+- registro de órdenes de trabajo o incidencias, ni cambios de su estado;
+- modificación manual de resultados calculados.
+
+El Administrador no modifica resultados calculados. El único ajuste permitido es el del Inspector, con justificación y trazabilidad (PR-008 v2.0).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
 
 ## PR-005 — Proyectos (v2.0 — REEMPLAZADA)
 Estado: reemplazada
@@ -605,9 +772,11 @@ Afecta:
 - base de datos
 - permisos
 
-## PR-006 — Registro básico del árbol (v7.0)
-Estado: vigente
+## PR-006 — Registro básico del árbol (v7.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 7.0
+Reemplazada por: PR-006 v8.0
+Motivo del reemplazo: exigía la medición inicial en el alta, permitía al Usuario municipal registrar mediciones y determinaba la vigencia por `fecha_medicion` (CC-026).
 Reemplaza: PR-006 v6.0
 Origen: CC-020
 Motivo: separar la identidad del árbol (ÁRBOL) de sus mediciones dendrométricas fechadas (MEDICIONES_DENDROMETRICAS) para conservar el historial dendrométrico (ADR-016).
@@ -702,6 +871,58 @@ Afecta:
 - base de datos
 - permisos
 
+## PR-006 — Registro básico del árbol (v8.0)
+Estado: vigente
+Versión: 8.0
+Reemplaza: PR-006 v7.0
+Origen: CC-026
+Motivo: auditoría del modelo de datos (2026-10-18): el alta no exige medición; los datos técnicos los registra el Inspector en la inspección; los valores se hacen vigentes al completar la OT (ADR-016 v2.0).
+
+Las listas siguientes describen la información capturada por la interfaz y su contrato funcional (DICCIONARIO_CAMPOS), no columnas físicas de la base de datos.
+
+### Vías de registro
+
+- **Alta municipal:** el Usuario municipal registra el árbol con el nombre común o científico y la ubicación (coordenadas, sector y descripción del lugar). Puede agregar de forma opcional el origen biogeográfico, que el Inspector confirma o corrige mediante OT. No se exige medición.
+- **Registro en levantamiento:** el Inspector registra árboles nuevos durante una OT de Levantamiento, sin alta municipal previa.
+- Si el árbol ya existe, se reutiliza su identificador y se agrega una nueva evaluación; no se duplica el árbol.
+- Todo árbol registrado comienza como Presente, aunque su evaluación técnica esté pendiente. Sin evaluación vigente, la ficha muestra "Evaluación pendiente".
+
+### Identificación y ubicación
+
+- Código, fecha de registro y registrado por: automáticos.
+- Proyecto e `id_sector`: el árbol hereda la delimitación territorial del proyecto (`id_sector`, no visible en el formulario, usado en los índices territoriales). `sector` es el texto descriptivo del barrio o sector y no se reemplaza por `id_sector`.
+- Coordenadas UTM de ingreso manual (`utm_este`, `utm_norte`) con `huso` y `datum`, y descripción del lugar (`ubicacion_descriptiva`).
+- Las modificaciones posteriores al alta las realiza el Inspector mediante OT y se hacen vigentes al completarla.
+
+### Especie
+
+- En el alta se acepta el nombre común o el científico. Para finalizar la inspección se exigen `especie_cientifica` y `nombre_comun`; no se admiten "Género sp." ni "No determinado".
+- El Inspector confirma o corrige la identificación; la corrección se hace vigente al completar la OT.
+- Solo el Inspector incorpora especies a CATALOGO_ESPECIES (`especie_cientifica`, `genero`, `familia`). El árbol se vincula por `especie_cientifica` normalizada. La ausencia de la especie en el catálogo no bloquea el alta.
+
+### Datos técnicos e historial (ADR-016 v2.0)
+
+- Los registra el Inspector en la inspección, mediante OT: origen biogeográfico, configuración de fustes y DAP, altura total (`altura_total_m` > 0), diámetros de copa norte–sur y este–oeste (el diámetro medio se calcula), altura de primera rama, altura de base de copa viva y clase de edad.
+- Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
+- No se sobrescribe el historial: la ficha muestra el valor vigente y la plataforma conserva cada versión anterior vinculada a la inspección que la registró.
+- Los valores nuevos se hacen vigentes al completar toda la OT. El valor vigente es el de la OT completada más recientemente según `fecha_completada_ot`, aunque su inspección se haya realizado antes que otra.
+- Una medición aplicable pendiente deja la inspección preguardada (PR-009 v3.0); no equivale a cero ni a "No presenta". "No presenta" se usa para características inexistentes y desactiva el valor numérico.
+
+### Pendientes (CC-026, `docs/auditorias/2026-10-18-modelo-datos/pendientes.md`)
+
+- P1: ubicación canónica en WGS84 con PostGIS (ADR-010 v2.0) frente a las coordenadas UTM de ingreso manual.
+- P2: `nombre_comun` como campo del árbol o resuelto solo desde el catálogo de especies.
+- P3: corrección y anulación lógica de una medición ya registrada.
+- P4: categorías de configuración de fustes y regla de DAP equivalente.
+
+Esta PR no modifica `schema.sql`.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+
 ## PR-007 — Estado técnico derivado
 Estado: propuesta
 Versión: 1.0
@@ -720,9 +941,11 @@ Afecta:
 - backend
 - frontend
 
-## PR-008 — Separación observado → calculado → decisión
-Estado: vigente
+## PR-008 — Separación observado → calculado → decisión (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-008 v2.0
+Motivo del reemplazo: la "regla futura explícita" para ajustar resultados calculados quedó definida en CC-026.
 
 La arquitectura metodológica debe mantener:
 
@@ -743,9 +966,40 @@ Afecta:
 - rules-engine
 - frontend
 
-## PR-009 — Inspecciones
+## PR-008 — Separación observado → calculado → decisión (v2.0)
 Estado: vigente
+Versión: 2.0
+Reemplaza: PR-008 v1.0
+Origen: CC-026
+Motivo: define la regla explícita de ajuste de clasificaciones por el Inspector (auditoría del modelo de datos, 2026-10-18).
+
+La arquitectura metodológica mantiene:
+
+dato observado
+→ resultado calculado
+→ evaluación agregada
+→ decisión de gestión
+
+El Inspector ingresa observaciones y mediciones; el backend aplica las reglas y la plataforma devuelve los resultados.
+
+Ajuste justificado (única excepción):
+- El Inspector puede ajustar `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad`.
+- Todo ajuste exige `justificacion_ajuste_clasificacion`.
+- Se conservan el valor calculado, el valor ajustado, el Inspector y la fecha del ajuste.
+- Si se ajusta el riesgo o la infraestructura, la prioridad se calcula con el valor ajustado.
+- Ningún otro resultado calculado se escribe manualmente, y ningún otro rol ajusta clasificaciones.
+
+Afecta:
+- base de datos
+- backend
+- rules-engine
+- frontend
+
+## PR-009 — Inspecciones (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-009 v2.0
+Motivo del reemplazo: asignaba las inspecciones al Administrador, que pasa a solo lectura (CC-022).
 
 Las inspecciones:
 - pertenecen a un árbol;
@@ -763,9 +1017,65 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-010 — Fotografías
+## PR-009 — Inspecciones (v2.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 2.0
+Reemplazada por: PR-009 v3.0
+Motivo del reemplazo: no definía el rol que realiza las inspecciones ni su ciclo de preguardado (CC-026).
+Reemplaza: PR-009 v1.0
+Origen: CC-022
+Motivo: el Administrador pasa a solo lectura (PR-004 v5.0).
+
+Las inspecciones:
+- pertenecen a un árbol;
+- no son realizadas por el Administrador (PR-004 v5.0); el rol que las realiza se define en CC-015 (pendiente);
+- comienzan como `borrador`;
+- admiten autosave por sección;
+- al completarse quedan inmutables;
+- conservan `rule_version`.
+
+Una inspección completada no se modifica retroactivamente.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- rules-engine
+
+## PR-009 — Inspecciones (v3.0)
 Estado: vigente
+Versión: 3.0
+Reemplaza: PR-009 v2.0
+Origen: CC-026
+Motivo: definir quién realiza las inspecciones, su ciclo de preguardado y su vigencia (auditoría del modelo de datos, 2026-10-18).
+
+Las inspecciones:
+- pertenecen a un árbol y a una OT de Inspección (Evaluación inicial, Reevaluación, Evaluación instrumental, Monitoreo o Levantamiento). Una OT de Levantamiento puede abarcar varios árboles aún no identificados al crearla; su alcance es el proyecto y el área de trabajo descrita en la OT;
+- las realiza el Inspector (PR-019 v1.0); no las realizan el Administrador ni el Usuario municipal;
+- tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado; `Finalizado` cuando están completas. Equivalen a `borrador` y `completada` de ADR-007;
+- admiten guardado parcial;
+- "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
+- exigen cuatro fotografías nuevas (PR-010 v2.0);
+- al finalizar quedan inmutables y conservan `rule_version`;
+- sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
+- `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
+- la plataforma sugiere `fecha_proxima_inspeccion` y `fecha_proximo_monitoreo` según `nivel_riesgo` (inicio del rango — inspección: Bajo 24 meses, Moderado 12 meses, Alto 1 a 3 meses, Extremo 1 a 4 semanas; monitoreo: Bajo 12 meses, Moderado 3 a 6 meses, Alto 2 a 4 semanas, Extremo inmediato y continuo). El Inspector puede ajustarlas registrando `justificacion_ajuste_fecha`. Al llegar la fecha de inicio, se envía al calendario del módulo.
+
+En el Excel auditado la entidad se llama INSPECCION.
+
+Una inspección finalizada no se modifica retroactivamente.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- rules-engine
+
+## PR-010 — Fotografías (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-010 v2.0
+Motivo del reemplazo: no exigía vistas fotográficas por inspección ni evidencia en mantenimiento e incidencias (CC-026).
 
 Cada árbol puede tener hasta 20 fotografías.
 
@@ -778,6 +1088,28 @@ PostgreSQL almacena metadatos.
 El límite debe validarse en frontend y backend.
 
 La asociación directa a inspecciones/incidencias/intervenciones queda pendiente de futuras decisiones.
+
+Afecta:
+- frontend
+- backend
+- storage
+- base de datos
+
+## PR-010 — Fotografías (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-010 v1.0
+Origen: CC-026
+Motivo: vistas fotográficas obligatorias por inspección y evidencia en mantenimiento e incidencias (auditoría del modelo de datos, 2026-10-18).
+
+- Se permiten varias fotografías por árbol y por inspección.
+- Para finalizar una inspección se exigen fotografías nuevas de cuatro vistas: árbol completo, base, tronco y copa. Las fotografías anteriores no cumplen las vistas obligatorias de una nueva inspección.
+- Se conserva el historial fotográfico vinculado a cada inspección.
+- Mantenimiento: la evidencia fotográfica de la ejecución es obligatoria para completar la OT (PR-020 v1.0).
+- Incidencias: el reportante carga al menos una fotografía (textos del diccionario por confirmar, CC-026 P11).
+- Las imágenes viven en Supabase Storage; PostgreSQL almacena metadatos (ADR-011).
+
+Pendiente (CC-026 P9): el límite de 20 fotografías por árbol de la v1.0 no fue confirmado.
 
 Afecta:
 - frontend
@@ -922,7 +1254,7 @@ ArcGIS no es fuente de datos ni de cálculo:
 
 Pendiente: seleccionar y validar el mecanismo de acceso/autenticación a los servicios cartográficos ArcGIS requeridos para desarrollo y producción (ADR-015). Debe resolverse antes de implementar el mapa que dependa de dichos servicios.
 
-El objetivo progresivo sigue siendo una experiencia territorial similar conceptualmente a Groundzy (referencia de UX, PR-016):
+El objetivo progresivo es una experiencia territorial que permita:
 - árboles georreferenciados;
 - selección desde mapa;
 - panel contextual;
@@ -966,11 +1298,13 @@ Afecta:
 - frontend
 - UX
 
-## PR-016 — Groundzy (v3.0)
-Estado: vigente
+## PR-016 — Groundzy (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
 Reemplaza: PR-016 v2.0
 Origen: CC-001
+Reemplazada por: PR-016 v4.0
+Motivo del reemplazo: ubicaba el prototipo como primera referencia funcional/UX, por encima de la documentación vigente, y mantenía a Groundzy como referencia visual. Se adopta una jerarquía única de fuentes y una referencia visual principal aprobada. Origen: CC-021.
 
 Groundzy inspira experiencia visual y organización de UX.
 
@@ -992,6 +1326,143 @@ Prioridad de referencias (de mayor a menor autoridad):
 Afecta:
 - frontend
 - UX
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v4.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 4.0
+Reemplazada por: PR-016 v5.0
+Motivo del reemplazo: incorpora referencias visuales complementarias de inspiración UX/UI, entre ellas una de Groundzy, mediante decisión explícita (CC-023).
+Reemplaza: PR-016 v3.0
+Origen: CC-021
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior.
+
+Referencia visual aprobada:
+- Principal y única referencia visual oficial vigente: `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg`. Función exclusivamente visual: composición, lenguaje gráfico, relación mapa–paneles, densidad informativa y paleta. No define funcionalidad ni metodología.
+- Groundzy deja de ser referencia visual oficial, para evitar lenguajes visuales contradictorios. Una idea concreta de Groundzy puede reincorporarse solo mediante decisión explícita.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v5.0 — REEMPLAZADA)
+Estado: reemplazada
+Versión: 5.0
+Reemplazada por: PR-016 v6.0
+Motivo del reemplazo: adopta el prototipo SIVU Territorio como referencia visual principal y fija sus reglas de integración (CC-025).
+Reemplaza: PR-016 v4.0
+Origen: CC-023
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior.
+
+Referencia visual principal (sin cambio): `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg` — composición, lenguaje gráfico, relación mapa–paneles, densidad informativa y paleta.
+
+Referencias visuales complementarias (inspiración UX/UI, CC-023). Son material de terceros: se conservan fuera del repositorio público y se describen aquí por lo que aportan.
+- Vista de árbol de Groundzy (escritorio y móvil): ficha lateral del ejemplar con pestañas, mediciones con íconos, pines legibles sobre mapa satelital, barra de herramientas sobre el mapa. Se reincorpora como idea concreta, según lo previsto en PR-016 v4.0.
+- Tablero agrícola en tablet (mapa satelital con parcelas): tarjeta de resumen flotante sobre el mapa con barras de estado.
+- Farm Management System: gráficos de dona con porcentajes y tarjetas de indicadores tintadas por categoría.
+- Wisetown (tablero de áreas verdes): barras horizontales ordenadas y gráficos de evolución.
+
+Reglas de uso de las referencias complementarias:
+- Se adaptan a la arquitectura, los módulos y los datos de SIVU; no se copian su identidad, marca, nombres ni composición literal (por ejemplo, el botón verde lima y la barra en píldora de Groundzy).
+- La paleta oficial de riesgo (Bajo `#DCE8A9`, Moderado `#F9B52B`, Alto `#F04A32`, Extremo `#C7252B`) no se modifica y se usa solo para el riesgo. Los colores de módulo evitan esos tonos.
+- No se incorporan elementos que impliquen funciones o resultados que SIVU no calcula (por ejemplo, recomendaciones automáticas tipo "AI insight").
+- Los gráficos se usan solo cuando aportan a la lectura del módulo y siempre con datos reales.
+- Antes de rediseñar la interfaz se valida una maqueta visual con la autora.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v6.0)
+Estado: vigente
+Versión: 6.0
+Reemplaza: PR-016 v5.0
+Origen: CC-025
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior. El Excel maestro "Base de Datos Valpo Verde" (paquete metodológico, PR-002) conserva su autoridad sobre los campos y las reglas que documenta: ningún elemento de una referencia visual lo sustituye.
+
+Referencia visual principal (CC-025): prototipo "SIVU Territorio" — repositorio `valpo-verde-frontend`, rama `prototype/sivu-territorio-v1`, carpeta `prototypes/sivu-territorio-lab/`. Línea base aprobada: commit `c852104`.
+- Define la dirección visual: composición, lenguaje gráfico, navegación, relación mapa–paneles y estilo de la ficha.
+- La aprobación corresponde a la dirección visual, no a cada componente, contenido o interacción particular.
+- No es una implementación funcional terminada.
+- Sus ajustes visuales posteriores pueden continuar dentro del proceso de diseño, validados con la autora, sin considerarse cambios funcionales aprobados.
+
+Antecedente e inspiración complementaria: `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg` (composición mapa–paneles, densidad informativa).
+
+Referencias visuales complementarias (inspiración UX/UI, CC-023), sin cambio. Son material de terceros: se conservan fuera del repositorio público y se describen aquí por lo que aportan.
+- Vista de árbol de Groundzy (escritorio y móvil): ficha lateral del ejemplar con pestañas, mediciones con íconos, pines legibles sobre mapa satelital, barra de herramientas sobre el mapa. Se reincorpora como idea concreta, según lo previsto en PR-016 v4.0.
+- Tablero agrícola en tablet (mapa satelital con parcelas): tarjeta de resumen flotante sobre el mapa con barras de estado.
+- Farm Management System: gráficos de dona con porcentajes y tarjetas de indicadores tintadas por categoría.
+- Wisetown (tablero de áreas verdes): barras horizontales ordenadas y gráficos de evolución.
+
+Reglas de uso de las referencias complementarias:
+- Se adaptan a la arquitectura, los módulos y los datos de SIVU; no se copian su identidad, marca, nombres ni composición literal (por ejemplo, el botón verde lima y la barra en píldora de Groundzy).
+- La paleta oficial de riesgo (Bajo `#DCE8A9`, Moderado `#F9B52B`, Alto `#F04A32`, Extremo `#C7252B`) no se modifica y se usa solo para el riesgo. Los colores de módulo evitan esos tonos.
+- No se incorporan elementos que impliquen funciones o resultados que SIVU no calcula (por ejemplo, recomendaciones automáticas tipo "AI insight").
+- Los gráficos se usan solo cuando aportan a la lectura del módulo y siempre con datos reales.
+- Antes de rediseñar la interfaz se valida una maqueta visual con la autora.
+
+Reglas de integración del prototipo:
+1. La adaptación es progresiva, módulo por módulo. Cada módulo se integra por separado sobre `main`, con revisión y validación de la autora.
+2. El rediseño UX/UI no modifica por sí mismo módulos, campos, rutas, funcionalidades, permisos ni reglas de negocio.
+   - Se conservan todos los módulos existentes y sus capacidades.
+   - Pueden reorganizarse visualmente o cambiar su nombre visible solo con aprobación previa de la autora.
+   - Las decisiones funcionales pendientes (por ejemplo CC-015, CC-020 o DA-01 a DA-04) evolucionan solo mediante su propio procedimiento de control de cambios.
+3. Si el prototipo muestra un campo, dato, acción o texto que no coincide con lo vigente (por ejemplo, "Coordenadas WGS84"), manda lo vigente. La diferencia se registra como pendiente y no se implementa.
+4. Esta referencia no autoriza a incorporar al frontend productivo datos ficticios, campos no validados ni reglas metodológicas provisionales. Los datos de ejemplo del prototipo (`src/data/mock.ts`) nunca pasan al código productivo; los gráficos y los indicadores se construyen solo con datos de la API.
+5. El código del prototipo no se importa desde la aplicación productiva: se reescribe dentro de su arquitectura.
+
+Roles:
+- Según la autora (2026-10-16), el modelo funcional objetivo de SIVU contempla cuatro roles: Administrador, Usuario municipal, Inspector y Mantenimiento. Su definición sigue en conciliación en CC-015 (varios roles por persona, asignación por proyecto, permisos).
+- El prototipo representa los dos roles implementados hoy (Administrador y Usuario municipal, CC-022). Ese modelo no es la definición funcional definitiva, y el prototipo no lo fija ni sustituye el objetivo.
+- La interfaz integrada se adapta al rol que confirma el backend.
+- El selector "Ver como" es un recurso de revisión del prototipo, no una función.
+
+Cartografía:
+- La imagen aérea del prototipo (Esri/Maxar) es material de terceros. No se versiona en repositorios públicos y su único uso es la revisión local.
+- El frontend productivo usa la cartografía de la arquitectura SIG vigente (ADR-015, CC-019): ArcGIS solo para representar, con la atribución que exige el proveedor, y sin imágenes fijas descargadas.
+- Cualquier imagen o capa nueva debe tener una licencia compatible con un repositorio público, o quedar fuera de él, documentada.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
 
 ## PR-017 — Arquitectura técnica
 Estado: vigente
@@ -1045,3 +1516,58 @@ Afecta:
 - frontend
 - backend
 - seguridad
+
+## PR-019 — Rol Inspector (v1.0)
+Estado: vigente
+Versión: 1.0
+Origen: CC-026
+Motivo: definir el rol técnico (auditoría del modelo de datos, 2026-10-18; resuelve la parte de CC-015 sobre el Inspector).
+
+- Identificador interno: pendiente (CC-026 P7).
+- Etiqueta de interfaz: `Inspector`. Es el término único del rol técnico; no se usa "Inspector Municipal".
+
+Puede:
+- realizar las inspecciones de las OT de Inspección, incluida la OT de Levantamiento (PR-009 v3.0);
+- registrar árboles nuevos durante una OT de Levantamiento, sin alta municipal previa (PR-006 v8.0);
+- registrar y modificar todos los datos técnicos del árbol y de la evaluación mediante OT;
+- confirmar o corregir la especie e incorporar especies a CATALOGO_ESPECIES;
+- aprobar o rechazar las ejecuciones de mantenimiento cuya OT requiere revisión (PR-020 v1.0);
+- ajustar `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad` con justificación (PR-008 v2.0);
+- ajustar las fechas sugeridas de próxima inspección y monitoreo con justificación (PR-009 v3.0).
+
+No realiza:
+- creación de proyectos ni gestión de miembros;
+- creación de órdenes de trabajo;
+- modificación de resultados calculados fuera del ajuste justificado de PR-008 v2.0.
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-020 — Rol Encargado de mantención y revisión de mantenimiento (v1.0)
+Estado: vigente
+Versión: 1.0
+Origen: CC-026
+Motivo: definir la ejecución de mantenimiento y cuándo la revisa el Inspector (auditoría del modelo de datos, 2026-10-18; resuelve la parte de CC-015 sobre "Encargado de mantención").
+
+- Identificador interno: pendiente (CC-026 P7).
+- Etiqueta de interfaz: `Encargado de mantención`.
+
+El Encargado de mantención registra la ejecución de las OT de Mantenimiento que tiene asignadas y su evidencia fotográfica, que es obligatoria.
+
+Revisión del Inspector:
+- La define el Usuario municipal al crear la OT (`requiere_revision_inspector`; valor inicial No).
+- Tala y Retiro_tocón exigen siempre revisión; el Sistema fija Sí y no permite cambiarlo.
+- Sin revisión: el Sistema completa la OT al registrarse la ejecución con `resultado` = Ejecutado completamente y la evidencia. Con Ejecutado parcialmente o No ejecutado, la OT permanece En ejecución.
+- Con revisión: el Sistema completa la OT cuando el Inspector registra `estado_revision = Aprobado`.
+- Rechazo: la OT vuelve a En ejecución; la corrección se registra como un nuevo registro de MANTENIMIENTO con el mismo `id_ot` y se conservan los anteriores.
+- `estado_presencia` cambia a Talado o Retirado solo después de la aprobación del Inspector.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+- RLS

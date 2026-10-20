@@ -24,14 +24,19 @@ Ninguna decisión es permanente.
 
 ## Qué fuente manda según el ámbito
 
-### Funcional / UX
+### Producto, funcional y UX
 
-1. prototipo propio `marybaxmann/Valpo-Verde-Conecta`;
-2. reglas funcionales / documentación vigente del proyecto;
-3. Groundzy — referencia visual/UX secundaria;
-4. otras referencias.
+Jerarquía única de fuentes (PR-016 v6.0; CC-021, CC-023, CC-025). Ante contradicción manda el nivel superior:
 
-- `marybaxmann/Valpo-Verde-Conecta` = prototipo navegable / referencia funcional v2.
+1. metodología y fuentes vigentes (PR-002);
+2. decisiones controladas (ADR, PR, CC);
+3. backend + API vigente;
+4. documentación vigente del proyecto;
+5. Figma y prototipo histórico — solo intención funcional (PR-001 v3.0);
+6. referencias visuales aprobadas — solo UX/UI.
+
+- `marybaxmann/Valpo-Verde-Conecta` y el Figma original (`valpo-verde-frontend/docs/referencias/figma-original/`) = referencias históricas de intención funcional; no restablecen decisiones posteriormente modificadas.
+- Referencia visual principal aprobada (PR-016 v6.0, CC-025): prototipo SIVU Territorio — `valpo-verde-frontend`, rama `prototype/sivu-territorio-v1` (`c852104`), `prototypes/sivu-territorio-lab/`. Solo dirección visual; no es implementación funcional. `03_CityDashboardsButton.jpg` queda como antecedente complementario.
 - `valpo-verde-frontend` = nombre previsto para el frontend productivo futuro. No asumir que hoy son el mismo repositorio.
 - El prototipo no define metodología ni estructura definitiva de base de datos.
 
@@ -62,9 +67,9 @@ Ninguna decisión es permanente.
 
 ## Roles
 
-Identificadores internos: `admin`, `usuario_municipal`.
+Roles (CC-026): Administrador, Usuario municipal, Inspector y Encargado de mantención (ADR-006 v2.0). Identificadores internos vigentes: `admin`, `usuario_municipal`; los de Inspector y Encargado de mantención están pendientes.
 
-La definición vigente de permisos vive en `docs/project-rules.md` (PR-003 y PR-004).
+La definición vigente de permisos vive en `docs/project-rules.md` (PR-003, PR-004, PR-019 y PR-020).
 
 ---
 
