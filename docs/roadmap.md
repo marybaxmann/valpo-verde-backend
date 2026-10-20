@@ -199,7 +199,7 @@ Estados: `PENDIENTE DE DECISIÓN` (autora) · `PENDIENTE` · `BLOQUEADO`
 
 | ID | Pendiente | Origen | Estado | Depende de |
 |---|---|---|---|---|
-| PA-12 | Verificar en navegador la rama del 2026-10-11 (P1–P7) y decidir su PR a `main` | H §1; D §2 K4 | PENDIENTE | — |
+| PA-12 | ~~Verificar en navegador la rama del 2026-10-11 (P1–P7) y decidir su PR a `main`~~ Verificada por la autora el 2026-10-20 (K4): P1–P5 y P7 OK; P6 con falla parcial ya existente en `main` (PA-43); observación de fluidez en P3–P4 (PA-44). PR a `main`: backend #23, frontend #9 | H §1; D §2 K4 | RESUELTO | — |
 | PA-13 | Reactivar entorno de pruebas aislado y reproducir el esquema (migraciones 001–006 fuera del historial) | E1; D §2 | PENDIENTE DE DECISIÓN (Q3) | — |
 | PA-14 | Ejecutar W1–W12 en el entorno aislado | T1; `escenarios-rls.md` | BLOQUEADO | PA-13 + autorización |
 | PA-15 | Evidencias de solo lectura E-2, E-3, E-5 para DA-01 | D §4 | PENDIENTE | — |
@@ -240,6 +240,8 @@ Estados: `PENDIENTE DE DECISIÓN` (autora) · `PENDIENTE` · `BLOQUEADO`
 | PA-40 | Tablas y columnas del modelo inicial sin uso (borrar requiere autorización) | I4 | Baja | PENDIENTE DE DECISIÓN | PA-05, PA-06 |
 | PA-41 | Validación de fecha en la función de alta con hora de Chile | I5 | Baja | PENDIENTE | PA-04 |
 | PA-42 | Caché global y relectura completa tras editar (aceptados por ahora) | P4d, P4e | Baja | PENDIENTE | — |
+| PA-43 | Pantalla del mapa en anchos de 860 px o menos: el menú pasa arriba y la pantalla del mapa (`height: 100vh`, `overflow: hidden`) pierde la parte inferior (`global.css:1297`, frontend). Ya existía en `main`; no la introduce `feature/demo-sivu` | K4 · P6 (2026-10-20) | Por definir | PENDIENTE | — |
+| PA-44 | La navegación entre módulos y la apertura de fichas responden bien, pero no del todo fluidas (observación de rendimiento) | K4 · P3–P4 (2026-10-20) | Por definir | PENDIENTE | — |
 
 ### Auditoría del modelo de datos 2026-10-18 (CC-026)
 

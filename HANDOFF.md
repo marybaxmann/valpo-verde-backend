@@ -9,11 +9,11 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-18 (CC-026: auditoría del modelo de datos, solo documentación)
+- **Última actualización:** 2026-10-20 (K4 verificado; PA-12 resuelto; PA-43 y PA-44 registrados)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `7913a13` (PR #16 demo + PR #17 CC-021…CC-024); frontend `main` = `187a90d` (PR #5).
-- **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas) — **fuera de `main` hasta verificar en navegador (K4)**. Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
+- **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); PR a `main`: backend #23, frontend #9, pendientes de fusión por la autora (PA-12 resuelto). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Resumen:** CC-026/027/028 aprobados; el Excel auditado es la única fuente. Implementación pendiente (AM-04, AM-06).
 
@@ -37,7 +37,7 @@
 
 **Dónde está todo:**
 - Auditoría postdemo: `docs/auditorias/2026-10-postauditoria/` (README, informe, hallazgos, contradicciones, decisiones, dependencias, escenarios RLS).
-- Registro maestro de pendientes: `docs/roadmap.md`, sección "Postauditoría 2026-10" (PA-01 a PA-42).
+- Registro maestro de pendientes: `docs/roadmap.md`, sección "Postauditoría 2026-10" (PA-01 a PA-44).
 
 **Decisiones de la autora (estado exacto, ver `decisiones.md`):**
 - DA-01 escrituras solo por el backend: **APROBADA en principio**; implementación (credencial, permisos, RLS) **no aprobada**.
