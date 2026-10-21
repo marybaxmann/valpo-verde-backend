@@ -66,9 +66,9 @@ hoja VERSION del Excel maestro.
 | CC-037 | Recordatorio de próxima inspección y monitoreo en lugar de agenda automática (AMD-38; PR-009 v4.0) | 3 (+5) | FUENTE SINCRONIZADA (2.0.0 publicada el 2026-10-20) | Fase 1 · decisión 10 | 2.0.0 (publicada el 2026-10-20) | — | 2026-10-20 |
 | CC-038 | Datos simulados fuera de la base de producción: producción nueva y vacía; seed solo para desarrollo | 4 | APROBADO METODOLÓGICAMENTE | Fase 1 · respuesta 0 | — (fuera del paquete) | — | 2026-10-20 |
 | CC-039 | Catálogo botánico: `persistencia_follaje`, `tipo_hoja` y `origen_biogeografico` en CATALOGO_ESPECIES; `rango_edad_estimada_anios` en ARBOLES | 2 (+3) | FUENTE SINCRONIZADA (2.0.0 publicada el 2026-10-20) | Decisión de la autora (2026-10-20) | 2.0.0 (publicada el 2026-10-20) | — | 2026-10-20 |
-| CC-040 | Alcance de la evaluación según el tipo de inspección, evaluación vigente compuesta por campo y fotografías por tipo (PR-006 v11.0, PR-009 v5.0, PR-010 v4.0, ADR-016 v5.0) | 2 (+3) | APROBADO METODOLÓGICAMENTE | Fase 3 · respuesta 3 de la autora | 2.1.0 (en preparación) | — | 2026-10-20 |
+| CC-040 | Alcance de la evaluación según el tipo de inspección, evaluación vigente compuesta por campo y fotografías por tipo (PR-006 v11.0, PR-009 v5.0, PR-010 v4.0, ADR-016 v5.0) | 2 (+3) | FUENTE SINCRONIZADA (2.1.0 publicada el 2026-10-21) | Fase 3 · respuesta 3 de la autora | 2.1.0 (publicada el 2026-10-21) | — | 2026-10-20 |
 | CC-041 | Decisiones de diseño de la Fase 3: sector obligatorio al crear el proyecto, eliminación de lo que no está en el Excel, ajuste antes de finalizar, `motor_commit` y `codigo_usuario` (PR-004 v7.0, PR-005 v4.0) | 3 (+4) | APROBADO METODOLÓGICAMENTE | Fase 3 · respuestas 1, 2, 4, 5 y 6 de la autora | — | — | 2026-10-20 |
-| CC-042 | Estado del proyecto: `estado_proyecto` (Activo / Cerrado) en PROYECTOS; proyecto Cerrado en solo consulta | 3 | APROBADO METODOLÓGICAMENTE | Decisión de la autora (2026-10-20), revisión del diseño de la Fase 3 (PR #31) | 2.1.0 (en preparación) | — | 2026-10-20 |
+| CC-042 | Estado del proyecto: `estado_proyecto` (Activo / Cerrado) en PROYECTOS; proyecto Cerrado en solo consulta | 3 | FUENTE SINCRONIZADA (2.1.0 publicada el 2026-10-21) | Decisión de la autora (2026-10-20), revisión del diseño de la Fase 3 (PR #31) | 2.1.0 (publicada el 2026-10-21) | — | 2026-10-20 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1814,7 +1814,7 @@ motivo)
 | Fecha | 2026-10-20 |
 | Origen | Fase 3, respuesta 3 de la autora al diseño (PR #31). D-209 exigía la evaluación completa para finalizar cualquier inspección. |
 | Tipo | 2 — metodológico (+3 modelo de datos) |
-| Estado | APROBADO METODOLÓGICAMENTE |
+| Estado | FUENTE SINCRONIZADA (paquete 2.1.0 publicado el 2026-10-21) |
 | Regla / campo afectado | REGLAS_GENERALES (fila nueva); DICCIONARIO_CAMPOS D-209 (`estado_registro`); vigencia de los datos técnicos y de la evaluación. |
 | Versión anterior | Toda inspección exigía la evaluación completa (D-209). La vigencia se definía por OT completa. |
 | Versión nueva | 1. **Evaluación inicial, Reevaluación y Levantamiento:** evaluación completa (D-209). 2. **Evaluación instrumental:** solo los campos de cavidad basal y de tronco (D-39 a D-49 y D-51 a D-61). 3. **Monitoreo:** solo los campos de su subtipo (Fitosanitario, Estructural o Vitalidad). 4. En una inspección parcial, los campos registrados reemplazan el valor vigente del árbol; los demás conservan su valor vigente anterior. El historial no se sobrescribe: cada valor queda en la inspección que lo registró. 5. La Evaluación instrumental resuelve el "No determinado" de "Requiere evaluación instrumental", y el riesgo se recalcula con los valores vigentes resultantes. 6. **La evaluación vigente se compone campo por campo:** para cada campo, el último valor entre las inspecciones no anuladas de OT completadas; con esa composición se recalculan las clasificaciones al completarse cada OT o al anularse una inspección. 7. **Fotografías:** las cuatro vistas (árbol completo, base, tronco y copa) son parte de los datos dendrométricos del árbol (`fotografias_arbol`, D-27) y se exigen solo en Evaluación inicial, Reevaluación y Levantamiento. La Evaluación instrumental no considera fotografías; en el Monitoreo no son obligatorias. |
@@ -1844,7 +1844,7 @@ motivo)
 - [x] PR-006 v11.0, PR-009 v5.0, PR-010 v4.0, ADR-016 v5.0.
 - [x] Excel — REGLAS_GENERALES fila 28 (texto propuesto más el texto adicional de (a) a (d)), D-209 J y L, D-27 I y K; VERSION fila 6 (2.1.0); export regenerado (AM-12).
 - [x] Campos por subtipo de Monitoreo y puntos (b) a (d) — decididos el 2026-10-20.
-- [ ] Publicación en el paquete (2.1.0).
+- [x] Publicación en el paquete (2.1.0) — 2026-10-21.
 - [ ] Migración, backend, API y frontend — Fases 4 a 7.
 - [ ] Revisión final
 
@@ -1856,6 +1856,7 @@ motivo)
 | 2026-10-20 | PENDIENTE DE DECISIÓN | marybaxmann | Evaluación vigente compuesta campo por campo; fotografías solo en Evaluación inicial, Reevaluación y Levantamiento (PR-010 v4.0). |
 | 2026-10-21 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decididos los puntos (a) a (d): campos por subtipo de Monitoreo, cavidades internas Sí/No en la instrumental, No determinado si falta un valor vigente, ajuste solo si el valor recalculado coincide. Los textos del Excel van en un PR aparte. |
 | 2026-10-21 | APROBADO METODOLÓGICAMENTE | marybaxmann | AM-12: textos cargados en el Excel (REGLAS_GENERALES fila 28, D-209 J y L, D-27 I y K). La autora define la versión en preparación como 2.1.0 (MINOR, `rule_version` 2.1) con CC-040 y CC-042. Verificación §14.9 sin hallazgos. |
+| 2026-10-21 | FUENTE SINCRONIZADA | marybaxmann | Publicación de 2.1.0 (PR #31 y #33 fusionados en `main`, `34d8e99`). `00-index.md` con la fecha; verificación §14.9 sin hallazgos. VERSION fila 6 (estado, fecha, aprobado_por, tag) y el tag `metodologia-v2.1.0` quedan para el PR aparte de la sesión de auditoría (como el PR #30 de 2.0.0). |
 
 ---
 
@@ -1908,7 +1909,7 @@ motivo)
 | Fecha | 2026-10-20 |
 | Origen | Revisión del diseño de la Fase 3 (PR #31): CC-041 retira `projects.status` porque no está en el Excel, y sin él un proyecto no puede cerrarse. La autora decide incorporar el estado al Excel. |
 | Tipo | 3 — modelo de datos |
-| Estado | APROBADO METODOLÓGICAMENTE (Excel actualizado; 2.1.0 en preparación, no publicada) |
+| Estado | FUENTE SINCRONIZADA (paquete 2.1.0 publicado el 2026-10-21) |
 | Regla / campo afectado | PROYECTOS: `estado_proyecto` (nuevo). REGLAS_GENERALES: sección "Proyectos" (fila 27). VERSION: fila 6 (2.1.0, junto con CC-040). |
 | Versión anterior | PROYECTOS solo tenía `id_proyecto` y `nombre_proyecto`; un proyecto no tenía estado ni podía cerrarse. |
 | Versión nueva | 1. **`estado_proyecto`** (D-265): Activo / Cerrado, Obligatorio. Valor inicial Activo al crear el proyecto. Solo el Administrador cierra o reabre. 2. **Proyecto Cerrado = solo consulta:** se ven árboles, mapa, fichas, indicadores e historial; no se registran árboles ni se crean OT, inspecciones, mantenimientos o incidencias; el formulario QR de sus árboles no recibe incidencias. La delimitación del sector no se modifica; el Administrador puede seguir gestionando los miembros. 3. **Cierre sin condiciones:** puede cerrarse aunque existan OT o incidencias abiertas; mientras el proyecto está Cerrado, esas OT e incidencias se conservan en su estado y no avanzan hasta que se reabra. 4. **Reapertura:** un proyecto Cerrado puede volver a Activo; el cambio no altera `id_proyecto` ni el historial. |
@@ -1928,12 +1929,12 @@ motivo)
 | Fecha de aprobación | 2026-10-20 |
 | Fecha de implementación | — (sin implementación) |
 | Commits / PR asociados | Rama `docs/cc-042-estado-proyecto`. |
-| Observaciones | Versión del paquete: por sí solo sería PATCH (2.0.1; `workflow.md` §14, tipo 3 que no participa en ninguna regla), pero se publica dentro de 2.1.0 junto con CC-040, que es MINOR (decisión de la autora, 2026-10-21; AM-12). Queda en preparación; se publica cuando la autora lo apruebe. No se modificaron código, migraciones, RLS ni Supabase. |
+| Observaciones | Versión del paquete: por sí solo sería PATCH (2.0.1; `workflow.md` §14, tipo 3 que no participa en ninguna regla), pero se publica dentro de 2.1.0 junto con CC-040, que es MINOR (decisión de la autora, 2026-10-21; AM-12). Publicado el 2026-10-21. No se modificaron código, migraciones, RLS ni Supabase. |
 
 **Checklist de sincronización**
 
 - [x] Excel maestro — DICCIONARIO_CAMPOS, PROYECTOS, REGLAS_GENERALES y VERSION.
-- [ ] Diseño de la Fase 3 (PR #31) — agregar `estado_proyecto` a `projects` y actualizar las referencias D-265/D-266 de MIEMBROS_PROYECTO a D-266/D-267.
+- [x] Diseño de la Fase 3 (PR #31) — `estado_proyecto` en `projects` y referencias D-266/D-267 de MIEMBROS_PROYECTO incorporadas.
 - [ ] PR / ADR — roles del Administrador (cierre y reapertura).
 - [ ] Migración + schema.sql — pendiente.
 - [ ] Backend — pendiente.
@@ -1948,3 +1949,4 @@ motivo)
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial y Excel actualizado (Valen-j211). |
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ajuste: el cierre se permite con OT o incidencias abiertas, que quedan congeladas hasta la reapertura (DICCIONARIO_CAMPOS L265, REGLAS_GENERALES B27). |
 | 2026-10-21 | APROBADO METODOLÓGICAMENTE | marybaxmann | La versión en preparación pasa de 2.0.1 a 2.1.0 (`rule_version` 2.1) e incluye CC-040 (AM-12). |
+| 2026-10-21 | FUENTE SINCRONIZADA | marybaxmann | Publicación de 2.1.0 (PR #31 y #33 fusionados en `main`, `34d8e99`). VERSION fila 6 y el tag `metodologia-v2.1.0` quedan para el PR aparte de la sesión de auditoría (como el PR #30 de 2.0.0). |

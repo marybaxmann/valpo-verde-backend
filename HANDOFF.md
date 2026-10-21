@@ -9,19 +9,28 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-20 (AM-08: verificación §14.9 final sobre el Excel con AM-10; fichas en FUENTE SINCRONIZADA; publicación pendiente de aprobación)
+- **Última actualización:** 2026-10-21 (Fase 3 cerrada: PR #31 y #33 fusionados; 2.1.0 en preparación de publicación, PR de este relevo pendiente de fusión por la autora)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
-- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `7913a13` (PR #16 demo + PR #17 CC-021…CC-024); frontend `main` = `187a90d` (PR #5).
-- **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); PR a `main`: backend #23, frontend #9, pendientes de fusión por la autora (PA-12 resuelto). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
+- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `34d8e99` (PR #31 Fase 3 + PR #33 AM-12); frontend `main` = `187a90d` (PR #5).
+- **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** 2.0.0 publicada (2026-10-20; tag tras el merge del PR #27). Siguiente: respaldo de la base, prueba de restauración y Fase 3.
+- **Resumen:** Fase 3 (diseño del modelo, paquete 2.1.0) cerrada en contenido. Publicación de 2.1.0 preparada (este PR); falta VERSION fila 6 y el tag, a cargo de la sesión de auditoría, y la fusión de la autora. Después: respaldo de la base, reactivación de la base de prueba y Fase 4.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
 ---
 
-## ▶ Novedad 2026-10-20 — AM-08, publicación de 2.0.0 (leer primero)
+## ▶ Novedad 2026-10-21 — Fase 3 cerrada; publicación de 2.1.0 preparada (leer primero)
+
+- **Fase 3 (diseño del modelo de datos) cerrada en contenido.** PR #31 (propuesta de diseño, `docs/diseno/fase3-modelo-datos-2.0.0.md`) y PR #33 (AM-12: textos de CC-040 en el Excel) fusionados por la autora en `main` (`34d8e99`). Del protocolo de 9 fases (0 a 8) van 4 cerradas.
+- **CC-040** (alcance de la evaluación según el tipo de inspección, evaluación vigente compuesta por campo, fotografías por tipo de inspección) y **CC-042** (`estado_proyecto` Activo/Cerrado) pasan a `FUENTE SINCRONIZADA` — paquete **2.1.0**, publicada el 2026-10-21. CC-041 (decisiones de diseño sin impacto en el Excel) queda `APROBADO METODOLÓGICAMENTE`, fuera del paquete.
+- **Verificación §14.9** sobre el Excel de `main` (incluye AM-12): **0 hallazgos** automáticos (`scripts/metodologia/verificar_14_9.py`). `docs/methodology/00-index.md` actualizado con la fecha y el tag previsto.
+- **Pendiente de otra sesión:** VERSION fila 6 del Excel (estado "publicada", `fecha_publicacion`, `aprobado_por`, `fecha_aprobacion`) y el tag `metodologia-v2.1.0` — a cargo de la sesión de auditoría en un PR aparte, como el PR #30 de 2.0.0. **No se tocó el Excel en este PR.**
+- **No fusionar sin aprobación expresa de la autora.**
+- **Después de publicar 2.1.0:** Fase 4 (base de datos — migraciones, schema.sql, RLS en la base de prueba), que empieza solo con la aprobación de la autora del respaldo y la reactivación de la base de prueba de Supabase. Fases 5 (motor de reglas), 6 (backend/API) y 7 (frontend) a cargo de otra sesión/colega; Fase 8 (verificación y cierre) al final.
+
+## ▶ Novedad 2026-10-20 — AM-08, publicación de 2.0.0
 
 - **Estado:** **2.0.0 publicada el 2026-10-20** con aprobación expresa de la autora (VERSION fila 5, PR #30; PR #27). El tag `metodologia-v2.0.0` se crea sobre el commit de `main` que fusiona el PR #27. Verificación §14.9 sobre el Excel de `main` con AM-10 (PR #28): **0 hallazgos** automáticos (`scripts/metodologia/verificar_14_9.py`) y revisión manual de activaciones y cobertura. Export de texto en `docs/excel/export/` (solo hojas del paquete).
 - **Fichas en `FUENTE SINCRONIZADA`:** CC-024, CC-026 a CC-032, CC-034 a CC-037 y CC-039 (las de la fila 5 de VERSION).
