@@ -1815,24 +1815,24 @@ motivo)
 | Estado | APROBADO METODOLÓGICAMENTE (Excel actualizado; 2.0.1 en preparación, no publicada) |
 | Regla / campo afectado | PROYECTOS: `estado_proyecto` (nuevo). REGLAS_GENERALES: sección "Proyectos" (fila 27). VERSION: fila 6 (2.0.1). |
 | Versión anterior | PROYECTOS solo tenía `id_proyecto` y `nombre_proyecto`; un proyecto no tenía estado ni podía cerrarse. |
-| Versión nueva | 1. **`estado_proyecto`** (D-265): Activo / Cerrado, Obligatorio. Valor inicial Activo al crear el proyecto. Solo el Administrador cierra o reabre. 2. **Proyecto Cerrado = solo consulta:** se ven árboles, mapa, fichas, indicadores e historial; no se registran árboles ni se crean OT, inspecciones, mantenimientos o incidencias; el formulario QR de sus árboles no recibe incidencias. La delimitación del sector no se modifica; el Administrador puede seguir gestionando los miembros. 3. **Condición de cierre:** no se puede cerrar mientras alguna OT del proyecto esté Pendiente, Programada o En ejecución, o alguna incidencia de sus árboles esté Ingresada o En revisión. 4. **Reapertura:** un proyecto Cerrado puede volver a Activo; el cambio no altera `id_proyecto` ni el historial. |
+| Versión nueva | 1. **`estado_proyecto`** (D-265): Activo / Cerrado, Obligatorio. Valor inicial Activo al crear el proyecto. Solo el Administrador cierra o reabre. 2. **Proyecto Cerrado = solo consulta:** se ven árboles, mapa, fichas, indicadores e historial; no se registran árboles ni se crean OT, inspecciones, mantenimientos o incidencias; el formulario QR de sus árboles no recibe incidencias. La delimitación del sector no se modifica; el Administrador puede seguir gestionando los miembros. 3. **Cierre sin condiciones:** puede cerrarse aunque existan OT o incidencias abiertas; mientras el proyecto está Cerrado, esas OT e incidencias se conservan en su estado y no avanzan hasta que se reabra. 4. **Reapertura:** un proyecto Cerrado puede volver a Activo; el cambio no altera `id_proyecto` ni el historial. |
 | Motivo | Buena práctica de gestión: permitir cerrar un proyecto terminado sin perder su información y sin que reciba nuevos registros. |
-| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20: valores Activo / Cerrado, solo consulta, sin cierre con OT abiertas y reabrible. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20: valores Activo / Cerrado, solo consulta y reabrible por el Administrador. Ajuste del mismo día: se puede cerrar aunque existan OT abiertas. |
 | Archivos afectados | `docs/excel/Base de Datos Valpo Verde.xlsx`; `docs/registro-cambios.md`. |
 | Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
 | Impacto en Excel metodológico | DICCIONARIO_CAMPOS: fila nueva 265 (`estado_proyecto`); las filas de MIEMBROS_PROYECTO pasan de D-265 y D-266 a **D-266 y D-267**. Cabecera C1 de PROYECTOS. REGLAS_GENERALES fila 27. VERSION fila 6. |
 | Impacto en BD | Pendiente (Fase 3 / Fase 4): columna `estado_proyecto` en `projects`, Activo por defecto; reemplaza el `status` que CC-041 retira. |
-| Impacto en backend | Pendiente: bloquear escrituras en proyectos Cerrados; validar la condición de cierre; solo el Administrador cambia el estado. |
+| Impacto en backend | Pendiente: bloquear escrituras en proyectos Cerrados, incluido el avance de OT e incidencias abiertas; solo el Administrador cambia el estado. |
 | Impacto en API | Pendiente: operación de cierre y reapertura; errores de escritura en proyecto Cerrado. |
 | Impacto en frontend | Pendiente: indicador del estado, acciones de cierre y reapertura para el Administrador, formularios deshabilitados y mensaje en el formulario QR. |
-| Pruebas necesarias | En implementación: cierre rechazado con una OT abierta o una incidencia Ingresada o En revisión; escrituras rechazadas en un proyecto Cerrado; consulta permitida; reapertura. |
+| Pruebas necesarias | En implementación: cierre con una OT abierta, que queda sin avanzar hasta la reapertura; escrituras rechazadas en un proyecto Cerrado; consulta permitida; reapertura. |
 | Dependencias | CC-041 (retiro de `projects.status`), CC-036 (formulario QR), AM-08 (2.0.0). |
 | rule_version | 2.0 (sin cambio: PATCH, el campo no participa en ninguna regla de cálculo) |
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-20 |
 | Fecha de implementación | — (sin implementación) |
 | Commits / PR asociados | Rama `docs/cc-042-estado-proyecto`. |
-| Observaciones | Versión del paquete: PATCH → 2.0.1 (`workflow.md` §14, tipo 3 que no participa en ninguna regla). Queda en preparación; se publica cuando la autora lo apruebe. Una incidencia Derivada no impide el cierre. No se modificaron código, migraciones, RLS ni Supabase. |
+| Observaciones | Versión del paquete: PATCH → 2.0.1 (`workflow.md` §14, tipo 3 que no participa en ninguna regla). Queda en preparación; se publica cuando la autora lo apruebe. No se modificaron código, migraciones, RLS ni Supabase. |
 
 **Checklist de sincronización**
 
@@ -1850,3 +1850,4 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial y Excel actualizado (Valen-j211). |
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ajuste: el cierre se permite con OT o incidencias abiertas, que quedan congeladas hasta la reapertura (DICCIONARIO_CAMPOS L265, REGLAS_GENERALES B27). |
