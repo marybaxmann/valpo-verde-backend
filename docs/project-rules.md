@@ -704,9 +704,11 @@ Afecta:
 - frontend
 - permisos
 
-## PR-005 — Proyectos (v3.0)
-Estado: vigente
+## PR-005 — Proyectos (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
+Reemplazada por: PR-005 v4.0
+Motivo del reemplazo: incluía campos funcionales de proyecto que no están en el Excel (`institution_name`, `responsible_professional`, `status`) y `public_spaces` (CC-041).
 Reemplaza: PR-005 v2.0
 Motivo: cierre de la estructura física del modelo multiproyecto, aprobada por la autora. El detalle arquitectónico vive en ADR-005 v2.0.
 
@@ -762,6 +764,33 @@ El rol (`admin`, `usuario_municipal`) sigue siendo global en `user_profiles`.
 ### Despliegue
 
 `002` estructura → backend con scoping rol + proyecto → `003` backfill (si corresponde) → `004` `SET NOT NULL` → RLS posterior.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- permisos
+
+## PR-005 — Proyectos (v4.0)
+Estado: vigente
+Versión: 4.0
+Reemplaza: PR-005 v3.0
+Origen: CC-041
+Motivo: se eliminan los campos funcionales que no están en el Excel maestro; el sector se crea junto con el proyecto (PR-004 v7.0).
+
+La plataforma es multiproyecto. Los árboles pertenecen a un proyecto.
+
+### Tabla `projects` (PROYECTOS)
+- `id` (D-263) y `nombre_proyecto` (D-264).
+- Campos técnicos: `created_by`, `created_at`, `updated_at`.
+- Se eliminan `institution_name`, `responsible_professional` y `status`: no están en el Excel. No hay cierre de proyectos mientras el Excel no lo defina.
+- Cada proyecto tiene exactamente un sector (SECTORES), creado en la misma operación (PR-004 v7.0).
+
+### Tabla `project_members` (MIEMBROS_PROYECTO)
+Representa solo la pertenencia (D-265, D-266); el rol es global (AMD-31). Campos técnicos: `id`, `created_at`, `added_by`. `UNIQUE(project_id, user_id)`.
+
+### Alcance por proyecto
+`trees`, `work_orders` e `incidents` llevan `project_id`; las demás tablas lo derivan del árbol o de la OT. `species` (CATALOGO_ESPECIES) es global. `public_spaces` se retira (CC-041). `tree_code` mantiene la secuencia global (`A-000001`, …).
 
 Afecta:
 - base de datos
@@ -1416,7 +1445,7 @@ Las inspecciones:
 - tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado **dentro del alcance de su tipo** (ver "Alcance"); `Finalizado` cuando están completas; `Anulado` cuando el Inspector anula una inspección finalizada (CC-031). Preguardado y Finalizado equivalen a `borrador` y `completada` de ADR-007;
 - admiten guardado parcial;
 - "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
-- exigen cuatro fotografías nuevas (PR-010 v3.0);
+- las de Evaluación inicial, Reevaluación y Levantamiento exigen las cuatro vistas fotográficas del árbol; la Evaluación instrumental no considera fotografías y en el Monitoreo son opcionales (PR-010 v4.0, CC-040);
 - al finalizar quedan inmutables y conservan `rule_version`;
 - sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
 - `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
@@ -1437,6 +1466,7 @@ Alcance de la evaluación según el tipo de inspección (CC-040):
 - **Monitoreo:** solo los campos de su subtipo (Fitosanitario, Estructural o Vitalidad). La lista de campos de cada subtipo está pendiente de definición en el Excel (CC-040).
 - En una inspección parcial, los datos registrados reemplazan el valor vigente del árbol al completar la OT; los demás conservan su valor vigente anterior. El historial no se sobrescribe: cada valor queda en la inspección que lo registró.
 - Las clasificaciones de una inspección parcial se calculan con los valores vigentes resultantes: los registrados en ella más los vigentes del árbol.
+- **La evaluación vigente del árbol se compone campo por campo:** para cada campo, el último valor entre las inspecciones no anuladas de OT completadas. Al completarse una OT, o al anularse una inspección, el riesgo y las demás clasificaciones se recalculan con esa composición y el resultado queda registrado como evaluación vigente del árbol (por ejemplo, después de una Evaluación instrumental).
 
 Ajuste de clasificaciones (CC-041): el Inspector ajusta `clasificacion_riesgo`, `clasificacion_infraestructura` o `clasificacion_prioridad` solo mientras la inspección está Preguardado. Después de finalizar, para cambiarlas se anula la inspección y se registra una nueva.
 
@@ -1498,15 +1528,39 @@ Afecta:
 - storage
 - base de datos
 
-## PR-010 — Fotografías (v3.0)
-Estado: vigente
+## PR-010 — Fotografías (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
+Reemplazada por: PR-010 v4.0
+Motivo del reemplazo: exigía las cuatro vistas en toda inspección (CC-040).
 Reemplaza: PR-010 v2.0
 Origen: CC-028, CC-036
 Motivo: CC-028 (P9) resolvió que no hay un límite fijo de fotografías y CC-036 definió la fotografía del reporte ciudadano.
 
 - Se permiten varias fotografías por árbol y por inspección, sin un límite fijo (CC-028 P9).
 - Para finalizar una inspección se exigen fotografías nuevas de cuatro vistas: árbol completo, base, tronco y copa. Las fotografías anteriores no cumplen las vistas obligatorias de una nueva inspección.
+- Se conserva el historial fotográfico vinculado a cada inspección.
+- Mantenimiento: la evidencia fotográfica de la ejecución es obligatoria para completar la OT (PR-020 v1.1).
+- Incidencias: el reportante carga al menos una fotografía (jpg o png) en el formulario ciudadano público (PR-022 v1.0).
+- Las imágenes viven en Supabase Storage; PostgreSQL almacena metadatos (ADR-011).
+
+Afecta:
+- frontend
+- backend
+- storage
+- base de datos
+
+## PR-010 — Fotografías (v4.0)
+Estado: vigente
+Versión: 4.0
+Reemplaza: PR-010 v3.0
+Origen: CC-040
+Motivo: las cuatro vistas son parte de los datos dendrométricos del árbol (`fotografias_arbol`, D-27) y solo se exigen en las inspecciones que registran esos datos.
+
+- Se permiten varias fotografías por árbol y por inspección, sin un límite fijo (CC-028 P9).
+- Las cuatro vistas (árbol completo, base, tronco y copa) son parte de los datos dendrométricos del árbol (`fotografias_arbol`, D-27). Se exigen, nuevas, para finalizar las inspecciones de **Evaluación inicial, Reevaluación y Levantamiento**. Las fotografías anteriores no cumplen las vistas obligatorias de una nueva inspección.
+- La **Evaluación instrumental** no considera fotografías.
+- En el **Monitoreo** las fotografías no son obligatorias (`evidencia_fotografica` de la inspección, D-206, opcional).
 - Se conserva el historial fotográfico vinculado a cada inspección.
 - Mantenimiento: la evidencia fotográfica de la ejecución es obligatoria para completar la OT (PR-020 v1.1).
 - Incidencias: el reportante carga al menos una fotografía (jpg o png) en el formulario ciudadano público (PR-022 v1.0).

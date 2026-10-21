@@ -1,9 +1,9 @@
 # Fase 3 — Diseño del modelo de datos para el paquete 2.0.0
 
-> **Estado: PROPUESTA PARA APROBACIÓN (revisión 2, con las respuestas de la autora del 2026-10-20 y CC-040 / CC-041).** Documento de diseño. No contiene migraciones ni modifica ninguna base. La Fase 4 (migraciones) empieza solo con la aprobación de la autora.
+> **Estado: PROPUESTA PARA APROBACIÓN (revisión 3, con las respuestas de la autora del 2026-10-20 y CC-040 / CC-041).** Documento de diseño. No contiene migraciones ni modifica ninguna base. La Fase 4 (migraciones) empieza solo con la aprobación de la autora.
 
 - **Fuente:** paquete metodológico 2.0.0 (tag `metodologia-v2.0.0`), Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx`. Las citas "D-n" remiten a la fila *n* de DICCIONARIO_CAMPOS; "RG" a REGLAS_GENERALES; "RI" a REGLAS_INDICADORES; "MC" a MATRICES_CALCULO.
-- **Decisiones que implementa:** CC-026, CC-029, CC-031 a CC-041; PR-003 v8.0, PR-004 v7.0, PR-006 v11.0, PR-008 v2.0, PR-009 v5.0, PR-010 v3.0, PR-011 v3.0, PR-018 v3.0, PR-019 v1.2, PR-020 v1.1, PR-021, PR-022; ADR-010 v3.0, ADR-014 v2.0, ADR-016 v5.0.
+- **Decisiones que implementa:** CC-026, CC-029, CC-031 a CC-041; PR-003 v8.0, PR-004 v7.0, PR-005 v4.0, PR-006 v11.0, PR-008 v2.0, PR-009 v5.0, PR-010 v4.0, PR-011 v3.0, PR-018 v3.0, PR-019 v1.2, PR-020 v1.1, PR-021, PR-022; ADR-010 v3.0, ADR-014 v2.0, ADR-016 v5.0.
 - **Estado actual de referencia:** `database/schema.sql` y Supabase `valpo-verde-conecta` (2026-10-20), con datos íntegramente simulados (CC-038).
 
 ## 1. Principios del diseño
@@ -14,14 +14,14 @@
 4. **Historial (ADR-012, ADR-016 v4.0, RG "Historial y vigencia"):** no se sobrescribe; cada versión de los datos técnicos queda vinculada a su inspección.
 5. **Valores derivados no se duplican (PR-007):** `estado_presencia`, `fecha_cambio_estado_presencia` y `nivel_riesgo` se obtienen con vistas.
 6. **Escrituras solo por el backend (CC-033):** ninguna política RLS de escritura para `authenticated` ni `anon`.
-7. **Lo que no se modela:** INDICES (DM-09; incluidos nativos e introducidos, CC-039) y cualquier campo que no esté en el Excel.
+7. **Lo que no se modela:** INDICES (DM-09; incluidos nativos e introducidos, CC-039) y **cualquier campo funcional que no esté en el Excel** (CC-041). Solo se agregan campos técnicos: identificadores, timestamps, FK, códigos visibles como `A-000000` y `audit_log`.
 
 ## 2. Mapa: tablas actuales → tablas destino
 
 | Tabla actual | Destino | Motivo |
 |---|---|---|
 | `roles`, `user_profiles` | Se mantienen; +2 roles | CC-032 |
-| `projects`, `project_members` | Se mantienen | D-263 a D-266; PR-005 v3.0 |
+| `projects`, `project_members` | Se adaptan (sin campos fuera del Excel) | D-263 a D-266; PR-005 v4.0 |
 | — | **`sectors`** (nueva) | D-252 a D-256; AMD-32 |
 | `species` | **Se adapta** como catálogo | D-257 a D-262; CC-039 |
 | `trees` | **Se adapta** (identidad + valores vigentes) | D-2 a D-29; ADR-010 v3.0 |
@@ -48,7 +48,17 @@ En cada tabla, la columna "Origen" cita el campo del Excel. Los campos técnicos
 `user_profiles`: se agrega `codigo_usuario` text UNIQUE con formato `USR-000`, generado por una secuencia (D-247; CC-041). El identificador interno (uuid) se mantiene. `Nombre`, `Correo` y `activo` (D-248 a D-251) ya están en `user_profiles.nombre`, `auth.users.email` y `activo`.
 
 ### 3.2 `projects`, `project_members`
-Sin cambios. `projects.name` = `nombre_proyecto` (D-264). Los campos extra de PR-005 v3.0 (`institution_name`, etc.) no contradicen el Excel y se conservan. `project_members` = MIEMBROS_PROYECTO (D-265, D-266).
+`projects` (PROYECTOS, PR-005 v4.0):
+
+| Columna | Tipo | Regla | Origen |
+|---|---|---|---|
+| `id` | uuid PK | | D-263 |
+| `nombre_proyecto` | text NOT NULL | renombra `name` | D-264 |
+| `created_by`, `created_at`, `updated_at` | | técnicos | — |
+
+Se eliminan `institution_name`, `responsible_professional` y `status` (no están en el Excel; CC-041).
+
+`project_members` (MIEMBROS_PROYECTO): sin cambios (D-265, D-266; `id`, `created_at` y `added_by` son técnicos).
 
 ### 3.3 `sectors` (nueva)
 | Columna | Tipo | Regla | Origen |
@@ -83,8 +93,6 @@ Se elimina `species.nombre_comun`: `nombre_comun` es un dato del árbol (CC-028 
 | `sector_id` | uuid FK `sectors` **NOT NULL** | el sector del proyecto, asignado por el sistema | D-6; CC-041 |
 | `fecha_registro` | date NOT NULL | hora de Chile | D-4 |
 | `registrado_por` | uuid FK `user_profiles` NOT NULL | explícito (CC-033) | D-5 |
-| `via_registro` | text CHECK (`alta_municipal`, `levantamiento`) | trazabilidad de la vía de registro | PR-006 v10.0 "Vías de registro" |
-| `legacy_id` | text UNIQUE NULL | se conserva | técnico |
 | **Valores vigentes** (los escribe solo la función de vigencia, §5.1) | | | |
 | `sector`, `ubicacion_descriptiva` | text | | D-7, D-8 |
 | `utm_este`, `utm_norte` | numeric(10,2) | coordenadas canónicas | D-9, D-10; CC-028 P1 |
@@ -95,7 +103,7 @@ Se elimina `species.nombre_comun`: `nombre_comun` es un dato del árbol (CC-028 
 | `vigente_desde_inspection_id` | uuid NULL FK `inspections` | inspección que aportó los valores vigentes; NULL = valores del alta ("Evaluación pendiente") | RG "Historial y vigencia" |
 | `created_at`, `updated_at` | | | técnico |
 
-Se retiran: `species_id` (el vínculo con el catálogo es por `especie_cientifica` normalizada, D-13, D-257, para que una especie ausente del catálogo no bloquee el alta), `dap`, `altura_total`, `diametro_copa`, `altura_primera_rama`, `estado_ciclo_vida` (→ vista `v_tree_presence`), `direccion`, `comuna`, `lugar_referencia` y `public_space_id` (CC-041).
+Se retiran (CC-041: no están en el Excel o los reemplaza otro campo): `legacy_id`, `species_id` (el vínculo con el catálogo es por `especie_cientifica` normalizada, D-13, D-257, para que una especie ausente del catálogo no bloquee el alta), `dap`, `altura_total`, `diametro_copa`, `altura_primera_rama`, `estado_ciclo_vida` (→ vista `v_tree_presence`), `direccion`, `comuna`, `lugar_referencia` y `public_space_id` (CC-041).
 
 ### 3.6 `tree_data_versions` (nueva): datos del árbol por inspección
 Una fila por alta (sin inspección) y una por cada inspección que registra o confirma datos del árbol (D-26 "conservar el historial"; RG "Historial y vigencia").
@@ -168,7 +176,7 @@ Trigger: no permite `completada` si alguna inspección de la OT está `preguarda
 | `registrado_por`, `fecha_registro` | | | D-207, D-208 |
 | `estado_registro` | text CHECK (`preguardado`, `finalizado`, `anulado`) | renombra `estado`; `anulado` solo desde `finalizado` | D-209; CC-031 |
 | `motivo_anulacion`, `anulado_por`, `fecha_anulacion` | | CHECK: presentes si y solo si `anulado` | D-210 a D-212 |
-| `rule_version` | text NOT NULL | se conserva; `2.0` | PR-009 v4.0 |
+| `rule_version` | text NOT NULL CHECK (formato `MAJOR.MINOR`: `^[0-9]+\.[0-9]+$`) | versión vigente al registrar | PR-009 v5.0; workflow §14.10 |
 | `finalizada_at` | timestamptz NULL | renombra `completed_at` | técnico |
 
 `nivel_riesgo` (D-200) no se guarda: se deriva del riesgo efectivo de su evaluación (vista `v_inspections`). La evidencia fotográfica (D-206) vive en `photos`.
@@ -194,11 +202,13 @@ Una fila por inspección (D-30 a D-32). El **alcance** depende del tipo de inspe
 | `puntaje_infraestructura`, `pct_infraestructura`, `clasificacion_infraestructura_calculada` | numeric / text | M04 (P_I y P_I%) | D-170; MC AL5 |
 | `clasificacion_prioridad_calculada` | text | M05 con el riesgo y la infraestructura **efectivos** | D-172; MC AW5; CC-029 |
 | `clasificacion_riesgo_ajustada`, `clasificacion_infraestructura_ajustada`, `clasificacion_prioridad_ajustada` | text NULL | ajuste del Inspector; el valor efectivo = ajustado si existe, si no, calculado | D-170 a D-172 L; PR-008 v2.0 |
-| `rule_version` | text NOT NULL CHECK (`2.0`) | versión con la que se calcularon los resultados | CC-030; PR-011 v3.0 |
+| `rule_version` | text NOT NULL CHECK (formato `MAJOR.MINOR`: `^[0-9]+\.[0-9]+$`) | versión con la que se calcularon los resultados; **no queda fija**: hoy `2.0`, mañana `2.1`… | CC-030; PR-011 v3.0; workflow §14.10 |
 | `motor_commit` | text NOT NULL | hash del código del motor que calculó | CC-030 punto 4; CC-041 |
 | `calculado_at`, `created_at`, `updated_at` | | | técnico |
 
 Sin `estado_registro` propio: lo hereda de su inspección.
+
+**Qué representan estos resultados:** son los **resultados de la inspección**, calculados al finalizarla con `variables_calculo` (lo registrado más los valores vigentes en ese momento). Son los que ve y ajusta el Inspector, y de ellos salen `nivel_riesgo` (D-200) y las fechas sugeridas (D-202, D-203). **No son la evaluación vigente del árbol**: esa se recalcula al completar la OT (§3.10 bis).
 
 ### 3.10 `classification_adjustments` (nueva): historial de ajustes
 | Columna | Tipo | Origen |
@@ -211,6 +221,24 @@ Sin `estado_registro` propio: lo hereda de su inspección.
 | `rule_version` | text | la del valor calculado (CC-030 punto 3) |
 
 Si se ajusta el riesgo o la infraestructura, el backend recalcula `clasificacion_prioridad_calculada` con el valor ajustado (PR-008 v2.0). Los ajustes solo se registran mientras la inspección está `preguardado`; después de finalizar, se anula la inspección y se registra una nueva (CC-041; PR-009 v5.0).
+
+### 3.10 bis `tree_assessments` (nueva): evaluación vigente del árbol, recalculada
+**Aquí se guarda el resultado recalculado** (CC-040). La evaluación vigente se compone **campo por campo**: para cada entrada de REGISTRO_EVALUACION, el último valor entre las inspecciones no anuladas de OT completadas. Con esa composición el motor recalcula todas las clasificaciones.
+
+| Columna | Tipo | Regla | Origen |
+|---|---|---|---|
+| `id`, `tree_id` | uuid | | técnico |
+| `evento` | text CHECK (`ot_completada`, `inspeccion_anulada`) | qué disparó el recálculo | CC-031; CC-040 |
+| `work_order_id`, `inspection_id` | uuid FK | la OT completada o la inspección anulada | técnico |
+| `entradas_vigentes` | jsonb NOT NULL | composición campo por campo: `{campo: {valor, inspection_id}}` | CC-040; D-33 a D-169 |
+| `calculados`, `indicadores` y todas las columnas de resultado de `evaluations` (R01–R04, M01–M05) | | mismo cálculo, con `entradas_vigentes` | D-159 a D-172; MC |
+| `clasificacion_*_ajustada`, `adjustment_ids` | | ajustes que siguen vigentes (ver regla abajo) | PR-008 v2.0 |
+| `rule_version` (`MAJOR.MINOR`), `motor_commit` | text NOT NULL | | CC-030; CC-041 |
+| `created_at` | | | técnico |
+
+- **Solo se agregan filas** (no se modifican): la más reciente de cada árbol es la evaluación vigente y las anteriores forman su historial.
+- **Ajustes:** se trasladan los de la inspección cuya OT disparó el recálculo, solo si el valor recalculado coincide con el valor calculado que ajustó el Inspector. Si no coincide, no se trasladan y la evaluación queda marcada para revisión (**pregunta (d)**).
+- **Momento (backend, una transacción):** al completar una OT, o al anular una inspección de una OT completada: (1) `fn_refresh_tree_current` (datos de ARBOLES, §5.1); (2) lectura de `v_tree_current_inputs`; (3) cálculo del motor; (4) nueva fila en `tree_assessments`.
 
 ### 3.11 `maintenance_records` (nueva): MANTENIMIENTO
 | Columna | Tipo | Regla | Origen |
@@ -263,14 +291,15 @@ Se retiran `reportado_por_user_id`, `observacion`, `actualizado_por` y `priorida
 | `id`, `storage_path`, `uploaded_by`, `created_at` | | se conservan | ADR-011 |
 | `tree_id` | uuid FK NOT NULL | | D-27 |
 | `inspection_id`, `maintenance_record_id`, `incident_id` | uuid FK NULL | CHECK: a lo más uno | D-27, D-206, D-224, D-183 |
-| `vista` | text CHECK (`arbol_completo`, `base`, `tronco`, `copa`) NULL | las 4 son obligatorias para finalizar una inspección | D-27; PR-010 v3.0 |
+| `vista` | text CHECK (`arbol_completo`, `base`, `tronco`, `copa`) NULL | vistas de `fotografias_arbol`; obligatorias (las 4, nuevas) solo para finalizar Evaluación inicial, Reevaluación y Levantamiento. La Evaluación instrumental no admite fotografías; en el Monitoreo son opcionales y pueden no tener vista | D-27; D-206; PR-010 v4.0; CC-040 |
 
 ## 4. Valores derivados (vistas)
 | Vista | Qué entrega | Origen |
 |---|---|---|
 | `v_tree_presence` | `estado_presencia` y `fecha_cambio_estado_presencia`: Presente desde `fecha_registro`; Talado o Retirado con OT completada + mantenimiento `aprobado` de Tala o Retiro_tocón (`fecha_revision`) | D-28, D-29; PR-020 v1.1 |
 | `v_inspections` | inspección + `nivel_riesgo` = riesgo efectivo de su evaluación | D-200 |
-| `v_tree_current_assessment` | evaluación vigente del árbol: la de la OT completada más reciente (`fecha_completada_ot`) cuya inspección no está anulada. Como sus resultados se calcularon con `variables_calculo`, ya incorporan los valores vigentes de las inspecciones anteriores | D-242 L; RG "Historial y vigencia"; CC-031; CC-040 |
+| `v_tree_current_inputs` | **entradas vigentes compuestas campo por campo**: para cada campo de REGISTRO_EVALUACION, el último valor (por `fecha_completada_ot`) entre las inspecciones no anuladas de OT completadas, con la inspección de origen | CC-040; RG "Historial y vigencia" |
+| `v_tree_current_assessment` | evaluación vigente del árbol = la fila más reciente de `tree_assessments` (resultados recalculados con `v_tree_current_inputs`). Sin filas: "Evaluación pendiente" | D-242 L; CC-031; CC-040 |
 | `v_species_traits` | árbol + rasgos del catálogo por `especie_cientifica` normalizada ("Origen no determinado" si no hay especie) | D-257 a D-262; CC-039 |
 | `v_upcoming_inspections` | por proyecto: próximas inspecciones y monitoreos, con inicio y término del rango, desde la fecha de inicio | D-202, D-203; CC-037 |
 
@@ -279,12 +308,14 @@ Se retiran `reportado_por_user_id`, `observacion`, `actualizado_por` y `priorida
 ### 5.1 Vigencia de los datos del árbol
 `fn_refresh_tree_current(tree_id)`: **por cada campo**, copia en `trees` el valor de la versión más reciente (OT completada, inspección no anulada) que registró ese campo; si ninguna lo registró, el del alta (CC-040). Se llama al completar una OT y al anular una inspección. Es la única vía de escritura de los valores vigentes. `vigente_desde_inspection_id` pasa a ser la última inspección que aportó algún valor.
 
+La evaluación vigente se recalcula en el mismo momento (§3.10 bis).
+
 ### 5.2 Generadores y controles
 - Secuencias de códigos: `OT-I-`, `OT-M-`, `INS-`, `MAN-` (nuevas); `INC-` y `A-` (existentes).
 - Triggers de control: `requiere_revision_inspector` fijo para Tala y Retiro_tocón; OT no `completada` con inspecciones `preguardado`; `anulado` solo desde `finalizado`; borrado de `incident_reporters`.
 
 ### 5.3 En el backend, no en SQL
-El motor de reglas (R01–R04, M01–M05; PR-011 v3.0), la validación por DICCIONARIO_CAMPOS, el cálculo de `estado_registro` (completitud), las fechas sugeridas (CC-037) y el cierre automático de las OT de Mantenimiento. La base solo protege invariantes con `CHECK` y triggers.
+El motor de reglas (R01–R04, M01–M05; PR-011 v3.0), el recálculo de la evaluación vigente (§3.10 bis), la validación por DICCIONARIO_CAMPOS, el cálculo de `estado_registro` según el alcance de cada tipo de inspección (incluidas las fotografías, PR-010 v4.0), las fechas sugeridas (CC-037) y el cierre automático de las OT de Mantenimiento. La base solo protege invariantes con `CHECK` y triggers.
 
 ## 6. RLS por rol (CC-033)
 **Escritura:** ninguna política INSERT, UPDATE ni DELETE para `authenticated` ni `anon` en ninguna tabla de datos, y se revocan esos privilegios. El backend escribe con la credencial de servicio después de autorizar. El formulario ciudadano (PR-022) también pasa por el backend.
@@ -295,7 +326,7 @@ El motor de reglas (R01–R04, M01–M05; PR-011 v3.0), la validación por DICCI
 |---|---|---|---|---|
 | `projects` | todos | sus proyectos | sus proyectos | sus proyectos |
 | `project_members` | todos | filas propias | filas propias | filas propias |
-| `sectors`, `trees`, `tree_data_versions`, `work_orders`, `inspections`, `evaluations`, `classification_adjustments`, `maintenance_records`, `incidents`, `photos` | todos (solo lectura, AMD-02) | su proyecto | su proyecto | su proyecto |
+| `sectors`, `trees`, `tree_data_versions`, `work_orders`, `inspections`, `evaluations`, `classification_adjustments`, `tree_assessments`, `maintenance_records`, `incidents`, `photos` | todos (solo lectura, AMD-02) | su proyecto | su proyecto | su proyecto |
 | `incident_reporters` | **no** | **su proyecto** | **no** | **no** |
 | `species` | sí | sí | sí | sí |
 | `user_profiles` | todos | propio (PA-08 sigue pendiente) | propio | propio |
@@ -317,12 +348,12 @@ Todos los datos actuales son simulados (CC-038), así que **no se convierten**: 
 | 1 | Inventario de solo lectura y **limpieza autorizada** de los datos simulados (orden de FK, una transacción) | restaurar el respaldo |
 | 2 | `012_roles_y_catalogo`: roles nuevos, `species` adaptada | `012.down.sql` |
 | 3 | `013_sectores_y_arboles`: `sectors`, `trees` adaptada, `tree_data_versions`, `fn_refresh_tree_current` | `013.down.sql` |
-| 4 | `014_ot_inspeccion_evaluacion`: `work_orders`, `inspections` adaptada, `evaluations`, `classification_adjustments`, `maintenance_records`, secuencias y triggers | `014.down.sql` |
+| 4 | `014_ot_inspeccion_evaluacion`: `work_orders`, `inspections` adaptada, `evaluations`, `classification_adjustments`, `tree_assessments`, `maintenance_records`, secuencias y triggers | `014.down.sql` |
 | 5 | `015_incidencias_y_fotos`: `incidents` adaptada, `incident_reporters`, `photos` adaptada | `015.down.sql` |
 | 6 | `016_vistas`: vistas de §4 | `016.down.sql` |
 | 7 | `017_rls_cc033`: RLS de §6 y revocación de escritura | `017.down.sql` (restaura las políticas actuales) |
 | 8 | Seed de desarrollo (`database/seeds/dev/`, solo bases de prueba) | vaciar las tablas |
-| 9 | `018_retiro` **(aparte, con autorización)**: retiro de `tree_measurements`, `fn_create_tree_with_measurement`, `tree_risk_assessments`, `tree_infrastructure_assessments`, `maintenance`, las 6 tablas de 001, `infrastructure_conflicts`, `public_spaces` y las columnas antiguas de `trees` e `incidents` (CC-041) | restaurar el respaldo |
+| 9 | `018_retiro` **(aparte, con autorización)**: retiro de `tree_measurements`, `fn_create_tree_with_measurement`, `tree_risk_assessments`, `tree_infrastructure_assessments`, `maintenance`, las 6 tablas de 001, `infrastructure_conflicts`, `public_spaces`, las columnas antiguas de `trees` (incluido `legacy_id`) e `incidents`, y `projects.institution_name`, `responsible_professional` y `status` (CC-041) | restaurar el respaldo |
 
 - **Orden de aplicación:** primero en `valpo-verde-conecta-pruebas`, con las pruebas W1–W12 y las de cada `down`; después en `valpo-verde-conecta`.
 - Cada migración es aditiva salvo la 9. Cada `down` se prueba aplicándolo y volviendo a aplicar la migración.
@@ -332,18 +363,20 @@ Todos los datos actuales son simulados (CC-038), así que **no se convierten**: 
 ## 8. Lo que no cubre este diseño
 INDICES (DM-09) · historial de eventos de OT e incidencias (PA-27) · visibilidad de nombres entre miembros (PA-08) · producción (se crea vacía cuando la plataforma esté lista, ADR-013).
 
-## 9. Respuestas incorporadas (revisión 2) y lo que queda abierto
+## 9. Respuestas incorporadas y lo que queda abierto
 | # | Respuesta de la autora | Dónde |
 |---|---|---|
-| 1 | La delimitación es obligatoria y se carga al crear el proyecto | §3.3, §3.5; PR-004 v7.0; CC-041 |
-| 2 | Todo lo que no está en el Excel se elimina | §2, §7 paso 9; CC-041 |
-| 3 | Alcance según el tipo de inspección y vigencia por dato | §3.6, §3.9, §4, §5.1; CC-040; PR-009 v5.0 |
+| 1 | La delimitación es obligatoria y se crea con el proyecto; `sector_id` NOT NULL | §3.3, §3.5; PR-004 v7.0; CC-041 |
+| 2 | Todo lo que no está en el Excel se elimina, salvo los campos técnicos (incluye `projects.institution_name`, `responsible_professional`, `status` y `trees.legacy_id`; no se agrega `via_registro`) | §1, §2, §3.2, §3.5, §7 paso 9; PR-005 v4.0; CC-041 |
+| 3 | Alcance por tipo de inspección; **evaluación vigente compuesta campo por campo**, recalculada en `tree_assessments` | §3.6, §3.9, §3.10 bis, §4, §5; CC-040; PR-009 v5.0; ADR-016 v5.0 |
 | 4 | Ajuste solo antes de finalizar | §3.10; PR-009 v5.0 |
-| 5 | `motor_commit` | §3.9 |
+| 5 | `motor_commit` | §3.9, §3.10 bis |
 | 6 | `codigo_usuario` `USR-000` | §3.1 |
+| — | `rule_version` con formato `MAJOR.MINOR`, sin valor fijo | §3.8, §3.9, §3.10 bis |
+| — | Fotos: las 4 vistas solo en Evaluación inicial, Reevaluación y Levantamiento; ninguna en la instrumental; opcionales en el Monitoreo | §3.13; PR-010 v4.0; CC-040 |
 
 **Abierto (CC-040), no bloquea el modelo físico:**
 - (a) Los campos de cada subtipo de Monitoreo (Fitosanitario, Estructural, Vitalidad). Hay una propuesta en la ficha.
-- (b) En la Evaluación instrumental, las cavidades internas solo admiten Sí o No.
-- (c) Si falta un valor vigente que una clasificación necesita, esa clasificación queda No determinado.
-- (d) Si las 4 vistas fotográficas se exigen también en las inspecciones parciales.
+- (b) En la Evaluación instrumental, ¿las cavidades internas solo admiten Sí o No?
+- (c) Si falta un valor vigente que una clasificación necesita, ¿esa clasificación queda No determinado?
+- (d) Ajustes en la evaluación vigente recalculada: ¿se trasladan solo si el valor recalculado coincide con el que ajustó el Inspector (propuesta de §3.10 bis)?

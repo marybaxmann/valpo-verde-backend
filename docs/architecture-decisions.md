@@ -1125,7 +1125,7 @@ La v3.0 cerró la corrección y anulación (CC-031) y el modelo sin MEDICIONES_D
 4. El alta municipal no exige medición: el árbol se considera presente con "Evaluación pendiente" hasta su primera evaluación vigente.
 5. Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
 6. No se sobrescribe el historial.
-7. Vigencia por dato: los valores se hacen vigentes al completar toda la OT. Para cada dato, el valor vigente es el de la inspección no anulada de la OT completada más recientemente que registró ese dato. Una inspección parcial (Evaluación instrumental, Monitoreo) solo reemplaza los datos que registra (CC-040).
+7. Vigencia por dato: los valores se hacen vigentes al completar toda la OT. Para cada dato, el valor vigente es el de la inspección no anulada de la OT completada más recientemente que registró ese dato. Una inspección parcial (Evaluación instrumental, Monitoreo) solo reemplaza los datos que registra (CC-040). La evaluación vigente se compone del mismo modo, campo por campo, y sus clasificaciones se recalculan con esa composición al completarse cada OT o al anularse una inspección.
 8. Corrección y anulación (CC-031): mientras la inspección está Preguardado se corrige libremente; una inspección Finalizado solo se anula completa, por el Inspector y con motivo, y los datos correctos se registran en una nueva inspección (en la misma OT si todavía no está completada; si lo está, en una nueva OT).
 9. El valor vigente se deriva; no es un segundo dato editable independiente.
 10. Una modificación posterior de la especie es una corrección de identificación, no una nueva medición.
