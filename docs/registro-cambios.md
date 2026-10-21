@@ -66,6 +66,8 @@ hoja VERSION del Excel maestro.
 | CC-037 | Recordatorio de próxima inspección y monitoreo en lugar de agenda automática (AMD-38; PR-009 v4.0) | 3 (+5) | FUENTE SINCRONIZADA (2.0.0 publicada el 2026-10-20) | Fase 1 · decisión 10 | 2.0.0 (publicada el 2026-10-20) | — | 2026-10-20 |
 | CC-038 | Datos simulados fuera de la base de producción: producción nueva y vacía; seed solo para desarrollo | 4 | APROBADO METODOLÓGICAMENTE | Fase 1 · respuesta 0 | — (fuera del paquete) | — | 2026-10-20 |
 | CC-039 | Catálogo botánico: `persistencia_follaje`, `tipo_hoja` y `origen_biogeografico` en CATALOGO_ESPECIES; `rango_edad_estimada_anios` en ARBOLES | 2 (+3) | FUENTE SINCRONIZADA (2.0.0 publicada el 2026-10-20) | Decisión de la autora (2026-10-20) | 2.0.0 (publicada el 2026-10-20) | — | 2026-10-20 |
+| CC-040 | Alcance de la evaluación según el tipo de inspección y vigencia por dato (PR-006 v11.0, PR-009 v5.0, ADR-016 v5.0) | 2 (+3) | PENDIENTE DE DECISIÓN (campos por subtipo de Monitoreo) | Fase 3 · respuesta 3 de la autora | 2.0.0 → siguiente versión | — | 2026-10-20 |
+| CC-041 | Decisiones de diseño de la Fase 3: sector obligatorio al crear el proyecto, retiro de lo que no está en el Excel, ajuste antes de finalizar, `motor_commit` y `codigo_usuario` (PR-004 v7.0) | 3 (+4) | APROBADO METODOLÓGICAMENTE | Fase 3 · respuestas 1, 2, 4, 5 y 6 de la autora | — | — | 2026-10-20 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1803,3 +1805,91 @@ motivo)
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial (Valen-j211, PR #25). |
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Sincronización documental (PR-003 v8.0, PR-006 v10.0, PR-019 v1.2, ADR-016 v4.0). Edad estimada Opcional; PN y PI no se adoptan en 2.0.0; AM-11 cerrado con la referencia estacional de `defoliacion_estimada_pct`. |
 | 2026-10-20 | FUENTE SINCRONIZADA | — | Incluido en el paquete 2.0.0 (VERSION, fila 5). Verificación §14.9 sin hallazgos sobre el Excel de `main` con AM-10 (AM-08). Publicación y tag pendientes de la aprobación de la autora. |
+
+---
+
+### CC-040 — Alcance de la evaluación según el tipo de inspección y vigencia por dato
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 3, respuesta 3 de la autora al diseño (PR #31). D-209 exigía la evaluación completa para finalizar cualquier inspección. |
+| Tipo | 2 — metodológico (+3 modelo de datos) |
+| Estado | PENDIENTE DE DECISIÓN: la regla está aprobada; falta definir los campos de cada subtipo de Monitoreo. |
+| Regla / campo afectado | REGLAS_GENERALES (fila nueva); DICCIONARIO_CAMPOS D-209 (`estado_registro`); vigencia de los datos técnicos y de la evaluación. |
+| Versión anterior | Toda inspección exigía la evaluación completa (D-209). La vigencia se definía por OT completa. |
+| Versión nueva | 1. **Evaluación inicial, Reevaluación y Levantamiento:** evaluación completa (D-209). 2. **Evaluación instrumental:** solo los campos de cavidad basal y de tronco (D-39 a D-49 y D-51 a D-61). 3. **Monitoreo:** solo los campos de su subtipo (Fitosanitario, Estructural o Vitalidad). 4. En una inspección parcial, los campos registrados reemplazan el valor vigente del árbol; los demás conservan su valor vigente anterior. El historial no se sobrescribe: cada valor queda en la inspección que lo registró. 5. La Evaluación instrumental resuelve el "No determinado" de "Requiere evaluación instrumental", y el riesgo se recalcula con los valores vigentes resultantes. |
+| Texto propuesto para el Excel (lo actualiza la autora) | **REGLAS_GENERALES, fila nueva** · A: `Preguardado y finalización` · B: `La evaluación que se exige para finalizar depende de tipo_inspeccion_realizada. Evaluación inicial, Reevaluación y Levantamiento: evaluación completa (todos los campos Obligatorios y los Condicionales activados de ARBOLES y REGISTRO_EVALUACION). Evaluación instrumental: solo los campos de cavidad basal y de tronco; resuelve el No determinado de Requiere evaluación instrumental. Monitoreo: solo los campos de su subtipo (Fitosanitario, Estructural o Vitalidad). En una inspección parcial, los campos registrados reemplazan el valor vigente del árbol al completar la OT; los demás conservan su valor vigente anterior. El historial no se sobrescribe: cada valor queda vinculado a la inspección que lo registró. Las clasificaciones se calculan con los valores vigentes resultantes.` · C: `tipo_inspeccion_realizada; subtipo_inspeccion; estado_registro; campos de cavidad; campos de cada subtipo de Monitoreo` · D: `INSPECCION; REGISTRO_EVALUACION; ARBOLES`. **DICCIONARIO_CAMPOS, D-209 (`estado_registro`), columna J:** `Finalizado cuando están completos todos los campos obligatorios y los condicionales activados que exige el tipo de inspección (REGLAS_GENERALES, Preguardado y finalización): evaluación completa en Evaluación inicial, Reevaluación y Levantamiento; campos de cavidad en Evaluación instrumental; campos de su subtipo en Monitoreo. En otro caso, Preguardado. Anulado solo desde Finalizado, cuando el Inspector registra motivo_anulacion.` · **columna L:** `No editable manualmente, salvo la anulación por el Inspector. Valor inicial: Preguardado. Una inspección Preguardado o Anulado no modifica la evaluación vigente del árbol. Una inspección parcial solo reemplaza los valores vigentes de los campos que registra. Mientras alguna inspección vinculada esté Preguardado, la OT no puede pasar a estado_ot = Completada. Una medición pendiente no equivale a cero ni a No presenta.` |
+| Pendiente de decisión | (a) **Campos de cada subtipo de Monitoreo.** No están en el Excel. Propuesta para revisar: *Fitosanitario* = `defoliacion_estimada_pct`, `clorosis_pct`, `necrosis_pct`, `muerte_regresiva_copa_pct`, `presenta_exudaciones`; *Estructural* = los campos de entrada de R01, R02 y R03 (D-33 a D-82 y D-86); *Vitalidad* = `clasificacion_vitalidad` (D-169). (b) **En la Evaluación instrumental**, `cavidad_basal_interna` y `cavidad_interna_tronco` solo admiten Sí o No, nunca "Requiere evaluación instrumental". (c) **Si falta un valor vigente** que una clasificación necesita (por ejemplo, un árbol sin evaluación completa previa), la clasificación afectada queda No determinado (criterio de CC-024). (d) **Fotografías:** ¿las 4 vistas (PR-010 v3.0) se exigen también en las inspecciones parciales? |
+| Motivo | Una evaluación instrumental o un monitoreo no repiten toda la evaluación del árbol. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20. |
+| Archivos afectados | Esta ficha; PR-006 v11.0; PR-009 v5.0; ADR-016 v5.0; `docs/diseno/fase3-modelo-datos-2.0.0.md`. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | REGLAS_GENERALES (fila nueva) y D-209 J y L (texto propuesto arriba); campos por subtipo de Monitoreo, cuando se decidan. |
+| Impacto en BD | Fase 4: versiones de datos y evaluaciones con solo los campos registrados; vigencia por dato (diseño §3.6, §3.9 y §5.1). |
+| Impacto en backend | Fase 6: validación por alcance; cálculo con los valores vigentes resultantes. |
+| Impacto en API | Alcance según el tipo de inspección. |
+| Impacto en frontend | Formulario de inspección con los campos del alcance. |
+| Pruebas necesarias | Finalización por tipo; reemplazo parcial de vigentes; historial sin sobrescritura; resolución del No determinado por la Evaluación instrumental; recálculo con los valores vigentes. |
+| Dependencias | CC-024, CC-026, CC-031; paquete 2.0.0. Al cambiar la fuente, entra en la siguiente versión del paquete (2.1.0 por §14.10: cambia el conjunto de campos exigidos). |
+| rule_version | 2.1 al publicarse en el paquete (por definir con la autora) |
+| Aprobado por | marybaxmann (regla de alcance y vigencia) |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase3-diseno-modelo-datos` (PR #31). |
+| Observaciones | No se modificaron código, migraciones, RLS ni Supabase. |
+
+**Checklist de sincronización**
+
+- [x] PR-006 v11.0, PR-009 v5.0, ADR-016 v5.0.
+- [ ] Excel (REGLAS_GENERALES y D-209) — lo actualiza la autora.
+- [ ] Campos por subtipo de Monitoreo — decisión pendiente.
+- [ ] Publicación en el paquete (2.1.0).
+- [ ] Migración, backend, API y frontend — Fases 4 a 7.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | PENDIENTE DE DECISIÓN | marybaxmann | Regla de alcance y vigencia aprobada; faltan los campos por subtipo de Monitoreo. |
+
+---
+
+### CC-041 — Decisiones de diseño de la Fase 3
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Fase 3, respuestas 1, 2, 4, 5 y 6 de la autora al diseño (PR #31). |
+| Tipo | 3 — modelo de datos (+4) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | SECTORES; `public_spaces`; `infrastructure_conflicts`; ajuste de clasificaciones; `motor_commit`; USUARIOS.`id_usuario` (D-247). |
+| Versión nueva | 1. **Sector obligatorio al crear el proyecto:** el Administrador carga la delimitación junto con el proyecto; nunca existe un proyecto sin sector, y `trees.sector_id` es obligatorio (D-6, D-252 a D-256). 2. **Todo lo que no está en el Excel se elimina:** `public_spaces` e `infrastructure_conflicts` se retiran en el paso de retiro, aparte y con autorización. 3. **El Inspector ajusta clasificaciones solo antes de finalizar** la inspección; después, se anula y se registra una nueva (PR-009 v5.0). 4. **`motor_commit`:** cada evaluación guarda el hash del código del motor que calculó sus resultados, junto con `rule_version`. 5. **`codigo_usuario`** con formato `USR-000` (D-247), además del identificador interno. |
+| Motivo | Cerrar las preguntas del diseño de la Fase 3. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20. |
+| Archivos afectados | Esta ficha; PR-004 v7.0; PR-009 v5.0; `docs/diseno/fase3-modelo-datos-2.0.0.md`. |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Fase 4 (diseño §3). |
+| Impacto en backend | Fase 6: creación de proyecto con sector; ajuste solo en Preguardado; `motor_commit` en cada cálculo. |
+| Impacto en frontend | Fase 7: alta de proyecto con delimitación. |
+| Pruebas necesarias | Proyecto sin delimitación rechazado; ajuste rechazado en una inspección finalizada; `motor_commit` presente en cada evaluación; formato de `codigo_usuario`. |
+| Dependencias | CC-030, CC-032, CC-033. |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — |
+| Commits / PR asociados | Rama `docs/fase3-diseno-modelo-datos` (PR #31). |
+| Observaciones | El retiro de tablas sigue requiriendo autorización expresa en la Fase 4. |
+
+**Checklist de sincronización**
+
+- [x] PR-004 v7.0 y PR-009 v5.0.
+- [ ] Migración, backend y frontend — Fases 4 a 7.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Respuestas 1, 2, 4, 5 y 6 al diseño de la Fase 3. |
