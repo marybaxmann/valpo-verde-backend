@@ -391,4 +391,4 @@ INDICES (DM-09) · historial de eventos de OT e incidencias (PA-27) · visibilid
 | (c) | Si falta un valor vigente que una clasificación necesita, esa clasificación queda No determinado (CC-024; prioridad según CC-029) | §3.10 bis; PR-009 v5.0 |
 | (d) | El ajuste se mantiene en la evaluación recalculada solo si el valor recalculado coincide con el valor calculado sobre el que se hizo; si no, se descarta y queda una marca de revisión | §3.10 bis (`ajustes_descartados`, `requiere_revision_ajuste`); PR-009 v5.0 |
 
-Los textos de CC-040 para el Excel se cargan en un PR aparte desde la sesión de auditoría (AM-12). No queda ninguna pregunta abierta sobre el modelo físico.
+Los textos de CC-040 están en el Excel (AM-12: REGLAS_GENERALES fila 28, D-209 y D-27; versión 2.1.0 en preparación). No queda ninguna pregunta abierta sobre el modelo físico.
