@@ -11,7 +11,7 @@
 1. **Nombres:** tablas en inglés, como las existentes (`trees`, `inspections`…); columnas con el nombre exacto del campo en DICCIONARIO_CAMPOS.
 2. **Códigos de catálogo:** cada categoría se guarda como código snake_case de PR-021 y la base la valida con `CHECK`. La etiqueta visible es la del Excel.
 3. **Calculado ≠ observado (PR-008 v2.0):** las entradas del Inspector y los resultados del motor se guardan por separado; los resultados no se editan, salvo el ajuste justificado.
-4. **Historial (ADR-012, ADR-016 v4.0, RG "Historial y vigencia"):** no se sobrescribe; cada versión de los datos técnicos queda vinculada a su inspección.
+4. **Historial (ADR-012, ADR-016 v5.0, RG "Historial y vigencia"):** no se sobrescribe; cada versión de los datos técnicos queda vinculada a su inspección.
 5. **Valores derivados no se duplican (PR-007):** `estado_presencia`, `fecha_cambio_estado_presencia` y `nivel_riesgo` se obtienen con vistas.
 6. **Escrituras solo por el backend (CC-033):** ninguna política RLS de escritura para `authenticated` ni `anon`.
 7. **Lo que no se modela:** INDICES (DM-09; incluidos nativos e introducidos, CC-039) y **cualquier campo funcional que no esté en el Excel** (CC-041). Solo se agregan campos técnicos: identificadores, timestamps, FK, códigos visibles como `A-000000` y `audit_log`.
@@ -33,7 +33,7 @@
 | `maintenance` (OT + ejecución mezcladas) | Se **retira** → `work_orders` + **`maintenance_records`** (nueva) | D-213 a D-230 |
 | `incidents` | **Se adapta** | D-174 a D-190; CC-036 |
 | — | **`incident_reporters`** (nueva) | D-178, D-179; PR-022 |
-| `photos` | **Se adapta** (vistas y vínculos) | D-27, D-183, D-206, D-224; PR-010 v3.0 |
+| `photos` | **Se adapta** (vistas y vínculos) | D-27, D-183, D-206, D-224; PR-010 v4.0 |
 | `audit_log` | Se mantiene | Historial de eventos (PA-27, pendiente) |
 | `defect_observations`, `defect_results`, `component_assessments`, `probability_thresholds`, `vitality_assessments`, `risk_evaluations` (001, vacías) | Se **retiran** | CC-032; PA-40 |
 | `infrastructure_conflicts` (001, vacía), `public_spaces` | Se **retiran** (paso de retiro, con autorización) | No están en el Excel (CC-041) |
@@ -115,7 +115,7 @@ Una fila por alta (sin inspección) y una por cada inspección que registra o co
 | `id`, `tree_id` | uuid | — | técnico / D-2 |
 | `inspection_id` | uuid NULL FK `inspections`, UNIQUE | NULL solo en la versión del alta | RG "Historial y vigencia" |
 | `campos_registrados` | text[] NOT NULL | campos que registró esta versión | CC-040 |
-| `sector`, `ubicacion_descriptiva`, `utm_este`, `utm_norte` | | el Inspector puede corregir la ubicación (PR-006 v10.0) | D-7 a D-10 |
+| `sector`, `ubicacion_descriptiva`, `utm_este`, `utm_norte` | | el Inspector puede corregir la ubicación (PR-006 v11.0) | D-7 a D-10 |
 | `especie_cientifica`, `nombre_comun` | text | para finalizar: ambos, sin "Género sp." ni "No determinado" | D-13, D-14 |
 | `multifustal` | boolean | | D-15 |
 | `numero_fustes` | integer CHECK ≥ 2 | si `multifustal` | D-16 |
@@ -130,7 +130,7 @@ Una fila por alta (sin inspección) y una por cada inspección que registra o co
 | `rango_edad_estimada_anios` | text CHECK (21 códigos: `0_5` … `96_100`, `mas_de_100`) NULL | **opcional**; no se exige para finalizar | D-26; CC-039 |
 | `created_by`, `created_at` | | | técnico |
 
-Las versiones no se modifican después de finalizar la inspección (PR-009 v4.0).
+Las versiones no se modifican después de finalizar la inspección (PR-009 v5.0).
 
 ### 3.7 `work_orders` (nueva): ORDENES DE TRABAJO
 | Columna | Tipo | Regla | Origen |
