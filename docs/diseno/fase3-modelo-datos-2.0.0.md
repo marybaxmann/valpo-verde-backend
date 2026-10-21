@@ -3,7 +3,7 @@
 > **Estado: PROPUESTA PARA APROBACIÓN (revisión 3, con las respuestas de la autora del 2026-10-20 y CC-040 / CC-041).** Documento de diseño. No contiene migraciones ni modifica ninguna base. La Fase 4 (migraciones) empieza solo con la aprobación de la autora.
 
 - **Fuente:** paquete metodológico 2.0.0 (tag `metodologia-v2.0.0`), Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx`. Las citas "D-n" remiten a la fila *n* de DICCIONARIO_CAMPOS; "RG" a REGLAS_GENERALES; "RI" a REGLAS_INDICADORES; "MC" a MATRICES_CALCULO.
-- **Decisiones que implementa:** CC-026, CC-029, CC-031 a CC-041; PR-003 v8.0, PR-004 v7.0, PR-005 v4.0, PR-006 v11.0, PR-008 v2.0, PR-009 v5.0, PR-010 v4.0, PR-011 v3.0, PR-018 v3.0, PR-019 v1.2, PR-020 v1.1, PR-021, PR-022; ADR-010 v3.0, ADR-014 v2.0, ADR-016 v5.0.
+- **Decisiones que implementa:** CC-026, CC-029, CC-031 a CC-042; PR-003 v8.0, PR-004 v7.0, PR-005 v4.0, PR-006 v11.0, PR-008 v2.0, PR-009 v5.0, PR-010 v4.0, PR-011 v3.0, PR-018 v3.0, PR-019 v1.2, PR-020 v1.1, PR-021, PR-022; ADR-010 v3.0, ADR-014 v2.0, ADR-016 v5.0.
 - **Estado actual de referencia:** `database/schema.sql` y Supabase `valpo-verde-conecta` (2026-10-20), con datos íntegramente simulados (CC-038).
 
 ## 1. Principios del diseño
@@ -21,7 +21,7 @@
 | Tabla actual | Destino | Motivo |
 |---|---|---|
 | `roles`, `user_profiles` | Se mantienen; +2 roles | CC-032 |
-| `projects`, `project_members` | Se adaptan (sin campos fuera del Excel) | D-263 a D-266; PR-005 v4.0 |
+| `projects`, `project_members` | Se adaptan (sin campos fuera del Excel; `status` pasa a `estado_proyecto`) | D-263 a D-267; PR-005 v4.0; CC-042 |
 | — | **`sectors`** (nueva) | D-252 a D-256; AMD-32 |
 | `species` | **Se adapta** como catálogo | D-257 a D-262; CC-039 |
 | `trees` | **Se adapta** (identidad + valores vigentes) | D-2 a D-29; ADR-010 v3.0 |
@@ -54,11 +54,14 @@ En cada tabla, la columna "Origen" cita el campo del Excel. Los campos técnicos
 |---|---|---|---|
 | `id` | uuid PK | | D-263 |
 | `nombre_proyecto` | text NOT NULL | renombra `name` | D-264 |
+| `estado_proyecto` | text NOT NULL DEFAULT `activo` CHECK (`activo`, `cerrado`) | renombra `status`, que ya usa esos mismos códigos (PR-021: no cambian). Solo el Administrador cierra o reabre | D-265; RG fila 27; CC-042 |
 | `created_by`, `created_at`, `updated_at` | | técnicos | — |
 
-Se eliminan `institution_name`, `responsible_professional` y `status` (no están en el Excel; CC-041).
+Se eliminan `institution_name` y `responsible_professional` (no están en el Excel; CC-041). `status` no se elimina: pasa a ser `estado_proyecto` (CC-042).
 
-`project_members` (MIEMBROS_PROYECTO): sin cambios (D-265, D-266; `id`, `created_at` y `added_by` son técnicos).
+**Proyecto Cerrado (RG fila 27):** queda en solo consulta. No se registran árboles ni se crean OT, inspecciones, mantenimientos ni incidencias, y el formulario QR de sus árboles no recibe incidencias. La delimitación no se modifica; el Administrador sigue gestionando los miembros. Las OT e incidencias abiertas se conservan en su estado y no avanzan hasta que el proyecto se reabra. El backend lo controla (capa 1) y un trigger de defensa rechaza las escrituras en un proyecto cerrado (§5.2).
+
+`project_members` (MIEMBROS_PROYECTO): sin cambios (D-266, D-267; `id`, `created_at` y `added_by` son técnicos).
 
 ### 3.3 `sectors` (nueva)
 | Columna | Tipo | Regla | Origen |
@@ -312,7 +315,7 @@ La evaluación vigente se recalcula en el mismo momento (§3.10 bis).
 
 ### 5.2 Generadores y controles
 - Secuencias de códigos: `OT-I-`, `OT-M-`, `INS-`, `MAN-` (nuevas); `INC-` y `A-` (existentes).
-- Triggers de control: `requiere_revision_inspector` fijo para Tala y Retiro_tocón; OT no `completada` con inspecciones `preguardado`; `anulado` solo desde `finalizado`; borrado de `incident_reporters`.
+- Triggers de control: rechazo de escrituras en las tablas del proyecto cuando `estado_proyecto` = `cerrado`, salvo `project_members` y el propio cambio de estado (RG fila 27; CC-042); `requiere_revision_inspector` fijo para Tala y Retiro_tocón; OT no `completada` con inspecciones `preguardado`; `anulado` solo desde `finalizado`; borrado de `incident_reporters`.
 
 ### 5.3 En el backend, no en SQL
 El motor de reglas (R01–R04, M01–M05; PR-011 v3.0), el recálculo de la evaluación vigente (§3.10 bis), la validación por DICCIONARIO_CAMPOS, el cálculo de `estado_registro` según el alcance de cada tipo de inspección (incluidas las fotografías, PR-010 v4.0), las fechas sugeridas (CC-037) y el cierre automático de las OT de Mantenimiento. La base solo protege invariantes con `CHECK` y triggers.
@@ -337,7 +340,7 @@ El motor de reglas (R01–R04, M01–M05; PR-011 v3.0), el recálculo de la eval
 - **Usuario municipal:** alta de árbol; OT; estado de OT de Inspección; revisión de incidencias.
 - **Inspector:** inspecciones, evaluaciones, versiones de datos del árbol, ajustes, anulación, catálogo de especies, revisión de mantenimiento.
 - **Encargado de mantención:** `maintenance_records` de sus OT y su evidencia.
-- **Administrador:** proyectos, miembros y sectores.
+- **Administrador:** proyectos (incluido cerrarlos y reabrirlos, CC-042), miembros y sectores.
 
 ## 7. Plan de migración (Fase 4) y reversión
 Todos los datos actuales son simulados (CC-038), así que **no se convierten**: se descartan con autorización y la estructura nueva se crea vacía.
@@ -346,14 +349,14 @@ Todos los datos actuales son simulados (CC-038), así que **no se convierten**: 
 |---|---|---|
 | 0 | Respaldo de `valpo-verde-conecta` (procedimiento probado el 2026-10-20) y reactivación de `valpo-verde-conecta-pruebas` **con tu confirmación** | — |
 | 1 | Inventario de solo lectura y **limpieza autorizada** de los datos simulados (orden de FK, una transacción) | restaurar el respaldo |
-| 2 | `012_roles_y_catalogo`: roles nuevos, `species` adaptada | `012.down.sql` |
+| 2 | `012_roles_catalogo_proyectos`: roles nuevos, `species` adaptada, `projects.status` → `estado_proyecto` | `012.down.sql` |
 | 3 | `013_sectores_y_arboles`: `sectors`, `trees` adaptada, `tree_data_versions`, `fn_refresh_tree_current` | `013.down.sql` |
 | 4 | `014_ot_inspeccion_evaluacion`: `work_orders`, `inspections` adaptada, `evaluations`, `classification_adjustments`, `tree_assessments`, `maintenance_records`, secuencias y triggers | `014.down.sql` |
 | 5 | `015_incidencias_y_fotos`: `incidents` adaptada, `incident_reporters`, `photos` adaptada | `015.down.sql` |
 | 6 | `016_vistas`: vistas de §4 | `016.down.sql` |
 | 7 | `017_rls_cc033`: RLS de §6 y revocación de escritura | `017.down.sql` (restaura las políticas actuales) |
 | 8 | Seed de desarrollo (`database/seeds/dev/`, solo bases de prueba) | vaciar las tablas |
-| 9 | `018_retiro` **(aparte, con autorización)**: retiro de `tree_measurements`, `fn_create_tree_with_measurement`, `tree_risk_assessments`, `tree_infrastructure_assessments`, `maintenance`, las 6 tablas de 001, `infrastructure_conflicts`, `public_spaces`, las columnas antiguas de `trees` (incluido `legacy_id`) e `incidents`, y `projects.institution_name`, `responsible_professional` y `status` (CC-041) | restaurar el respaldo |
+| 9 | `018_retiro` **(aparte, con autorización)**: retiro de `tree_measurements`, `fn_create_tree_with_measurement`, `tree_risk_assessments`, `tree_infrastructure_assessments`, `maintenance`, las 6 tablas de 001, `infrastructure_conflicts`, `public_spaces`, las columnas antiguas de `trees` (incluido `legacy_id`) e `incidents`, y `projects.institution_name` y `responsible_professional` (CC-041) | restaurar el respaldo |
 
 - **Orden de aplicación:** primero en `valpo-verde-conecta-pruebas`, con las pruebas W1–W12 y las de cada `down`; después en `valpo-verde-conecta`.
 - Cada migración es aditiva salvo la 9. Cada `down` se prueba aplicándolo y volviendo a aplicar la migración.
@@ -367,11 +370,12 @@ INDICES (DM-09) · historial de eventos de OT e incidencias (PA-27) · visibilid
 | # | Respuesta de la autora | Dónde |
 |---|---|---|
 | 1 | La delimitación es obligatoria y se crea con el proyecto; `sector_id` NOT NULL | §3.3, §3.5; PR-004 v7.0; CC-041 |
-| 2 | Todo lo que no está en el Excel se elimina, salvo los campos técnicos (incluye `projects.institution_name`, `responsible_professional`, `status` y `trees.legacy_id`; no se agrega `via_registro`) | §1, §2, §3.2, §3.5, §7 paso 9; PR-005 v4.0; CC-041 |
+| 2 | Todo lo que no está en el Excel se elimina, salvo los campos técnicos (incluye `projects.institution_name`, `responsible_professional` y `trees.legacy_id`; no se agrega `via_registro`). `status` pasa a `estado_proyecto` (CC-042) | §1, §2, §3.2, §3.5, §7 paso 9; PR-005 v4.0; CC-041 |
 | 3 | Alcance por tipo de inspección; **evaluación vigente compuesta campo por campo**, recalculada en `tree_assessments` | §3.6, §3.9, §3.10 bis, §4, §5; CC-040; PR-009 v5.0; ADR-016 v5.0 |
 | 4 | Ajuste solo antes de finalizar | §3.10; PR-009 v5.0 |
 | 5 | `motor_commit` | §3.9, §3.10 bis |
 | 6 | `codigo_usuario` `USR-000` | §3.1 |
+| — | `estado_proyecto` Activo / Cerrado; proyecto Cerrado en solo consulta (CC-042) | §3.2, §5.2, §6 |
 | — | `rule_version` con formato `MAJOR.MINOR`, sin valor fijo | §3.8, §3.9, §3.10 bis |
 | — | Fotos: las 4 vistas solo en Evaluación inicial, Reevaluación y Levantamiento; ninguna en la instrumental; opcionales en el Monitoreo | §3.13; PR-010 v4.0; CC-040 |
 

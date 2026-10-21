@@ -68,6 +68,7 @@ hoja VERSION del Excel maestro.
 | CC-039 | Catálogo botánico: `persistencia_follaje`, `tipo_hoja` y `origen_biogeografico` en CATALOGO_ESPECIES; `rango_edad_estimada_anios` en ARBOLES | 2 (+3) | FUENTE SINCRONIZADA (2.0.0 publicada el 2026-10-20) | Decisión de la autora (2026-10-20) | 2.0.0 (publicada el 2026-10-20) | — | 2026-10-20 |
 | CC-040 | Alcance de la evaluación según el tipo de inspección, evaluación vigente compuesta por campo y fotografías por tipo (PR-006 v11.0, PR-009 v5.0, PR-010 v4.0, ADR-016 v5.0) | 2 (+3) | PENDIENTE DE DECISIÓN (campos por subtipo de Monitoreo) | Fase 3 · respuesta 3 de la autora | 2.0.0 → siguiente versión | — | 2026-10-20 |
 | CC-041 | Decisiones de diseño de la Fase 3: sector obligatorio al crear el proyecto, eliminación de lo que no está en el Excel, ajuste antes de finalizar, `motor_commit` y `codigo_usuario` (PR-004 v7.0, PR-005 v4.0) | 3 (+4) | APROBADO METODOLÓGICAMENTE | Fase 3 · respuestas 1, 2, 4, 5 y 6 de la autora | — | — | 2026-10-20 |
+| CC-042 | Estado del proyecto: `estado_proyecto` (Activo / Cerrado) en PROYECTOS; proyecto Cerrado en solo consulta | 3 | APROBADO METODOLÓGICAMENTE | Decisión de la autora (2026-10-20), revisión del diseño de la Fase 3 (PR #31) | 2.0.1 (en preparación) | — | 2026-10-20 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1806,8 +1807,6 @@ motivo)
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Sincronización documental (PR-003 v8.0, PR-006 v10.0, PR-019 v1.2, ADR-016 v4.0). Edad estimada Opcional; PN y PI no se adoptan en 2.0.0; AM-11 cerrado con la referencia estacional de `defoliacion_estimada_pct`. |
 | 2026-10-20 | FUENTE SINCRONIZADA | — | Incluido en el paquete 2.0.0 (VERSION, fila 5). Verificación §14.9 sin hallazgos sobre el Excel de `main` con AM-10 (AM-08). Publicación y tag pendientes de la aprobación de la autora. |
 
----
-
 ### CC-040 — Alcance de la evaluación según el tipo de inspección y vigencia por dato
 
 | Campo | Valor |
@@ -1866,7 +1865,7 @@ motivo)
 | Tipo | 3 — modelo de datos (+4) |
 | Estado | APROBADO METODOLÓGICAMENTE |
 | Regla / campo afectado | SECTORES; `public_spaces`; `infrastructure_conflicts`; ajuste de clasificaciones; `motor_commit`; USUARIOS.`id_usuario` (D-247). |
-| Versión nueva | 1. **Sector obligatorio al crear el proyecto:** el Administrador carga la delimitación junto con el proyecto; nunca existe un proyecto sin sector, y `trees.sector_id` es obligatorio (D-6, D-252 a D-256). 2. **Todo lo que no está en el Excel se elimina:** `public_spaces` e `infrastructure_conflicts` se retiran en el paso de retiro, aparte y con autorización. Se conservan solo los campos técnicos (identificadores, timestamps, FK, códigos visibles como `A-000000` y `audit_log`). Se eliminan los campos funcionales que no están en el Excel, entre ellos `projects.institution_name`, `responsible_professional` y `status` (PR-005 v4.0), y `trees.legacy_id`; el diseño no agrega `trees.via_registro`. 3. **El Inspector ajusta clasificaciones solo antes de finalizar** la inspección; después, se anula y se registra una nueva (PR-009 v5.0). 4. **`motor_commit`:** cada evaluación guarda el hash del código del motor que calculó sus resultados, junto con `rule_version`, que se valida con el formato `MAJOR.MINOR` (no queda fija en un valor). 5. **`codigo_usuario`** con formato `USR-000` (D-247), además del identificador interno. |
+| Versión nueva | 1. **Sector obligatorio al crear el proyecto:** el Administrador carga la delimitación junto con el proyecto; nunca existe un proyecto sin sector, y `trees.sector_id` es obligatorio (D-6, D-252 a D-256). 2. **Todo lo que no está en el Excel se elimina:** `public_spaces` e `infrastructure_conflicts` se retiran en el paso de retiro, aparte y con autorización. Se conservan solo los campos técnicos (identificadores, timestamps, FK, códigos visibles como `A-000000` y `audit_log`). Se eliminan los campos funcionales que no están en el Excel, entre ellos `projects.institution_name` y `responsible_professional` (PR-005 v4.0) y `trees.legacy_id`; `projects.status` no se elimina: lo reemplaza `estado_proyecto` (CC-042); el diseño no agrega `trees.via_registro`. 3. **El Inspector ajusta clasificaciones solo antes de finalizar** la inspección; después, se anula y se registra una nueva (PR-009 v5.0). 4. **`motor_commit`:** cada evaluación guarda el hash del código del motor que calculó sus resultados, junto con `rule_version`, que se valida con el formato `MAJOR.MINOR` (no queda fija en un valor). 5. **`codigo_usuario`** con formato `USR-000` (D-247), además del identificador interno. |
 | Motivo | Cerrar las preguntas del diseño de la Fase 3. |
 | Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20. |
 | Archivos afectados | Esta ficha; PR-004 v7.0; PR-005 v4.0; PR-009 v5.0; `docs/diseno/fase3-modelo-datos-2.0.0.md`. |
@@ -1895,3 +1894,53 @@ motivo)
 |---|---|---|---|
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Respuestas 1, 2, 4, 5 y 6 al diseño de la Fase 3. |
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Se eliminan los campos funcionales que no están en el Excel (PR-005 v4.0; `trees.legacy_id`); `rule_version` con formato `MAJOR.MINOR`. |
+| 2026-10-21 | APROBADO METODOLÓGICAMENTE | marybaxmann | `status` ya no se retira: lo reemplaza `estado_proyecto` (CC-042, PR #32). Citas de MIEMBROS_PROYECTO renumeradas a D-266 y D-267. |
+
+---
+
+### CC-042 — Estado del proyecto: `estado_proyecto` (Activo / Cerrado)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Revisión del diseño de la Fase 3 (PR #31): CC-041 retira `projects.status` porque no está en el Excel, y sin él un proyecto no puede cerrarse. La autora decide incorporar el estado al Excel. |
+| Tipo | 3 — modelo de datos |
+| Estado | APROBADO METODOLÓGICAMENTE (Excel actualizado; 2.0.1 en preparación, no publicada) |
+| Regla / campo afectado | PROYECTOS: `estado_proyecto` (nuevo). REGLAS_GENERALES: sección "Proyectos" (fila 27). VERSION: fila 6 (2.0.1). |
+| Versión anterior | PROYECTOS solo tenía `id_proyecto` y `nombre_proyecto`; un proyecto no tenía estado ni podía cerrarse. |
+| Versión nueva | 1. **`estado_proyecto`** (D-265): Activo / Cerrado, Obligatorio. Valor inicial Activo al crear el proyecto. Solo el Administrador cierra o reabre. 2. **Proyecto Cerrado = solo consulta:** se ven árboles, mapa, fichas, indicadores e historial; no se registran árboles ni se crean OT, inspecciones, mantenimientos o incidencias; el formulario QR de sus árboles no recibe incidencias. La delimitación del sector no se modifica; el Administrador puede seguir gestionando los miembros. 3. **Cierre sin condiciones:** puede cerrarse aunque existan OT o incidencias abiertas; mientras el proyecto está Cerrado, esas OT e incidencias se conservan en su estado y no avanzan hasta que se reabra. 4. **Reapertura:** un proyecto Cerrado puede volver a Activo; el cambio no altera `id_proyecto` ni el historial. |
+| Motivo | Buena práctica de gestión: permitir cerrar un proyecto terminado sin perder su información y sin que reciba nuevos registros. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20: valores Activo / Cerrado, solo consulta y reabrible por el Administrador. Ajuste del mismo día: se puede cerrar aunque existan OT abiertas. |
+| Archivos afectados | `docs/excel/Base de Datos Valpo Verde.xlsx`; `docs/registro-cambios.md`. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | DICCIONARIO_CAMPOS: fila nueva 265 (`estado_proyecto`); las filas de MIEMBROS_PROYECTO pasan de D-265 y D-266 a **D-266 y D-267**. Cabecera C1 de PROYECTOS. REGLAS_GENERALES fila 27. VERSION fila 6. |
+| Impacto en BD | Pendiente (Fase 3 / Fase 4): columna `estado_proyecto` en `projects`, Activo por defecto; reemplaza el `status` que CC-041 retira. |
+| Impacto en backend | Pendiente: bloquear escrituras en proyectos Cerrados, incluido el avance de OT e incidencias abiertas; solo el Administrador cambia el estado. |
+| Impacto en API | Pendiente: operación de cierre y reapertura; errores de escritura en proyecto Cerrado. |
+| Impacto en frontend | Pendiente: indicador del estado, acciones de cierre y reapertura para el Administrador, formularios deshabilitados y mensaje en el formulario QR. |
+| Pruebas necesarias | En implementación: cierre con una OT abierta, que queda sin avanzar hasta la reapertura; escrituras rechazadas en un proyecto Cerrado; consulta permitida; reapertura. |
+| Dependencias | CC-041 (retiro de `projects.status`), CC-036 (formulario QR), AM-08 (2.0.0). |
+| rule_version | 2.0 (sin cambio: PATCH, el campo no participa en ninguna regla de cálculo) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — (sin implementación) |
+| Commits / PR asociados | Rama `docs/cc-042-estado-proyecto`. |
+| Observaciones | Versión del paquete: PATCH → 2.0.1 (`workflow.md` §14, tipo 3 que no participa en ninguna regla). Queda en preparación; se publica cuando la autora lo apruebe. No se modificaron código, migraciones, RLS ni Supabase. |
+
+**Checklist de sincronización**
+
+- [x] Excel maestro — DICCIONARIO_CAMPOS, PROYECTOS, REGLAS_GENERALES y VERSION.
+- [ ] Diseño de la Fase 3 (PR #31) — agregar `estado_proyecto` a `projects` y actualizar las referencias D-265/D-266 de MIEMBROS_PROYECTO a D-266/D-267.
+- [ ] PR / ADR — roles del Administrador (cierre y reapertura).
+- [ ] Migración + schema.sql — pendiente.
+- [ ] Backend — pendiente.
+- [ ] API / Zod — pendiente.
+- [ ] Frontend — pendiente.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial y Excel actualizado (Valen-j211). |
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ajuste: el cierre se permite con OT o incidencias abiertas, que quedan congeladas hasta la reapertura (DICCIONARIO_CAMPOS L265, REGLAS_GENERALES B27). |

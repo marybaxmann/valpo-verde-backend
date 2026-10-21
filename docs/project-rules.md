@@ -775,19 +775,20 @@ Afecta:
 Estado: vigente
 Versión: 4.0
 Reemplaza: PR-005 v3.0
-Origen: CC-041
-Motivo: se eliminan los campos funcionales que no están en el Excel maestro; el sector se crea junto con el proyecto (PR-004 v7.0).
+Origen: CC-041, CC-042
+Motivo: se eliminan los campos funcionales que no están en el Excel maestro; el sector se crea junto con el proyecto (PR-004 v7.0); el estado del proyecto pasa a `estado_proyecto` (CC-042).
 
 La plataforma es multiproyecto. Los árboles pertenecen a un proyecto.
 
 ### Tabla `projects` (PROYECTOS)
-- `id` (D-263) y `nombre_proyecto` (D-264).
+- `id` (D-263), `nombre_proyecto` (D-264) y `estado_proyecto` (D-265): Activo / Cerrado, obligatorio, Activo por defecto.
 - Campos técnicos: `created_by`, `created_at`, `updated_at`.
-- Se eliminan `institution_name`, `responsible_professional` y `status`: no están en el Excel. No hay cierre de proyectos mientras el Excel no lo defina.
+- Se eliminan `institution_name` y `responsible_professional`: no están en el Excel. `status` se reemplaza por `estado_proyecto` (CC-042).
+- **Proyecto Cerrado** (REGLAS_GENERALES fila 27): queda en solo consulta; no se registran árboles ni se crean OT, inspecciones, mantenimientos ni incidencias, y el formulario QR no recibe incidencias. La delimitación no se modifica; el Administrador sigue gestionando los miembros. Solo el Administrador cierra o reabre el proyecto. Puede cerrarse aunque existan OT o incidencias abiertas, que se conservan en su estado y no avanzan hasta que se reabra.
 - Cada proyecto tiene exactamente un sector (SECTORES), creado en la misma operación (PR-004 v7.0).
 
 ### Tabla `project_members` (MIEMBROS_PROYECTO)
-Representa solo la pertenencia (D-265, D-266); el rol es global (AMD-31). Campos técnicos: `id`, `created_at`, `added_by`. `UNIQUE(project_id, user_id)`.
+Representa solo la pertenencia (D-266, D-267); el rol es global (AMD-31). Campos técnicos: `id`, `created_at`, `added_by`. `UNIQUE(project_id, user_id)`.
 
 ### Alcance por proyecto
 `trees`, `work_orders` e `incidents` llevan `project_id`; las demás tablas lo derivan del árbol o de la OT. `species` (CATALOGO_ESPECIES) es global. `public_spaces` se retira (CC-041). `tree_code` mantiene la secuencia global (`A-000001`, …).
