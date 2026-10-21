@@ -1464,7 +1464,10 @@ Corrección y anulación (CC-031):
 Alcance de la evaluación según el tipo de inspección (CC-040):
 - **Evaluación inicial, Reevaluación y Levantamiento:** evaluación completa (todos los datos obligatorios y condicionales activados de ARBOLES y REGISTRO_EVALUACION).
 - **Evaluación instrumental:** solo los campos de cavidad basal y de tronco. Resuelve el "No determinado" de "Requiere evaluación instrumental".
-- **Monitoreo:** solo los campos de su subtipo (Fitosanitario, Estructural o Vitalidad). La lista de campos de cada subtipo está pendiente de definición en el Excel (CC-040).
+- **Monitoreo:** solo los campos de su subtipo (CC-040): *Fitosanitario* = `defoliacion_estimada_pct` (D-83), `clorosis_pct` (D-84), `necrosis_pct` (D-85), `muerte_regresiva_copa_pct` (D-89) y `presenta_exudaciones` (D-65); *Estructural* = las entradas de R01, R02 y R03 (D-33 a D-82 y D-86); *Vitalidad* = `clasificacion_vitalidad` (D-169).
+- En la Evaluación instrumental, `cavidad_basal_interna` y `cavidad_interna_tronco` solo admiten Sí o No.
+- Si falta un valor vigente que una clasificación necesita, esa clasificación queda No determinado (CC-024); la prioridad sigue CC-029.
+- En la evaluación vigente recalculada, el ajuste del Inspector se mantiene solo si el valor recalculado coincide con el valor calculado sobre el que se hizo; si no, se descarta y queda una marca de revisión para el Inspector.
 - En una inspección parcial, los datos registrados reemplazan el valor vigente del árbol al completar la OT; los demás conservan su valor vigente anterior. El historial no se sobrescribe: cada valor queda en la inspección que lo registró.
 - Las clasificaciones de una inspección parcial se calculan con los valores vigentes resultantes: los registrados en ella más los vigentes del árbol.
 - **La evaluación vigente del árbol se compone campo por campo:** para cada campo, el último valor entre las inspecciones no anuladas de OT completadas. Al completarse una OT, o al anularse una inspección, el riesgo y las demás clasificaciones se recalculan con esa composición y el resultado queda registrado como evaluación vigente del árbol (por ejemplo, después de una Evaluación instrumental).

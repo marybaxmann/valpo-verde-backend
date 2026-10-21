@@ -185,7 +185,7 @@ Trigger: no permite `completada` si alguna inspección de la OT está `preguarda
 `nivel_riesgo` (D-200) no se guarda: se deriva del riesgo efectivo de su evaluación (vista `v_inspections`). La evidencia fotográfica (D-206) vive en `photos`.
 
 ### 3.9 `evaluations` (nueva): REGISTRO_EVALUACION y resultados
-Una fila por inspección (D-30 a D-32). El **alcance** depende del tipo de inspección (CC-040): evaluación completa en Evaluación inicial, Reevaluación y Levantamiento; solo cavidades (D-39 a D-49 y D-51 a D-61) en Evaluación instrumental; solo los campos del subtipo en Monitoreo.
+Una fila por inspección (D-30 a D-32). El **alcance** depende del tipo de inspección (CC-040): evaluación completa en Evaluación inicial, Reevaluación y Levantamiento; solo cavidades (D-39 a D-49 y D-51 a D-61) en Evaluación instrumental, donde `cavidad_basal_interna` y `cavidad_interna_tronco` solo admiten Sí o No; en Monitoreo, solo los campos de su subtipo: *Fitosanitario* = `defoliacion_estimada_pct` (D-83), `clorosis_pct` (D-84), `necrosis_pct` (D-85), `muerte_regresiva_copa_pct` (D-89) y `presenta_exudaciones` (D-65); *Estructural* = las entradas de R01, R02 y R03 (D-33 a D-82 y D-86); *Vitalidad* = `clasificacion_vitalidad` (D-169) (CC-040).
 
 | Columna | Tipo | Regla | Origen |
 |---|---|---|---|
@@ -236,11 +236,14 @@ Si se ajusta el riesgo o la infraestructura, el backend recalcula `clasificacion
 | `entradas_vigentes` | jsonb NOT NULL | composición campo por campo: `{campo: {valor, inspection_id}}` | CC-040; D-33 a D-169 |
 | `calculados`, `indicadores` y todas las columnas de resultado de `evaluations` (R01–R04, M01–M05) | | mismo cálculo, con `entradas_vigentes` | D-159 a D-172; MC |
 | `clasificacion_*_ajustada`, `adjustment_ids` | | ajustes que siguen vigentes (ver regla abajo) | PR-008 v2.0 |
+| `ajustes_descartados` | jsonb NULL | ajustes que no se trasladaron: campo, valor calculado anterior, valor ajustado, nuevo valor calculado, `adjustment_id` | CC-040 (d) |
+| `requiere_revision_ajuste` | boolean NOT NULL DEFAULT false | marca de revisión para el Inspector cuando se descartó algún ajuste | CC-040 (d) |
 | `rule_version` (`MAJOR.MINOR`), `motor_commit` | text NOT NULL | | CC-030; CC-041 |
 | `created_at` | | | técnico |
 
 - **Solo se agregan filas** (no se modifican): la más reciente de cada árbol es la evaluación vigente y las anteriores forman su historial.
-- **Ajustes:** se trasladan los de la inspección cuya OT disparó el recálculo, solo si el valor recalculado coincide con el valor calculado que ajustó el Inspector. Si no coincide, no se trasladan y la evaluación queda marcada para revisión (**pregunta (d)**).
+- **Ajustes (CC-040 d):** se mantienen los de la inspección cuya OT disparó el recálculo solo si el valor recalculado coincide con el valor calculado sobre el que se hizo el ajuste. Si no coincide, el ajuste se descarta, se registra en `ajustes_descartados` y `requiere_revision_ajuste` = true.
+- **Valores faltantes (CC-040 c):** si falta un valor vigente que una clasificación necesita, esa clasificación queda No determinado (CC-024); la prioridad sigue CC-029.
 - **Momento (backend, una transacción):** al completar una OT, o al anular una inspección de una OT completada: (1) `fn_refresh_tree_current` (datos de ARBOLES, §5.1); (2) lectura de `v_tree_current_inputs`; (3) cálculo del motor; (4) nueva fila en `tree_assessments`.
 
 ### 3.11 `maintenance_records` (nueva): MANTENIMIENTO
@@ -379,8 +382,13 @@ INDICES (DM-09) · historial de eventos de OT e incidencias (PA-27) · visibilid
 | — | `rule_version` con formato `MAJOR.MINOR`, sin valor fijo | §3.8, §3.9, §3.10 bis |
 | — | Fotos: las 4 vistas solo en Evaluación inicial, Reevaluación y Levantamiento; ninguna en la instrumental; opcionales en el Monitoreo | §3.13; PR-010 v4.0; CC-040 |
 
-**Abierto (CC-040), no bloquea el modelo físico:**
-- (a) Los campos de cada subtipo de Monitoreo (Fitosanitario, Estructural, Vitalidad). Hay una propuesta en la ficha.
-- (b) En la Evaluación instrumental, ¿las cavidades internas solo admiten Sí o No?
-- (c) Si falta un valor vigente que una clasificación necesita, ¿esa clasificación queda No determinado?
-- (d) Ajustes en la evaluación vigente recalculada: ¿se trasladan solo si el valor recalculado coincide con el que ajustó el Inspector (propuesta de §3.10 bis)?
+**Decisiones de CC-040 (2026-10-20), CC-040 queda APROBADO:**
+
+| # | Decisión | Dónde |
+|---|---|---|
+| (a) | Campos por subtipo de Monitoreo: *Fitosanitario* = `defoliacion_estimada_pct` (D-83), `clorosis_pct` (D-84), `necrosis_pct` (D-85), `muerte_regresiva_copa_pct` (D-89) y `presenta_exudaciones` (D-65); *Estructural* = las entradas de R01, R02 y R03 (D-33 a D-82 y D-86); *Vitalidad* = `clasificacion_vitalidad` (D-169) | §3.9; PR-009 v5.0 |
+| (b) | En la Evaluación instrumental, las cavidades internas solo admiten Sí o No | §3.9; PR-009 v5.0 |
+| (c) | Si falta un valor vigente que una clasificación necesita, esa clasificación queda No determinado (CC-024; prioridad según CC-029) | §3.10 bis; PR-009 v5.0 |
+| (d) | El ajuste se mantiene en la evaluación recalculada solo si el valor recalculado coincide con el valor calculado sobre el que se hizo; si no, se descarta y queda una marca de revisión | §3.10 bis (`ajustes_descartados`, `requiere_revision_ajuste`); PR-009 v5.0 |
+
+Los textos de CC-040 para el Excel se cargan en un PR aparte desde la sesión de auditoría (AM-12). No queda ninguna pregunta abierta sobre el modelo físico.
