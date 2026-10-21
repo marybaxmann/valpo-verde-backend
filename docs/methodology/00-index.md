@@ -17,11 +17,25 @@ No inferir ni completar metodología faltante.
 
 ---
 
-## Versión vigente y estado de transición
+## Versión vigente
 
-Versión vigente del paquete metodológico: **ninguna publicada todavía**. La primera versión formal será `2.0.0` (`docs/workflow.md` §14.10).
+Versión vigente del paquete metodológico: **2.0.0** (`rule_version` **2.0**), publicada el 2026-10-20, tag `metodologia-v2.0.0` (CC-030).
 
-Hasta su publicación rige el siguiente estado de transición (CC-001):
+- **Fuente única:** el Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (PR-002 v3.0). Su export de texto está en `docs/excel/export/`.
+- **Reglas vigentes:** todas las de REGLAS_INDICADORES (98), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0).
+- **INDICES** sigue en propuesta y no es implementable (CC-016; DM-09). Los índices de proporción de árboles nativos e introducidos no se adoptan en 2.0.0 (CC-039).
+- **Diagramas:** no forman parte del paquete (CC-030); son ilustraciones en `docs/excel/diagramas/` (imágenes, el `.drawio` de consolidación y `docs/excel/Diagrama actualizados.json`). Si difieren del Excel, manda el Excel.
+- **Documentos `01-roots-base.md` a `05-infrastructure.md` (v1.1)** y las secciones de este índice marcadas como reemplazadas son historial de la metodología textual previa; no se usan para implementar.
+
+### Convenciones de nombres en MATRICES_CALCULO
+
+- `probabilidad_falla_componente`, `consecuencia_componente` y `clasificacion_riesgo_componente` son **títulos genéricos** de las matrices M02 y M03: se aplican a cada componente (raíces y cuello, tronco, copa y ramas) con los campos `probabilidad_falla_raices_cuello` / `_tronco` / `_copa_ramas`, `consecuencia_raices_cuello` / `_tronco` / `_copa_ramas` y `clasificacion_raices_cuello` / `_tronco` / `_copa_ramas` de DICCIONARIO_CAMPOS (decisión C de AM-08).
+- `probabilidad_falla_impacto` es el **resultado intermedio** de M02. No se guarda: solo se usa para obtener la clasificación de M03.
+- Los puntajes `P_RC`, `P_T`, `P_CR` y `P_I` son valores de cálculo de R01, R02, R03 y M04, no campos.
+
+### Historial: estado de transición hasta la publicación de 2.0.0
+
+> **REEMPLAZADO por la publicación de 2.0.0.** Se conserva como historial.
 
 1. El Excel maestro (`docs/excel/Base de Datos Valpo Verde.xlsx`) contiene, desde CC-028, el Excel auditado el 2026-10-18 y es la única fuente metodológica. Incluye REGLAS_GENERALES, REGLAS_INDICADORES (98 reglas) y la hoja VERSION, que registra el 2.0.0 en preparación sin versión publicada. No existe una `rule_version` publicada. CC-030 decidió publicar 2.0.0 (`rule_version` 2.0) antes de implementar; la publicación requiere la aprobación explícita de la autora. El contenido anterior del Excel queda solo en el historial de git.
 2. En `docs/excel/diagramas/` solo el diagrama de consolidación (R01–R04, M01–M03) tiene archivo fuente `.drawio`; los diagramas por componente son imágenes sin fuente. Ninguno refleja todavía CC-027 (R03 con defoliación, cavidades 09 y 10, M04 y M05). Quedan fuera del paquete 2.0.0 (CC-030, opción B): son ilustraciones, no fuente.
@@ -31,14 +45,14 @@ Hasta su publicación rige el siguiente estado de transición (CC-001):
 6. Las decisiones metodológicas ya tomadas y aún no sincronizadas se registran como CC en `docs/registro-cambios.md`. No se incorporan a estos documentos fuera de su CC.
 7. La hoja INDICES es un módulo metodológico en propuesta (CC-016): no es fuente normativa vigente y sus fórmulas no son implementables. Las hojas ARBOLES, REGISTRO_EVALUACION, INSPECCION, ORDENES DE TRABAJO, MANTENIMIENTO, INCIDENCIA, USUARIOS, PROYECTOS, MIEMBROS_PROYECTO, SECTORES y CATALOGO_ESPECIES son anexos operativos no normativos (PR-002 v3.0, CC-003); las contradicciones detectadas en ellas están registradas como CC y no se corrigen fuera de su CC.
 8. ~~Desde CC-008, DICCIONARIO_CAMPOS registra el ámbito de cada campo y las especificaciones operativas pueden implementarse antes de publicar.~~ Sin efecto por CC-028 (P8) y CC-035: no hay columna `ambito` ni excepción operativa. Ninguna especificación ni regla se implementa antes de publicar 2.0.0 (CC-030).
-9. El modelo conceptual ÁRBOL / datos técnicos con historial por inspección está en ADR-016 v3.0 y PR-006 v9.0 (CC-026, CC-028, CC-031). `modelo-arbol-medicion.md` describe el modelo anterior de CC-020 y se conserva como historial (reemplazado).
+9. El modelo conceptual ÁRBOL / datos técnicos con historial por inspección está en ADR-016 v4.0 y PR-006 v10.0 (CC-026, CC-028, CC-031, CC-039). `modelo-arbol-medicion.md` describe el modelo anterior de CC-020 y se conserva como historial (reemplazado).
 10. CC-028 resuelve a favor del Excel auditado los conflictos P1–P9 de CC-026: entre otros, la hoja MEDICIONES_DENDROMETRICAS y la columna `ambito` de DICCIONARIO_CAMPOS ya no forman parte del Excel maestro. Los puntos 7 a 9 y los documentos que los desarrollan se actualizaron en AM-07 (Fase 2, 2026-10-20).
 
 ---
 
 ## Estados metodológicos
 
-> **CONTENIDO TRANSITORIO** — vocabulario de la metodología textual previa (v1.1). A partir del paquete 2.0.0, el estado de cada regla se expresa con `estado_regla` en REGLAS_INDICADORES (vigente · pendiente · reemplazada · descartada), según PR-011 v2.0.
+> **REEMPLAZADO por el paquete 2.0.0 (historial).** Antes: CONTENIDO TRANSITORIO — vocabulario de la metodología textual previa (v1.1). A partir del paquete 2.0.0, el estado de cada regla se expresa con `estado_regla` en REGLAS_INDICADORES (vigente · pendiente · reemplazada · descartada), según PR-011 v2.0.
 
 Los estados metodológicos son distintos de los estados usados por las `PR-*`.
 
@@ -92,7 +106,7 @@ Los estados de `PR-*` y los estados metodológicos son vocabularios distintos. P
 
 ## Estructura metodológica
 
-> **CONTENIDO TRANSITORIO** — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
+> **REEMPLAZADO por el paquete 2.0.0 (historial).** Antes: CONTENIDO TRANSITORIO — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
 
 | Archivo | Componente | Estado actual |
 |---|---|---|
@@ -113,7 +127,7 @@ Los estados aquí declarados representan el estado metodológico consolidado esp
 
 ## Estado general actual
 
-> **CONTENIDO TRANSITORIO** — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
+> **REEMPLAZADO por el paquete 2.0.0 (historial).** Antes: CONTENIDO TRANSITORIO — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
 
 ### Raíces y base
 Estado: vigente parcial
@@ -278,7 +292,7 @@ Jerarquía única (PR-016 v4.0, CC-021): metodología y fuentes vigentes → dec
 
 ## Pendientes conocidos
 
-> **CONTENIDO TRANSITORIO** — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
+> **REEMPLAZADO por el paquete 2.0.0 (historial).** Antes: CONTENIDO TRANSITORIO — metodología textual previa (v1.1). No refleja decisiones metodológicas posteriores ni el Excel maestro y no debe usarse como base de implementación. Se reemplazará con el paquete 2.0.0 (ver "Versión vigente y estado de transición").
 
 > Nota (CC-001): el formato de `rule_version` quedó definido en `docs/workflow.md` §14.10.
 
@@ -290,6 +304,8 @@ Jerarquía única (PR-016 v4.0, CC-021): metodología y fuentes vigentes → dec
 - fórmula exacta de `SL` (pendiente de validación);
 - fórmula de agregación del puntaje del tronco (no explícita en su diagrama; en raíces/base, copa/ramas e infraestructura es suma simple vigente);
 - ~~formato definitivo de `rule_version`~~ (resuelto: `workflow.md` §14.10 y CC-030).
+
+Todos los puntos anteriores quedaron resueltos en el Excel maestro 2.0.0 (R01–R04, M01–M05; PR-012 v2.0, PR-014 v2.0).
 
 La estructura actual de `database/schema.sql` respecto de `probability_thresholds` refleja una decisión anterior y no debe utilizarse como fuente para cerrar la conversión puntaje → probabilidad de falla. Esa decisión permanece pendiente hasta consolidar la metodología.
 

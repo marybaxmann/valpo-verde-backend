@@ -90,7 +90,7 @@ Una decisión explícita nueva de una aprobadora del proyecto (§14.5: `marybaxm
 Si el cambio afecta metodología:
 
 1. revisar el paquete metodológico vigente (PR-002), con `docs/methodology/00-index.md` como punto de entrada;
-2. identificar el estado de cada regla afectada (`estado_regla`: vigente, pendiente, reemplazada, descartada). Hasta la publicación del paquete 2.0.0 rige el estado de transición descrito en `docs/methodology/00-index.md`;
+2. identificar la versión publicada del paquete en que está cada regla afectada (todas las reglas de una versión publicada son vigentes en ella, PR-011 v3.0). Hasta la publicación del paquete 2.0.0 rige el estado de transición descrito en `docs/methodology/00-index.md`;
 3. no inferir información faltante;
 4. no copiar reglas entre componentes por similitud;
 5. no implementar una regla pendiente;
@@ -556,7 +556,9 @@ Un CC solo pasa a `FUENTE SINCRONIZADA` si se cumple todo lo que aplica:
 - [ ] Los intervalos numéricos de cada indicador no tienen huecos ni
       solapes.
 - [ ] Ninguna salida "No determinado" o "No aplica" tiene puntaje 0.
-- [ ] Export de texto regenerado desde el Excel.
+- [ ] Export de texto regenerado desde el Excel (`docs/excel/export/`, con
+      `scripts/metodologia/exportar_excel.py`) y verificación automática
+      ejecutada (`scripts/metodologia/verificar_14_9.py`).
 - [ ] La ficha CC registra la versión del paquete y `rule_version`.
 
 Catálogos (DICCIONARIO_CAMPOS ↔ LISTAS ↔ registro de catálogos del

@@ -1,0 +1,99 @@
+ID regla,Componente,Indicador,Campos de entrada,Condición,Categoría parcial,Puntaje
+RC-EST-01,R01 Raíces y cuello,Estabilidad,levantamiento_del_plato_radicular; angulo_inclinacion,levantamiento_del_plato_radicular = Sí y angulo_inclinacion < 15°,Leve,1
+RC-EST-02,R01 Raíces y cuello,Estabilidad,levantamiento_del_plato_radicular; angulo_inclinacion,levantamiento_del_plato_radicular = Sí y 15° ≤ angulo_inclinacion ≤ 30°,Moderada,2
+RC-EST-03,R01 Raíces y cuello,Estabilidad,levantamiento_del_plato_radicular; angulo_inclinacion,levantamiento_del_plato_radicular = Sí y 30° < angulo_inclinacion ≤ 45°,Moderada,2
+RC-EST-04,R01 Raíces y cuello,Estabilidad,levantamiento_del_plato_radicular; angulo_inclinacion,levantamiento_del_plato_radicular = Sí y angulo_inclinacion > 45°,Severa,3
+RC-EST-05,R01 Raíces y cuello,Estabilidad,levantamiento_del_plato_radicular; angulo_inclinacion,levantamiento_del_plato_radicular = No y angulo_inclinacion < 15°,Despreciable,0
+RC-EST-06,R01 Raíces y cuello,Estabilidad,levantamiento_del_plato_radicular; angulo_inclinacion,levantamiento_del_plato_radicular = No y 15° ≤ angulo_inclinacion ≤ 30°,Leve,1
+RC-EST-07,R01 Raíces y cuello,Estabilidad,levantamiento_del_plato_radicular; angulo_inclinacion,levantamiento_del_plato_radicular = No y 30° < angulo_inclinacion ≤ 45°,Moderada,2
+RC-EST-08,R01 Raíces y cuello,Estabilidad,levantamiento_del_plato_radicular; angulo_inclinacion,levantamiento_del_plato_radicular = No y angulo_inclinacion > 45°,Severa,3
+RC-REX-01,R01 Raíces y cuello,Raíces expuestas,raices_expuestas; necrosis_radicular; raices_cortadas,raices_expuestas = No,Despreciable,0
+RC-REX-02,R01 Raíces y cuello,Raíces expuestas,raices_expuestas; necrosis_radicular; raices_cortadas,"raices_expuestas = Sí, necrosis_radicular = No y raices_cortadas = No",Leve,1
+RC-REX-03,R01 Raíces y cuello,Raíces expuestas,raices_expuestas; necrosis_radicular; raices_cortadas,necrosis_radicular = Sí y raices_cortadas = No,Moderada,2
+RC-REX-04,R01 Raíces y cuello,Raíces expuestas,raices_expuestas; necrosis_radicular; raices_cortadas,necrosis_radicular = No y raices_cortadas = Sí,Moderada,2
+RC-REX-05,R01 Raíces y cuello,Raíces expuestas,raices_expuestas; necrosis_radicular; raices_cortadas,necrosis_radicular = Sí y raices_cortadas = Sí,Severa,3
+RC-CAV-01,R01 Raíces y cuello,Cavidad basal,cavidad_pudricion_basal,cavidad_pudricion_basal = No,Despreciable,0
+RC-CAV-02,R01 Raíces y cuello,Cavidad basal,cavidad_basal_externa; SL_basal_pct,cavidad_basal_externa = Sí y SL_basal_pct < 20 %,Leve,1
+RC-CAV-03,R01 Raíces y cuello,Cavidad basal,cavidad_basal_externa; SL_basal_pct,cavidad_basal_externa = Sí y 20 % ≤ SL_basal_pct < 33 %,Moderada,2
+RC-CAV-04,R01 Raíces y cuello,Cavidad basal,cavidad_basal_externa; SL_basal_pct,cavidad_basal_externa = Sí y SL_basal_pct ≥ 33 %,Severa,3
+RC-CAV-05,R01 Raíces y cuello,Cavidad basal,cavidad_basal_externa; SL_basal_pct,cavidad_basal_externa = Sí y SL_basal_pct no calculable,No determinado,Sin puntaje
+RC-CAV-06,R01 Raíces y cuello,Cavidad basal,cavidad_basal_interna; t_R_basal,"cavidad_basal_interna = Sí y t_R_basal > 0,3",Moderada,2
+RC-CAV-07,R01 Raíces y cuello,Cavidad basal,cavidad_basal_interna; t_R_basal,"cavidad_basal_interna = Sí y t_R_basal ≤ 0,3",Severa,3
+RC-CAV-08,R01 Raíces y cuello,Cavidad basal,cavidad_basal_interna; t_R_basal,cavidad_basal_interna = Sí y t_R_basal no medido,No determinado,Sin puntaje
+RC-CAV-09,R01 Raíces y cuello,Cavidad basal,cavidad_basal_interna,"cavidad_basal_interna = Requiere evaluación instrumental, hasta que se realice la evaluación instrumental y se registren sus datos",No determinado,Sin puntaje
+RC-CAV-10,R01 Raíces y cuello,Cavidad basal,cavidad_basal_externa; cavidad_basal_interna,cavidad_basal_externa = Sí y cavidad_basal_interna = Sí,"La categoría más severa entre la obtenida por SL (RC-CAV-02 a 05) y por t/R (RC-CAV-06 a 08); si alguna es No determinado, No determinado",Puntaje de la categoría resultante
+TR-CAV-01,R02 Tronco,Cavidad del tronco,presenta_cavidad_pudricion_tronco,presenta_cavidad_pudricion_tronco = No,Despreciable,0
+TR-CAV-02,R02 Tronco,Cavidad del tronco,cavidad_externa_tronco; SL_tronco_pct,cavidad_externa_tronco = Sí y SL_tronco_pct < 20 %,Leve,1
+TR-CAV-03,R02 Tronco,Cavidad del tronco,cavidad_externa_tronco; SL_tronco_pct,cavidad_externa_tronco = Sí y 20 % ≤ SL_tronco_pct < 33 %,Moderada,2
+TR-CAV-04,R02 Tronco,Cavidad del tronco,cavidad_externa_tronco; SL_tronco_pct,cavidad_externa_tronco = Sí y SL_tronco_pct ≥ 33 %,Severa,3
+TR-CAV-05,R02 Tronco,Cavidad del tronco,cavidad_externa_tronco; SL_tronco_pct,cavidad_externa_tronco = Sí y SL_tronco_pct no calculable,No determinado,Sin puntaje
+TR-CAV-06,R02 Tronco,Cavidad del tronco,cavidad_interna_tronco; t_R_tronco,"cavidad_interna_tronco = Sí y t_R_tronco > 0,3",Moderada,2
+TR-CAV-07,R02 Tronco,Cavidad del tronco,cavidad_interna_tronco; t_R_tronco,"cavidad_interna_tronco = Sí y t_R_tronco ≤ 0,3",Severa,3
+TR-CAV-08,R02 Tronco,Cavidad del tronco,cavidad_interna_tronco; t_R_tronco,cavidad_interna_tronco = Sí y t_R_tronco no medido,No determinado,Sin puntaje
+TR-CAV-09,R02 Tronco,Cavidad del tronco,cavidad_interna_tronco,"cavidad_interna_tronco = Requiere evaluación instrumental, hasta que se realice la evaluación instrumental y se registren sus datos",No determinado,Sin puntaje
+TR-CAV-10,R02 Tronco,Cavidad del tronco,cavidad_externa_tronco; cavidad_interna_tronco,cavidad_externa_tronco = Sí y cavidad_interna_tronco = Sí,"La categoría más severa entre la obtenida por SL (TR-CAV-02 a 05) y por t/R (TR-CAV-06 a 08); si alguna es No determinado, No determinado",Puntaje de la categoría resultante
+TR-HER-01,R02 Tronco,Heridas,presenta_heridas_tronco,presenta_heridas_tronco = No,Despreciable,0
+TR-HER-02,R02 Tronco,Heridas,presenta_heridas_tronco; condicion_heridas_tronco,condicion_heridas_tronco = Cerrada,Despreciable,0
+TR-HER-03,R02 Tronco,Heridas,presenta_heridas_tronco; condicion_heridas_tronco,condicion_heridas_tronco = En proceso de cierre,Leve,1
+TR-HER-04,R02 Tronco,Heridas,presenta_heridas_tronco; condicion_heridas_tronco,condicion_heridas_tronco = Abierta,Moderada,2
+TR-COR-01,R02 Tronco,Corteza muerta o ausente,corteza_muerta_ausente,corteza_muerta_ausente = No,Despreciable,0
+TR-COR-02,R02 Tronco,Corteza muerta o ausente,corteza_muerta_ausente,corteza_muerta_ausente = Sí,Moderada,2
+TR-EXU-01,R02 Tronco,Exudaciones,presenta_exudaciones,presenta_exudaciones = No,Despreciable,0
+TR-EXU-02,R02 Tronco,Exudaciones,presenta_exudaciones,presenta_exudaciones = Sí,Leve,1
+TR-GRI-01,R02 Tronco,Fisuras y grietas,presenta_fisura_grieta_tronco,presenta_fisura_grieta_tronco = No,Despreciable,0
+TR-GRI-02,R02 Tronco,Fisuras y grietas,afectacion_fisura_grieta,afectacion_fisura_grieta = Solo corteza,Leve,1
+TR-GRI-03,R02 Tronco,Fisuras y grietas,afectacion_fisura_grieta; direccion_grieta,afectacion_fisura_grieta = Penetra en madera y direccion_grieta = Longitudinal,Moderada,2
+TR-GRI-04,R02 Tronco,Fisuras y grietas,afectacion_fisura_grieta; direccion_grieta,afectacion_fisura_grieta = Penetra en madera y direccion_grieta = Transversal,Severa,3
+TR-COD-01,R02 Tronco,Codominancia,troncos_codominantes,troncos_codominantes = No,Despreciable,0
+TR-COD-02,R02 Tronco,Codominancia,troncos_codominantes; grieta_union_codominante,grieta_union_codominante = Sí,Severa,3
+TR-COD-03,R02 Tronco,Codominancia,troncos_codominantes; grieta_union_codominante; corteza_incluida,grieta_union_codominante = No y corteza_incluida = Sí,Moderada,2
+TR-COD-04,R02 Tronco,Codominancia,troncos_codominantes; grieta_union_codominante; corteza_incluida,grieta_union_codominante = No y corteza_incluida = No,Leve,1
+CR-RSE-01,R03 Copa y ramas,Ramas secas,ramas_secas,ramas_secas = No,Despreciable,0
+CR-RSE-02,R03 Copa y ramas,Ramas secas,ramas_secas_pct_copa,ramas_secas_pct_copa < 10 %,Leve,1
+CR-RSE-03,R03 Copa y ramas,Ramas secas,ramas_secas_pct_copa,10 % ≤ ramas_secas_pct_copa ≤ 50 %,Moderada,2
+CR-RSE-04,R03 Copa y ramas,Ramas secas,ramas_secas_pct_copa,ramas_secas_pct_copa > 50 %,Severa,3
+CR-RSE-05,R03 Copa y ramas,Ramas secas,ramas_secas_pct_copa,ramas_secas = Sí y ramas_secas_pct_copa no registrado,No determinado,Sin puntaje
+CR-RQU-01,R03 Copa y ramas,Ramas quebradas,ramas_quebradas,ramas_quebradas = No,Despreciable,0
+CR-RQU-02,R03 Copa y ramas,Ramas quebradas,ramas_quebradas,ramas_quebradas = Sí,Leve,1
+CR-DES-01,R03 Copa y ramas,Desequilibrio de copa,desequilibrio_copa,desequilibrio_copa = No,Despreciable,0
+CR-DES-02,R03 Copa y ramas,Desequilibrio de copa,desequilibrio_copa,desequilibrio_copa = Sí,Leve,1
+CR-DEF-01,R03 Copa y ramas,Defoliación,defoliacion_estimada_pct,defoliacion_estimada_pct ≤ 10 %,Despreciable,0
+CR-DEF-02,R03 Copa y ramas,Defoliación,defoliacion_estimada_pct,10 % < defoliacion_estimada_pct ≤ 25 %,Leve,1
+CR-DEF-03,R03 Copa y ramas,Defoliación,defoliacion_estimada_pct,25 % < defoliacion_estimada_pct ≤ 60 %,Moderada,2
+CR-DEF-04,R03 Copa y ramas,Defoliación,defoliacion_estimada_pct,defoliacion_estimada_pct > 60 %,Severa,3
+IN-GEN-01,M04 Infraestructura,Todos los componentes salvo alcorque y superficie permeable,infraestructura_inmediata; interferencia_redes_servicios,"infraestructura_inmediata = No: vereda, calzada, infraestructura vertical, red aérea y red subterránea quedan sin activar. interferencia_redes_servicios = No: red aérea y red subterránea quedan sin activar.",No aplica,Se excluye
+IN-VER-01,M04 Infraestructura,Vereda,existe_vereda,existe_vereda = No,No aplica,Se excluye
+IN-VER-02,M04 Infraestructura,Vereda,dano_interferencia_vereda,dano_interferencia_vereda = No,Sin afectación,0
+IN-VER-03,M04 Infraestructura,Vereda,desnivel_max_vereda_cm,"desnivel_max_vereda_cm > 5,0 cm",Severa,3
+IN-VER-04,M04 Infraestructura,Vereda,desnivel_max_vereda_cm; ancho_max_grieta_vereda_cm,"2,5 cm ≤ desnivel_max_vereda_cm ≤ 5,0 cm o ancho_max_grieta_vereda_cm ≥ 1 cm",Moderada,2
+IN-VER-05,M04 Infraestructura,Vereda,dano_interferencia_vereda,dano_interferencia_vereda = Sí sin cumplir IN-VER-03 ni IN-VER-04. Las mediciones no activadas no cumplen esas condiciones.,Leve,1
+IN-VER-06,M04 Infraestructura,Vereda,reduce_circulacion_peatonal; impide_paso_seguro,reduce_circulacion_peatonal = Sí e impide_paso_seguro = Sí. Reemplaza la categoría obtenida en IN-VER-03 a 05.,Severa,3
+IN-CAL-01,M04 Infraestructura,Calzada,existe_calzada,existe_calzada = No,No aplica,Se excluye
+IN-CAL-02,M04 Infraestructura,Calzada,dano_interferencia_calzada,dano_interferencia_calzada = No,Sin afectación,0
+IN-CAL-03,M04 Infraestructura,Calzada,desnivel_max_calzada_cm,"desnivel_max_calzada_cm > 5,0 cm",Severa,3
+IN-CAL-04,M04 Infraestructura,Calzada,desnivel_max_calzada_cm,"2,5 cm ≤ desnivel_max_calzada_cm ≤ 5,0 cm",Moderada,2
+IN-CAL-05,M04 Infraestructura,Calzada,dano_interferencia_calzada,dano_interferencia_calzada = Sí sin cumplir IN-CAL-03 ni IN-CAL-04. Las mediciones no activadas no cumplen esas condiciones.,Leve,1
+IN-CAL-06,M04 Infraestructura,Calzada,afecta_circulacion_vehicular,"afecta_circulacion_vehicular = Sí. Si la categoría obtenida es Leve, pasa a Moderada; Moderada y Severa se mantienen.",Mínimo Moderada,2 o 3
+IN-ALC-01,M04 Infraestructura,Alcorque y superficie permeable,suelo_sellado_impermeabilizado,suelo_sellado_impermeabilizado = Sí,Severa,3
+IN-ALC-02,M04 Infraestructura,Alcorque y superficie permeable,indicios_compactacion_superficial,indicios_compactacion_superficial = Sí,Moderada,2
+IN-ALC-03,M04 Infraestructura,Alcorque y superficie permeable,obstaculos_crecimiento_radicular,obstaculos_crecimiento_radicular = Sí,Leve,1
+IN-ALC-04,M04 Infraestructura,Alcorque y superficie permeable,suelo_sellado_impermeabilizado; indicios_compactacion_superficial; obstaculos_crecimiento_radicular,Se cumplen dos o más de IN-ALC-01 a 03,La categoría más severa,Puntaje de la categoría resultante
+IN-ALC-05,M04 Infraestructura,Alcorque y superficie permeable,suelo_sellado_impermeabilizado; indicios_compactacion_superficial; obstaculos_crecimiento_radicular,"Las tres condiciones = No. Se evalúa siempre, exista o no alcorque o superficie permeable.",Sin afectación,0
+IN-VRT-01,M04 Infraestructura,Infraestructura vertical,contacto_interferencia_infraestructura_vertical,contacto_interferencia_infraestructura_vertical = No,Sin afectación,0
+IN-VRT-02,M04 Infraestructura,Infraestructura vertical,dano_fisico_observable_infraestructura_vertical; compromete_estabilidad_funcionalidad,"Contacto = Sí, dano_fisico_observable_infraestructura_vertical = No y compromete_estabilidad_funcionalidad = No",Leve,1
+IN-VRT-03,M04 Infraestructura,Infraestructura vertical,dano_fisico_observable_infraestructura_vertical; compromete_estabilidad_funcionalidad,dano_fisico_observable_infraestructura_vertical = No y compromete_estabilidad_funcionalidad = Sí,Moderada,2
+IN-VRT-04,M04 Infraestructura,Infraestructura vertical,dano_fisico_observable_infraestructura_vertical; compromete_estabilidad_funcionalidad,dano_fisico_observable_infraestructura_vertical = Sí y compromete_estabilidad_funcionalidad = No,Moderada,2
+IN-VRT-05,M04 Infraestructura,Infraestructura vertical,dano_fisico_observable_infraestructura_vertical; compromete_estabilidad_funcionalidad,dano_fisico_observable_infraestructura_vertical = Sí y compromete_estabilidad_funcionalidad = Sí,Severa,3
+IN-RAE-01,M04 Infraestructura,Red aérea,red_aerea_presente,red_aerea_presente = No,No aplica,Se excluye
+IN-RAE-02,M04 Infraestructura,Red aérea,tipo_red_aerea; cumplimiento_distancia_seguridad_bt_mt,tipo_red_aerea incluye Eléctrica y cumplimiento_distancia_seguridad_bt_mt = No cumple,Severa,3
+IN-RAE-03,M04 Infraestructura,Red aérea,tipo_red_aerea; cumplimiento_distancia_seguridad_bt_mt; dano_interferencia_red_aerea,"tipo_red_aerea incluye Eléctrica, cumplimiento_distancia_seguridad_bt_mt = Cumple y dano_interferencia_red_aerea = No",Leve,1
+IN-RAE-04,M04 Infraestructura,Red aérea,tipo_red_aerea; cumplimiento_distancia_seguridad_bt_mt; dano_interferencia_red_aerea,"tipo_red_aerea incluye Eléctrica, cumplimiento_distancia_seguridad_bt_mt = Cumple y dano_interferencia_red_aerea = Sí",Moderada,2
+IN-RAE-05,M04 Infraestructura,Red aérea,tipo_red_aerea; dano_interferencia_red_aerea,tipo_red_aerea no incluye Eléctrica y dano_interferencia_red_aerea = No,Leve,1
+IN-RAE-06,M04 Infraestructura,Red aérea,tipo_red_aerea; dano_interferencia_red_aerea,tipo_red_aerea no incluye Eléctrica y dano_interferencia_red_aerea = Sí,Moderada,2
+IN-RSU-01,M04 Infraestructura,Red subterránea,red_subterranea_presente,red_subterranea_presente = No,No aplica,Se excluye
+IN-RSU-02,M04 Infraestructura,Red subterránea,red_subterranea_presente,red_subterranea_presente = No determinado,No determinado,Se excluye
+IN-RSU-03,M04 Infraestructura,Red subterránea,compromete_funcionalidad_red_subterranea,"compromete_funcionalidad_red_subterranea = Sí, con o sin afectación física",Severa,3
+IN-RSU-04,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = Sí y compromete_funcionalidad_red_subterranea = No,Moderada,2
+IN-RSU-05,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = Sí y compromete_funcionalidad_red_subterranea = No determinado,Moderada,2
+IN-RSU-06,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = No y compromete_funcionalidad_red_subterranea = No,Sin afectación,0
+IN-RSU-07,M04 Infraestructura,Red subterránea,afectacion_fisica_red_subterranea; compromete_funcionalidad_red_subterranea,afectacion_fisica_red_subterranea = No y compromete_funcionalidad_red_subterranea = No determinado,No determinado,Se excluye
