@@ -66,6 +66,7 @@ hoja VERSION del Excel maestro.
 | CC-037 | Recordatorio de próxima inspección y monitoreo en lugar de agenda automática (AMD-38; PR-009 v4.0) | 3 (+5) | FUENTE SINCRONIZADA (2.0.0 publicada el 2026-10-20) | Fase 1 · decisión 10 | 2.0.0 (publicada el 2026-10-20) | — | 2026-10-20 |
 | CC-038 | Datos simulados fuera de la base de producción: producción nueva y vacía; seed solo para desarrollo | 4 | APROBADO METODOLÓGICAMENTE | Fase 1 · respuesta 0 | — (fuera del paquete) | — | 2026-10-20 |
 | CC-039 | Catálogo botánico: `persistencia_follaje`, `tipo_hoja` y `origen_biogeografico` en CATALOGO_ESPECIES; `rango_edad_estimada_anios` en ARBOLES | 2 (+3) | FUENTE SINCRONIZADA (2.0.0 publicada el 2026-10-20) | Decisión de la autora (2026-10-20) | 2.0.0 (publicada el 2026-10-20) | — | 2026-10-20 |
+| CC-042 | Estado del proyecto: `estado_proyecto` (Activo / Cerrado) en PROYECTOS; proyecto Cerrado en solo consulta | 3 | APROBADO METODOLÓGICAMENTE | Decisión de la autora (2026-10-20), revisión del diseño de la Fase 3 (PR #31) | 2.0.1 (en preparación) | — | 2026-10-20 |
 
 Las decisiones de la auditoría de diagramas (D1–D23, N1–N12) y sus
 pendientes (N13–N21, MP1) se registrarán en CC posteriores, que
@@ -1803,3 +1804,49 @@ motivo)
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial (Valen-j211, PR #25). |
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Sincronización documental (PR-003 v8.0, PR-006 v10.0, PR-019 v1.2, ADR-016 v4.0). Edad estimada Opcional; PN y PI no se adoptan en 2.0.0; AM-11 cerrado con la referencia estacional de `defoliacion_estimada_pct`. |
 | 2026-10-20 | FUENTE SINCRONIZADA | — | Incluido en el paquete 2.0.0 (VERSION, fila 5). Verificación §14.9 sin hallazgos sobre el Excel de `main` con AM-10 (AM-08). Publicación y tag pendientes de la aprobación de la autora. |
+
+### CC-042 — Estado del proyecto: `estado_proyecto` (Activo / Cerrado)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-20 |
+| Origen | Revisión del diseño de la Fase 3 (PR #31): CC-041 retira `projects.status` porque no está en el Excel, y sin él un proyecto no puede cerrarse. La autora decide incorporar el estado al Excel. |
+| Tipo | 3 — modelo de datos |
+| Estado | APROBADO METODOLÓGICAMENTE (Excel actualizado; 2.0.1 en preparación, no publicada) |
+| Regla / campo afectado | PROYECTOS: `estado_proyecto` (nuevo). REGLAS_GENERALES: sección "Proyectos" (fila 27). VERSION: fila 6 (2.0.1). |
+| Versión anterior | PROYECTOS solo tenía `id_proyecto` y `nombre_proyecto`; un proyecto no tenía estado ni podía cerrarse. |
+| Versión nueva | 1. **`estado_proyecto`** (D-265): Activo / Cerrado, Obligatorio. Valor inicial Activo al crear el proyecto. Solo el Administrador cierra o reabre. 2. **Proyecto Cerrado = solo consulta:** se ven árboles, mapa, fichas, indicadores e historial; no se registran árboles ni se crean OT, inspecciones, mantenimientos o incidencias; el formulario QR de sus árboles no recibe incidencias. La delimitación del sector no se modifica; el Administrador puede seguir gestionando los miembros. 3. **Condición de cierre:** no se puede cerrar mientras alguna OT del proyecto esté Pendiente, Programada o En ejecución, o alguna incidencia de sus árboles esté Ingresada o En revisión. 4. **Reapertura:** un proyecto Cerrado puede volver a Activo; el cambio no altera `id_proyecto` ni el historial. |
+| Motivo | Buena práctica de gestión: permitir cerrar un proyecto terminado sin perder su información y sin que reciba nuevos registros. |
+| Fundamento / fuente | Decisión de la autora (marybaxmann), 2026-10-20: valores Activo / Cerrado, solo consulta, sin cierre con OT abiertas y reabrible. |
+| Archivos afectados | `docs/excel/Base de Datos Valpo Verde.xlsx`; `docs/registro-cambios.md`. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | DICCIONARIO_CAMPOS: fila nueva 265 (`estado_proyecto`); las filas de MIEMBROS_PROYECTO pasan de D-265 y D-266 a **D-266 y D-267**. Cabecera C1 de PROYECTOS. REGLAS_GENERALES fila 27. VERSION fila 6. |
+| Impacto en BD | Pendiente (Fase 3 / Fase 4): columna `estado_proyecto` en `projects`, Activo por defecto; reemplaza el `status` que CC-041 retira. |
+| Impacto en backend | Pendiente: bloquear escrituras en proyectos Cerrados; validar la condición de cierre; solo el Administrador cambia el estado. |
+| Impacto en API | Pendiente: operación de cierre y reapertura; errores de escritura en proyecto Cerrado. |
+| Impacto en frontend | Pendiente: indicador del estado, acciones de cierre y reapertura para el Administrador, formularios deshabilitados y mensaje en el formulario QR. |
+| Pruebas necesarias | En implementación: cierre rechazado con una OT abierta o una incidencia Ingresada o En revisión; escrituras rechazadas en un proyecto Cerrado; consulta permitida; reapertura. |
+| Dependencias | CC-041 (retiro de `projects.status`), CC-036 (formulario QR), AM-08 (2.0.0). |
+| rule_version | 2.0 (sin cambio: PATCH, el campo no participa en ninguna regla de cálculo) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-20 |
+| Fecha de implementación | — (sin implementación) |
+| Commits / PR asociados | Rama `docs/cc-042-estado-proyecto`. |
+| Observaciones | Versión del paquete: PATCH → 2.0.1 (`workflow.md` §14, tipo 3 que no participa en ninguna regla). Queda en preparación; se publica cuando la autora lo apruebe. Una incidencia Derivada no impide el cierre. No se modificaron código, migraciones, RLS ni Supabase. |
+
+**Checklist de sincronización**
+
+- [x] Excel maestro — DICCIONARIO_CAMPOS, PROYECTOS, REGLAS_GENERALES y VERSION.
+- [ ] Diseño de la Fase 3 (PR #31) — agregar `estado_proyecto` a `projects` y actualizar las referencias D-265/D-266 de MIEMBROS_PROYECTO a D-266/D-267.
+- [ ] PR / ADR — roles del Administrador (cierre y reapertura).
+- [ ] Migración + schema.sql — pendiente.
+- [ ] Backend — pendiente.
+- [ ] API / Zod — pendiente.
+- [ ] Frontend — pendiente.
+- [ ] Revisión final
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial y Excel actualizado (Valen-j211). |
