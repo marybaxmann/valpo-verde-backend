@@ -1063,9 +1063,11 @@ ADR-012
 
 ---
 
-## ADR-016 — Árbol y medición dendrométrica como conceptos distintos (v4.0)
-Estado: vigente
+## ADR-016 — Árbol y medición dendrométrica como conceptos distintos (v4.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 4.0
+Reemplazada por: ADR-016 v5.0
+Motivo del reemplazo: definía la vigencia por OT, sin inspecciones parciales (CC-040).
 Fecha: 2026-10
 Reemplaza: ADR-016 v3.0
 Origen: CC-039
@@ -1099,6 +1101,49 @@ Sí, preservando la trazabilidad histórica de árboles, mediciones e inspeccion
 ### Reglas relacionadas
 PR-006 v10.0
 PR-009 v4.0
+PR-019 v1.2
+ADR-007
+ADR-010 v3.0
+ADR-012
+
+---
+
+## ADR-016 — Árbol y medición dendrométrica como conceptos distintos (v5.0)
+Estado: vigente
+Versión: 5.0
+Fecha: 2026-10
+Reemplaza: ADR-016 v4.0
+Origen: CC-040
+
+### Contexto
+La v3.0 cerró la corrección y anulación (CC-031) y el modelo sin MEDICIONES_DENDROMETRICAS (CC-028). CC-039 separó las características de la especie, que pasan al catálogo, de los datos técnicos del ejemplar, y agregó la edad estimada.
+
+### Decisión
+1. ÁRBOL representa la identidad y la caracterización relativamente estable del ejemplar: identificación, proyecto, ubicación (ADR-010 v3.0) y especie, incluido `nombre_comun` (CC-028 P2).
+2. Las dimensiones y características dendrométricas del ejemplar (`multifustal`, `numero_fustes`, `dap_fustes_cm`, `dap_cm`, altura total, diámetros de copa, alturas de primera rama y de base de copa viva, clase de edad y `rango_edad_estimada_anios`) son datos técnicos del árbol con historial: cada versión queda vinculada a la inspección que la registró. No existe una entidad de mediciones separada (CC-028 P3).
+3. Las registra el Inspector en la inspección, mediante OT.
+4. El alta municipal no exige medición: el árbol se considera presente con "Evaluación pendiente" hasta su primera evaluación vigente.
+5. Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
+6. No se sobrescribe el historial.
+7. Vigencia por dato: los valores se hacen vigentes al completar toda la OT. Para cada dato, el valor vigente es el de la inspección no anulada de la OT completada más recientemente que registró ese dato. Una inspección parcial (Evaluación instrumental, Monitoreo) solo reemplaza los datos que registra (CC-040). La evaluación vigente se compone del mismo modo, campo por campo, y sus clasificaciones se recalculan con esa composición al completarse cada OT o al anularse una inspección.
+8. Corrección y anulación (CC-031): mientras la inspección está Preguardado se corrige libremente; una inspección Finalizado solo se anula completa, por el Inspector y con motivo, y los datos correctos se registran en una nueva inspección (en la misma OT si todavía no está completada; si lo está, en una nueva OT).
+9. El valor vigente se deriva; no es un segundo dato editable independiente.
+10. Una modificación posterior de la especie es una corrección de identificación, no una nueva medición.
+11. Las características de la especie (`origen_biogeografico`, `persistencia_follaje`, `tipo_hoja`) viven una sola vez en CATALOGO_ESPECIES y se obtienen mediante `especie_cientifica`; no son datos del árbol ni se versionan por inspección (CC-039).
+
+Esta ADR no define el esquema físico (Fase 3, CC-032).
+
+### Consecuencias
+- Se conserva con qué dimensiones se hizo cada evaluación.
+- `tree_measurements` y `fn_create_tree_with_measurement` (CC-020) dejan de usarse y se retiran con autorización (CC-032).
+- La implementación requiere la versión publicada del paquete (CC-030, CC-035).
+
+### Puede cambiar
+Sí, preservando la trazabilidad histórica de árboles, mediciones e inspecciones.
+
+### Reglas relacionadas
+PR-006 v11.0
+PR-009 v5.0
 PR-019 v1.2
 ADR-007
 ADR-010 v3.0

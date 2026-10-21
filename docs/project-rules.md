@@ -590,9 +590,11 @@ Afecta:
 - permisos
 - RLS
 
-## PR-004 — Rol Administrador (v6.0)
-Estado: vigente
+## PR-004 — Rol Administrador (v6.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 6.0
+Reemplazada por: PR-004 v7.0
+Motivo del reemplazo: la delimitación del sector no era obligatoria al crear el proyecto (CC-041).
 Reemplaza: PR-004 v5.0
 Origen: CC-026
 Motivo: agregar la gestión de la delimitación territorial del proyecto (auditoría del modelo de datos, 2026-10-18). Sin otros cambios respecto de v5.0.
@@ -605,6 +607,37 @@ Puede:
 - crear y gestionar proyectos;
 - gestionar los miembros de cada proyecto (`project_members`);
 - gestionar la delimitación territorial de cada proyecto: un polígono o multipolígono, dibujado o importado desde KML o KMZ de Google Earth (SECTORES). Los árboles heredan el `id_sector` del proyecto;
+- consultar, en modo de solo lectura, toda la información de los proyectos: dashboard, inventario, mediciones, fichas, evaluaciones técnicas y de riesgo, infraestructura, mantención, incidencias e indicadores.
+
+No realiza:
+- registro ni edición de árboles o mediciones;
+- evaluaciones técnicas (estructural, vitalidad, riesgo, infraestructura);
+- registro de órdenes de trabajo o incidencias, ni cambios de su estado;
+- modificación manual de resultados calculados.
+
+El Administrador no modifica resultados calculados. El único ajuste permitido es el del Inspector, con justificación y trazabilidad (PR-008 v2.0).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-004 — Rol Administrador (v7.0)
+Estado: vigente
+Versión: 7.0
+Reemplaza: PR-004 v6.0
+Origen: CC-041
+Motivo: la delimitación del sector es obligatoria al crear el proyecto, para que nunca exista un proyecto sin sector (decisión de la autora, 2026-10-20).
+
+- Identificador interno: `admin`
+- Etiqueta de interfaz: `Administrador`
+- Acceso transversal a todos los proyectos en esta versión (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- crear y gestionar proyectos;
+- gestionar los miembros de cada proyecto (`project_members`);
+- crear cada proyecto **junto con su delimitación territorial**, que es obligatoria: un polígono o multipolígono, dibujado o importado desde KML o KMZ de Google Earth (SECTORES). No existe un proyecto sin sector. Después puede modificar la delimitación. Los árboles heredan el `id_sector` del proyecto;
 - consultar, en modo de solo lectura, toda la información de los proyectos: dashboard, inventario, mediciones, fichas, evaluaciones técnicas y de riesgo, infraestructura, mantención, incidencias e indicadores.
 
 No realiza:
@@ -671,9 +704,11 @@ Afecta:
 - frontend
 - permisos
 
-## PR-005 — Proyectos (v3.0)
-Estado: vigente
+## PR-005 — Proyectos (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
+Reemplazada por: PR-005 v4.0
+Motivo del reemplazo: incluía campos funcionales de proyecto que no están en el Excel (`institution_name`, `responsible_professional`, `status`) y `public_spaces` (CC-041).
 Reemplaza: PR-005 v2.0
 Motivo: cierre de la estructura física del modelo multiproyecto, aprobada por la autora. El detalle arquitectónico vive en ADR-005 v2.0.
 
@@ -729,6 +764,34 @@ El rol (`admin`, `usuario_municipal`) sigue siendo global en `user_profiles`.
 ### Despliegue
 
 `002` estructura → backend con scoping rol + proyecto → `003` backfill (si corresponde) → `004` `SET NOT NULL` → RLS posterior.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- permisos
+
+## PR-005 — Proyectos (v4.0)
+Estado: vigente
+Versión: 4.0
+Reemplaza: PR-005 v3.0
+Origen: CC-041, CC-042
+Motivo: se eliminan los campos funcionales que no están en el Excel maestro; el sector se crea junto con el proyecto (PR-004 v7.0); el estado del proyecto pasa a `estado_proyecto` (CC-042).
+
+La plataforma es multiproyecto. Los árboles pertenecen a un proyecto.
+
+### Tabla `projects` (PROYECTOS)
+- `id` (D-263), `nombre_proyecto` (D-264) y `estado_proyecto` (D-265): Activo / Cerrado, obligatorio, Activo por defecto.
+- Campos técnicos: `created_by`, `created_at`, `updated_at`.
+- Se eliminan `institution_name` y `responsible_professional`: no están en el Excel. `status` se reemplaza por `estado_proyecto` (CC-042).
+- **Proyecto Cerrado** (REGLAS_GENERALES fila 27): queda en solo consulta; no se registran árboles ni se crean OT, inspecciones, mantenimientos ni incidencias, y el formulario QR no recibe incidencias. La delimitación no se modifica; el Administrador sigue gestionando los miembros. Solo el Administrador cierra o reabre el proyecto. Puede cerrarse aunque existan OT o incidencias abiertas, que se conservan en su estado y no avanzan hasta que se reabra.
+- Cada proyecto tiene exactamente un sector (SECTORES), creado en la misma operación (PR-004 v7.0).
+
+### Tabla `project_members` (MIEMBROS_PROYECTO)
+Representa solo la pertenencia (D-266, D-267); el rol es global (AMD-31). Campos técnicos: `id`, `created_at`, `added_by`. `UNIQUE(project_id, user_id)`.
+
+### Alcance por proyecto
+`trees`, `work_orders` e `incidents` llevan `project_id`; las demás tablas lo derivan del árbol o de la OT. `species` (CATALOGO_ESPECIES) es global. `public_spaces` se retira (CC-041). `tree_code` mantiene la secuencia global (`A-000001`, …).
 
 Afecta:
 - base de datos
@@ -1076,9 +1139,11 @@ Afecta:
 - base de datos
 - permisos
 
-## PR-006 — Registro básico del árbol (v10.0)
-Estado: vigente
+## PR-006 — Registro básico del árbol (v10.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 10.0
+Reemplazada por: PR-006 v11.0
+Motivo del reemplazo: la vigencia se definía por OT, sin considerar inspecciones parciales (CC-040).
 Reemplaza: PR-006 v9.0
 Origen: CC-039
 Motivo: el origen biogeográfico, la persistencia del follaje y el tipo de hoja son características de la especie en el catálogo; se agrega el rango de edad estimada del árbol (CC-039).
@@ -1118,6 +1183,57 @@ Las listas siguientes describen la información capturada por la interfaz y su c
 - Los valores nuevos se hacen vigentes al completar toda la OT. El valor vigente es el de la OT completada más recientemente según `fecha_completada_ot` cuya inspección no esté anulada, aunque se haya realizado antes que otra.
 - Corrección y anulación: según `estado_registro` de la inspección (PR-009 v4.0, CC-031).
 - Una medición aplicable pendiente deja la inspección preguardada (PR-009 v4.0); no equivale a cero ni a "No presenta". "No presenta" se usa para características inexistentes y desactiva el valor numérico.
+
+Esta PR no modifica `schema.sql`. El modelo físico se diseña en la Fase 3 (CC-032, CC-039).
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+
+## PR-006 — Registro básico del árbol (v11.0)
+Estado: vigente
+Versión: 11.0
+Reemplaza: PR-006 v10.0
+Origen: CC-040
+Motivo: la vigencia se determina por dato, porque una inspección parcial solo reemplaza los datos que registra (CC-040).
+
+Las listas siguientes describen la información capturada por la interfaz y su contrato funcional (DICCIONARIO_CAMPOS), no columnas físicas de la base de datos.
+
+### Vías de registro
+
+- **Alta municipal:** el Usuario municipal registra el árbol con el nombre común o científico y la ubicación (coordenadas UTM, sector y descripción del lugar). No ingresa características de la especie. No se exige medición.
+- **Registro en levantamiento:** el Inspector registra árboles nuevos durante una OT de Levantamiento, sin alta municipal previa.
+- Si el árbol ya existe, se reutiliza su identificador y se agrega una nueva evaluación; no se duplica el árbol.
+- Todo árbol registrado comienza como Presente, aunque su evaluación técnica esté pendiente. Sin evaluación vigente, la ficha muestra "Evaluación pendiente".
+
+### Identificación y ubicación
+
+- Código, fecha de registro y registrado por: automáticos.
+- Proyecto e `id_sector`: el árbol hereda la delimitación territorial del proyecto (`id_sector`, no visible en el formulario, usado en los índices territoriales). `sector` es el texto descriptivo del barrio o sector y no se reemplaza por `id_sector`.
+- Coordenadas UTM de ingreso manual y obligatorio (`utm_este`, `utm_norte`). `huso` = 19S y `datum` = WGS84 son fijos y los asigna el Sistema (CC-028 P1). Descripción del lugar en `ubicacion_descriptiva`.
+- Como ayuda, al marcar el punto en el mapa del formulario la plataforma rellena `utm_este` y `utm_norte`, que siguen siendo editables; se guardan las coordenadas UTM del formulario (CC-032).
+- La geometría para el mapa y las consultas espaciales se deriva de las coordenadas UTM y es de solo lectura (ADR-010 v3.0).
+- `estado_presencia` (Presente / Talado / Retirado) y `fecha_cambio_estado_presencia` se derivan de las OT completadas y de los MANTENIMIENTO aprobados (PR-020); no son datos editables del árbol.
+- Las modificaciones posteriores al alta las realiza el Inspector mediante OT y se hacen vigentes al completarla.
+
+### Especie
+
+- `nombre_comun` es un dato del árbol (CC-028 P2).
+- En el alta se acepta el nombre común o el científico. Para finalizar la inspección se exigen `especie_cientifica` y `nombre_comun`; no se admiten "Género sp." ni "No determinado".
+- El Inspector confirma o corrige la identificación; la corrección se hace vigente al completar la OT.
+- Solo el Inspector incorpora especies a CATALOGO_ESPECIES (`especie_cientifica`, `genero`, `familia`) y completa sus características: `origen_biogeografico`, `persistencia_follaje` y `tipo_hoja` (CC-039). Si una característica aún no se conoce, queda vacía; no se inventa ni bloquea el registro del árbol.
+- Las características de la especie se obtienen del catálogo mediante `especie_cientifica`; no se ingresan ni se duplican en el árbol. Si el árbol no tiene especie vigente, no se muestran (origen: "Origen no determinado"). El árbol se vincula por `especie_cientifica` normalizada. La ausencia de la especie en el catálogo no bloquea el alta.
+
+### Datos técnicos e historial (ADR-016 v3.0)
+
+- Los registra el Inspector en la inspección, mediante OT: `multifustal`, `numero_fustes`, `dap_fustes_cm` y `dap_cm` según la fórmula de DICCIONARIO_CAMPOS (CC-028 P4; no se usa `configuracion_fustes`), altura total (`altura_total_m` > 0), diámetros de copa norte–sur y este–oeste (el diámetro medio se calcula), altura de primera rama, altura de base de copa viva, clase de edad, que es obligatoria (CC-028 P5), y `rango_edad_estimada_anios` en la Evaluación inicial o el Levantamiento, que es **opcional** mientras no se valide su factibilidad (CC-039) y no se exige para finalizar la inspección. La edad estimada no se deriva de la clase de edad ni solo del DAP.
+- Una nueva inspección puede precargar los valores anteriores; solo se conservan si el Inspector los confirma, y entonces cuentan como mediciones de esa inspección.
+- No se sobrescribe el historial: la ficha muestra el valor vigente y la plataforma conserva cada versión anterior vinculada a la inspección que la registró.
+- Los valores nuevos se hacen vigentes al completar toda la OT. **Para cada dato**, el valor vigente es el registrado por la inspección no anulada de la OT completada más recientemente (según `fecha_completada_ot`) que registró ese dato, aunque se haya realizado antes que otra. Una inspección parcial solo reemplaza los datos que registró; los demás conservan su valor vigente anterior (CC-040).
+- Corrección y anulación: según `estado_registro` de la inspección (PR-009 v5.0, CC-031).
+- Una medición aplicable pendiente deja la inspección preguardada (PR-009 v5.0); no equivale a cero ni a "No presenta". "No presenta" se usa para características inexistentes y desactiva el valor numérico.
 
 Esta PR no modifica `schema.sql`. El modelo físico se diseña en la Fase 3 (CC-032, CC-039).
 
@@ -1277,9 +1393,11 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-009 — Inspecciones (v4.0)
-Estado: vigente
+## PR-009 — Inspecciones (v4.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 4.0
+Reemplazada por: PR-009 v5.0
+Motivo del reemplazo: exigía la evaluación completa en todo tipo de inspección (CC-040) y no fijaba el momento del ajuste de clasificaciones (CC-041).
 Reemplaza: PR-009 v3.0
 Origen: CC-031, CC-037
 Motivo: definir la corrección y anulación de una inspección (CC-031) y reemplazar el envío al "calendario del módulo" por un recordatorio (CC-037).
@@ -1304,6 +1422,57 @@ Corrección y anulación (CC-031):
 - La inspección anulada se conserva en el historial con todos sus valores y deja de considerarse para la vigencia.
 - Los datos correctos se registran en una nueva inspección: en la misma OT si todavía no está completada; si lo está, en una nueva OT.
 - Solo el Inspector anula inspecciones. El Usuario municipal, el Administrador y el Encargado de mantención no anulan.
+
+En el Excel auditado la entidad se llama INSPECCION.
+
+Una inspección finalizada no se modifica retroactivamente.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- rules-engine
+
+## PR-009 — Inspecciones (v5.0)
+Estado: vigente
+Versión: 5.0
+Reemplaza: PR-009 v4.0
+Origen: CC-040, CC-041
+Motivo: alcance de la evaluación según el tipo de inspección y vigencia por dato (CC-040); el ajuste de clasificaciones solo antes de finalizar (CC-041).
+
+Las inspecciones:
+- pertenecen a un árbol y a una OT de Inspección (Evaluación inicial, Reevaluación, Evaluación instrumental, Monitoreo o Levantamiento). Una OT de Levantamiento puede abarcar varios árboles aún no identificados al crearla; su alcance es el proyecto y el área de trabajo descrita en la OT;
+- las realiza el Inspector (PR-019 v1.1); no las realizan el Administrador ni el Usuario municipal;
+- tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado **dentro del alcance de su tipo** (ver "Alcance"); `Finalizado` cuando están completas; `Anulado` cuando el Inspector anula una inspección finalizada (CC-031). Preguardado y Finalizado equivalen a `borrador` y `completada` de ADR-007;
+- admiten guardado parcial;
+- "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
+- las de Evaluación inicial, Reevaluación y Levantamiento exigen las cuatro vistas fotográficas del árbol; la Evaluación instrumental no considera fotografías y en el Monitoreo son opcionales (PR-010 v4.0, CC-040);
+- al finalizar quedan inmutables y conservan `rule_version`;
+- sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
+- `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
+- la plataforma sugiere `fecha_proxima_inspeccion` y `fecha_proximo_monitoreo` según `nivel_riesgo` (inicio del rango — inspección: Bajo 24 meses, Moderado 12 meses, Alto 1 a 3 meses, Extremo 1 a 4 semanas; monitoreo: Bajo 12 meses, Moderado 3 a 6 meses, Alto 2 a 4 semanas, Extremo inmediato y continuo). El Inspector puede ajustarlas registrando `justificacion_ajuste_fecha`.
+
+Recordatorio (CC-037): SIVU no agenda automáticamente. Al llegar el inicio del rango, la fecha (la ajustada, si existe) aparece como recordatorio en la lista de próximas inspecciones y monitoreos del proyecto, con el inicio y el término del rango. Desde esa lista el Usuario municipal crea y programa la OT.
+
+Corrección y anulación (CC-031):
+- Mientras la inspección está Preguardado, el Inspector modifica libremente todos sus datos, incluidos los datos técnicos del árbol registrados en ella.
+- Una inspección Finalizado no se modifica. Si contiene un error, el Inspector la anula registrando el motivo; el Sistema registra quién y cuándo.
+- La inspección anulada se conserva en el historial con todos sus valores y deja de considerarse para la vigencia.
+- Los datos correctos se registran en una nueva inspección: en la misma OT si todavía no está completada; si lo está, en una nueva OT.
+- Solo el Inspector anula inspecciones. El Usuario municipal, el Administrador y el Encargado de mantención no anulan.
+
+Alcance de la evaluación según el tipo de inspección (CC-040):
+- **Evaluación inicial, Reevaluación y Levantamiento:** evaluación completa (todos los datos obligatorios y condicionales activados de ARBOLES y REGISTRO_EVALUACION).
+- **Evaluación instrumental:** solo los campos de cavidad basal y de tronco. Resuelve el "No determinado" de "Requiere evaluación instrumental".
+- **Monitoreo:** solo los campos de su subtipo (CC-040): *Fitosanitario* = `defoliacion_estimada_pct` (D-83), `clorosis_pct` (D-84), `necrosis_pct` (D-85), `muerte_regresiva_copa_pct` (D-89) y `presenta_exudaciones` (D-65); *Estructural* = las entradas de R01, R02 y R03 (D-33 a D-82 y D-86); *Vitalidad* = `clasificacion_vitalidad` (D-169).
+- En la Evaluación instrumental, `cavidad_basal_interna` y `cavidad_interna_tronco` solo admiten Sí o No.
+- Si falta un valor vigente que una clasificación necesita, esa clasificación queda No determinado (CC-024); la prioridad sigue CC-029.
+- En la evaluación vigente recalculada, el ajuste del Inspector se mantiene solo si el valor recalculado coincide con el valor calculado sobre el que se hizo; si no, se descarta y queda una marca de revisión para el Inspector.
+- En una inspección parcial, los datos registrados reemplazan el valor vigente del árbol al completar la OT; los demás conservan su valor vigente anterior. El historial no se sobrescribe: cada valor queda en la inspección que lo registró.
+- Las clasificaciones de una inspección parcial se calculan con los valores vigentes resultantes: los registrados en ella más los vigentes del árbol.
+- **La evaluación vigente del árbol se compone campo por campo:** para cada campo, el último valor entre las inspecciones no anuladas de OT completadas. Al completarse una OT, o al anularse una inspección, el riesgo y las demás clasificaciones se recalculan con esa composición y el resultado queda registrado como evaluación vigente del árbol (por ejemplo, después de una Evaluación instrumental).
+
+Ajuste de clasificaciones (CC-041): el Inspector ajusta `clasificacion_riesgo`, `clasificacion_infraestructura` o `clasificacion_prioridad` solo mientras la inspección está Preguardado. Después de finalizar, para cambiarlas se anula la inspección y se registra una nueva.
 
 En el Excel auditado la entidad se llama INSPECCION.
 
@@ -1363,15 +1532,39 @@ Afecta:
 - storage
 - base de datos
 
-## PR-010 — Fotografías (v3.0)
-Estado: vigente
+## PR-010 — Fotografías (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
+Reemplazada por: PR-010 v4.0
+Motivo del reemplazo: exigía las cuatro vistas en toda inspección (CC-040).
 Reemplaza: PR-010 v2.0
 Origen: CC-028, CC-036
 Motivo: CC-028 (P9) resolvió que no hay un límite fijo de fotografías y CC-036 definió la fotografía del reporte ciudadano.
 
 - Se permiten varias fotografías por árbol y por inspección, sin un límite fijo (CC-028 P9).
 - Para finalizar una inspección se exigen fotografías nuevas de cuatro vistas: árbol completo, base, tronco y copa. Las fotografías anteriores no cumplen las vistas obligatorias de una nueva inspección.
+- Se conserva el historial fotográfico vinculado a cada inspección.
+- Mantenimiento: la evidencia fotográfica de la ejecución es obligatoria para completar la OT (PR-020 v1.1).
+- Incidencias: el reportante carga al menos una fotografía (jpg o png) en el formulario ciudadano público (PR-022 v1.0).
+- Las imágenes viven en Supabase Storage; PostgreSQL almacena metadatos (ADR-011).
+
+Afecta:
+- frontend
+- backend
+- storage
+- base de datos
+
+## PR-010 — Fotografías (v4.0)
+Estado: vigente
+Versión: 4.0
+Reemplaza: PR-010 v3.0
+Origen: CC-040
+Motivo: las cuatro vistas son parte de los datos dendrométricos del árbol (`fotografias_arbol`, D-27) y solo se exigen en las inspecciones que registran esos datos.
+
+- Se permiten varias fotografías por árbol y por inspección, sin un límite fijo (CC-028 P9).
+- Las cuatro vistas (árbol completo, base, tronco y copa) son parte de los datos dendrométricos del árbol (`fotografias_arbol`, D-27). Se exigen, nuevas, para finalizar las inspecciones de **Evaluación inicial, Reevaluación y Levantamiento**. Las fotografías anteriores no cumplen las vistas obligatorias de una nueva inspección.
+- La **Evaluación instrumental** no considera fotografías.
+- En el **Monitoreo** las fotografías no son obligatorias (`evidencia_fotografica` de la inspección, D-206, opcional).
 - Se conserva el historial fotográfico vinculado a cada inspección.
 - Mantenimiento: la evidencia fotográfica de la ejecución es obligatoria para completar la OT (PR-020 v1.1).
 - Incidencias: el reportante carga al menos una fotografía (jpg o png) en el formulario ciudadano público (PR-022 v1.0).

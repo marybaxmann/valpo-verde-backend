@@ -260,6 +260,7 @@ Decisiones aprobadas en CC-026 (`docs/auditorias/2026-10-18-modelo-datos/`). Res
 | AM-09 | Datos simulados (todo es simulado, incluidos A-000013/14 y los proyectos y usuarios de la demo): inventario de solo lectura y limpieza de las bases de prueba con autorización; seed solo para desarrollo en `database/seeds/dev/`. La base de producción se creará vacía cuando la plataforma esté lista (ADR-013) | CC-038 | PENDIENTE | Autorización de la autora |
 | AM-10 | ~~Actualizar el Excel maestro con los textos propuestos en CC-031, CC-032, CC-036 y CC-037~~ Resuelto en el PR #28 (2026-10-20), junto con la edad estimada opcional (CC-039), la referencia estacional de la defoliación (AM-11) y la fila 5 de VERSION | CC-031, CC-032, CC-036, CC-037 | RESUELTO | — |
 | AM-11 | ~~Definir cómo se evalúan la defoliación y la clorosis en especies caducifolias durante su período sin hojas~~ Cerrado sin regla nueva (2026-10-20): `defoliacion_estimada_pct` se estima respecto de una copa de referencia de la misma especie y condición estacional; en receso, la pérdida estacional no cuenta como defoliación (0 %). La autora lo explicita en el Excel (AM-10) | CC-039 | RESUELTO | — |
+| AM-12 | Cargar en el Excel los textos de CC-040 (REGLAS_GENERALES con los campos por subtipo de Monitoreo, D-209 y D-27), en un PR aparte desde la sesión de auditoría; publicar en la siguiente versión del paquete | CC-040 | PENDIENTE | PR de la sesión de auditoría |
 
 ### Pendientes previos que siguen abiertos (referencia)
 

@@ -38,7 +38,7 @@ La autora conduce la actualización del backend y el frontend con un protocolo p
 - **Respuestas de la Fase 2 aplicadas (2026-10-20):** diagramas fuera del paquete (CC-030, opción B); nueva inspección en la misma OT si no está completada (CC-031); mapa del alta como ayuda para UTM (CC-032); nombre y RUT se eliminan con Validada o Descartada y "Requiere antecedentes" se resuelve con una OT de Inspección vinculada por `id_incidencia` (CC-036); todo dato actual es simulado y la limpieza aplica solo a las bases de prueba, con autorización (CC-038). Siguiente: la autora fusiona el PR #24 y actualiza el Excel (AM-10); luego AM-08 (publicar 2.0.0) y la Fase 3.
 - **Hallazgo:** las migraciones 008 y 009 no cargan datos; los datos simulados entraron por script o por la aplicación (CC-038).
 - **CC-039 `APROBADO METODOLÓGICAMENTE` (2026-10-20):** `origen_biogeografico` pasa de ARBOLES a CATALOGO_ESPECIES; nuevos `persistencia_follaje` y `tipo_hoja` en el catálogo y `rango_edad_estimada_anios` en ARBOLES (Excel maestro actualizado). AM-11 cerrado (referencia estacional de la defoliación). Edad estimada Opcional; PN y PI fuera de 2.0.0. Sincronización documental: PR-003 v8.0, PR-006 v10.0, PR-019 v1.2, ADR-016 v4.0.
-- **Próximos libres:** CC-040, ADR-017, PR-023.
+- **Próximos libres:** CC-043, ADR-017, PR-023.
 
 ## ▶ Novedad 2026-10-18 — CC-026
 
@@ -50,7 +50,7 @@ La autora conduce la actualización del backend y el frontend con un protocolo p
 - **No modificado:** código, Supabase, migraciones, RLS y motor. La implementación de desarrollo (CC-020, CC-022) queda desalineada con CC-026 hasta su implementación (AM-04).
 - **CC-027 `APROBADO METODOLÓGICAMENTE`:** el motor (`treeRisk.ts`) difiere del Excel auditado en R03 (máximo 8 con defoliación), etiquetas, cavidades (reglas 09 y 10) y no implementa M04 ni M05. Detalle en `docs/auditorias/2026-10-18-modelo-datos/diferencias-motor.md`. **No modificar el motor sin autorización.**
 - **CC-029 `APROBADO METODOLÓGICAMENTE` (2026-10-20):** M05 devuelve `clasificacion_prioridad` = No determinado cuando `clasificacion_riesgo` = No determinado (Excel maestro actualizado).
-- **Próximos libres (actualizado 2026-10-20):** CC-040, ADR-017, PR-023.
+- **Próximos libres (actualizado 2026-10-20):** CC-043, ADR-017, PR-023.
 
 ## ▶ Punto de reanudación (2026-10-11) — leer primero
 
