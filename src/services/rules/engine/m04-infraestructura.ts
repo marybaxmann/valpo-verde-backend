@@ -22,6 +22,12 @@
  * Mismo patrón que R01–R03: el motor nunca rellena, supone ni
  * sustituye un dato.
  *
+ * `reglaId`: el ID exacto de REGLAS_INDICADORES que produjo el
+ * resultado (p. ej. "IN-VER-03", "IN-GEN-01" cuando el gate es lo que
+ * excluyó el componente). `null` cuando el resultado es un corte
+ * genérico por dato faltante, fuera de dominio o combinación inválida
+ * que el diccionario exige pero que REGLAS_INDICADORES no numera.
+ *
  * Simplificación explícita de esta implementación (aprobada):
  * `cumplimiento_distancia_seguridad_bt_mt` (D-152) es "Calculado por
  * plataforma" — se calcula aquí desde `distancia_copa_red_aerea_m`
@@ -36,6 +42,9 @@
  * Eléctrica, se aplican IN-RAE-02 a 04 aunque también esté marcada
  * Función no determinada. Pendiente llevar el texto a REGLAS_
  * INDICADORES (IN-RAE) y a D-149 en la próxima versión del paquete.
+ * Este caso de CC-043 no tiene un ID numerado de REGLAS_INDICADORES,
+ * así que su `reglaId` queda `null` (igual que cualquier otro corte
+ * genérico), con "CC-043" citado en el motivo.
  */
 
 import {
@@ -95,6 +104,7 @@ export interface M04Input {
 export interface ResultadoComponenteInfraestructura {
   categoria: CategoriaInfraestructuraCodigo;
   puntaje: number | null; // null cuando categoria = no_aplica o no_determinado (D-180: excluidos de P_I y n)
+  reglaId: string | null; // el ID de REGLAS_INDICADORES que produjo el resultado; null si es un corte genérico
   motivo?: string; // presente cuando categoria = no_aplica o no_determinado
 }
 
@@ -109,20 +119,23 @@ const PUNTAJE_CATEGORIA: Record<CategoriaDeterminada, number> = {
 
 const ORDEN_CATEGORIA: CategoriaDeterminada[] = ["sin_afectacion", "leve", "moderada", "severa"];
 
-function masSeveraInfra(a: CategoriaDeterminada, b: CategoriaDeterminada): CategoriaDeterminada {
-  return ORDEN_CATEGORIA.indexOf(a) >= ORDEN_CATEGORIA.indexOf(b) ? a : b;
+function masSeveraInfra(
+  a: { categoria: CategoriaDeterminada; reglaId: string },
+  b: { categoria: CategoriaDeterminada; reglaId: string },
+): { categoria: CategoriaDeterminada; reglaId: string } {
+  return ORDEN_CATEGORIA.indexOf(a.categoria) >= ORDEN_CATEGORIA.indexOf(b.categoria) ? a : b;
 }
 
-function indicadorInfra(categoria: CategoriaDeterminada): ResultadoComponenteInfraestructura {
-  return { categoria, puntaje: PUNTAJE_CATEGORIA[categoria] };
+function indicadorInfra(categoria: CategoriaDeterminada, reglaId: string): ResultadoComponenteInfraestructura {
+  return { categoria, puntaje: PUNTAJE_CATEGORIA[categoria], reglaId };
 }
 
-function noAplica(motivo: string): ResultadoComponenteInfraestructura {
-  return { categoria: "no_aplica", puntaje: null, motivo };
+function noAplica(motivo: string, reglaId: string | null = null): ResultadoComponenteInfraestructura {
+  return { categoria: "no_aplica", puntaje: null, reglaId, motivo };
 }
 
-function noDeterminadoInfra(motivo: string): ResultadoComponenteInfraestructura {
-  return { categoria: "no_determinado", puntaje: null, motivo };
+function noDeterminadoInfra(motivo: string, reglaId: string | null = null): ResultadoComponenteInfraestructura {
+  return { categoria: "no_determinado", puntaje: null, reglaId, motivo };
 }
 
 /** Valida que una medición numérica opcional, si se informa, sea un número finito > 0. */
@@ -142,7 +155,7 @@ function gateInfraestructuraInmediata(input: M04Input): ResultadoComponenteInfra
     return noDeterminadoInfra(motivoFueraDominioSiNo("infraestructura_inmediata", input.infraestructura_inmediata, "D-101"));
   }
   if (!input.infraestructura_inmediata) {
-    return noAplica("infraestructura_inmediata = No (IN-GEN-01): queda sin activar");
+    return noAplica("infraestructura_inmediata = No (IN-GEN-01): queda sin activar", "IN-GEN-01");
   }
   return null; // el gate pasa; el componente sigue evaluándose
 }
@@ -158,7 +171,7 @@ function gateRedesServicios(input: M04Input): ResultadoComponenteInfraestructura
     return noDeterminadoInfra(motivoFueraDominioSiNo("interferencia_redes_servicios", input.interferencia_redes_servicios, "D-146"));
   }
   if (!input.interferencia_redes_servicios) {
-    return noAplica("interferencia_redes_servicios = No (IN-GEN-01): queda sin activar");
+    return noAplica("interferencia_redes_servicios = No (IN-GEN-01): queda sin activar", "IN-GEN-01");
   }
   return null;
 }
@@ -174,7 +187,7 @@ function evaluarVereda(input: M04Input): ResultadoComponenteInfraestructura {
   if (!esBooleanoValido(input.existe_vereda)) {
     return noDeterminadoInfra(motivoFueraDominioSiNo("existe_vereda", input.existe_vereda, "D-102"));
   }
-  if (!input.existe_vereda) return noAplica("existe_vereda = No (IN-VER-01)");
+  if (!input.existe_vereda) return noAplica("existe_vereda = No (IN-VER-01)", "IN-VER-01");
 
   if (input.dano_interferencia_vereda === null) {
     return noDeterminadoInfra("dano_interferencia_vereda sin valor (D-104, condicional activado por existe_vereda = Sí)");
@@ -182,7 +195,7 @@ function evaluarVereda(input: M04Input): ResultadoComponenteInfraestructura {
   if (!esBooleanoValido(input.dano_interferencia_vereda)) {
     return noDeterminadoInfra(motivoFueraDominioSiNo("dano_interferencia_vereda", input.dano_interferencia_vereda, "D-104"));
   }
-  if (!input.dano_interferencia_vereda) return indicadorInfra("sin_afectacion"); // IN-VER-02
+  if (!input.dano_interferencia_vereda) return indicadorInfra("sin_afectacion", "IN-VER-02");
 
   // Activadores de las mediciones (D-105, D-107, D-109): una vez que el
   // daño está confirmado, estos tres son obligatorios — no se ignoran.
@@ -239,14 +252,23 @@ function evaluarVereda(input: M04Input): ResultadoComponenteInfraestructura {
   const desnivel = input.desnivel_max_vereda_cm;
   const grieta = input.ancho_max_grieta_vereda_cm;
   let base: CategoriaDeterminada;
-  if (desnivel !== null && desnivel > 5.0) base = "severa"; // IN-VER-03
-  else if ((desnivel !== null && desnivel >= 2.5 && desnivel <= 5.0) || (grieta !== null && grieta >= 1)) base = "moderada"; // IN-VER-04
-  else base = "leve"; // IN-VER-05: ni levantamiento/hundimiento ni grieta activados (o activados bajo el umbral)
+  let baseRegla: string;
+  if (desnivel !== null && desnivel > 5.0) {
+    base = "severa";
+    baseRegla = "IN-VER-03";
+  } else if ((desnivel !== null && desnivel >= 2.5 && desnivel <= 5.0) || (grieta !== null && grieta >= 1)) {
+    base = "moderada";
+    baseRegla = "IN-VER-04";
+  } else {
+    base = "leve"; // ni levantamiento/hundimiento ni grieta activados (o activados bajo el umbral)
+    baseRegla = "IN-VER-05";
+  }
 
   if (input.reduce_circulacion_peatonal && input.impide_paso_seguro) {
-    base = "severa"; // IN-VER-06: reemplaza la categoría obtenida en IN-VER-03 a 05
+    base = "severa"; // reemplaza la categoría obtenida en IN-VER-03 a 05
+    baseRegla = "IN-VER-06";
   }
-  return indicadorInfra(base);
+  return indicadorInfra(base, baseRegla);
 }
 
 /** IN-CAL-01 a 06. */
@@ -260,7 +282,7 @@ function evaluarCalzada(input: M04Input): ResultadoComponenteInfraestructura {
   if (!esBooleanoValido(input.existe_calzada)) {
     return noDeterminadoInfra(motivoFueraDominioSiNo("existe_calzada", input.existe_calzada, "D-118"));
   }
-  if (!input.existe_calzada) return noAplica("existe_calzada = No (IN-CAL-01)");
+  if (!input.existe_calzada) return noAplica("existe_calzada = No (IN-CAL-01)", "IN-CAL-01");
 
   if (input.dano_interferencia_calzada === null) {
     return noDeterminadoInfra("dano_interferencia_calzada sin valor (D-120, condicional activado por existe_calzada = Sí)");
@@ -268,7 +290,7 @@ function evaluarCalzada(input: M04Input): ResultadoComponenteInfraestructura {
   if (!esBooleanoValido(input.dano_interferencia_calzada)) {
     return noDeterminadoInfra(motivoFueraDominioSiNo("dano_interferencia_calzada", input.dano_interferencia_calzada, "D-120"));
   }
-  if (!input.dano_interferencia_calzada) return indicadorInfra("sin_afectacion"); // IN-CAL-02
+  if (!input.dano_interferencia_calzada) return indicadorInfra("sin_afectacion", "IN-CAL-02");
 
   if (input.levantamiento_calzada === null) {
     return noDeterminadoInfra("levantamiento_calzada sin valor (D-121, condicional activado por dano_interferencia_calzada = Sí)");
@@ -298,14 +320,23 @@ function evaluarCalzada(input: M04Input): ResultadoComponenteInfraestructura {
 
   const desnivel = input.desnivel_max_calzada_cm;
   let base: CategoriaDeterminada;
-  if (desnivel !== null && desnivel > 5.0) base = "severa"; // IN-CAL-03
-  else if (desnivel !== null && desnivel >= 2.5 && desnivel <= 5.0) base = "moderada"; // IN-CAL-04
-  else base = "leve"; // IN-CAL-05: levantamiento/hundimiento no activados (o activados bajo el umbral)
+  let baseRegla: string;
+  if (desnivel !== null && desnivel > 5.0) {
+    base = "severa";
+    baseRegla = "IN-CAL-03";
+  } else if (desnivel !== null && desnivel >= 2.5 && desnivel <= 5.0) {
+    base = "moderada";
+    baseRegla = "IN-CAL-04";
+  } else {
+    base = "leve"; // levantamiento/hundimiento no activados (o activados bajo el umbral)
+    baseRegla = "IN-CAL-05";
+  }
 
   if (input.afecta_circulacion_vehicular && base === "leve") {
     base = "moderada"; // IN-CAL-06: Leve pasa a Moderada; Moderada y Severa se mantienen
+    baseRegla = "IN-CAL-06";
   }
-  return indicadorInfra(base);
+  return indicadorInfra(base, baseRegla);
 }
 
 /** IN-ALC-01 a 05. Se evalúa siempre (no la gatea infraestructura_inmediata). */
@@ -329,13 +360,16 @@ function evaluarAlcorque(input: M04Input): ResultadoComponenteInfraestructura {
     return noDeterminadoInfra(motivoFueraDominioSiNo("obstaculos_crecimiento_radicular", input.obstaculos_crecimiento_radicular, "D-139"));
   }
 
-  const candidatos: CategoriaDeterminada[] = [];
-  if (input.suelo_sellado_impermeabilizado) candidatos.push("severa"); // IN-ALC-01
-  if (input.indicios_compactacion_superficial) candidatos.push("moderada"); // IN-ALC-02
-  if (input.obstaculos_crecimiento_radicular) candidatos.push("leve"); // IN-ALC-03
+  const candidatos: Array<{ categoria: CategoriaDeterminada; reglaId: string }> = [];
+  if (input.suelo_sellado_impermeabilizado) candidatos.push({ categoria: "severa", reglaId: "IN-ALC-01" });
+  if (input.indicios_compactacion_superficial) candidatos.push({ categoria: "moderada", reglaId: "IN-ALC-02" });
+  if (input.obstaculos_crecimiento_radicular) candidatos.push({ categoria: "leve", reglaId: "IN-ALC-03" });
 
-  if (candidatos.length === 0) return indicadorInfra("sin_afectacion"); // IN-ALC-05
-  return indicadorInfra(candidatos.reduce(masSeveraInfra)); // IN-ALC-04 si hay 2 o más
+  if (candidatos.length === 0) return indicadorInfra("sin_afectacion", "IN-ALC-05");
+  if (candidatos.length === 1) return indicadorInfra(candidatos[0].categoria, candidatos[0].reglaId);
+  // Dos o más condiciones: la más severa, bajo la regla de combinación IN-ALC-04.
+  const masSevero = candidatos.reduce(masSeveraInfra);
+  return indicadorInfra(masSevero.categoria, "IN-ALC-04");
 }
 
 /** IN-VRT-01 a 05. */
@@ -357,7 +391,7 @@ function evaluarInfraestructuraVertical(input: M04Input): ResultadoComponenteInf
       ),
     );
   }
-  if (!input.contacto_interferencia_infraestructura_vertical) return indicadorInfra("sin_afectacion"); // IN-VRT-01
+  if (!input.contacto_interferencia_infraestructura_vertical) return indicadorInfra("sin_afectacion", "IN-VRT-01");
 
   if (input.dano_fisico_observable_infraestructura_vertical === null) {
     return noDeterminadoInfra(
@@ -384,14 +418,19 @@ function evaluarInfraestructuraVertical(input: M04Input): ResultadoComponenteInf
 
   const dano = input.dano_fisico_observable_infraestructura_vertical;
   const compromete = input.compromete_estabilidad_funcionalidad;
-  if (!dano && !compromete) return indicadorInfra("leve"); // IN-VRT-02
-  if (!dano && compromete) return indicadorInfra("moderada"); // IN-VRT-03
-  if (dano && !compromete) return indicadorInfra("moderada"); // IN-VRT-04
-  return indicadorInfra("severa"); // IN-VRT-05
+  if (!dano && !compromete) return indicadorInfra("leve", "IN-VRT-02");
+  if (!dano && compromete) return indicadorInfra("moderada", "IN-VRT-03");
+  if (dano && !compromete) return indicadorInfra("moderada", "IN-VRT-04");
+  return indicadorInfra("severa", "IN-VRT-05");
 }
 
-/** D-152: cumplimiento_distancia_seguridad_bt_mt, calculado desde distancia_copa_red_aerea_m (D-150). */
-function calcularCumplimientoDistanciaSeguridad(distancia: number | null): "cumple" | "no_cumple" | null {
+/**
+ * D-152: cumplimiento_distancia_seguridad_bt_mt, calculado desde
+ * distancia_copa_red_aerea_m (D-150). Exportada para que el ensamblaje
+ * (ensamblaje.ts) pueda incluirla en `calculados` sin duplicar la
+ * fórmula — M04 la usa internamente para IN-RAE-02/03/04.
+ */
+export function calcularCumplimientoDistanciaSeguridad(distancia: number | null): "cumple" | "no_cumple" | null {
   if (distancia === null || !Number.isFinite(distancia) || distancia < 0) return null;
   return distancia >= 2.0 ? "cumple" : "no_cumple";
 }
@@ -407,7 +446,7 @@ function evaluarRedAerea(input: M04Input): ResultadoComponenteInfraestructura {
   if (!esBooleanoValido(input.red_aerea_presente)) {
     return noDeterminadoInfra(motivoFueraDominioSiNo("red_aerea_presente", input.red_aerea_presente, "D-147"));
   }
-  if (!input.red_aerea_presente) return noAplica("red_aerea_presente = No (IN-RAE-01)");
+  if (!input.red_aerea_presente) return noAplica("red_aerea_presente = No (IN-RAE-01)", "IN-RAE-01");
 
   if (input.tipo_red_aerea === null) {
     return noDeterminadoInfra("tipo_red_aerea sin valor (D-149, condicional activado por red_aerea_presente = Sí)");
@@ -437,12 +476,13 @@ function evaluarRedAerea(input: M04Input): ResultadoComponenteInfraestructura {
     // CC-043 (decisión de la responsable, 2026-10-22, opción B): si la
     // selección no incluye Eléctrica pero sí Función no determinada, no
     // se puede descartar que la red sea eléctrica — queda no_determinado.
+    // No tiene un ID numerado de REGLAS_INDICADORES: reglaId queda null.
     return noDeterminadoInfra("función de la red no determinada: podría ser eléctrica (CC-043)");
   }
 
   if (!incluyeElectrica) {
     // IN-RAE-05 / IN-RAE-06 (sin Eléctrica ni Función no determinada)
-    return indicadorInfra(input.dano_interferencia_red_aerea ? "moderada" : "leve");
+    return input.dano_interferencia_red_aerea ? indicadorInfra("moderada", "IN-RAE-06") : indicadorInfra("leve", "IN-RAE-05");
   }
 
   // incluyeElectrica = true: se aplican IN-RAE-02 a 04, aunque la
@@ -451,9 +491,9 @@ function evaluarRedAerea(input: M04Input): ResultadoComponenteInfraestructura {
   if (cumplimiento === null) {
     return noDeterminadoInfra("distancia_copa_red_aerea_m no calculable (D-150/D-152): sin valor, no finita o negativa");
   }
-  if (cumplimiento === "no_cumple") return indicadorInfra("severa"); // IN-RAE-02
+  if (cumplimiento === "no_cumple") return indicadorInfra("severa", "IN-RAE-02");
   // cumplimiento === "cumple"
-  return indicadorInfra(input.dano_interferencia_red_aerea ? "moderada" : "leve"); // IN-RAE-04 / IN-RAE-03
+  return input.dano_interferencia_red_aerea ? indicadorInfra("moderada", "IN-RAE-04") : indicadorInfra("leve", "IN-RAE-03");
 }
 
 /** IN-RSU-01 a 07. */
@@ -467,9 +507,9 @@ function evaluarRedSubterranea(input: M04Input): ResultadoComponenteInfraestruct
   if (!esCodigoVigente("si_no_no_determinado", input.red_subterranea_presente)) {
     return noDeterminadoInfra(`red_subterranea_presente tiene un código no reconocido ("${input.red_subterranea_presente}")`);
   }
-  if (input.red_subterranea_presente === "no") return noAplica("red_subterranea_presente = No (IN-RSU-01)");
+  if (input.red_subterranea_presente === "no") return noAplica("red_subterranea_presente = No (IN-RSU-01)", "IN-RSU-01");
   if (input.red_subterranea_presente === "no_determinado") {
-    return noDeterminadoInfra("red_subterranea_presente = No determinado (IN-RSU-02)");
+    return noDeterminadoInfra("red_subterranea_presente = No determinado (IN-RSU-02)", "IN-RSU-02");
   }
 
   // red_subterranea_presente === "si"
@@ -494,12 +534,15 @@ function evaluarRedSubterranea(input: M04Input): ResultadoComponenteInfraestruct
 
   const afectacion = input.afectacion_fisica_red_subterranea;
   const compromete = input.compromete_funcionalidad_red_subterranea;
-  if (compromete === "si") return indicadorInfra("severa"); // IN-RSU-03, con o sin afectación física
-  if (afectacion && compromete === "no") return indicadorInfra("moderada"); // IN-RSU-04
-  if (afectacion && compromete === "no_determinado") return indicadorInfra("moderada"); // IN-RSU-05
-  if (!afectacion && compromete === "no") return indicadorInfra("sin_afectacion"); // IN-RSU-06
+  if (compromete === "si") return indicadorInfra("severa", "IN-RSU-03"); // con o sin afectación física
+  if (afectacion && compromete === "no") return indicadorInfra("moderada", "IN-RSU-04");
+  if (afectacion && compromete === "no_determinado") return indicadorInfra("moderada", "IN-RSU-05");
+  if (!afectacion && compromete === "no") return indicadorInfra("sin_afectacion", "IN-RSU-06");
   // !afectacion && compromete === "no_determinado"
-  return noDeterminadoInfra("afectacion_fisica_red_subterranea = No y compromete_funcionalidad_red_subterranea = No determinado (IN-RSU-07)");
+  return noDeterminadoInfra(
+    "afectacion_fisica_red_subterranea = No y compromete_funcionalidad_red_subterranea = No determinado (IN-RSU-07)",
+    "IN-RSU-07",
+  );
 }
 
 export interface M04Resultado {

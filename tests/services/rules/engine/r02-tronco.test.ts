@@ -315,6 +315,92 @@ describe("Puntaje total P_T — tramos de MATRICES_CALCULO", () => {
   });
 });
 
+describe("reglaId — el ID de REGLAS_INDICADORES que produjo cada resultado", () => {
+  it("TR-CAV-01 a 10", () => {
+    expect(evaluarR02(base()).indicadores.cavidadTronco.reglaId).toBe("TR-CAV-01");
+    expect(
+      evaluarR02({
+        ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: true, cavidad_interna_tronco: "no",
+        D_diametro_tronco_cm: 10, d_diametro_cavidad_tronco_cm: 1, Cc_longitud_abertura_tronco_cm: 1, C_circunferencia_tronco_cm: 10,
+      }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-02");
+    expect(
+      evaluarR02({
+        ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: true, cavidad_interna_tronco: "no",
+        D_diametro_tronco_cm: 10, d_diametro_cavidad_tronco_cm: 5, Cc_longitud_abertura_tronco_cm: 10, C_circunferencia_tronco_cm: 100,
+      }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-03");
+    expect(
+      evaluarR02({
+        ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: true, cavidad_interna_tronco: "no",
+        D_diametro_tronco_cm: 10, d_diametro_cavidad_tronco_cm: 8, Cc_longitud_abertura_tronco_cm: 5, C_circunferencia_tronco_cm: 10,
+      }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-04");
+    expect(
+      evaluarR02({
+        ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: true, cavidad_interna_tronco: "no",
+        D_diametro_tronco_cm: 10, d_diametro_cavidad_tronco_cm: 5, Cc_longitud_abertura_tronco_cm: 3, C_circunferencia_tronco_cm: null,
+      }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-05");
+    expect(
+      evaluarR02({
+        ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: false, cavidad_interna_tronco: "si",
+        t_pared_residual_tronco_cm: 5, D_diametro_tronco_cm: 20,
+      }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-06");
+    expect(
+      evaluarR02({
+        ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: false, cavidad_interna_tronco: "si",
+        t_pared_residual_tronco_cm: 3, D_diametro_tronco_cm: 20,
+      }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-07");
+    expect(
+      evaluarR02({
+        ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: false, cavidad_interna_tronco: "si",
+        t_pared_residual_tronco_cm: null, D_diametro_tronco_cm: 20,
+      }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-08");
+    expect(
+      evaluarR02({ ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_interna_tronco: "requiere_evaluacion_instrumental" }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-09");
+    expect(
+      evaluarR02({
+        ...base(), presenta_cavidad_pudricion_tronco: true,
+        cavidad_externa_tronco: true, D_diametro_tronco_cm: 10, d_diametro_cavidad_tronco_cm: 1, Cc_longitud_abertura_tronco_cm: 1, C_circunferencia_tronco_cm: 10,
+        cavidad_interna_tronco: "si", t_pared_residual_tronco_cm: 1,
+      }).indicadores.cavidadTronco.reglaId,
+    ).toBe("TR-CAV-10");
+  });
+  it("TR-HER-01 a 04", () => {
+    expect(evaluarR02(base()).indicadores.heridas.reglaId).toBe("TR-HER-01");
+    expect(evaluarR02({ ...base(), presenta_heridas_tronco: true, condicion_heridas_tronco: "cerrada" }).indicadores.heridas.reglaId).toBe("TR-HER-02");
+    expect(evaluarR02({ ...base(), presenta_heridas_tronco: true, condicion_heridas_tronco: "en_proceso_de_cierre" }).indicadores.heridas.reglaId).toBe("TR-HER-03");
+    expect(evaluarR02({ ...base(), presenta_heridas_tronco: true, condicion_heridas_tronco: "abierta" }).indicadores.heridas.reglaId).toBe("TR-HER-04");
+  });
+  it("TR-COR-01/02, TR-EXU-01/02", () => {
+    expect(evaluarR02(base()).indicadores.cortezaMuertaAusente.reglaId).toBe("TR-COR-01");
+    expect(evaluarR02({ ...base(), corteza_muerta_ausente: true }).indicadores.cortezaMuertaAusente.reglaId).toBe("TR-COR-02");
+    expect(evaluarR02(base()).indicadores.exudaciones.reglaId).toBe("TR-EXU-01");
+    expect(evaluarR02({ ...base(), presenta_exudaciones: true }).indicadores.exudaciones.reglaId).toBe("TR-EXU-02");
+  });
+  it("TR-GRI-01 a 04", () => {
+    expect(evaluarR02(base()).indicadores.fisurasGrietas.reglaId).toBe("TR-GRI-01");
+    expect(evaluarR02({ ...base(), presenta_fisura_grieta_tronco: true, afectacion_fisura_grieta: "solo_corteza" }).indicadores.fisurasGrietas.reglaId).toBe("TR-GRI-02");
+    expect(
+      evaluarR02({ ...base(), presenta_fisura_grieta_tronco: true, afectacion_fisura_grieta: "penetra_en_madera", direccion_grieta: "longitudinal" }).indicadores.fisurasGrietas.reglaId,
+    ).toBe("TR-GRI-03");
+    expect(
+      evaluarR02({ ...base(), presenta_fisura_grieta_tronco: true, afectacion_fisura_grieta: "penetra_en_madera", direccion_grieta: "transversal" }).indicadores.fisurasGrietas.reglaId,
+    ).toBe("TR-GRI-04");
+  });
+  it("TR-COD-01 a 04", () => {
+    expect(evaluarR02(base()).indicadores.codominancia.reglaId).toBe("TR-COD-01");
+    expect(evaluarR02({ ...base(), troncos_codominantes: true, grieta_union_codominante: true }).indicadores.codominancia.reglaId).toBe("TR-COD-02");
+    expect(evaluarR02({ ...base(), troncos_codominantes: true, grieta_union_codominante: false, corteza_incluida: true }).indicadores.codominancia.reglaId).toBe("TR-COD-03");
+    expect(evaluarR02({ ...base(), troncos_codominantes: true, grieta_union_codominante: false, corteza_incluida: false }).indicadores.codominancia.reglaId).toBe("TR-COD-04");
+  });
+});
+
 describe("Valores fuera del dominio Sí/No (nunca truthy/falsy por coerción)", () => {
   it.each(["Sí", "no", 1, 0])("presenta_cavidad_pudricion_tronco = %p → no_determinado", (valor) => {
     const r = evaluarR02({ ...base(), presenta_cavidad_pudricion_tronco: valor as unknown as boolean });

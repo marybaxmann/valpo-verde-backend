@@ -178,6 +178,40 @@ describe("catálogo clasificacion_infraestructura vs DICCIONARIO_CAMPOS (fila cl
   });
 });
 
+describe("catálogo tipo_inspeccion_realizada vs DICCIONARIO_CAMPOS (fila tipo_inspeccion_realizada)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[0] === "INSPECCION" && f[1] === "tipo_inspeccion_realizada");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("tipo_inspeccion_realizada").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo subtipo_inspeccion vs DICCIONARIO_CAMPOS (fila subtipo_inspeccion)", () => {
+  it("cada etiqueta vigente aparece textualmente en la celda del Excel (dominio irregular, no separado por '/')", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[0] === "INSPECCION" && f[1] === "subtipo_inspeccion");
+    expect(fila).toBeDefined();
+    const celda = fila![7];
+    for (const entrada of entradasVigentesDe("subtipo_inspeccion")) {
+      expect(celda).toContain(entrada.etiqueta);
+    }
+  });
+});
+
+describe("catálogo forma_alcorque vs DICCIONARIO_CAMPOS (fila forma_alcorque)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "forma_alcorque");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("forma_alcorque").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
 describe("catálogo tipo_red_aerea vs DICCIONARIO_CAMPOS (fila tipo_red_aerea)", () => {
   it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
     const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);

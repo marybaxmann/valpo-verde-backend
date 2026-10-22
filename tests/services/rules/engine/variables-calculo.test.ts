@@ -5,7 +5,9 @@ import {
   calcularSLTroncoPct,
   calcularRRadioTroncoCm,
   calcularTRTronco,
+  calcularSuperficieAlcorqueM2,
 } from "../../../../src/services/rules/engine/variables-calculo";
+import { FormaAlcorqueCodigo } from "../../../../src/services/rules/engine/catalogs";
 
 // Caso calculado a mano (D-56): D=10, d=5, Cc=3, C=35.
 // SL% = [(5³ + (3/35) × (10³ − 5³)) / 10³] × 100
@@ -153,5 +155,87 @@ describe("variante tronco — mismas fórmulas (D-68, D-70, D-71), delegación v
   });
   it("calcularTRTronco: t no medido → no calculable", () => {
     expect(calcularTRTronco(null, 20).valor).toBeNull();
+  });
+});
+
+function baseAlcorque(): Parameters<typeof calcularSuperficieAlcorqueM2>[0] {
+  return {
+    forma_alcorque: null,
+    largo_alcorque_m: null,
+    ancho_alcorque_m: null,
+    diametro_alcorque_m: null,
+    superficie_alcorque_m2_manual: null,
+  };
+}
+
+// Caso calculado a mano, rectangular (D-135): largo=4, ancho=2,5 → 10 m².
+describe("calcularSuperficieAlcorqueM2 — fórmula D-135", () => {
+  it("rectangular: caso a mano largo=4, ancho=2,5 → 10 m²", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "rectangular", largo_alcorque_m: 4, ancho_alcorque_m: 2.5 });
+    expect(r.valor).toBeCloseTo(10, 9);
+  });
+  it("circular: caso a mano diámetro=2 → π×1² ≈ 3,14159 m²", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "circular", diametro_alcorque_m: 2 });
+    expect(r.valor).toBeCloseTo(Math.PI, 9);
+  });
+  it("irregular: ingreso manual del Inspector, no se calcula — se valida y se deja pasar tal cual", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "irregular", superficie_alcorque_m2_manual: 7.25 });
+    expect(r.valor).toBe(7.25);
+  });
+
+  it("forma_alcorque sin valor → no calculable", () => {
+    const r = calcularSuperficieAlcorqueM2(baseAlcorque());
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/forma_alcorque sin valor/);
+  });
+  it("forma_alcorque con código no reconocido → no calculable, nunca se trata como una forma conocida", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "triangular" as unknown as FormaAlcorqueCodigo });
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/código no reconocido/);
+  });
+
+  it("rectangular: falta largo_alcorque_m → no calculable", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "rectangular", ancho_alcorque_m: 2 });
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/largo_alcorque_m/);
+  });
+  it("rectangular: falta ancho_alcorque_m → no calculable", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "rectangular", largo_alcorque_m: 4 });
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/ancho_alcorque_m/);
+  });
+  it("rectangular: largo_alcorque_m ≤ 0 → no calculable", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "rectangular", largo_alcorque_m: 0, ancho_alcorque_m: 2 });
+    expect(r.valor).toBeNull();
+  });
+  it("rectangular: largo_alcorque_m = NaN → no calculable (no finito)", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "rectangular", largo_alcorque_m: NaN, ancho_alcorque_m: 2 });
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/no es un número finito/);
+  });
+
+  it("circular: falta diametro_alcorque_m → no calculable", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "circular" });
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/diametro_alcorque_m/);
+  });
+  it("circular: diametro_alcorque_m ≤ 0 → no calculable", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "circular", diametro_alcorque_m: 0 });
+    expect(r.valor).toBeNull();
+  });
+  it("circular: diametro_alcorque_m = Infinity → no calculable (no finito)", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "circular", diametro_alcorque_m: Infinity });
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/no es un número finito/);
+  });
+
+  it("irregular: falta superficie_alcorque_m2_manual → no calculable (no se inventa el valor)", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "irregular" });
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/superficie_alcorque_m2_manual/);
+  });
+  it("irregular: superficie_alcorque_m2_manual ≤ 0 → no calculable", () => {
+    const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "irregular", superficie_alcorque_m2_manual: 0 });
+    expect(r.valor).toBeNull();
   });
 });

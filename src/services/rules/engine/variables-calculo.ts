@@ -2,9 +2,15 @@
  * Variables "Calculado por plataforma... No admite ingreso manual"
  * (DICCIONARIO_CAMPOS): SL_basal_pct (D-56), R_radio_basal_cm (D-58),
  * t_R_basal (D-59); SL_tronco_pct (D-68), R_radio_tronco_cm (D-70),
- * t_R_tronco (D-71). R01 y R02 reciben las mediciones crudas (D, d, Cc,
- * C, t) y llaman a estas funciones — nunca reciben el resultado ya
- * calculado ni lo aceptan como entrada.
+ * t_R_tronco (D-71); superficie_alcorque_m2 (D-135). R01 y R02 reciben
+ * las mediciones crudas (D, d, Cc, C, t) y llaman a estas funciones —
+ * nunca reciben el resultado ya calculado ni lo aceptan como entrada.
+ *
+ * superficie_alcorque_m2 es un caso especial: cuando forma_alcorque =
+ * "Irregular", el Excel dice "ingreso manual" (D-135) — ahí la
+ * plataforma NO calcula nada, solo valida que el Inspector haya
+ * informado un valor > 0 m² y lo deja pasar tal cual. Rectangular y
+ * Circular sí se calculan aquí, desde largo×ancho o el diámetro.
  *
  * "No calculable" — falta una medición, viola una condición del Excel
  * (D > 0, d > 0, Cc > 0, C > 0, d ≤ D, Cc < C; t > 0), o el resultado
@@ -20,6 +26,8 @@
  * Infinity sí son alcanzables (una medición corrupta) y se detectan
  * antes de calcular, no después.
  */
+
+import { esCodigoVigente, FormaAlcorqueCodigo } from "./catalogs";
 
 export interface ResultadoCalculo {
   valor: number | null; // null = no calculable
@@ -149,4 +157,62 @@ export function calcularTRTronco(
   D_diametro_tronco_cm: number | null,
 ): ResultadoCalculo {
   return calcularEspesorSobreRadio(t_pared_residual_tronco_cm, calcularRadio(D_diametro_tronco_cm));
+}
+
+// ---------------------------------------------------------------------
+// Alcorque y superficie permeable
+// ---------------------------------------------------------------------
+
+/**
+ * superficie_alcorque_m2 (D-135): Rectangular → largo × ancho; Circular
+ * → π × (diámetro/2)²; Irregular → ingreso manual del Inspector (no se
+ * calcula: solo se valida que sea un número finito > 0 m² y se deja
+ * pasar tal cual).
+ */
+export function calcularSuperficieAlcorqueM2(m: {
+  forma_alcorque: FormaAlcorqueCodigo | null;
+  largo_alcorque_m: number | null;
+  ancho_alcorque_m: number | null;
+  diametro_alcorque_m: number | null;
+  superficie_alcorque_m2_manual: number | null; // solo tiene sentido si forma_alcorque = "irregular"
+}): ResultadoCalculo {
+  if (m.forma_alcorque === null) {
+    return { valor: null, motivo: "forma_alcorque sin valor (D-131, condicional activado por existe_alcorque = Sí)" };
+  }
+  if (!esCodigoVigente("forma_alcorque", m.forma_alcorque)) {
+    return { valor: null, motivo: `forma_alcorque tiene un código no reconocido ("${m.forma_alcorque}")` };
+  }
+
+  if (m.forma_alcorque === "rectangular") {
+    const errorLargo = campoFaltanteOInvalido(m.largo_alcorque_m, "largo_alcorque_m");
+    if (errorLargo) return { valor: null, motivo: errorLargo };
+    const errorAncho = campoFaltanteOInvalido(m.ancho_alcorque_m, "ancho_alcorque_m");
+    if (errorAncho) return { valor: null, motivo: errorAncho };
+    const largo = m.largo_alcorque_m as number;
+    const ancho = m.ancho_alcorque_m as number;
+    if (largo <= 0) return { valor: null, motivo: "largo_alcorque_m debe ser > 0 (D-132)" };
+    if (ancho <= 0) return { valor: null, motivo: "ancho_alcorque_m debe ser > 0 (D-133)" };
+    const valor = largo * ancho;
+    if (!Number.isFinite(valor) || valor <= 0) return { valor: null, motivo: `resultado inválido (${valor})` };
+    return { valor };
+  }
+
+  if (m.forma_alcorque === "circular") {
+    const errorDiametro = campoFaltanteOInvalido(m.diametro_alcorque_m, "diametro_alcorque_m");
+    if (errorDiametro) return { valor: null, motivo: errorDiametro };
+    const diametro = m.diametro_alcorque_m as number;
+    if (diametro <= 0) return { valor: null, motivo: "diametro_alcorque_m debe ser > 0 (D-134)" };
+    const valor = Math.PI * (diametro / 2) ** 2;
+    if (!Number.isFinite(valor) || valor <= 0) return { valor: null, motivo: `resultado inválido (${valor})` };
+    return { valor };
+  }
+
+  // forma_alcorque === "irregular": D-135 dice "ingreso manual" — la
+  // plataforma no calcula nada aquí, solo valida el valor que informó
+  // el Inspector y lo deja pasar tal cual.
+  const errorManual = campoFaltanteOInvalido(m.superficie_alcorque_m2_manual, "superficie_alcorque_m2_manual");
+  if (errorManual) return { valor: null, motivo: errorManual };
+  const manual = m.superficie_alcorque_m2_manual as number;
+  if (manual <= 0) return { valor: null, motivo: "superficie_alcorque_m2_manual debe ser > 0 m² (D-135)" };
+  return { valor: manual };
 }

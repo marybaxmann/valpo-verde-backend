@@ -20,6 +20,13 @@
  * plataforma... No admite ingreso manual" (D-68, D-70, D-71): este
  * módulo recibe las mediciones crudas y los calcula con
  * variables-calculo.ts — nunca los recibe ya calculados.
+ *
+ * `reglaId`: el ID exacto de REGLAS_INDICADORES que produjo el
+ * resultado (p. ej. "TR-HER-02"), incluidos los terminales No
+ * determinado que corresponden a una regla numerada (TR-CAV-09) o a
+ * una combinación (TR-CAV-10). `null` cuando el resultado es un corte
+ * genérico por dato faltante, fuera de dominio o combinación inválida
+ * que el diccionario prohíbe pero que REGLAS_INDICADORES no numera.
  */
 
 import {
@@ -69,6 +76,7 @@ export interface R02Input {
 export interface IndicadorResultado {
   severidad: SeveridadCodigo | null; // null = no_determinado
   puntaje: number | null;
+  reglaId: string | null; // el ID de REGLAS_INDICADORES que produjo el resultado; null si es un corte genérico
   noDeterminado: boolean;
   motivo?: string; // presente solo si noDeterminado = true
 }
@@ -82,12 +90,12 @@ const PUNTAJE_SEVERIDAD: Record<SeveridadCodigo, number> = {
 
 const ORDEN_SEVERIDAD: SeveridadCodigo[] = ["despreciable", "leve", "moderada", "severa"];
 
-function indicador(severidad: SeveridadCodigo): IndicadorResultado {
-  return { severidad, puntaje: PUNTAJE_SEVERIDAD[severidad], noDeterminado: false };
+function indicador(severidad: SeveridadCodigo, reglaId: string): IndicadorResultado {
+  return { severidad, puntaje: PUNTAJE_SEVERIDAD[severidad], reglaId, noDeterminado: false };
 }
 
-function noDeterminado(motivo: string): IndicadorResultado {
-  return { severidad: null, puntaje: null, noDeterminado: true, motivo };
+function noDeterminado(motivo: string, reglaId: string | null = null): IndicadorResultado {
+  return { severidad: null, puntaje: null, reglaId, noDeterminado: true, motivo };
 }
 
 function masSevera(a: SeveridadCodigo, b: SeveridadCodigo): SeveridadCodigo {
@@ -96,17 +104,17 @@ function masSevera(a: SeveridadCodigo, b: SeveridadCodigo): SeveridadCodigo {
 
 /** Rama SL (TR-CAV-02 a 05), aplicable cuando cavidad_externa_tronco = Sí. */
 function evaluarPorSL(sl: ResultadoCalculo): IndicadorResultado {
-  if (sl.valor === null) return noDeterminado(`SL_tronco_pct no calculable (TR-CAV-05): ${sl.motivo}`);
-  if (sl.valor < 20) return indicador("leve"); // TR-CAV-02
-  if (sl.valor < 33) return indicador("moderada"); // TR-CAV-03
-  return indicador("severa"); // TR-CAV-04
+  if (sl.valor === null) return noDeterminado(`SL_tronco_pct no calculable (TR-CAV-05): ${sl.motivo}`, "TR-CAV-05");
+  if (sl.valor < 20) return indicador("leve", "TR-CAV-02");
+  if (sl.valor < 33) return indicador("moderada", "TR-CAV-03");
+  return indicador("severa", "TR-CAV-04");
 }
 
 /** Rama t/R (TR-CAV-06 a 08), aplicable cuando cavidad_interna_tronco = "si". */
 function evaluarPorTR(tR: ResultadoCalculo): IndicadorResultado {
-  if (tR.valor === null) return noDeterminado(`t_R_tronco no calculable (TR-CAV-08): ${tR.motivo}`);
-  if (tR.valor > 0.3) return indicador("moderada"); // TR-CAV-06
-  return indicador("severa"); // TR-CAV-07
+  if (tR.valor === null) return noDeterminado(`t_R_tronco no calculable (TR-CAV-08): ${tR.motivo}`, "TR-CAV-08");
+  if (tR.valor > 0.3) return indicador("moderada", "TR-CAV-06");
+  return indicador("severa", "TR-CAV-07");
 }
 
 interface CavidadTroncoResultado {
@@ -126,7 +134,7 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
       indicador: noDeterminado(motivoFueraDominioSiNo("presenta_cavidad_pudricion_tronco", input.presenta_cavidad_pudricion_tronco, "D-61")),
     };
   }
-  if (!input.presenta_cavidad_pudricion_tronco) return { indicador: indicador("despreciable") }; // TR-CAV-01
+  if (!input.presenta_cavidad_pudricion_tronco) return { indicador: indicador("despreciable", "TR-CAV-01") };
 
   if (input.cavidad_interna_tronco === null) {
     return {
@@ -137,7 +145,7 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
     return { indicador: noDeterminado(`cavidad_interna_tronco tiene un código no reconocido ("${input.cavidad_interna_tronco}")`) };
   }
   if (input.cavidad_interna_tronco === "requiere_evaluacion_instrumental") {
-    return { indicador: noDeterminado("cavidad_interna_tronco = Requiere evaluación instrumental (TR-CAV-09)") };
+    return { indicador: noDeterminado("cavidad_interna_tronco = Requiere evaluación instrumental (TR-CAV-09)", "TR-CAV-09") };
   }
   if (input.cavidad_externa_tronco === null) {
     return {
@@ -182,26 +190,32 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
       t_R_tronco,
     };
   }
-  if (porSL?.noDeterminado || porTR?.noDeterminado) {
-    // TR-CAV-10: si alguna de las dos vías es no_determinado, el
-    // resultado combinado es no_determinado.
-    const motivos = [porSL, porTR]
-      .filter((p): p is IndicadorResultado => p !== null && p.noDeterminado)
-      .map((p) => p.motivo);
+  if (porSL === null || porTR === null) {
+    // Solo una de las dos vías está activa (externa = Sí xor interna =
+    // "si"): no es una combinación, es esa regla sola — conserva su
+    // propio reglaId (TR-CAV-02/03/04/05 o TR-CAV-06/07/08), determinada
+    // o no_determinado.
+    return { indicador: (porSL ?? porTR)!, SL_tronco_pct, R_radio_tronco_cm, t_R_tronco };
+  }
+
+  // Ambas vías activas (externa = Sí e interna = "si"): aplica TR-CAV-10.
+  if (porSL.noDeterminado || porTR.noDeterminado) {
+    // Si alguna de las dos vías es no_determinado, el resultado
+    // combinado es no_determinado.
+    const motivos = [porSL, porTR].filter((p) => p.noDeterminado).map((p) => p.motivo);
     return {
-      indicador: noDeterminado(`TR-CAV-10 (combinación externa+interna): ${motivos.join("; ")}`),
+      indicador: noDeterminado(`TR-CAV-10 (combinación externa+interna): ${motivos.join("; ")}`, "TR-CAV-10"),
       SL_tronco_pct,
       R_radio_tronco_cm,
       t_R_tronco,
     };
   }
-
-  const candidatos = [porSL, porTR].filter((c): c is IndicadorResultado => c !== null);
-  const indicadorFinal =
-    candidatos.length === 1
-      ? candidatos[0] // solo externa o solo interna aplicable
-      : indicador(masSevera(candidatos[0].severidad!, candidatos[1].severidad!)); // TR-CAV-10
-  return { indicador: indicadorFinal, SL_tronco_pct, R_radio_tronco_cm, t_R_tronco };
+  return {
+    indicador: indicador(masSevera(porSL.severidad!, porTR.severidad!), "TR-CAV-10"),
+    SL_tronco_pct,
+    R_radio_tronco_cm,
+    t_R_tronco,
+  };
 }
 
 /** TR-HER-01 a 04. */
@@ -212,7 +226,7 @@ function evaluarHeridas(input: R02Input): IndicadorResultado {
   if (!esBooleanoValido(input.presenta_heridas_tronco)) {
     return noDeterminado(motivoFueraDominioSiNo("presenta_heridas_tronco", input.presenta_heridas_tronco, "D-72"));
   }
-  if (!input.presenta_heridas_tronco) return indicador("despreciable"); // TR-HER-01
+  if (!input.presenta_heridas_tronco) return indicador("despreciable", "TR-HER-01");
 
   if (input.condicion_heridas_tronco === null) {
     return noDeterminado("condicion_heridas_tronco sin valor (TR-HER, condicional activado por presenta_heridas_tronco = Sí)");
@@ -220,9 +234,9 @@ function evaluarHeridas(input: R02Input): IndicadorResultado {
   if (!esCodigoVigente("condicion_herida", input.condicion_heridas_tronco)) {
     return noDeterminado(`condicion_heridas_tronco tiene un código no reconocido ("${input.condicion_heridas_tronco}")`);
   }
-  if (input.condicion_heridas_tronco === "cerrada") return indicador("despreciable"); // TR-HER-02
-  if (input.condicion_heridas_tronco === "en_proceso_de_cierre") return indicador("leve"); // TR-HER-03
-  return indicador("moderada"); // TR-HER-04 (abierta)
+  if (input.condicion_heridas_tronco === "cerrada") return indicador("despreciable", "TR-HER-02");
+  if (input.condicion_heridas_tronco === "en_proceso_de_cierre") return indicador("leve", "TR-HER-03");
+  return indicador("moderada", "TR-HER-04"); // abierta
 }
 
 /** TR-COR-01 a 02. */
@@ -233,7 +247,7 @@ function evaluarCortezaMuertaAusente(input: R02Input): IndicadorResultado {
   if (!esBooleanoValido(input.corteza_muerta_ausente)) {
     return noDeterminado(motivoFueraDominioSiNo("corteza_muerta_ausente", input.corteza_muerta_ausente, "D-74"));
   }
-  return input.corteza_muerta_ausente ? indicador("moderada") : indicador("despreciable"); // TR-COR-02 / TR-COR-01
+  return input.corteza_muerta_ausente ? indicador("moderada", "TR-COR-02") : indicador("despreciable", "TR-COR-01");
 }
 
 /** TR-EXU-01 a 02. */
@@ -244,7 +258,7 @@ function evaluarExudaciones(input: R02Input): IndicadorResultado {
   if (!esBooleanoValido(input.presenta_exudaciones)) {
     return noDeterminado(motivoFueraDominioSiNo("presenta_exudaciones", input.presenta_exudaciones, "D-75"));
   }
-  return input.presenta_exudaciones ? indicador("leve") : indicador("despreciable"); // TR-EXU-02 / TR-EXU-01
+  return input.presenta_exudaciones ? indicador("leve", "TR-EXU-02") : indicador("despreciable", "TR-EXU-01");
 }
 
 /** TR-GRI-01 a 04. */
@@ -255,7 +269,7 @@ function evaluarFisurasGrietas(input: R02Input): IndicadorResultado {
   if (!esBooleanoValido(input.presenta_fisura_grieta_tronco)) {
     return noDeterminado(motivoFueraDominioSiNo("presenta_fisura_grieta_tronco", input.presenta_fisura_grieta_tronco, "D-77"));
   }
-  if (!input.presenta_fisura_grieta_tronco) return indicador("despreciable"); // TR-GRI-01
+  if (!input.presenta_fisura_grieta_tronco) return indicador("despreciable", "TR-GRI-01");
 
   if (input.afectacion_fisura_grieta === null) {
     return noDeterminado("afectacion_fisura_grieta sin valor (TR-GRI, condicional activado por presenta_fisura_grieta_tronco = Sí)");
@@ -263,7 +277,7 @@ function evaluarFisurasGrietas(input: R02Input): IndicadorResultado {
   if (!esCodigoVigente("afectacion_grieta", input.afectacion_fisura_grieta)) {
     return noDeterminado(`afectacion_fisura_grieta tiene un código no reconocido ("${input.afectacion_fisura_grieta}")`);
   }
-  if (input.afectacion_fisura_grieta === "solo_corteza") return indicador("leve"); // TR-GRI-02
+  if (input.afectacion_fisura_grieta === "solo_corteza") return indicador("leve", "TR-GRI-02");
 
   // afectacion_fisura_grieta = "penetra_en_madera"
   if (input.direccion_grieta === null) {
@@ -272,7 +286,7 @@ function evaluarFisurasGrietas(input: R02Input): IndicadorResultado {
   if (!esCodigoVigente("direccion_grieta", input.direccion_grieta)) {
     return noDeterminado(`direccion_grieta tiene un código no reconocido ("${input.direccion_grieta}")`);
   }
-  return input.direccion_grieta === "longitudinal" ? indicador("moderada") : indicador("severa"); // TR-GRI-03 / TR-GRI-04
+  return input.direccion_grieta === "longitudinal" ? indicador("moderada", "TR-GRI-03") : indicador("severa", "TR-GRI-04");
 }
 
 /** TR-COD-01 a 04. */
@@ -283,7 +297,7 @@ function evaluarCodominancia(input: R02Input): IndicadorResultado {
   if (!esBooleanoValido(input.troncos_codominantes)) {
     return noDeterminado(motivoFueraDominioSiNo("troncos_codominantes", input.troncos_codominantes, "D-82"));
   }
-  if (!input.troncos_codominantes) return indicador("despreciable"); // TR-COD-01
+  if (!input.troncos_codominantes) return indicador("despreciable", "TR-COD-01");
 
   if (input.grieta_union_codominante === null) {
     return noDeterminado("grieta_union_codominante sin valor (TR-COD, condicional activado por troncos_codominantes = Sí)");
@@ -291,7 +305,7 @@ function evaluarCodominancia(input: R02Input): IndicadorResultado {
   if (!esBooleanoValido(input.grieta_union_codominante)) {
     return noDeterminado(motivoFueraDominioSiNo("grieta_union_codominante", input.grieta_union_codominante, "D-84"));
   }
-  if (input.grieta_union_codominante) return indicador("severa"); // TR-COD-02
+  if (input.grieta_union_codominante) return indicador("severa", "TR-COD-02");
 
   if (input.corteza_incluida === null) {
     return noDeterminado("corteza_incluida sin valor (TR-COD, condicional activado por troncos_codominantes = Sí)");
@@ -299,7 +313,7 @@ function evaluarCodominancia(input: R02Input): IndicadorResultado {
   if (!esBooleanoValido(input.corteza_incluida)) {
     return noDeterminado(motivoFueraDominioSiNo("corteza_incluida", input.corteza_incluida, "D-83"));
   }
-  return input.corteza_incluida ? indicador("moderada") : indicador("leve"); // TR-COD-03 / TR-COD-04
+  return input.corteza_incluida ? indicador("moderada", "TR-COD-03") : indicador("leve", "TR-COD-04");
 }
 
 export interface R02Resultado {

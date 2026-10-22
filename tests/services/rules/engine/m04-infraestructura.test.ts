@@ -362,6 +362,105 @@ describe("IN-RSU — Red subterránea", () => {
   });
 });
 
+describe("reglaId — el ID de REGLAS_INDICADORES (o del gate IN-GEN-01) que produjo cada componente", () => {
+  it("IN-GEN-01 (gate) → no_aplica con reglaId IN-GEN-01; el campo faltante en sí → reglaId null", () => {
+    expect(evaluarM04(base()).componentes.vereda.reglaId).toBe("IN-GEN-01");
+    expect(evaluarM04({ ...base(), infraestructura_inmediata: null }).componentes.vereda.reglaId).toBeNull();
+  });
+  it("IN-VER-01 a 06", () => {
+    const conInfra = { infraestructura_inmediata: true as const };
+    expect(evaluarM04({ ...base(), ...conInfra, existe_vereda: false }).componentes.vereda.reglaId).toBe("IN-VER-01");
+    expect(evaluarM04({ ...base(), ...conInfra, existe_vereda: true, dano_interferencia_vereda: false }).componentes.vereda.reglaId).toBe("IN-VER-02");
+    const danoSinActivadores = {
+      ...conInfra, existe_vereda: true as const, dano_interferencia_vereda: true as const,
+      presenta_levantamiento_vereda: false as const, presenta_hundimiento_vereda: false as const, presenta_grieta_vereda: false as const,
+      reduce_circulacion_peatonal: false as const, impide_paso_seguro: false as const,
+    };
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, presenta_levantamiento_vereda: true, desnivel_max_vereda_cm: 6 }).componentes.vereda.reglaId).toBe("IN-VER-03");
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, presenta_hundimiento_vereda: true, desnivel_max_vereda_cm: 3 }).componentes.vereda.reglaId).toBe("IN-VER-04");
+    expect(evaluarM04({ ...base(), ...danoSinActivadores }).componentes.vereda.reglaId).toBe("IN-VER-05");
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, reduce_circulacion_peatonal: true, impide_paso_seguro: true }).componentes.vereda.reglaId).toBe("IN-VER-06");
+  });
+  it("IN-CAL-01 a 06", () => {
+    const conInfra = { infraestructura_inmediata: true as const };
+    expect(evaluarM04({ ...base(), ...conInfra, existe_calzada: false }).componentes.calzada.reglaId).toBe("IN-CAL-01");
+    expect(evaluarM04({ ...base(), ...conInfra, existe_calzada: true, dano_interferencia_calzada: false }).componentes.calzada.reglaId).toBe("IN-CAL-02");
+    const danoSinActivadores = {
+      ...conInfra, existe_calzada: true as const, dano_interferencia_calzada: true as const,
+      levantamiento_calzada: false as const, hundimiento_calzada: false as const, afecta_circulacion_vehicular: false as const,
+    };
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, levantamiento_calzada: true, desnivel_max_calzada_cm: 6 }).componentes.calzada.reglaId).toBe("IN-CAL-03");
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, hundimiento_calzada: true, desnivel_max_calzada_cm: 3 }).componentes.calzada.reglaId).toBe("IN-CAL-04");
+    expect(evaluarM04({ ...base(), ...danoSinActivadores }).componentes.calzada.reglaId).toBe("IN-CAL-05");
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, afecta_circulacion_vehicular: true }).componentes.calzada.reglaId).toBe("IN-CAL-06");
+  });
+  it("IN-ALC-01 a 05 (IN-ALC-04 cuando hay dos o más condiciones)", () => {
+    expect(evaluarM04({ ...base(), suelo_sellado_impermeabilizado: true }).componentes.alcorque.reglaId).toBe("IN-ALC-01");
+    expect(evaluarM04({ ...base(), indicios_compactacion_superficial: true }).componentes.alcorque.reglaId).toBe("IN-ALC-02");
+    expect(evaluarM04({ ...base(), obstaculos_crecimiento_radicular: true }).componentes.alcorque.reglaId).toBe("IN-ALC-03");
+    expect(evaluarM04({ ...base(), indicios_compactacion_superficial: true, obstaculos_crecimiento_radicular: true }).componentes.alcorque.reglaId).toBe("IN-ALC-04");
+    expect(evaluarM04(base()).componentes.alcorque.reglaId).toBe("IN-ALC-05");
+  });
+  it("IN-VRT-01 a 05", () => {
+    const conInfra = { infraestructura_inmediata: true as const };
+    expect(evaluarM04({ ...base(), ...conInfra, contacto_interferencia_infraestructura_vertical: false }).componentes.infraestructuraVertical.reglaId).toBe("IN-VRT-01");
+    expect(
+      evaluarM04({ ...base(), ...conInfra, contacto_interferencia_infraestructura_vertical: true, dano_fisico_observable_infraestructura_vertical: false, compromete_estabilidad_funcionalidad: false }).componentes.infraestructuraVertical.reglaId,
+    ).toBe("IN-VRT-02");
+    expect(
+      evaluarM04({ ...base(), ...conInfra, contacto_interferencia_infraestructura_vertical: true, dano_fisico_observable_infraestructura_vertical: false, compromete_estabilidad_funcionalidad: true }).componentes.infraestructuraVertical.reglaId,
+    ).toBe("IN-VRT-03");
+    expect(
+      evaluarM04({ ...base(), ...conInfra, contacto_interferencia_infraestructura_vertical: true, dano_fisico_observable_infraestructura_vertical: true, compromete_estabilidad_funcionalidad: false }).componentes.infraestructuraVertical.reglaId,
+    ).toBe("IN-VRT-04");
+    expect(
+      evaluarM04({ ...base(), ...conInfra, contacto_interferencia_infraestructura_vertical: true, dano_fisico_observable_infraestructura_vertical: true, compromete_estabilidad_funcionalidad: true }).componentes.infraestructuraVertical.reglaId,
+    ).toBe("IN-VRT-05");
+  });
+  it("IN-RAE-01 a 06", () => {
+    const conRedes = { infraestructura_inmediata: true as const, interferencia_redes_servicios: true as const };
+    expect(evaluarM04({ ...base(), ...conRedes, red_aerea_presente: false }).componentes.redAerea.reglaId).toBe("IN-RAE-01");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_aerea_presente: true, tipo_red_aerea: ["electrica"], distancia_copa_red_aerea_m: 1.5, dano_interferencia_red_aerea: false }).componentes.redAerea.reglaId,
+    ).toBe("IN-RAE-02");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_aerea_presente: true, tipo_red_aerea: ["electrica"], distancia_copa_red_aerea_m: 2.5, dano_interferencia_red_aerea: false }).componentes.redAerea.reglaId,
+    ).toBe("IN-RAE-03");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_aerea_presente: true, tipo_red_aerea: ["electrica"], distancia_copa_red_aerea_m: 2.5, dano_interferencia_red_aerea: true }).componentes.redAerea.reglaId,
+    ).toBe("IN-RAE-04");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_aerea_presente: true, tipo_red_aerea: ["telecomunicaciones"], dano_interferencia_red_aerea: false }).componentes.redAerea.reglaId,
+    ).toBe("IN-RAE-05");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_aerea_presente: true, tipo_red_aerea: ["alumbrado_publico"], dano_interferencia_red_aerea: true }).componentes.redAerea.reglaId,
+    ).toBe("IN-RAE-06");
+  });
+  it("IN-RSU-01 a 07; CC-043 (Función no determinada sin Eléctrica) → reglaId null", () => {
+    const conRedes = { infraestructura_inmediata: true as const, interferencia_redes_servicios: true as const };
+    expect(evaluarM04({ ...base(), ...conRedes, red_subterranea_presente: "no" }).componentes.redSubterranea.reglaId).toBe("IN-RSU-01");
+    expect(evaluarM04({ ...base(), ...conRedes, red_subterranea_presente: "no_determinado" }).componentes.redSubterranea.reglaId).toBe("IN-RSU-02");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_subterranea_presente: "si", afectacion_fisica_red_subterranea: false, compromete_funcionalidad_red_subterranea: "si" }).componentes.redSubterranea.reglaId,
+    ).toBe("IN-RSU-03");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_subterranea_presente: "si", afectacion_fisica_red_subterranea: true, compromete_funcionalidad_red_subterranea: "no" }).componentes.redSubterranea.reglaId,
+    ).toBe("IN-RSU-04");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_subterranea_presente: "si", afectacion_fisica_red_subterranea: true, compromete_funcionalidad_red_subterranea: "no_determinado" }).componentes.redSubterranea.reglaId,
+    ).toBe("IN-RSU-05");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_subterranea_presente: "si", afectacion_fisica_red_subterranea: false, compromete_funcionalidad_red_subterranea: "no" }).componentes.redSubterranea.reglaId,
+    ).toBe("IN-RSU-06");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_subterranea_presente: "si", afectacion_fisica_red_subterranea: false, compromete_funcionalidad_red_subterranea: "no_determinado" }).componentes.redSubterranea.reglaId,
+    ).toBe("IN-RSU-07");
+    expect(
+      evaluarM04({ ...base(), ...conRedes, red_aerea_presente: true, tipo_red_aerea: ["funcion_no_determinada"], dano_interferencia_red_aerea: false }).componentes.redAerea.reglaId,
+    ).toBeNull();
+  });
+});
+
 describe("M04 — normalización P_I% (D-180: No aplica y No determinado se excluyen de P_I y n)", () => {
   it("n = 0 (los seis componentes excluidos) → clasificacion_infraestructura = No aplica", () => {
     const r = evaluarM04({

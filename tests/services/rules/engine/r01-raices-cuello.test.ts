@@ -337,6 +337,85 @@ describe("Valores fuera del dominio Sí/No (nunca truthy/falsy por coerción)", 
   });
 });
 
+describe("reglaId — el ID de REGLAS_INDICADORES que produjo cada resultado", () => {
+  it("RC-EST-01 a 08", () => {
+    expect(evaluarR01({ ...base(), levantamiento_del_plato_radicular: true, angulo_inclinacion: 10 }).indicadores.estabilidad.reglaId).toBe("RC-EST-01");
+    expect(evaluarR01({ ...base(), levantamiento_del_plato_radicular: true, angulo_inclinacion: 20 }).indicadores.estabilidad.reglaId).toBe("RC-EST-02");
+    expect(evaluarR01({ ...base(), levantamiento_del_plato_radicular: true, angulo_inclinacion: 40 }).indicadores.estabilidad.reglaId).toBe("RC-EST-03");
+    expect(evaluarR01({ ...base(), levantamiento_del_plato_radicular: true, angulo_inclinacion: 60 }).indicadores.estabilidad.reglaId).toBe("RC-EST-04");
+    expect(evaluarR01({ ...base(), angulo_inclinacion: 5 }).indicadores.estabilidad.reglaId).toBe("RC-EST-05");
+    expect(evaluarR01({ ...base(), angulo_inclinacion: 25 }).indicadores.estabilidad.reglaId).toBe("RC-EST-06");
+    expect(evaluarR01({ ...base(), angulo_inclinacion: 45 }).indicadores.estabilidad.reglaId).toBe("RC-EST-07");
+    expect(evaluarR01({ ...base(), angulo_inclinacion: 46 }).indicadores.estabilidad.reglaId).toBe("RC-EST-08");
+  });
+  it("RC-REX-01 a 05", () => {
+    expect(evaluarR01(base()).indicadores.raicesExpuestas.reglaId).toBe("RC-REX-01");
+    expect(evaluarR01({ ...base(), raices_expuestas: true, necrosis_radicular: false, raices_cortadas: false }).indicadores.raicesExpuestas.reglaId).toBe("RC-REX-02");
+    expect(evaluarR01({ ...base(), raices_expuestas: true, necrosis_radicular: true, raices_cortadas: false }).indicadores.raicesExpuestas.reglaId).toBe("RC-REX-03");
+    expect(evaluarR01({ ...base(), raices_expuestas: true, necrosis_radicular: false, raices_cortadas: true }).indicadores.raicesExpuestas.reglaId).toBe("RC-REX-04");
+    expect(evaluarR01({ ...base(), raices_expuestas: true, necrosis_radicular: true, raices_cortadas: true }).indicadores.raicesExpuestas.reglaId).toBe("RC-REX-05");
+  });
+  it("RC-CAV-01 a 10", () => {
+    expect(evaluarR01(base()).indicadores.cavidadBasal.reglaId).toBe("RC-CAV-01");
+    expect(
+      evaluarR01({
+        ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: true, cavidad_basal_interna: "no",
+        D_diametro_basal_tronco_cm: 10, d_diametro_cavidad_basal_cm: 1, Cc_longitud_abertura_cavidad_cm: 1, C_circunferencia_basal_cm: 10,
+      }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-02");
+    expect(
+      evaluarR01({
+        ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: true, cavidad_basal_interna: "no",
+        D_diametro_basal_tronco_cm: 10, d_diametro_cavidad_basal_cm: 5, Cc_longitud_abertura_cavidad_cm: 10, C_circunferencia_basal_cm: 100,
+      }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-03");
+    expect(
+      evaluarR01({
+        ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: true, cavidad_basal_interna: "no",
+        D_diametro_basal_tronco_cm: 10, d_diametro_cavidad_basal_cm: 8, Cc_longitud_abertura_cavidad_cm: 5, C_circunferencia_basal_cm: 10,
+      }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-04");
+    expect(
+      evaluarR01({
+        ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: true, cavidad_basal_interna: "no",
+        D_diametro_basal_tronco_cm: 10, d_diametro_cavidad_basal_cm: 5, Cc_longitud_abertura_cavidad_cm: 3, C_circunferencia_basal_cm: null,
+      }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-05");
+    expect(
+      evaluarR01({
+        ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: false, cavidad_basal_interna: "si",
+        t_pared_residual_basal_cm: 5, D_diametro_basal_tronco_cm: 20,
+      }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-06");
+    expect(
+      evaluarR01({
+        ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: false, cavidad_basal_interna: "si",
+        t_pared_residual_basal_cm: 3, D_diametro_basal_tronco_cm: 20,
+      }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-07");
+    expect(
+      evaluarR01({
+        ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: false, cavidad_basal_interna: "si",
+        t_pared_residual_basal_cm: null, D_diametro_basal_tronco_cm: 20,
+      }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-08");
+    expect(
+      evaluarR01({ ...base(), cavidad_pudricion_basal: true, cavidad_basal_interna: "requiere_evaluacion_instrumental" }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-09");
+    expect(
+      evaluarR01({
+        ...base(), cavidad_pudricion_basal: true,
+        cavidad_basal_externa: true, D_diametro_basal_tronco_cm: 10, d_diametro_cavidad_basal_cm: 1, Cc_longitud_abertura_cavidad_cm: 1, C_circunferencia_basal_cm: 10,
+        cavidad_basal_interna: "si", t_pared_residual_basal_cm: 1,
+      }).indicadores.cavidadBasal.reglaId,
+    ).toBe("RC-CAV-10");
+  });
+  it("cortes genéricos (campo faltante, fuera de dominio, combinación inválida D-51) → reglaId null", () => {
+    expect(evaluarR01({ ...base(), levantamiento_del_plato_radicular: null }).indicadores.estabilidad.reglaId).toBeNull();
+    expect(evaluarR01({ ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: false, cavidad_basal_interna: "no" }).indicadores.cavidadBasal.reglaId).toBeNull();
+  });
+});
+
 describe("Campos faltantes → no_determinado (el motor nunca rellena ni supone)", () => {
   it("levantamiento_del_plato_radicular = null → no_determinado", () => {
     const r = evaluarR01({ ...base(), levantamiento_del_plato_radicular: null });

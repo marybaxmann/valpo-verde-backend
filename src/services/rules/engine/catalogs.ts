@@ -118,6 +118,30 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_infraestructura", codigo: "critico", etiqueta: "Crítico", orden: 3, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_infraestructura", codigo: "no_aplica", etiqueta: "No aplica", orden: 4, estado: "vigente", cc: "PR-021" },
 
+  // --- tipo_inspeccion_realizada: D-206 (INSPECCION) ---
+  { catalogo: "tipo_inspeccion_realizada", codigo: "evaluacion_inicial", etiqueta: "Evaluación inicial", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tipo_inspeccion_realizada", codigo: "reevaluacion", etiqueta: "Reevaluación", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tipo_inspeccion_realizada", codigo: "evaluacion_instrumental", etiqueta: "Evaluación instrumental", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tipo_inspeccion_realizada", codigo: "monitoreo", etiqueta: "Monitoreo", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tipo_inspeccion_realizada", codigo: "levantamiento", etiqueta: "Levantamiento", orden: 4, estado: "vigente", cc: "PR-021" },
+
+  // --- subtipo_inspeccion: D-207 (INSPECCION), dominio dependiente de
+  //     tipo_inspeccion_realizada — un campo, dominio irregular, no
+  //     separado por "/" como los demás (ver catalogs.test.ts). ---
+  { catalogo: "subtipo_inspeccion", codigo: "seguimiento", etiqueta: "Seguimiento", padre: "reevaluacion", estado: "vigente", cc: "PR-021" },
+  { catalogo: "subtipo_inspeccion", codigo: "post_intervencion", etiqueta: "Post_intervención", padre: "reevaluacion", estado: "vigente", cc: "PR-021" },
+  { catalogo: "subtipo_inspeccion", codigo: "tomografia_sonica", etiqueta: "Tomografía_sónica", padre: "evaluacion_instrumental", estado: "vigente", cc: "PR-021" },
+  { catalogo: "subtipo_inspeccion", codigo: "resistografia", etiqueta: "Resistografía", padre: "evaluacion_instrumental", estado: "vigente", cc: "PR-021" },
+  { catalogo: "subtipo_inspeccion", codigo: "otra_instrumental", etiqueta: "Otra", padre: "evaluacion_instrumental", estado: "vigente", cc: "PR-021" },
+  { catalogo: "subtipo_inspeccion", codigo: "fitosanitario", etiqueta: "Fitosanitario", padre: "monitoreo", estado: "vigente", cc: "PR-021" },
+  { catalogo: "subtipo_inspeccion", codigo: "estructural", etiqueta: "Estructural", padre: "monitoreo", estado: "vigente", cc: "PR-021" },
+  { catalogo: "subtipo_inspeccion", codigo: "vitalidad", etiqueta: "Vitalidad", padre: "monitoreo", estado: "vigente", cc: "PR-021" },
+
+  // --- forma_alcorque: D-131 ---
+  { catalogo: "forma_alcorque", codigo: "rectangular", etiqueta: "Rectangular", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "forma_alcorque", codigo: "circular", etiqueta: "Circular", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "forma_alcorque", codigo: "irregular", etiqueta: "Irregular", orden: 2, estado: "vigente", cc: "PR-021" },
+
   // --- tipo_red_aerea: D-149, selección múltiple ---
   { catalogo: "tipo_red_aerea", codigo: "electrica", etiqueta: "Eléctrica", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "tipo_red_aerea", codigo: "telecomunicaciones", etiqueta: "Telecomunicaciones", orden: 1, estado: "vigente", cc: "PR-021" },
@@ -176,3 +200,19 @@ export type CategoriaInfraestructuraCodigo = "no_aplica" | "sin_afectacion" | "l
 export type ClasificacionInfraestructuraCodigo = "bajo" | "moderado" | "alto" | "critico" | "no_aplica";
 export type ClasificacionPrioridadCodigo = "baja" | "media" | "alta" | "critica" | "no_determinado";
 export type TipoRedAereaCodigo = "electrica" | "telecomunicaciones" | "alumbrado_publico" | "otra" | "funcion_no_determinada";
+export type FormaAlcorqueCodigo = "rectangular" | "circular" | "irregular";
+export type TipoInspeccionRealizadaCodigo =
+  | "evaluacion_inicial"
+  | "reevaluacion"
+  | "evaluacion_instrumental"
+  | "monitoreo"
+  | "levantamiento";
+export type SubtipoInspeccionCodigo =
+  | "seguimiento"
+  | "post_intervencion"
+  | "tomografia_sonica"
+  | "resistografia"
+  | "otra_instrumental"
+  | "fitosanitario"
+  | "estructural"
+  | "vitalidad";

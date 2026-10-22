@@ -21,6 +21,13 @@
  * plataforma... No admite ingreso manual" (D-56, D-58, D-59): este
  * módulo recibe las mediciones crudas (D, d, Cc, C, t) y los calcula
  * con variables-calculo.ts — nunca los recibe ya calculados.
+ *
+ * `reglaId`: el ID exacto de REGLAS_INDICADORES que produjo el
+ * resultado (p. ej. "RC-EST-01"), incluidos los terminales No
+ * determinado que corresponden a una regla numerada (RC-CAV-09) o a
+ * una combinación (RC-CAV-10). `null` cuando el resultado es un corte
+ * genérico por dato faltante, fuera de dominio o combinación inválida
+ * que el diccionario prohíbe pero que REGLAS_INDICADORES no numera.
  */
 
 import { esCodigoVigente, ProbabilidadFallaCodigo, ResultadoCavidadInternaCodigo, SeveridadCodigo } from "./catalogs";
@@ -54,6 +61,7 @@ export interface R01Input {
 export interface IndicadorResultado {
   severidad: SeveridadCodigo | null; // null = no_determinado
   puntaje: number | null;
+  reglaId: string | null; // el ID de REGLAS_INDICADORES que produjo el resultado; null si es un corte genérico
   noDeterminado: boolean;
   motivo?: string; // presente solo si noDeterminado = true
 }
@@ -67,12 +75,12 @@ const PUNTAJE_SEVERIDAD: Record<SeveridadCodigo, number> = {
 
 const ORDEN_SEVERIDAD: SeveridadCodigo[] = ["despreciable", "leve", "moderada", "severa"];
 
-function indicador(severidad: SeveridadCodigo): IndicadorResultado {
-  return { severidad, puntaje: PUNTAJE_SEVERIDAD[severidad], noDeterminado: false };
+function indicador(severidad: SeveridadCodigo, reglaId: string): IndicadorResultado {
+  return { severidad, puntaje: PUNTAJE_SEVERIDAD[severidad], reglaId, noDeterminado: false };
 }
 
-function noDeterminado(motivo: string): IndicadorResultado {
-  return { severidad: null, puntaje: null, noDeterminado: true, motivo };
+function noDeterminado(motivo: string, reglaId: string | null = null): IndicadorResultado {
+  return { severidad: null, puntaje: null, reglaId, noDeterminado: true, motivo };
 }
 
 function masSevera(a: SeveridadCodigo, b: SeveridadCodigo): SeveridadCodigo {
@@ -99,15 +107,15 @@ function evaluarEstabilidad(input: R01Input): IndicadorResultado {
     return noDeterminado(`angulo_inclinacion fuera de rango 0°–90° (${angulo}) (D-47)`);
   }
   if (levantamiento) {
-    if (angulo < 15) return indicador("leve"); // RC-EST-01
-    if (angulo <= 30) return indicador("moderada"); // RC-EST-02
-    if (angulo <= 45) return indicador("moderada"); // RC-EST-03
-    return indicador("severa"); // RC-EST-04
+    if (angulo < 15) return indicador("leve", "RC-EST-01");
+    if (angulo <= 30) return indicador("moderada", "RC-EST-02");
+    if (angulo <= 45) return indicador("moderada", "RC-EST-03");
+    return indicador("severa", "RC-EST-04");
   }
-  if (angulo < 15) return indicador("despreciable"); // RC-EST-05
-  if (angulo <= 30) return indicador("leve"); // RC-EST-06
-  if (angulo <= 45) return indicador("moderada"); // RC-EST-07
-  return indicador("severa"); // RC-EST-08
+  if (angulo < 15) return indicador("despreciable", "RC-EST-05");
+  if (angulo <= 30) return indicador("leve", "RC-EST-06");
+  if (angulo <= 45) return indicador("moderada", "RC-EST-07");
+  return indicador("severa", "RC-EST-08");
 }
 
 /** RC-REX-01 a 05. */
@@ -118,7 +126,7 @@ function evaluarRaicesExpuestas(input: R01Input): IndicadorResultado {
   if (!esBooleanoValido(input.raices_expuestas)) {
     return noDeterminado(motivoFueraDominioSiNo("raices_expuestas", input.raices_expuestas, "D-43"));
   }
-  if (!input.raices_expuestas) return indicador("despreciable"); // RC-REX-01, necrosis/cortadas no se activan
+  if (!input.raices_expuestas) return indicador("despreciable", "RC-REX-01"); // necrosis/cortadas no se activan
 
   if (input.necrosis_radicular === null) {
     return noDeterminado("necrosis_radicular sin valor (RC-REX, condicional activado por raices_expuestas = Sí)");
@@ -134,25 +142,25 @@ function evaluarRaicesExpuestas(input: R01Input): IndicadorResultado {
   }
   const necrosis = input.necrosis_radicular;
   const cortadas = input.raices_cortadas;
-  if (!necrosis && !cortadas) return indicador("leve"); // RC-REX-02
-  if (necrosis && !cortadas) return indicador("moderada"); // RC-REX-03
-  if (!necrosis && cortadas) return indicador("moderada"); // RC-REX-04
-  return indicador("severa"); // RC-REX-05
+  if (!necrosis && !cortadas) return indicador("leve", "RC-REX-02");
+  if (necrosis && !cortadas) return indicador("moderada", "RC-REX-03");
+  if (!necrosis && cortadas) return indicador("moderada", "RC-REX-04");
+  return indicador("severa", "RC-REX-05");
 }
 
 /** Rama SL (RC-CAV-02 a 05), aplicable cuando cavidad_basal_externa = Sí. */
 function evaluarPorSL(sl: ResultadoCalculo): IndicadorResultado {
-  if (sl.valor === null) return noDeterminado(`SL_basal_pct no calculable (RC-CAV-05): ${sl.motivo}`);
-  if (sl.valor < 20) return indicador("leve"); // RC-CAV-02
-  if (sl.valor < 33) return indicador("moderada"); // RC-CAV-03
-  return indicador("severa"); // RC-CAV-04
+  if (sl.valor === null) return noDeterminado(`SL_basal_pct no calculable (RC-CAV-05): ${sl.motivo}`, "RC-CAV-05");
+  if (sl.valor < 20) return indicador("leve", "RC-CAV-02");
+  if (sl.valor < 33) return indicador("moderada", "RC-CAV-03");
+  return indicador("severa", "RC-CAV-04");
 }
 
 /** Rama t/R (RC-CAV-06 a 08), aplicable cuando cavidad_basal_interna = "si". */
 function evaluarPorTR(tR: ResultadoCalculo): IndicadorResultado {
-  if (tR.valor === null) return noDeterminado(`t_R_basal no calculable (RC-CAV-08): ${tR.motivo}`);
-  if (tR.valor > 0.3) return indicador("moderada"); // RC-CAV-06
-  return indicador("severa"); // RC-CAV-07
+  if (tR.valor === null) return noDeterminado(`t_R_basal no calculable (RC-CAV-08): ${tR.motivo}`, "RC-CAV-08");
+  if (tR.valor > 0.3) return indicador("moderada", "RC-CAV-06");
+  return indicador("severa", "RC-CAV-07");
 }
 
 interface CavidadBasalResultado {
@@ -170,7 +178,7 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
   if (!esBooleanoValido(input.cavidad_pudricion_basal)) {
     return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_pudricion_basal", input.cavidad_pudricion_basal, "D-49")) };
   }
-  if (!input.cavidad_pudricion_basal) return { indicador: indicador("despreciable") }; // RC-CAV-01
+  if (!input.cavidad_pudricion_basal) return { indicador: indicador("despreciable", "RC-CAV-01") };
 
   if (input.cavidad_basal_interna === null) {
     return {
@@ -182,7 +190,7 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
     return { indicador: noDeterminado(`cavidad_basal_interna tiene un código no reconocido ("${input.cavidad_basal_interna}")`) };
   }
   if (input.cavidad_basal_interna === "requiere_evaluacion_instrumental") {
-    return { indicador: noDeterminado("cavidad_basal_interna = Requiere evaluación instrumental (RC-CAV-09)") };
+    return { indicador: noDeterminado("cavidad_basal_interna = Requiere evaluación instrumental (RC-CAV-09)", "RC-CAV-09") };
   }
   if (input.cavidad_basal_externa === null) {
     return {
@@ -228,26 +236,32 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
       t_R_basal,
     };
   }
-  if (porSL?.noDeterminado || porTR?.noDeterminado) {
-    // RC-CAV-10: si alguna de las dos vías es no_determinado, el
-    // resultado combinado es no_determinado.
-    const motivos = [porSL, porTR]
-      .filter((p): p is IndicadorResultado => p !== null && p.noDeterminado)
-      .map((p) => p.motivo);
+  if (porSL === null || porTR === null) {
+    // Solo una de las dos vías está activa (externa = Sí xor interna =
+    // "si"): no es una combinación, es esa regla sola — conserva su
+    // propio reglaId (RC-CAV-02/03/04/05 o RC-CAV-06/07/08), determinada
+    // o no_determinado.
+    return { indicador: (porSL ?? porTR)!, SL_basal_pct, R_radio_basal_cm, t_R_basal };
+  }
+
+  // Ambas vías activas (externa = Sí e interna = "si"): aplica RC-CAV-10.
+  if (porSL.noDeterminado || porTR.noDeterminado) {
+    // Si alguna de las dos vías es no_determinado, el resultado
+    // combinado es no_determinado.
+    const motivos = [porSL, porTR].filter((p) => p.noDeterminado).map((p) => p.motivo);
     return {
-      indicador: noDeterminado(`RC-CAV-10 (combinación externa+interna): ${motivos.join("; ")}`),
+      indicador: noDeterminado(`RC-CAV-10 (combinación externa+interna): ${motivos.join("; ")}`, "RC-CAV-10"),
       SL_basal_pct,
       R_radio_basal_cm,
       t_R_basal,
     };
   }
-
-  const candidatos = [porSL, porTR].filter((c): c is IndicadorResultado => c !== null);
-  const indicadorFinal =
-    candidatos.length === 1
-      ? candidatos[0] // solo externa o solo interna aplicable
-      : indicador(masSevera(candidatos[0].severidad!, candidatos[1].severidad!)); // RC-CAV-10
-  return { indicador: indicadorFinal, SL_basal_pct, R_radio_basal_cm, t_R_basal };
+  return {
+    indicador: indicador(masSevera(porSL.severidad!, porTR.severidad!), "RC-CAV-10"),
+    SL_basal_pct,
+    R_radio_basal_cm,
+    t_R_basal,
+  };
 }
 
 export interface R01Resultado {

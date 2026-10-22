@@ -212,6 +212,28 @@ describe("Puntaje total P_CR — tramos de MATRICES_CALCULO", () => {
   });
 });
 
+describe("reglaId — el ID de REGLAS_INDICADORES que produjo cada resultado", () => {
+  it("CR-RSE-01 a 05", () => {
+    expect(evaluarR03(base()).indicadores.ramasSecas.reglaId).toBe("CR-RSE-01");
+    expect(evaluarR03({ ...base(), ramas_secas: true, ramas_secas_pct_copa: 5 }).indicadores.ramasSecas.reglaId).toBe("CR-RSE-02");
+    expect(evaluarR03({ ...base(), ramas_secas: true, ramas_secas_pct_copa: 30 }).indicadores.ramasSecas.reglaId).toBe("CR-RSE-03");
+    expect(evaluarR03({ ...base(), ramas_secas: true, ramas_secas_pct_copa: 51 }).indicadores.ramasSecas.reglaId).toBe("CR-RSE-04");
+    expect(evaluarR03({ ...base(), ramas_secas: true, ramas_secas_pct_copa: null }).indicadores.ramasSecas.reglaId).toBe("CR-RSE-05");
+  });
+  it("CR-RQU-01/02, CR-DES-01/02", () => {
+    expect(evaluarR03(base()).indicadores.ramasQuebradas.reglaId).toBe("CR-RQU-01");
+    expect(evaluarR03({ ...base(), ramas_quebradas: true }).indicadores.ramasQuebradas.reglaId).toBe("CR-RQU-02");
+    expect(evaluarR03(base()).indicadores.desequilibrioCopa.reglaId).toBe("CR-DES-01");
+    expect(evaluarR03({ ...base(), desequilibrio_copa: true }).indicadores.desequilibrioCopa.reglaId).toBe("CR-DES-02");
+  });
+  it("CR-DEF-01 a 04", () => {
+    expect(evaluarR03({ ...base(), defoliacion_estimada_pct: 10 }).indicadores.defoliacion.reglaId).toBe("CR-DEF-01");
+    expect(evaluarR03({ ...base(), defoliacion_estimada_pct: 20 }).indicadores.defoliacion.reglaId).toBe("CR-DEF-02");
+    expect(evaluarR03({ ...base(), defoliacion_estimada_pct: 40 }).indicadores.defoliacion.reglaId).toBe("CR-DEF-03");
+    expect(evaluarR03({ ...base(), defoliacion_estimada_pct: 61 }).indicadores.defoliacion.reglaId).toBe("CR-DEF-04");
+  });
+});
+
 describe("Valores fuera del dominio Sí/No (nunca truthy/falsy por coerción)", () => {
   it.each(["Sí", "no", 1, 0])("ramas_secas = %p → no_determinado", (valor) => {
     const r = evaluarR03({ ...base(), ramas_secas: valor as unknown as boolean });
