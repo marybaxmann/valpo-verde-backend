@@ -38,6 +38,39 @@ describe("catálogo resultado_cavidad_interna vs DICCIONARIO_CAMPOS (fila cavida
   });
 });
 
+describe("catálogo condicion_herida vs DICCIONARIO_CAMPOS (fila condicion_heridas_tronco)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "condicion_heridas_tronco");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("condicion_herida").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo afectacion_grieta vs DICCIONARIO_CAMPOS (fila afectacion_fisura_grieta)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "afectacion_fisura_grieta");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("afectacion_grieta").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo direccion_grieta vs DICCIONARIO_CAMPOS (fila direccion_grieta)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "direccion_grieta");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("direccion_grieta").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
 describe("integridad del registro", () => {
   it("todos los códigos son snake_case ASCII, únicos dentro de su catálogo (PR-021)", () => {
     const vistos = new Set<string>();

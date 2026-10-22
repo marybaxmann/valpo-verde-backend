@@ -43,6 +43,19 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "resultado_cavidad_interna", codigo: "si", etiqueta: "Sí", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "resultado_cavidad_interna", codigo: "no", etiqueta: "No", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "resultado_cavidad_interna", codigo: "requiere_evaluacion_instrumental", etiqueta: "Requiere evaluación instrumental", orden: 2, estado: "vigente", cc: "CC-040" },
+
+  // --- condicion_herida: D-73 (condicion_heridas_tronco) ---
+  { catalogo: "condicion_herida", codigo: "abierta", etiqueta: "Abierta", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "condicion_herida", codigo: "en_proceso_de_cierre", etiqueta: "En proceso de cierre", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "condicion_herida", codigo: "cerrada", etiqueta: "Cerrada", orden: 2, estado: "vigente", cc: "PR-021" },
+
+  // --- afectacion_grieta: D-78 (afectacion_fisura_grieta) ---
+  { catalogo: "afectacion_grieta", codigo: "solo_corteza", etiqueta: "Solo corteza", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "afectacion_grieta", codigo: "penetra_en_madera", etiqueta: "Penetra en madera", orden: 1, estado: "vigente", cc: "PR-021" },
+
+  // --- direccion_grieta: D-79 (direccion_grieta) ---
+  { catalogo: "direccion_grieta", codigo: "longitudinal", etiqueta: "Longitudinal", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "direccion_grieta", codigo: "transversal", etiqueta: "Transversal", orden: 1, estado: "vigente", cc: "PR-021" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {
@@ -58,3 +71,6 @@ export function entradasVigentesDe(catalogo: string): CatalogEntry[] {
 export type SeveridadCodigo = "despreciable" | "leve" | "moderada" | "severa";
 export type ProbabilidadFallaCodigo = "improbable" | "posible" | "probable" | "inminente" | "no_determinado";
 export type ResultadoCavidadInternaCodigo = "si" | "no" | "requiere_evaluacion_instrumental";
+export type CondicionHeridaCodigo = "abierta" | "en_proceso_de_cierre" | "cerrada";
+export type AfectacionGrietaCodigo = "solo_corteza" | "penetra_en_madera";
+export type DireccionGrietaCodigo = "longitudinal" | "transversal";
