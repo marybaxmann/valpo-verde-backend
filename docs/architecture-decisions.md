@@ -1154,38 +1154,41 @@ ADR-012
 ## ADR-017 — Conexión directa a Postgres (node-postgres) para los flujos transaccionales de la Fase 6
 
 Estado: vigente
-Versión: 1.0
+Versión: 1.1
 Fecha: 2026-10-22
 Origen: Fase 6 (backend y API), planificación
 Motivo: `supabase-js` no permite abrir una transacción de base de datos que incluya, en medio, una llamada a código del backend (el motor de reglas, `src/services/rules/engine/`) entre dos operaciones SQL — cada llamada de `supabase-js` es su propia petición HTTP a PostgREST, no una sentencia dentro de una transacción abierta.
 
+**Cambio en v1.1 (issue #56):** se retira "crear proyecto + sector" de los flujos que necesitan `node-postgres`. Al implementarlo (migración 018b) resultó que ese flujo no tiene al motor de reglas en medio — solo dos `INSERT` relacionados y una validación geométrica que PostGIS hace en SQL — así que una función Postgres `SECURITY DEFINER` (`fn_create_project_with_sector`), invocada una sola vez vía `supabase-js` con el cliente `service_role`, ya es una transacción atómica: no hace falta una conexión nueva. Quedan solo los dos flujos que sí tienen el motor corriendo en memoria del backend entre pasos de base de datos (ver Contexto). El rol de Postgres dedicado para `pg` (punto pendiente de Consecuencias) se define antes del issue #60, cuando se implemente el primero de esos dos flujos.
+
 ### Contexto
 
-Varios flujos de la Fase 6 necesitan que una secuencia de pasos sea atómica, con el motor de reglas corriendo entre pasos de base de datos:
+Dos flujos de la Fase 6 necesitan que una secuencia de pasos sea atómica, con el motor de reglas corriendo entre pasos de base de datos:
 1. **Completar una OT**: `fn_refresh_tree_current` → leer `v_tree_current_inputs` → `ensamblarResultadoVigente` (motor, en memoria del backend) → `INSERT` en `tree_assessments`. Si el `INSERT` falla, el refresco de `trees` no debe quedar aplicado.
-2. **Crear proyecto + sector**: dos `INSERT` relacionados (`projects`, `sectors`) que deben quedar juntos o ninguno (diseño §3.3).
-3. **Anular una inspección**: marcar la inspección `Anulado` → recalcular la vigente (`ensamblarResultadoVigente`, evento `inspeccion_anulada`, CC-045 a) → `INSERT` en `tree_assessments`, también atómico.
+2. **Anular una inspección**: marcar la inspección `Anulado` → recalcular la vigente (`ensamblarResultadoVigente`, evento `inspeccion_anulada`, CC-045 a) → `INSERT` en `tree_assessments`, también atómico.
+
+(Un tercer flujo, "crear proyecto + sector", se consideró aquí originalmente — ver "Cambio en v1.1": no tiene el motor en medio y se resolvió con una función Postgres `SECURITY DEFINER`, issue #56, sin necesitar esta decisión.)
 
 `supabase-js` (usado hoy por toda la demo, vía `src/config/supabase.ts`) habla con Supabase por PostgREST sobre HTTP: cada llamada es autocontenida. No existe una API de `supabase-js` para abrir una transacción, ejecutar una función de JavaScript en medio, y luego seguir la misma transacción.
 
 ### Decisión
 
-Los tres flujos transaccionales de la Fase 6 (y solo ellos) se escriben con **`node-postgres` (`pg`)**, conectado directamente a Postgres con la cadena de conexión de servicio (`DATABASE_URL`, rol `postgres` o un rol equivalente con los mismos privilegios que `service_role` ya tiene vía RLS — a definir el rol exacto al implementar), usando `client.query('BEGIN')` / lógica en memoria / `client.query('COMMIT')` (o `ROLLBACK` si algo falla), con el motor de reglas corriendo íntegramente en memoria del backend entre las sentencias SQL.
+Los dos flujos transaccionales de la Fase 6 (y solo ellos) se escriben con **`node-postgres` (`pg`)**, conectado directamente a Postgres con la cadena de conexión de servicio (`DATABASE_URL`, rol `postgres` o un rol equivalente con los mismos privilegios que `service_role` ya tiene vía RLS — a definir el rol exacto antes del issue #60), usando `client.query('BEGIN')` / lógica en memoria / `client.query('COMMIT')` (o `ROLLBACK` si algo falla), con el motor de reglas corriendo íntegramente en memoria del backend entre las sentencias SQL.
 
-Todo lo demás (lecturas, escrituras simples de un solo recurso) sigue usando `supabase-js`, igual que la demo — esta decisión **no** reemplaza `supabase-js` como cliente general, solo cubre los flujos que necesitan una transacción real con el motor en medio.
+Todo lo demás (lecturas, escrituras simples de un solo recurso, y los flujos que solo necesitan una función Postgres de un solo paso, como `fn_create_project_with_sector`) sigue usando `supabase-js`, igual que la demo — esta decisión **no** reemplaza `supabase-js` como cliente general, solo cubre los flujos que necesitan una transacción real con el motor en medio.
 
 **Cadena de conexión:** vive solo en `.env.pruebas` (nunca en `.env`, nunca en el código, nunca en el repositorio — ver el `.gitignore` reforzado antes de crear ese archivo). Mientras el desarrollo ocurra solo contra `valpo-verde-conecta-pruebas`, no existe una `DATABASE_URL` de producción que proteger todavía.
 
 ### Consecuencias
 
 - Nuevo paquete de producción: `pg` (y `@types/pg` de desarrollo).
-- Un pool de conexión (`pg.Pool`) nuevo, separado del cliente `supabase-js`, usado únicamente por los repositorios de estos tres flujos.
+- Un pool de conexión (`pg.Pool`) nuevo, separado del cliente `supabase-js`, usado únicamente por los repositorios de estos dos flujos.
 - El motor de reglas sigue siendo puro (no se le pasa un cliente de base de datos): el repositorio abre la transacción, lee lo que el motor necesita, llama a `ensamblarResultadoEvaluacion`/`ensamblarResultadoVigente` con esos datos ya en memoria, y escribe el resultado dentro de la misma transacción.
-- Las políticas RLS no se evalúan sobre una conexión directa con el rol de servicio del mismo modo que sobre `service_role` vía PostgREST — hay que confirmar, al implementar, que el rol usado por `pg` tiene exactamente los mismos privilegios (ni más, ni menos) que `service_role`, no privilegios de superusuario innecesarios.
+- Las políticas RLS no se evalúan sobre una conexión directa con el rol de servicio del mismo modo que sobre `service_role` vía PostgREST — hay que confirmar, al implementar, que el rol usado por `pg` tiene exactamente los mismos privilegios (ni más, ni menos) que `service_role`, no privilegios de superusuario innecesarios. **Pendiente, antes del issue #60:** proponer ese rol dedicado en una migración con su `down`, para revisión antes de aplicarla.
 
 ### Puede cambiar
 
-Sí. Si Supabase ofrece en el futuro una forma nativa de transacción con lógica intermedia (p. ej. una función Postgres que el backend invoque una sola vez, con el cálculo del motor empaquetado de otra forma), se puede reconsiderar. Mientras eso no exista, esta es la única forma de garantizar atomicidad real en estos tres flujos.
+Sí. Si Supabase ofrece en el futuro una forma nativa de transacción con lógica intermedia (p. ej. una función Postgres que el backend invoque una sola vez, con el cálculo del motor empaquetado de otra forma), se puede reconsiderar. Mientras eso no exista, esta es la única forma de garantizar atomicidad real en estos dos flujos. El propio issue #56 (v1.1) es un ejemplo de esa reconsideración funcionando para un flujo que, al implementarlo, resultó no necesitarla.
 
 ### Reglas relacionadas
 ADR-014 v2.0
