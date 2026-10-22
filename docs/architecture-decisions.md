@@ -1148,3 +1148,47 @@ PR-019 v1.2
 ADR-007
 ADR-010 v3.0
 ADR-012
+
+---
+
+## ADR-017 — Conexión directa a Postgres (node-postgres) para los flujos transaccionales de la Fase 6
+
+Estado: vigente
+Versión: 1.0
+Fecha: 2026-10-22
+Origen: Fase 6 (backend y API), planificación
+Motivo: `supabase-js` no permite abrir una transacción de base de datos que incluya, en medio, una llamada a código del backend (el motor de reglas, `src/services/rules/engine/`) entre dos operaciones SQL — cada llamada de `supabase-js` es su propia petición HTTP a PostgREST, no una sentencia dentro de una transacción abierta.
+
+### Contexto
+
+Varios flujos de la Fase 6 necesitan que una secuencia de pasos sea atómica, con el motor de reglas corriendo entre pasos de base de datos:
+1. **Completar una OT**: `fn_refresh_tree_current` → leer `v_tree_current_inputs` → `ensamblarResultadoVigente` (motor, en memoria del backend) → `INSERT` en `tree_assessments`. Si el `INSERT` falla, el refresco de `trees` no debe quedar aplicado.
+2. **Crear proyecto + sector**: dos `INSERT` relacionados (`projects`, `sectors`) que deben quedar juntos o ninguno (diseño §3.3).
+3. **Anular una inspección**: marcar la inspección `Anulado` → recalcular la vigente (`ensamblarResultadoVigente`, evento `inspeccion_anulada`, CC-045 a) → `INSERT` en `tree_assessments`, también atómico.
+
+`supabase-js` (usado hoy por toda la demo, vía `src/config/supabase.ts`) habla con Supabase por PostgREST sobre HTTP: cada llamada es autocontenida. No existe una API de `supabase-js` para abrir una transacción, ejecutar una función de JavaScript en medio, y luego seguir la misma transacción.
+
+### Decisión
+
+Los tres flujos transaccionales de la Fase 6 (y solo ellos) se escriben con **`node-postgres` (`pg`)**, conectado directamente a Postgres con la cadena de conexión de servicio (`DATABASE_URL`, rol `postgres` o un rol equivalente con los mismos privilegios que `service_role` ya tiene vía RLS — a definir el rol exacto al implementar), usando `client.query('BEGIN')` / lógica en memoria / `client.query('COMMIT')` (o `ROLLBACK` si algo falla), con el motor de reglas corriendo íntegramente en memoria del backend entre las sentencias SQL.
+
+Todo lo demás (lecturas, escrituras simples de un solo recurso) sigue usando `supabase-js`, igual que la demo — esta decisión **no** reemplaza `supabase-js` como cliente general, solo cubre los flujos que necesitan una transacción real con el motor en medio.
+
+**Cadena de conexión:** vive solo en `.env.pruebas` (nunca en `.env`, nunca en el código, nunca en el repositorio — ver el `.gitignore` reforzado antes de crear ese archivo). Mientras el desarrollo ocurra solo contra `valpo-verde-conecta-pruebas`, no existe una `DATABASE_URL` de producción que proteger todavía.
+
+### Consecuencias
+
+- Nuevo paquete de producción: `pg` (y `@types/pg` de desarrollo).
+- Un pool de conexión (`pg.Pool`) nuevo, separado del cliente `supabase-js`, usado únicamente por los repositorios de estos tres flujos.
+- El motor de reglas sigue siendo puro (no se le pasa un cliente de base de datos): el repositorio abre la transacción, lee lo que el motor necesita, llama a `ensamblarResultadoEvaluacion`/`ensamblarResultadoVigente` con esos datos ya en memoria, y escribe el resultado dentro de la misma transacción.
+- Las políticas RLS no se evalúan sobre una conexión directa con el rol de servicio del mismo modo que sobre `service_role` vía PostgREST — hay que confirmar, al implementar, que el rol usado por `pg` tiene exactamente los mismos privilegios (ni más, ni menos) que `service_role`, no privilegios de superusuario innecesarios.
+
+### Puede cambiar
+
+Sí. Si Supabase ofrece en el futuro una forma nativa de transacción con lógica intermedia (p. ej. una función Postgres que el backend invoque una sola vez, con el cálculo del motor empaquetado de otra forma), se puede reconsiderar. Mientras eso no exista, esta es la única forma de garantizar atomicidad real en estos tres flujos.
+
+### Reglas relacionadas
+ADR-014 v2.0
+CC-033
+CC-040 (d)
+CC-045 (a)
