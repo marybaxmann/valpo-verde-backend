@@ -4,6 +4,8 @@
 
 DROP FUNCTION IF EXISTS fn_refresh_tree_current(UUID);
 
+DROP TRIGGER IF EXISTS trg_maintenance_records_ot ON maintenance_records;
+DROP FUNCTION IF EXISTS fn_check_maintenance_record_ot();
 DROP INDEX IF EXISTS idx_maintenance_records_tree;
 DROP INDEX IF EXISTS idx_maintenance_records_work_order;
 DROP TABLE IF EXISTS maintenance_records;
@@ -25,10 +27,14 @@ DROP FUNCTION IF EXISTS fn_check_ot_completada();
 DROP INDEX IF EXISTS idx_inspections_estado_registro;
 DROP INDEX IF EXISTS idx_inspections_work_order;
 
+DROP TRIGGER IF EXISTS trg_inspections_tree_coherente ON inspections;
+DROP FUNCTION IF EXISTS fn_check_inspection_tree_coherente();
+
 DROP TRIGGER IF EXISTS trg_inspections_anulacion ON inspections;
 DROP FUNCTION IF EXISTS fn_check_inspection_anulacion();
 
 ALTER TABLE inspections
+  DROP CONSTRAINT IF EXISTS inspections_id_tree_id_key,
   DROP CONSTRAINT IF EXISTS chk_inspections_rule_version_formato,
   DROP CONSTRAINT IF EXISTS chk_inspections_justificacion_ajuste_fecha,
   DROP CONSTRAINT IF EXISTS chk_inspections_anulacion,
@@ -47,10 +53,6 @@ ALTER TABLE inspections
 ALTER TABLE inspections RENAME COLUMN finalizada_at TO completed_at;
 ALTER TABLE inspections RENAME COLUMN inspector TO inspector_id;
 ALTER TABLE inspections RENAME COLUMN fecha_inspeccion TO fecha;
-
--- El rename de vuelta deja la CHECK de 'inspections_check' referida a
--- completed_at automáticamente (Postgres actualiza el nombre de columna
--- dentro de la definición del constraint).
 
 ALTER TABLE inspections
   DROP COLUMN IF EXISTS fecha_anulacion,

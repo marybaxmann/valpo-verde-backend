@@ -14,6 +14,16 @@
 --   de riesgo), 008 (infraestructura, mantención), 009 (códigos OT/INC) y
 --   010 (RLS en tablas expuestas). Sincronizado el 2026-10-21.
 --
+--   Corrección de la responsable sobre 012–014 (2026-10-21), antes de
+--   abrir PR: projects.name -> nombre_proyecto (D-264, faltaba);
+--   clase_edad y probabilidad_falla_* en snake_case (PR-021), con
+--   no_determinado (CC-024); FK/triggers de coherencia proyecto-sector,
+--   inspección-OT, evaluación-inspección y mantenimiento-OT; CHECK de
+--   fustes, copa, "No presenta", primera rama ≤ altura total,
+--   fecha_accion_programada y observaciones de work_orders; huso/datum
+--   NOT NULL con DEFAULT; fn_refresh_tree_current con CASE WHEN EXISTS
+--   (no COALESCE) y search_path fijo.
+--
 --   **Aplicado solo en `valpo-verde-conecta-pruebas`** (012 en adelante;
 --   diseño Fase 3 §7). `valpo-verde-conecta` sigue en la revisión 6 hasta
 --   que la Fase 8 autorice aplicar 012–017 ahí (issue #45). Este archivo
@@ -139,7 +149,7 @@ CREATE TABLE user_profiles (
 
 CREATE TABLE projects (
   id                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name                      TEXT NOT NULL,
+  nombre_proyecto           TEXT NOT NULL,                                 -- renombrado desde `name` (D-264; migración 012)
   institution_name          TEXT NOT NULL,
   responsible_professional  TEXT,                                       -- nullable por ahora
   created_by                UUID REFERENCES user_profiles(id) ON DELETE SET NULL,  -- auditoría nullable
@@ -190,7 +200,10 @@ CREATE TABLE sectors (
   geometria_sector      geography(MultiPolygon, 4326) NOT NULL,
   superficie_sector_m2  NUMERIC GENERATED ALWAYS AS (ST_Area(geometria_sector)) STORED,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  -- Destino de la FK compuesta (project_id, sector_id) de trees.
+  CONSTRAINT sectors_project_id_id_key UNIQUE (project_id, id)
 );
 
 CREATE INDEX idx_sectors_geometria ON sectors USING GIST (geometria_sector);
@@ -314,8 +327,8 @@ CREATE TABLE trees (
   ubicacion_descriptiva         TEXT,                                           -- D-8
   utm_este                      NUMERIC(10,2),                                  -- D-9; coordenada canónica (CC-028 P1)
   utm_norte                     NUMERIC(10,2),                                  -- D-10
-  huso                          TEXT CHECK (huso IS NULL OR huso = '19S'),       -- D-11
-  datum                         TEXT CHECK (datum IS NULL OR datum = 'WGS84'),   -- D-12
+  huso                          TEXT NOT NULL DEFAULT '19S' CHECK (huso = '19S'),       -- D-11
+  datum                         TEXT NOT NULL DEFAULT 'WGS84' CHECK (datum = 'WGS84'),   -- D-12
   ubicacion                     geography(Point, 4326)                          -- ADR-010 v3.0: generada desde UTM (ya no manual)
                                    GENERATED ALWAYS AS (
                                      ST_Transform(ST_SetSRID(ST_MakePoint(utm_este, utm_norte), 32719), 4326)
@@ -327,8 +340,8 @@ CREATE TABLE trees (
   dap_fustes_cm                 NUMERIC(6,2)[],                                 -- D-17
   dap_cm                        NUMERIC(6,2) CHECK (dap_cm IS NULL OR dap_cm > 0),  -- D-18
   altura_total_m                NUMERIC(6,2) CHECK (altura_total_m IS NULL OR altura_total_m > 0),  -- D-19; AMD-13
-  diametro_copa_ns_m            NUMERIC(6,2),                                   -- D-20
-  diametro_copa_eo_m            NUMERIC(6,2),                                   -- D-21
+  diametro_copa_ns_m            NUMERIC(6,2) CHECK (diametro_copa_ns_m IS NULL OR diametro_copa_ns_m >= 0),  -- D-20
+  diametro_copa_eo_m            NUMERIC(6,2) CHECK (diametro_copa_eo_m IS NULL OR diametro_copa_eo_m >= 0),  -- D-21
   copa_no_presenta              BOOLEAN,                                       -- RG "Ausencia"
   diametro_copa_m               NUMERIC(6,2)                                    -- D-22; generada, promedio si ambas existen
                                    GENERATED ALWAYS AS ((diametro_copa_ns_m + diametro_copa_eo_m) / 2) STORED,
@@ -336,8 +349,8 @@ CREATE TABLE trees (
   altura_primera_rama_no_presenta BOOLEAN,
   altura_base_copa_viva_m       NUMERIC(6,2),                                   -- D-24
   altura_base_copa_viva_no_presenta BOOLEAN,
-  clase_edad                    TEXT CHECK (clase_edad IS NULL OR clase_edad IN (  -- D-25
-    'Joven', 'Semimaduro', 'Tempranamente maduro', 'Maduro', 'Sobremaduro'
+  clase_edad                    TEXT CHECK (clase_edad IS NULL OR clase_edad IN (  -- D-25; códigos snake_case (PR-021)
+    'joven', 'semimaduro', 'tempranamente_maduro', 'maduro', 'sobremaduro'
   )),
   rango_edad_estimada_anios     TEXT CHECK (rango_edad_estimada_anios IS NULL OR rango_edad_estimada_anios IN (  -- D-26; CC-039; opcional
     '0_5', '6_10', '11_15', '16_20', '21_25', '26_30', '31_35', '36_40',
@@ -366,7 +379,31 @@ CREATE TABLE trees (
     REFERENCES public_spaces (project_id, id) MATCH SIMPLE ON DELETE RESTRICT,
   -- Al menos especie_cientifica o nombre_comun en el alta (RG "Preguardado"; migración 013).
   CONSTRAINT chk_trees_especie_o_comun
-    CHECK (especie_cientifica IS NOT NULL OR nombre_comun IS NOT NULL)
+    CHECK (especie_cientifica IS NOT NULL OR nombre_comun IS NOT NULL),
+  -- Coherencia: el sector de un árbol debe ser del mismo proyecto (AMD-32; CC-041).
+  CONSTRAINT trees_project_sector_fkey
+    FOREIGN KEY (project_id, sector_id) REFERENCES sectors (project_id, id),
+  -- Largo de dap_fustes_cm = numero_fustes y cada valor > 0 (D-17).
+  CONSTRAINT chk_trees_dap_fustes
+    CHECK (
+      dap_fustes_cm IS NULL
+      OR (
+        numero_fustes IS NOT NULL
+        AND array_length(dap_fustes_cm, 1) = numero_fustes
+        AND array_position(dap_fustes_cm, NULL) IS NULL
+        AND NOT (0 >= ANY (dap_fustes_cm))
+      )
+    ),
+  -- "No presenta" desactiva el número (RG "Ausencia").
+  CONSTRAINT chk_trees_copa_no_presenta
+    CHECK (copa_no_presenta IS NOT TRUE OR (diametro_copa_ns_m IS NULL AND diametro_copa_eo_m IS NULL)),
+  CONSTRAINT chk_trees_primera_rama_no_presenta
+    CHECK (altura_primera_rama_no_presenta IS NOT TRUE OR altura_primera_rama_m IS NULL),
+  CONSTRAINT chk_trees_base_copa_viva_no_presenta
+    CHECK (altura_base_copa_viva_no_presenta IS NOT TRUE OR altura_base_copa_viva_m IS NULL),
+  -- Primera rama ≤ altura total.
+  CONSTRAINT chk_trees_primera_rama_le_altura
+    CHECK (altura_primera_rama_m IS NULL OR altura_total_m IS NULL OR altura_primera_rama_m <= altura_total_m)
 );
 
 CREATE INDEX idx_trees_species ON trees (species_id);
@@ -647,8 +684,8 @@ CREATE TABLE tree_data_versions (
   dap_fustes_cm                       NUMERIC(6,2)[],
   dap_cm                              NUMERIC(6,2) CHECK (dap_cm IS NULL OR dap_cm > 0),
   altura_total_m                      NUMERIC(6,2) CHECK (altura_total_m IS NULL OR altura_total_m > 0),
-  diametro_copa_ns_m                  NUMERIC(6,2),
-  diametro_copa_eo_m                  NUMERIC(6,2),
+  diametro_copa_ns_m                  NUMERIC(6,2) CHECK (diametro_copa_ns_m IS NULL OR diametro_copa_ns_m >= 0),
+  diametro_copa_eo_m                  NUMERIC(6,2) CHECK (diametro_copa_eo_m IS NULL OR diametro_copa_eo_m >= 0),
   copa_no_presenta                    BOOLEAN,
   diametro_copa_m                     NUMERIC(6,2)
                                         GENERATED ALWAYS AS ((diametro_copa_ns_m + diametro_copa_eo_m) / 2) STORED,
@@ -657,7 +694,7 @@ CREATE TABLE tree_data_versions (
   altura_base_copa_viva_m             NUMERIC(6,2),
   altura_base_copa_viva_no_presenta   BOOLEAN,
   clase_edad                          TEXT CHECK (clase_edad IS NULL OR clase_edad IN (
-    'Joven', 'Semimaduro', 'Tempranamente maduro', 'Maduro', 'Sobremaduro'
+    'joven', 'semimaduro', 'tempranamente_maduro', 'maduro', 'sobremaduro'
   )),
   rango_edad_estimada_anios           TEXT CHECK (rango_edad_estimada_anios IS NULL OR rango_edad_estimada_anios IN (
     '0_5', '6_10', '11_15', '16_20', '21_25', '26_30', '31_35', '36_40',
@@ -665,7 +702,26 @@ CREATE TABLE tree_data_versions (
     '76_80', '81_85', '86_90', '91_95', '96_100', 'mas_de_100'
   )),
   created_by                          UUID NOT NULL REFERENCES user_profiles(id),
-  created_at                          TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at                          TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_tdv_dap_fustes
+    CHECK (
+      dap_fustes_cm IS NULL
+      OR (
+        numero_fustes IS NOT NULL
+        AND array_length(dap_fustes_cm, 1) = numero_fustes
+        AND array_position(dap_fustes_cm, NULL) IS NULL
+        AND NOT (0 >= ANY (dap_fustes_cm))
+      )
+    ),
+  CONSTRAINT chk_tdv_copa_no_presenta
+    CHECK (copa_no_presenta IS NOT TRUE OR (diametro_copa_ns_m IS NULL AND diametro_copa_eo_m IS NULL)),
+  CONSTRAINT chk_tdv_primera_rama_no_presenta
+    CHECK (altura_primera_rama_no_presenta IS NOT TRUE OR altura_primera_rama_m IS NULL),
+  CONSTRAINT chk_tdv_base_copa_viva_no_presenta
+    CHECK (altura_base_copa_viva_no_presenta IS NOT TRUE OR altura_base_copa_viva_m IS NULL),
+  CONSTRAINT chk_tdv_primera_rama_le_altura
+    CHECK (altura_primera_rama_m IS NULL OR altura_total_m IS NULL OR altura_primera_rama_m <= altura_total_m)
 );
 
 CREATE INDEX idx_tree_data_versions_tree ON tree_data_versions (tree_id, created_at DESC);
@@ -677,46 +733,95 @@ CREATE INDEX idx_tree_data_versions_tree ON tree_data_versions (tree_id, created
 -- inspections.estado_registro/fecha_completada_ot (definidas más abajo),
 -- por eso el cuerpo se agrega recién en esa migración aunque se describe
 -- aquí junto a tree_data_versions.
-CREATE FUNCTION fn_refresh_tree_current(p_tree_id UUID) RETURNS void AS $$
+--
+-- Por cada campo: si existe una versión válida (OT completada, inspección
+-- no anulada) que lo haya registrado, se usa el valor de la MÁS RECIENTE
+-- de esas versiones — incluso si ese valor es NULL (p. ej. "No presenta").
+-- Solo si NINGUNA versión válida registró el campo se usa el valor del
+-- alta. Por eso es CASE WHEN EXISTS (...), no COALESCE: COALESCE seguiría
+-- buscando hacia atrás ante un NULL legítimo, perdiendo la actualización.
+CREATE FUNCTION fn_refresh_tree_current(p_tree_id UUID) RETURNS void
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   WITH validas AS (
-    SELECT tdv.*
+    SELECT tdv.*, wo.fecha_completada_ot AS ot_fecha_completada
     FROM tree_data_versions tdv
     JOIN inspections i ON i.id = tdv.inspection_id
     JOIN work_orders wo ON wo.id = i.work_order_id
     WHERE tdv.tree_id = p_tree_id
       AND i.estado_registro <> 'anulado'
       AND wo.estado_ot = 'completada'
-    ORDER BY wo.fecha_completada_ot DESC, tdv.created_at DESC
   ),
   alta AS (
     SELECT * FROM tree_data_versions WHERE tree_id = p_tree_id AND inspection_id IS NULL
   )
   UPDATE trees t SET
-    sector = COALESCE((SELECT v.sector FROM validas v WHERE 'sector' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.sector FROM alta a)),
-    ubicacion_descriptiva = COALESCE((SELECT v.ubicacion_descriptiva FROM validas v WHERE 'ubicacion_descriptiva' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.ubicacion_descriptiva FROM alta a)),
-    utm_este = COALESCE((SELECT v.utm_este FROM validas v WHERE 'utm_este' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.utm_este FROM alta a)),
-    utm_norte = COALESCE((SELECT v.utm_norte FROM validas v WHERE 'utm_norte' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.utm_norte FROM alta a)),
-    especie_cientifica = COALESCE((SELECT v.especie_cientifica FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.especie_cientifica FROM alta a)),
-    nombre_comun = COALESCE((SELECT v.nombre_comun FROM validas v WHERE 'nombre_comun' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.nombre_comun FROM alta a)),
-    multifustal = COALESCE((SELECT v.multifustal FROM validas v WHERE 'multifustal' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.multifustal FROM alta a)),
-    numero_fustes = COALESCE((SELECT v.numero_fustes FROM validas v WHERE 'numero_fustes' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.numero_fustes FROM alta a)),
-    dap_fustes_cm = COALESCE((SELECT v.dap_fustes_cm FROM validas v WHERE 'dap_fustes_cm' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.dap_fustes_cm FROM alta a)),
-    dap_cm = COALESCE((SELECT v.dap_cm FROM validas v WHERE 'dap_cm' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.dap_cm FROM alta a)),
-    altura_total_m = COALESCE((SELECT v.altura_total_m FROM validas v WHERE 'altura_total_m' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.altura_total_m FROM alta a)),
-    diametro_copa_ns_m = COALESCE((SELECT v.diametro_copa_ns_m FROM validas v WHERE 'diametro_copa_ns_m' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.diametro_copa_ns_m FROM alta a)),
-    diametro_copa_eo_m = COALESCE((SELECT v.diametro_copa_eo_m FROM validas v WHERE 'diametro_copa_eo_m' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.diametro_copa_eo_m FROM alta a)),
-    copa_no_presenta = COALESCE((SELECT v.copa_no_presenta FROM validas v WHERE 'copa_no_presenta' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.copa_no_presenta FROM alta a)),
-    altura_primera_rama_m = COALESCE((SELECT v.altura_primera_rama_m FROM validas v WHERE 'altura_primera_rama_m' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.altura_primera_rama_m FROM alta a)),
-    altura_primera_rama_no_presenta = COALESCE((SELECT v.altura_primera_rama_no_presenta FROM validas v WHERE 'altura_primera_rama_no_presenta' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.altura_primera_rama_no_presenta FROM alta a)),
-    altura_base_copa_viva_m = COALESCE((SELECT v.altura_base_copa_viva_m FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.altura_base_copa_viva_m FROM alta a)),
-    altura_base_copa_viva_no_presenta = COALESCE((SELECT v.altura_base_copa_viva_no_presenta FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.altura_base_copa_viva_no_presenta FROM alta a)),
-    clase_edad = COALESCE((SELECT v.clase_edad FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.clase_edad FROM alta a)),
-    rango_edad_estimada_anios = COALESCE((SELECT v.rango_edad_estimada_anios FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados) LIMIT 1), (SELECT a.rango_edad_estimada_anios FROM alta a)),
-    vigente_desde_inspection_id = (SELECT v.inspection_id FROM validas v LIMIT 1)
+    sector = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'sector' = ANY(v.campos_registrados))
+      THEN (SELECT v.sector FROM validas v WHERE 'sector' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.sector FROM alta a) END,
+    ubicacion_descriptiva = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'ubicacion_descriptiva' = ANY(v.campos_registrados))
+      THEN (SELECT v.ubicacion_descriptiva FROM validas v WHERE 'ubicacion_descriptiva' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.ubicacion_descriptiva FROM alta a) END,
+    utm_este = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'utm_este' = ANY(v.campos_registrados))
+      THEN (SELECT v.utm_este FROM validas v WHERE 'utm_este' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.utm_este FROM alta a) END,
+    utm_norte = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'utm_norte' = ANY(v.campos_registrados))
+      THEN (SELECT v.utm_norte FROM validas v WHERE 'utm_norte' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.utm_norte FROM alta a) END,
+    especie_cientifica = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados))
+      THEN (SELECT v.especie_cientifica FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.especie_cientifica FROM alta a) END,
+    nombre_comun = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'nombre_comun' = ANY(v.campos_registrados))
+      THEN (SELECT v.nombre_comun FROM validas v WHERE 'nombre_comun' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.nombre_comun FROM alta a) END,
+    multifustal = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'multifustal' = ANY(v.campos_registrados))
+      THEN (SELECT v.multifustal FROM validas v WHERE 'multifustal' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.multifustal FROM alta a) END,
+    numero_fustes = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'numero_fustes' = ANY(v.campos_registrados))
+      THEN (SELECT v.numero_fustes FROM validas v WHERE 'numero_fustes' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.numero_fustes FROM alta a) END,
+    dap_fustes_cm = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'dap_fustes_cm' = ANY(v.campos_registrados))
+      THEN (SELECT v.dap_fustes_cm FROM validas v WHERE 'dap_fustes_cm' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.dap_fustes_cm FROM alta a) END,
+    dap_cm = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'dap_cm' = ANY(v.campos_registrados))
+      THEN (SELECT v.dap_cm FROM validas v WHERE 'dap_cm' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.dap_cm FROM alta a) END,
+    altura_total_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_total_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_total_m FROM validas v WHERE 'altura_total_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_total_m FROM alta a) END,
+    diametro_copa_ns_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'diametro_copa_ns_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.diametro_copa_ns_m FROM validas v WHERE 'diametro_copa_ns_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.diametro_copa_ns_m FROM alta a) END,
+    diametro_copa_eo_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'diametro_copa_eo_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.diametro_copa_eo_m FROM validas v WHERE 'diametro_copa_eo_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.diametro_copa_eo_m FROM alta a) END,
+    copa_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'copa_no_presenta' = ANY(v.campos_registrados))
+      THEN (SELECT v.copa_no_presenta FROM validas v WHERE 'copa_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.copa_no_presenta FROM alta a) END,
+    altura_primera_rama_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_primera_rama_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_primera_rama_m FROM validas v WHERE 'altura_primera_rama_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_primera_rama_m FROM alta a) END,
+    altura_primera_rama_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_primera_rama_no_presenta' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_primera_rama_no_presenta FROM validas v WHERE 'altura_primera_rama_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_primera_rama_no_presenta FROM alta a) END,
+    altura_base_copa_viva_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_base_copa_viva_m FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_base_copa_viva_m FROM alta a) END,
+    altura_base_copa_viva_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_base_copa_viva_no_presenta FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_base_copa_viva_no_presenta FROM alta a) END,
+    clase_edad = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados))
+      THEN (SELECT v.clase_edad FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.clase_edad FROM alta a) END,
+    rango_edad_estimada_anios = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados))
+      THEN (SELECT v.rango_edad_estimada_anios FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.rango_edad_estimada_anios FROM alta a) END,
+    vigente_desde_inspection_id = (SELECT v.inspection_id FROM validas v ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
   WHERE t.id = p_tree_id;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- ---------------------------------------------------------------------
 -- EVALUACIÓN TÉCNICA Y RIESGO (migración 007)
@@ -840,7 +945,15 @@ CREATE TABLE work_orders (
   CONSTRAINT chk_work_orders_tree_levantamiento
     CHECK ((tree_id IS NULL) = (accion_solicitada = 'levantamiento')),
   CONSTRAINT chk_work_orders_completada_fecha
-    CHECK ((estado_ot = 'completada') = (fecha_completada_ot IS NOT NULL))
+    CHECK ((estado_ot = 'completada') = (fecha_completada_ot IS NOT NULL)),
+  -- fecha_accion_programada obligatoria desde programada (D-241).
+  CONSTRAINT chk_work_orders_fecha_programada
+    CHECK (estado_ot = 'pendiente' OR fecha_accion_programada IS NOT NULL),
+  -- observaciones obligatoria en Levantamiento y Otra/Otra_Intervención (D-246).
+  CONSTRAINT chk_work_orders_observaciones
+    CHECK (accion_solicitada NOT IN ('levantamiento', 'otra', 'otra_intervencion') OR observaciones IS NOT NULL),
+  -- Destino de la FK compuesta de maintenance_records (coherencia con tipo_ot).
+  CONSTRAINT work_orders_id_tipo_ot_key UNIQUE (id, tipo_ot)
 );
 
 CREATE INDEX idx_work_orders_project ON work_orders (project_id);
@@ -851,7 +964,10 @@ CREATE TRIGGER trg_work_orders_updated_at
   BEFORE UPDATE ON work_orders
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-CREATE FUNCTION fn_set_work_order_codigo() RETURNS TRIGGER AS $$
+CREATE FUNCTION fn_set_work_order_codigo() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   IF NEW.codigo_ot IS NULL THEN
     IF NEW.tipo_ot = 'inspeccion' THEN
@@ -862,20 +978,23 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_work_orders_codigo
   BEFORE INSERT ON work_orders
   FOR EACH ROW EXECUTE FUNCTION fn_set_work_order_codigo();
 
-CREATE FUNCTION fn_fix_requiere_revision_inspector() RETURNS TRIGGER AS $$
+CREATE FUNCTION fn_fix_requiere_revision_inspector() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   IF NEW.subtipo_accion IN ('tala', 'retiro_tocon') THEN
     NEW.requiere_revision_inspector := true;
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_work_orders_revision_inspector
   BEFORE INSERT OR UPDATE ON work_orders
@@ -937,7 +1056,9 @@ CREATE TABLE inspections (
       justificacion_ajuste_fecha IS NOT NULL
       OR (fecha_proxima_inspeccion IS NULL OR fecha_proxima_inspeccion_sugerida IS NULL OR fecha_proxima_inspeccion = fecha_proxima_inspeccion_sugerida)
       AND (fecha_proximo_monitoreo IS NULL OR fecha_proximo_monitoreo_sugerida IS NULL OR fecha_proximo_monitoreo = fecha_proximo_monitoreo_sugerida)
-    )
+    ),
+  -- Destino de la FK compuesta de evaluations (coherencia tree_id).
+  CONSTRAINT inspections_id_tree_id_key UNIQUE (id, tree_id)
 );
 
 CREATE SEQUENCE inspections_codigo_seq START 1;
@@ -947,14 +1068,17 @@ CREATE INDEX idx_inspections_estado_registro ON inspections (estado_registro);
 CREATE INDEX idx_inspections_work_order ON inspections (work_order_id);
 
 -- anulado solo desde finalizado (CC-031).
-CREATE FUNCTION fn_check_inspection_anulacion() RETURNS TRIGGER AS $$
+CREATE FUNCTION fn_check_inspection_anulacion() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   IF NEW.estado_registro = 'anulado' AND OLD.estado_registro <> 'finalizado' THEN
     RAISE EXCEPTION 'Una inspección solo puede anularse desde finalizado (actual: %)', OLD.estado_registro;
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_inspections_anulacion
   BEFORE UPDATE ON inspections
@@ -962,8 +1086,32 @@ CREATE TRIGGER trg_inspections_anulacion
   WHEN (NEW.estado_registro = 'anulado' AND OLD.estado_registro IS DISTINCT FROM NEW.estado_registro)
   EXECUTE FUNCTION fn_check_inspection_anulacion();
 
+-- Coherencia: inspections.tree_id debe ser el de su OT, salvo
+-- Levantamiento (la OT no tiene árbol todavía).
+CREATE FUNCTION fn_check_inspection_tree_coherente() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_wo_tree_id UUID;
+BEGIN
+  SELECT tree_id INTO v_wo_tree_id FROM work_orders WHERE id = NEW.work_order_id;
+  IF v_wo_tree_id IS NOT NULL AND v_wo_tree_id <> NEW.tree_id THEN
+    RAISE EXCEPTION 'La inspección % no coincide con el árbol de su OT', NEW.id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_inspections_tree_coherente
+  BEFORE INSERT OR UPDATE ON inspections
+  FOR EACH ROW EXECUTE FUNCTION fn_check_inspection_tree_coherente();
+
 -- OT no completada con inspecciones preguardadas (§5.2; D-239).
-CREATE FUNCTION fn_check_ot_completada() RETURNS TRIGGER AS $$
+CREATE FUNCTION fn_check_ot_completada() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   IF NEW.estado_ot = 'completada' AND EXISTS (
     SELECT 1 FROM inspections WHERE work_order_id = NEW.id AND estado_registro = 'preguardado'
@@ -972,7 +1120,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_work_orders_completada
   BEFORE UPDATE ON work_orders
@@ -993,11 +1141,11 @@ CREATE TABLE evaluations (
   calculados                               JSONB,
   indicadores                              JSONB,
   puntaje_raices_cuello                    INTEGER CHECK (puntaje_raices_cuello IS NULL OR (puntaje_raices_cuello >= 0 AND puntaje_raices_cuello <= 9)),
-  probabilidad_falla_raices_cuello         TEXT CHECK (probabilidad_falla_raices_cuello IS NULL OR probabilidad_falla_raices_cuello IN ('Improbable', 'Posible', 'Probable', 'Inminente')),
+  probabilidad_falla_raices_cuello         TEXT CHECK (probabilidad_falla_raices_cuello IS NULL OR probabilidad_falla_raices_cuello IN ('improbable', 'posible', 'probable', 'inminente', 'no_determinado')),
   puntaje_tronco                           INTEGER CHECK (puntaje_tronco IS NULL OR (puntaje_tronco >= 0 AND puntaje_tronco <= 14)),
-  probabilidad_falla_tronco                TEXT CHECK (probabilidad_falla_tronco IS NULL OR probabilidad_falla_tronco IN ('Improbable', 'Posible', 'Probable', 'Inminente')),
+  probabilidad_falla_tronco                TEXT CHECK (probabilidad_falla_tronco IS NULL OR probabilidad_falla_tronco IN ('improbable', 'posible', 'probable', 'inminente', 'no_determinado')),
   puntaje_copa_ramas                       INTEGER CHECK (puntaje_copa_ramas IS NULL OR (puntaje_copa_ramas >= 0 AND puntaje_copa_ramas <= 8)),  -- R03 con defoliación (CC-027)
-  probabilidad_falla_copa_ramas            TEXT CHECK (probabilidad_falla_copa_ramas IS NULL OR probabilidad_falla_copa_ramas IN ('Improbable', 'Posible', 'Probable', 'Inminente')),
+  probabilidad_falla_copa_ramas            TEXT CHECK (probabilidad_falla_copa_ramas IS NULL OR probabilidad_falla_copa_ramas IN ('improbable', 'posible', 'probable', 'inminente', 'no_determinado')),
   probabilidad_impacto                     TEXT,
   clasificacion_raices_cuello              TEXT,
   clasificacion_tronco                     TEXT,
@@ -1014,7 +1162,11 @@ CREATE TABLE evaluations (
   motor_commit                             TEXT NOT NULL,
   calculado_at                             TIMESTAMPTZ,
   created_at                               TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at                                TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at                                TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  -- Coherencia: la evaluación es del mismo árbol que su inspección.
+  CONSTRAINT evaluations_inspection_tree_fkey
+    FOREIGN KEY (inspection_id, tree_id) REFERENCES inspections (id, tree_id)
 );
 
 CREATE INDEX idx_evaluations_tree ON evaluations (tree_id, created_at DESC);
@@ -1052,11 +1204,11 @@ CREATE TABLE tree_assessments (
   calculados                               JSONB,
   indicadores                              JSONB,
   puntaje_raices_cuello                    INTEGER,
-  probabilidad_falla_raices_cuello         TEXT,
+  probabilidad_falla_raices_cuello         TEXT CHECK (probabilidad_falla_raices_cuello IS NULL OR probabilidad_falla_raices_cuello IN ('improbable', 'posible', 'probable', 'inminente', 'no_determinado')),
   puntaje_tronco                           INTEGER,
-  probabilidad_falla_tronco                TEXT,
+  probabilidad_falla_tronco                TEXT CHECK (probabilidad_falla_tronco IS NULL OR probabilidad_falla_tronco IN ('improbable', 'posible', 'probable', 'inminente', 'no_determinado')),
   puntaje_copa_ramas                       INTEGER,
-  probabilidad_falla_copa_ramas            TEXT,
+  probabilidad_falla_copa_ramas            TEXT CHECK (probabilidad_falla_copa_ramas IS NULL OR probabilidad_falla_copa_ramas IN ('improbable', 'posible', 'probable', 'inminente', 'no_determinado')),
   probabilidad_impacto                     TEXT,
   clasificacion_raices_cuello              TEXT,
   clasificacion_tronco                     TEXT,
@@ -1356,6 +1508,30 @@ CREATE TABLE maintenance_records (
 
 CREATE INDEX idx_maintenance_records_work_order ON maintenance_records (work_order_id);
 CREATE INDEX idx_maintenance_records_tree ON maintenance_records (tree_id);
+
+-- Coherencia: la OT debe ser de tipo mantenimiento y del mismo árbol.
+CREATE FUNCTION fn_check_maintenance_record_ot() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_wo_tipo_ot TEXT;
+  v_wo_tree_id UUID;
+BEGIN
+  SELECT tipo_ot, tree_id INTO v_wo_tipo_ot, v_wo_tree_id FROM work_orders WHERE id = NEW.work_order_id;
+  IF v_wo_tipo_ot IS DISTINCT FROM 'mantenimiento' THEN
+    RAISE EXCEPTION 'maintenance_records.work_order_id debe ser una OT de tipo mantenimiento';
+  END IF;
+  IF v_wo_tree_id IS DISTINCT FROM NEW.tree_id THEN
+    RAISE EXCEPTION 'maintenance_records.tree_id debe coincidir con el árbol de su OT';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_maintenance_records_ot
+  BEFORE INSERT OR UPDATE ON maintenance_records
+  FOR EACH ROW EXECUTE FUNCTION fn_check_maintenance_record_ot();
 
 -- Cierre automático de la OT (RG "Revisión de mantenimiento") y demás
 -- orquestación: backend, no trigger de base (§5.3).

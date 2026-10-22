@@ -90,9 +90,12 @@ CREATE TRIGGER trg_species_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ---------------------------------------------------------------------
--- 4. projects.status -> estado_proyecto (D-265; RG fila 27; CC-042).
---    Mismos códigos ('activo', 'cerrado'); el CHECK existente sigue
---    aplicando al renombrar.
+-- 4. projects: name -> nombre_proyecto (D-264) y status -> estado_proyecto
+--    (D-265; RG fila 27; CC-042). Mismos códigos de estado_proyecto
+--    ('activo', 'cerrado'); el CHECK existente sigue aplicando al
+--    renombrar.
 -- ---------------------------------------------------------------------
+ALTER TABLE projects
+  RENAME COLUMN name TO nombre_proyecto;
 ALTER TABLE projects
   RENAME COLUMN status TO estado_proyecto;

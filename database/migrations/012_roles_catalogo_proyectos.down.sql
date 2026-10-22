@@ -4,6 +4,8 @@
 
 ALTER TABLE projects
   RENAME COLUMN estado_proyecto TO status;
+ALTER TABLE projects
+  RENAME COLUMN nombre_proyecto TO name;
 
 DROP TRIGGER IF EXISTS trg_species_updated_at ON species;
 DROP INDEX IF EXISTS uq_species_especie_cientifica_norm;
