@@ -106,3 +106,39 @@ export async function assertProjectWriter(
   }
   await assertProjectAccess(user, projectId, accessToken);
 }
+
+/**
+ * Los cuatro roles de SIVU (REGLAS_GENERALES filas 15–18; CC-032). Rol
+ * global por usuario (AMD-31) — no hay rol por proyecto.
+ */
+export type RolSivu = "admin" | "usuario_municipal" | "inspector" | "encargado_mantencion";
+
+/**
+ * Exige que `user.role` sea uno de `allowedRoles` **y** acceso al
+ * proyecto (`assertProjectAccess`) — construida sobre esa misma
+ * función, nunca un sistema de autorización paralelo (ver la nota del
+ * encabezado de este archivo).
+ *
+ * A diferencia de `assertProjectAccess`, esta función NO trata a
+ * `admin` como transversal por defecto: para las acciones de datos de
+ * un proyecto (crear árbol, OT, inspección, ajuste, mantenimiento...)
+ * el Administrador tiene acceso de solo lectura (PR-004 v7.0) — si
+ * una acción es de un rol específico, `admin` queda fuera salvo que se
+ * lo incluya explícitamente en `allowedRoles`.
+ *
+ * Uso en un controller:
+ * ```ts
+ * await assertProjectRole(req.user, projectId, ["usuario_municipal"], accessToken);
+ * ```
+ */
+export async function assertProjectRole(
+  user: AuthenticatedUser,
+  projectId: string,
+  allowedRoles: readonly RolSivu[],
+  accessToken: string
+): Promise<void> {
+  if (user.role === null || !(allowedRoles as readonly string[]).includes(user.role)) {
+    throw new AppError(`Requiere uno de los roles: ${allowedRoles.join(", ")}`, 403);
+  }
+  await assertProjectAccess(user, projectId, accessToken);
+}
