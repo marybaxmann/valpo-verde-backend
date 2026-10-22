@@ -1950,3 +1950,39 @@ motivo)
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ajuste: el cierre se permite con OT o incidencias abiertas, que quedan congeladas hasta la reapertura (DICCIONARIO_CAMPOS L265, REGLAS_GENERALES B27). |
 | 2026-10-21 | APROBADO METODOLÓGICAMENTE | marybaxmann | La versión en preparación pasa de 2.0.1 a 2.1.0 (`rule_version` 2.1) e incluye CC-040 (AM-12). |
 | 2026-10-21 | FUENTE SINCRONIZADA | marybaxmann | Publicación de 2.1.0 (PR #31 y #33 fusionados en `main`, `34d8e99`). VERSION fila 6 y el tag `metodologia-v2.1.0` quedan para el PR aparte de la sesión de auditoría (como el PR #30 de 2.0.0). |
+
+---
+
+### CC-043 — M04: tratamiento de "Función no determinada" en `tipo_red_aerea` (IN-RAE)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-22 |
+| Origen | Fase 5 (motor de reglas), implementación de M04 / IN-RAE. El Excel define `tipo_red_aerea` (D-149) como selección múltiple con la opción "Función no determinada", pero las reglas IN-RAE-02 a 06 solo distinguen "incluye Eléctrica" / "no incluye Eléctrica"; no definen qué hacer cuando la selección incluye "Función no determinada" y no incluye "Eléctrica". |
+| Tipo | 2 — metodológico (regla de indicador, M04) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | REGLAS_INDICADORES: IN-RAE-02 a 06. DICCIONARIO_CAMPOS: D-149 (`tipo_red_aerea`). |
+| Versión anterior | No definida: el Excel no contempla el caso "Función no determinada" sin "Eléctrica" en IN-RAE. |
+| Versión nueva (opción B) | Si la selección de `tipo_red_aerea` incluye "Función no determinada" y **no** incluye "Eléctrica", el componente red aérea queda `no_determinado` (se excluye de M04 según D-180): no se puede descartar que la red sea eléctrica. Si la selección incluye "Eléctrica", se aplican IN-RAE-02 a 04 igual, aunque también esté marcada "Función no determinada". Si no incluye ninguna de las dos, se aplican IN-RAE-05/06 como hoy. |
+| Motivo | El Excel no define el caso y la regla del proyecto es no suponer datos: no se puede asumir que una red de función desconocida no es eléctrica (lo que subestimaría el riesgo tratándola como IN-RAE-05/06), ni asumir que sí lo es (lo que la sobreestimaría exigiéndole la distancia de seguridad sin que el Inspector la haya evaluado como tal). |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-22. |
+| Archivos afectados | `src/services/rules/engine/m04-infraestructura.ts` (implementación); esta ficha. Pendiente: `docs/excel/Base de Datos Valpo Verde.xlsx` (REGLAS_INDICADORES IN-RAE, DICCIONARIO_CAMPOS D-149). |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: agregar el texto de esta decisión a REGLAS_INDICADORES (IN-RAE) y a D-149, en la próxima versión del paquete. |
+| Impacto en BD | Ninguno: `tipo_red_aerea` no tiene columna propia todavía (Fase 6). |
+| Impacto en backend | Implementado en el motor (Fase 5): `evaluarRedAerea` en `m04-infraestructura.ts`. |
+| Impacto en API | Ninguno todavía (Fase 6). |
+| Impacto en frontend | Ninguno todavía (Fase 7). |
+| Pruebas necesarias | Implementadas: solo "Función no determinada"; "Eléctrica" + "Función no determinada"; "Telecomunicaciones" + "Función no determinada"; código desconocido; lista vacía (`tests/services/rules/engine/m04-infraestructura.test.ts`). |
+| Dependencias | D-180 (No aplica y No determinado se excluyen de M04). |
+| rule_version | 2.1 (sin cambio de versión del paquete: el Excel en sí no se modificó todavía; la sincronización queda pendiente, ver "Impacto en Excel metodológico"). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-22 |
+| Fecha de implementación | 2026-10-22 (rama `feature/fase5-motor-reglas`) |
+| Commits / PR asociados | Rama `feature/fase5-motor-reglas` (sin PR todavía). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día. Pendiente llevar el texto al Excel. |

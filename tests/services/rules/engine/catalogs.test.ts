@@ -178,6 +178,17 @@ describe("catálogo clasificacion_infraestructura vs DICCIONARIO_CAMPOS (fila cl
   });
 });
 
+describe("catálogo tipo_red_aerea vs DICCIONARIO_CAMPOS (fila tipo_red_aerea)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "tipo_red_aerea");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("tipo_red_aerea").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
 describe("catálogo clasificacion_prioridad vs DICCIONARIO_CAMPOS (fila clasificacion_prioridad)", () => {
   it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
     const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);

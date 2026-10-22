@@ -21,6 +21,14 @@
 
 ---
 
+## ▶ Novedad 2026-10-22 — Fase 5 (motor de reglas): CC-043 registrado
+
+- **CC-043 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** M04/IN-RAE — si `tipo_red_aerea` incluye "Función no determinada" y no incluye "Eléctrica", el componente red aérea queda `no_determinado` (se excluye de M04, D-180); si incluye "Eléctrica", se aplican IN-RAE-02 a 04 igual. Ficha completa en `docs/registro-cambios.md`. Pendiente llevar el texto a REGLAS_INDICADORES (IN-RAE) y D-149 en la próxima versión del paquete.
+- **Próximos libres:** CC-044, ADR-017, PR-023.
+- Motor (rama `feature/fase5-motor-reglas`, sin PR todavía): catálogos (PR-021), variables derivadas, R01–R04, M01–M05 implementados con tests (ver el commit más reciente de esa rama para el detalle). Sin endpoints, sin tocar ninguna base.
+
+---
+
 ## ▶ Novedad 2026-10-21 — Fase 4: migraciones 012–017 completas (leer primero)
 
 - **Protocolo de 9 fases:** van 4 cerradas (0 a 3); Fase 4 (base de datos) con sus 6 migraciones (012–017) escritas, aplicadas y probadas en `valpo-verde-conecta-pruebas`, en la rama `feature/fase4-migraciones-012-017` del backend. **Falta abrir el PR** (con el script de limpieza, las 6 migraciones + `.down.sql` y `schema.sql`) y la revisión/aprobación de la responsable antes de fusionar o de pasar a `valpo-verde-conecta` (issue #45, Fase 8).

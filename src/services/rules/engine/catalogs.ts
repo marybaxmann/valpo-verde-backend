@@ -118,6 +118,13 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_infraestructura", codigo: "critico", etiqueta: "Crítico", orden: 3, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_infraestructura", codigo: "no_aplica", etiqueta: "No aplica", orden: 4, estado: "vigente", cc: "PR-021" },
 
+  // --- tipo_red_aerea: D-149, selección múltiple ---
+  { catalogo: "tipo_red_aerea", codigo: "electrica", etiqueta: "Eléctrica", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tipo_red_aerea", codigo: "telecomunicaciones", etiqueta: "Telecomunicaciones", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tipo_red_aerea", codigo: "alumbrado_publico", etiqueta: "Alumbrado público", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tipo_red_aerea", codigo: "otra", etiqueta: "Otra", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tipo_red_aerea", codigo: "funcion_no_determinada", etiqueta: "Función no determinada", orden: 4, estado: "vigente", cc: "PR-021" },
+
   // --- clasificacion_prioridad: D-172 (salida de M05) ---
   { catalogo: "clasificacion_prioridad", codigo: "baja", etiqueta: "Baja", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_prioridad", codigo: "media", etiqueta: "Media", orden: 1, estado: "vigente", cc: "PR-021" },
@@ -168,3 +175,4 @@ export type SiNoNoDeterminadoCodigo = "si" | "no" | "no_determinado";
 export type CategoriaInfraestructuraCodigo = "no_aplica" | "sin_afectacion" | "leve" | "moderada" | "severa" | "no_determinado";
 export type ClasificacionInfraestructuraCodigo = "bajo" | "moderado" | "alto" | "critico" | "no_aplica";
 export type ClasificacionPrioridadCodigo = "baja" | "media" | "alta" | "critica" | "no_determinado";
+export type TipoRedAereaCodigo = "electrica" | "telecomunicaciones" | "alumbrado_publico" | "otra" | "funcion_no_determinada";
