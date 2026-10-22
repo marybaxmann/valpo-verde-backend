@@ -9,26 +9,31 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-21 (Fase 4 en curso: respaldo, reactivación, limpieza y migración 012 aplicados en `valpo-verde-conecta-pruebas`)
+- **Última actualización:** 2026-10-21 (Fase 4: migraciones 012–017 completas y probadas en `valpo-verde-conecta-pruebas`; falta abrir PR y la aprobación de la responsable sobre el resultado de la 017 antes de cerrar el issue #43)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `00b3a84` (PR #34 y #35, 2.1.0 publicada; tag `metodologia-v2.1.0`); frontend `main` = `187a90d` (PR #5). Fase 4 en la rama `feature/fase4-migraciones-012-017` (sin PR todavía).
 - **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** 2.1.0 publicada (tag `metodologia-v2.1.0`). Fase 4 en curso: migración 012 aplicada y probada en `valpo-verde-conecta-pruebas`; siguen 013 a 017. **Importante:** 012–017 solo existen en `valpo-verde-conecta-pruebas` hasta que la Fase 8 lo autorice (issue #45) — `valpo-verde-conecta` sigue en la revisión 6 de `schema.sql`.
+- **Resumen:** 2.1.0 publicada (tag `metodologia-v2.1.0`). Migraciones 012–017 completas, probadas (aplicar→revertir→reaplicar) y con W1–W29 ejecutados en `valpo-verde-conecta-pruebas`; falta abrir el PR de la rama `feature/fase4-migraciones-012-017` (sin fusionar) y su revisión. **Importante:** 012–017 solo existen en `valpo-verde-conecta-pruebas` hasta que la Fase 8 lo autorice (issue #45) — `valpo-verde-conecta` sigue en la revisión 6 de `schema.sql`.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
 ---
 
-## ▶ Novedad 2026-10-21 — Fase 4 en curso (leer primero)
+## ▶ Novedad 2026-10-21 — Fase 4: migraciones 012–017 completas (leer primero)
 
-- **Protocolo de 9 fases:** van 4 cerradas (0 a 3); Fase 4 (base de datos) en curso, en la rama `feature/fase4-migraciones-012-017` del backend, sin PR todavía (se abre al terminar 012–017 y W1–W12; no se fusiona sin autorización expresa).
-- **Paso 0 (#36) y paso 1 (#37), hechos:** respaldo nuevo de `valpo-verde-conecta` (`C:\Users\usuario\respaldos\sivu\2026-10-21\`); `valpo-verde-conecta-pruebas` reactivada (`restore_project`, plan free, sin costo); inventario y limpieza de los datos simulados en una transacción (`database/fase4/00_limpieza_datos_simulados.sql`) — **solo** en `valpo-verde-conecta-pruebas`; no se tocaron `roles` ni `user_profiles`.
-- **Migración 012 (#38), hecha:** roles `inspector`/`encargado_mantencion`; `user_profiles.codigo_usuario` (`USR-000`); `species` adaptada a catálogo (CC-039); `projects.status` → `estado_proyecto` (CC-042). Aplicar → revertir → reaplicar probado en `valpo-verde-conecta-pruebas`. `schema.sql` en revisión 7.
-- **CRÍTICO — alcance de 012 a 017:** se aplican y prueban únicamente en `valpo-verde-conecta-pruebas` (diseño §7: "primero en pruebas, con W1–W12 y las de cada down; después en `valpo-verde-conecta`"). `valpo-verde-conecta` (la base con la demo/dev actual) **no se toca** hasta el issue #45, que requiere aprobación expresa de la autora. Cualquier agente que continúe la Fase 4 debe seguir aplicando contra `gmlbmyreoxgoqrolhyxo` (pruebas), nunca contra `ytcxswbulsmboucardxa` (conecta).
-- **Historial de migraciones de Supabase:** en `valpo-verde-conecta-pruebas` hay 2 entradas antiguas (`demo_valpo_verde_schema`, `demo_real_data_schema_v2`) que no corresponden a 001–011 (la estructura llegó por `pg_restore`, no por replay). No se editaron a mano; `apply_migration` registra 012 en adelante con normalidad. Si hace falta reconciliar esas 2 entradas, se propone antes de tocarlas.
-- **Siguen:** 013 (sectores y árboles, #39), 014 (OT/inspección/evaluación/mantenimiento, #40), 015 (incidencias y fotos, #41), 016 (vistas, #42), 017 (RLS + W1–W12, #43).
+- **Protocolo de 9 fases:** van 4 cerradas (0 a 3); Fase 4 (base de datos) con sus 6 migraciones (012–017) escritas, aplicadas y probadas en `valpo-verde-conecta-pruebas`, en la rama `feature/fase4-migraciones-012-017` del backend. **Falta abrir el PR** (con el script de limpieza, las 6 migraciones + `.down.sql` y `schema.sql`) y la revisión/aprobación de la responsable antes de fusionar o de pasar a `valpo-verde-conecta` (issue #45, Fase 8).
+- **Paso 0 (#36) y paso 1 (#37), hechos:** respaldo de `valpo-verde-conecta` (`C:\Users\usuario\respaldos\sivu\2026-10-21\`); `valpo-verde-conecta-pruebas` reactivada; limpieza de los datos simulados (`database/fase4/00_limpieza_datos_simulados.sql`), solo en pruebas.
+- **012 (#38):** roles `inspector`/`encargado_mantencion`; `user_profiles.codigo_usuario`; `projects.name`→`nombre_proyecto` y `.status`→`estado_proyecto`; `species` adaptada (CC-039). Corregida una vez (LPAD/setval y el rename de `name` que faltaba).
+- **013 (#39):** `sectors`, `trees` con identidad + valores vigentes, `tree_data_versions`. Corregida una vez (snake_case en `clase_edad`, FK de coherencia proyecto↔sector, CHECK del Excel).
+- **014 (#40):** `work_orders`, `inspections` reutilizada (`estado_registro`), `evaluations`, `classification_adjustments`, `tree_assessments`, `maintenance_records`, `fn_refresh_tree_current`. Corregida una vez (`CASE WHEN EXISTS` en vez de `COALESCE` para no perder un "No presenta" explícito; `probabilidad_falla_*` en snake_case con `no_determinado`; triggers de coherencia OT↔inspección↔evaluación↔mantenimiento).
+- **015 (#41):** `incidents` adaptada, `incident_reporters`, `photos` adaptada.
+- **016 (#42):** las 6 vistas (`v_tree_presence`, `v_inspections`, `v_tree_current_inputs`, `v_tree_current_assessment`, `v_species_traits`, `v_upcoming_inspections`).
+- **017 (#43), hecha pero PENDIENTE DE REVISIÓN antes de cerrar el issue:** RLS por rol (CC-033: solo SELECT, ninguna escritura para ningún rol, incluido admin); `has_project_role`; `incident_reporters` solo `usuario_municipal` (PR-022); GRANT/REVOKE de tabla/secuencia/función (anon sin SELECT en nada; `fn_refresh_tree_current` y `fn_create_tree_with_measurement` sin EXECUTE para anon/authenticated — **esto deja sin función el alta de árbol actual hasta que la Fase 6 la reescriba con `service_role`**, solo en pruebas por ahora); trigger de proyecto cerrado (RG fila 27; CC-042) en 12 tablas + la propia fila de `projects` (bloquea todo salvo el cambio de `estado_proyecto`); `security_invoker = true` en las 6 vistas. W1–W29 (29/29 con el resultado esperado) documentados en `docs/auditorias/2026-10-postauditoria/escenarios-rls.md`.
+- **CRÍTICO — alcance de 012 a 017:** se aplican y prueban únicamente en `valpo-verde-conecta-pruebas`. `valpo-verde-conecta` (la base con la demo/dev actual) **no se toca** hasta el issue #45, que requiere aprobación expresa de la autora.
+- **Historial de migraciones de Supabase:** en `valpo-verde-conecta-pruebas` hay 2 entradas antiguas (`demo_valpo_verde_schema`, `demo_real_data_schema_v2`) que no corresponden a 001–011 (la estructura llegó por `pg_restore`, no por replay). No se editaron a mano. Si hace falta reconciliar esas 2 entradas, se propone antes de tocarlas.
+- **Siguiente paso esperado:** la responsable revisa el resultado de la 017 (incluida la lista de funciones y el inventario de GRANT que acompañó el diseño); si lo aprueba, se abre el PR de `feature/fase4-migraciones-012-017` y se cierra el issue #43.
 
 ## ▶ Novedad 2026-10-21 — Fase 3 cerrada; publicación de 2.1.0 preparada
 
