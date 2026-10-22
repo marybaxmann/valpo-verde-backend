@@ -109,6 +109,11 @@ describe("M03 — faltantes y fuera de dominio", () => {
     expect(r.noDeterminado).toBe(true);
     expect(r.motivo).toMatch(/código no reconocido/);
   });
+  it("probabilidad_falla_impacto con código no reconocido → no_determinado, nunca lanza (regresión del hallazgo de la responsable)", () => {
+    const r = evaluarM03("muy_segura" as unknown as ProbabilidadFallaImpactoCodigo, "menor");
+    expect(r.noDeterminado).toBe(true);
+    expect(r.motivo).toMatch(/código no reconocido/);
+  });
 });
 
 describe("evaluarClasificacionComponente — composición M02 + M03", () => {

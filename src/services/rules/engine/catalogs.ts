@@ -87,6 +87,43 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_riesgo", codigo: "alto", etiqueta: "Alto", orden: 2, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_riesgo", codigo: "extremo", etiqueta: "Extremo", orden: 3, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_riesgo", codigo: "no_determinado", etiqueta: "No determinado", estado: "vigente", cc: "CC-024" },
+
+  // --- probabilidad_falla_impacto: salida intermedia de M02, sin columna
+  //     propia en evaluations/tree_assessments (D-176 a D-178 tratan
+  //     M02+M03 como un solo paso); se registra igual para que
+  //     evaluarM03 pueda validar su dominio antes de indexar la matriz. ---
+  { catalogo: "probabilidad_falla_impacto", codigo: "poco_probable", etiqueta: "Poco probable", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "probabilidad_falla_impacto", codigo: "algo_probable", etiqueta: "Algo probable", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "probabilidad_falla_impacto", codigo: "probable", etiqueta: "Probable", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "probabilidad_falla_impacto", codigo: "muy_probable", etiqueta: "Muy probable", orden: 3, estado: "vigente", cc: "PR-021" },
+
+  // --- si_no_no_determinado: D-148 (red_subterranea_presente), D-156
+  //     (compromete_funcionalidad_red_subterranea) ---
+  { catalogo: "si_no_no_determinado", codigo: "si", etiqueta: "Sí", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "si_no_no_determinado", codigo: "no", etiqueta: "No", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "si_no_no_determinado", codigo: "no_determinado", etiqueta: "No determinado", orden: 2, estado: "vigente", cc: "PR-021" },
+
+  // --- categoria_infraestructura: categoría parcial de REGLAS_INDICADORES (IN-*) ---
+  { catalogo: "categoria_infraestructura", codigo: "no_aplica", etiqueta: "No aplica", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "categoria_infraestructura", codigo: "sin_afectacion", etiqueta: "Sin afectación", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "categoria_infraestructura", codigo: "leve", etiqueta: "Leve", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "categoria_infraestructura", codigo: "moderada", etiqueta: "Moderada", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "categoria_infraestructura", codigo: "severa", etiqueta: "Severa", orden: 4, estado: "vigente", cc: "PR-021" },
+  { catalogo: "categoria_infraestructura", codigo: "no_determinado", etiqueta: "No determinado", orden: 5, estado: "vigente", cc: "PR-021" },
+
+  // --- clasificacion_infraestructura: D-170 (salida de M04) ---
+  { catalogo: "clasificacion_infraestructura", codigo: "bajo", etiqueta: "Bajo", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_infraestructura", codigo: "moderado", etiqueta: "Moderado", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_infraestructura", codigo: "alto", etiqueta: "Alto", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_infraestructura", codigo: "critico", etiqueta: "Crítico", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_infraestructura", codigo: "no_aplica", etiqueta: "No aplica", orden: 4, estado: "vigente", cc: "PR-021" },
+
+  // --- clasificacion_prioridad: D-172 (salida de M05) ---
+  { catalogo: "clasificacion_prioridad", codigo: "baja", etiqueta: "Baja", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_prioridad", codigo: "media", etiqueta: "Media", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_prioridad", codigo: "alta", etiqueta: "Alta", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_prioridad", codigo: "critica", etiqueta: "Crítica", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_prioridad", codigo: "no_determinado", etiqueta: "No determinado", orden: 4, estado: "vigente", cc: "CC-029" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {
@@ -127,3 +164,7 @@ export type TasaOcupacionCodigo = "rara" | "ocasional" | "frecuente" | "constant
 export type ProbabilidadImpactoCodigo = "muy_baja" | "baja" | "media" | "alta";
 export type ConsecuenciaCodigo = "insignificante" | "menor" | "significativa" | "severa";
 export type ClasificacionRiesgoCodigo = "bajo" | "moderado" | "alto" | "extremo" | "no_determinado";
+export type SiNoNoDeterminadoCodigo = "si" | "no" | "no_determinado";
+export type CategoriaInfraestructuraCodigo = "no_aplica" | "sin_afectacion" | "leve" | "moderada" | "severa" | "no_determinado";
+export type ClasificacionInfraestructuraCodigo = "bajo" | "moderado" | "alto" | "critico" | "no_aplica";
+export type ClasificacionPrioridadCodigo = "baja" | "media" | "alta" | "critica" | "no_determinado";

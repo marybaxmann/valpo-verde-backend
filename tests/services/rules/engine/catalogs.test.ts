@@ -128,6 +128,67 @@ describe("catálogo clasificacion_riesgo vs DICCIONARIO_CAMPOS (fila clasificaci
   });
 });
 
+describe("catálogo probabilidad_falla_impacto vs las celdas de M02 en MATRICES_CALCULO", () => {
+  it("las etiquetas vigentes coinciden con los valores únicos de las 16 celdas de M02", () => {
+    const filas = leerExportCsv("MATRICES_CALCULO.csv");
+    // M02 ocupa las columnas 7–10 (Muy baja/Baja/Media/Alta) de las filas
+    // 5–8 (índices 4–7): Inminente, Probable, Posible, Improbable.
+    const celdasM02 = filas.slice(4, 8).flatMap((f) => [f[7], f[8], f[9], f[10]].map((c) => c.trim()));
+    const etiquetasEnExcel = new Set(celdasM02);
+    const etiquetasCatalogo = entradasVigentesDe("probabilidad_falla_impacto").map((c) => c.etiqueta);
+    expect(new Set(etiquetasCatalogo)).toEqual(etiquetasEnExcel);
+  });
+});
+
+describe("catálogo si_no_no_determinado vs DICCIONARIO_CAMPOS (fila red_subterranea_presente)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "red_subterranea_presente");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("si_no_no_determinado").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo categoria_infraestructura vs la columna Categoría parcial de las reglas IN-* en REGLAS_INDICADORES", () => {
+  it("las etiquetas vigentes son exactamente las categorías parciales usadas por las reglas IN-*", () => {
+    const filas = leerExportCsv("REGLAS_INDICADORES.csv").slice(1);
+    // IN-ALC-04 ("la categoría más severa...") e IN-CAL-06 ("Mínimo
+    // Moderada...") describen una regla de combinación, no asignan una
+    // categoría propia — se excluyen de la comparación por su ID.
+    const etiquetasEnExcel = new Set(
+      filas
+        .filter((f) => f[0]?.startsWith("IN-") && f[0] !== "IN-ALC-04" && f[0] !== "IN-CAL-06")
+        .map((f) => f[5]?.trim()),
+    );
+    const etiquetasCatalogo = entradasVigentesDe("categoria_infraestructura").map((c) => c.etiqueta);
+    expect(new Set(etiquetasCatalogo)).toEqual(etiquetasEnExcel);
+  });
+});
+
+describe("catálogo clasificacion_infraestructura vs DICCIONARIO_CAMPOS (fila clasificacion_infraestructura)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "clasificacion_infraestructura");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("clasificacion_infraestructura").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo clasificacion_prioridad vs DICCIONARIO_CAMPOS (fila clasificacion_prioridad)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "clasificacion_prioridad");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("clasificacion_prioridad").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
 describe("esCodigoVigente", () => {
   it("true para un código vigente conocido", () => {
     expect(esCodigoVigente("resultado_cavidad_interna", "si")).toBe(true);

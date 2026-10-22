@@ -95,6 +95,13 @@ export function evaluarM03(
   if (probabilidadFallaImpacto === null) {
     return { clasificacion: null, noDeterminado: true, motivo: "probabilidad_falla_impacto sin valor (M02 no evaluado o no_determinado)" };
   }
+  if (!esCodigoVigente("probabilidad_falla_impacto", probabilidadFallaImpacto)) {
+    return {
+      clasificacion: null,
+      noDeterminado: true,
+      motivo: `probabilidad_falla_impacto tiene un código no reconocido ("${probabilidadFallaImpacto}")`,
+    };
+  }
   if (consecuencia === null) {
     return { clasificacion: null, noDeterminado: true, motivo: "consecuencia_* sin valor (D-170/171/172, obligatorio)" };
   }
