@@ -1,8 +1,15 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 11 — posterior a la migración 016 (Fase 4: vistas
---   v_tree_presence, v_inspections, v_tree_current_inputs,
+--   (revisión 12 — posterior a la migración 017 (Fase 4: RLS por rol
+--   CC-033 en las 21 tablas de datos — solo políticas SELECT, ninguna de
+--   escritura, en ningún rol —; bloqueo de proyecto cerrado con trigger,
+--   RG fila 27/CC-042, incluida la propia fila de projects;
+--   security_invoker = true en las 6 vistas de la 016; has_project_role
+--   nueva. Las políticas RLS y los GRANT/REVOKE de la 017 NO están en
+--   este archivo, solo sus funciones y triggers — ver la nota de RLS al
+--   final); antes revisión 11, posterior a la migración 016 (Fase 4:
+--   vistas v_tree_presence, v_inspections, v_tree_current_inputs,
 --   v_tree_current_assessment, v_species_traits, v_upcoming_inspections);
 --   antes revisión 10, posterior a la migración 015 (Fase 4: incidents
 --   adaptada con estado_incidencia/tipo_incidencia, incident_reporters,
@@ -1658,7 +1665,7 @@ CREATE TRIGGER trg_photos_tree_coherente
 -- estado_presencia y fecha_cambio_estado_presencia (D-28, D-29;
 -- PR-020 v1.1). Talado/Retirado solo con OT completada + mantenimiento
 -- aprobado de Tala o Retiro_tocón.
-CREATE VIEW v_tree_presence AS
+CREATE VIEW v_tree_presence WITH (security_invoker = true) AS
 WITH cierre AS (
   SELECT
     wo.tree_id,
@@ -1684,7 +1691,7 @@ LEFT JOIN cierre c ON c.tree_id = t.id AND c.rn = 1;
 
 -- Inspección + nivel_riesgo (riesgo efectivo: ajustado si existe, si no,
 -- calculado). D-200.
-CREATE VIEW v_inspections AS
+CREATE VIEW v_inspections WITH (security_invoker = true) AS
 SELECT
   i.*,
   COALESCE(e.clasificacion_riesgo_ajustada, e.clasificacion_riesgo_calculada) AS nivel_riesgo
@@ -1695,7 +1702,7 @@ LEFT JOIN evaluations e ON e.inspection_id = i.id;
 -- desde evaluations.variables (CC-040; RG "Historial y vigencia").
 -- entradas_vigentes: el valor más reciente de cada clave;
 -- origen_por_campo: la inspección que lo aportó.
-CREATE VIEW v_tree_current_inputs AS
+CREATE VIEW v_tree_current_inputs WITH (security_invoker = true) AS
 WITH validas AS (
   SELECT
     e.tree_id,
@@ -1727,7 +1734,7 @@ GROUP BY tree_id;
 -- Evaluación vigente del árbol = la fila más reciente de
 -- tree_assessments (D-242 L; CC-031; CC-040). Sin filas: "Evaluación
 -- pendiente" (lo interpreta la aplicación; no hay fila vacía aquí).
-CREATE VIEW v_tree_current_assessment AS
+CREATE VIEW v_tree_current_assessment WITH (security_invoker = true) AS
 SELECT DISTINCT ON (tree_id) *
 FROM tree_assessments
 ORDER BY tree_id, created_at DESC;
@@ -1735,7 +1742,7 @@ ORDER BY tree_id, created_at DESC;
 -- Árbol + rasgos del catálogo por especie_cientifica normalizada
 -- (D-257 a D-262; CC-039). "no_determinado" si no hay especie en el
 -- catálogo.
-CREATE VIEW v_species_traits AS
+CREATE VIEW v_species_traits WITH (security_invoker = true) AS
 SELECT
   t.id AS tree_id,
   COALESCE(s.origen_biogeografico, 'no_determinado') AS origen_biogeografico,
@@ -1752,7 +1759,7 @@ LEFT JOIN species s
 -- fecha ajustada si existe (D-202, D-203; CC-037). El rango
 -- (inicio/término) lo calcula el backend desde nivel_riesgo con su
 -- tabla de plazos — "Impacto en BD: ninguno adicional" (CC-037).
-CREATE VIEW v_upcoming_inspections AS
+CREATE VIEW v_upcoming_inspections WITH (security_invoker = true) AS
 SELECT DISTINCT ON (t.id)
   t.project_id,
   t.id AS tree_id,
@@ -1765,15 +1772,143 @@ JOIN inspections i ON i.tree_id = t.id AND i.estado_registro = 'finalizado'
 LEFT JOIN evaluations e ON e.inspection_id = i.id
 ORDER BY t.id, i.fecha_inspeccion DESC, i.created_at DESC;
 
+-- ---------------------------------------------------------------------
+-- FUNCIONES Y TRIGGERS DE BLOQUEO DE PROYECTO CERRADO (migración 017;
+-- RG fila 27; CC-042). Las políticas RLS y los GRANT/REVOKE de la 017
+-- (CC-033) NO están en este archivo — por convención (ver nota de RLS
+-- más abajo), viven solo en la migración.
+-- ---------------------------------------------------------------------
+
+CREATE FUNCTION public.has_project_role(p_project_id uuid, p_roles text[])
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT public.get_user_role() = ANY(p_roles)
+     AND public.is_project_member(p_project_id);
+$$;
+
+-- Resuelve el project_id de una fila (OLD o NEW, como jsonb) según cómo
+-- la tabla protegida llega a él.
+CREATE FUNCTION public.fn_resolve_project_id(p_row jsonb, p_mode text)
+RETURNS uuid LANGUAGE plpgsql STABLE
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_result uuid;
+BEGIN
+  IF p_row IS NULL THEN
+    RETURN NULL;
+  END IF;
+  CASE p_mode
+    WHEN 'direct' THEN
+      v_result := (p_row->>'project_id')::uuid;
+    WHEN 'via_tree' THEN
+      SELECT project_id INTO v_result FROM trees WHERE id = (p_row->>'tree_id')::uuid;
+    WHEN 'via_evaluation' THEN
+      SELECT t.project_id INTO v_result
+        FROM evaluations e JOIN trees t ON t.id = e.tree_id
+        WHERE e.id = (p_row->>'evaluation_id')::uuid;
+    WHEN 'via_incident' THEN
+      SELECT project_id INTO v_result FROM incidents WHERE id = (p_row->>'incident_id')::uuid;
+  END CASE;
+  RETURN v_result;
+END;
+$$;
+
+-- Bloquea INSERT/UPDATE/DELETE en las tablas de un proyecto cerrado.
+-- Revisa el proyecto de OLD y de NEW (no se puede sacar ni meter una
+-- fila de un proyecto cerrado cambiando tree_id/project_id). Se aplica
+-- igual con service_role: BYPASSRLS omite las políticas, nunca los
+-- triggers — por eso este control es un trigger y no una policy.
+CREATE FUNCTION public.fn_check_proyecto_no_cerrado() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_mode text := TG_ARGV[0];
+  v_project_old uuid;
+  v_project_new uuid;
+BEGIN
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    v_project_old := public.fn_resolve_project_id(to_jsonb(OLD), v_mode);
+  END IF;
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
+    v_project_new := public.fn_resolve_project_id(to_jsonb(NEW), v_mode);
+  END IF;
+
+  IF v_project_old IS NOT NULL AND EXISTS (
+    SELECT 1 FROM projects WHERE id = v_project_old AND estado_proyecto = 'cerrado'
+  ) THEN
+    RAISE EXCEPTION 'El proyecto % está cerrado: solo consulta (RG fila 27; CC-042)', v_project_old;
+  END IF;
+
+  IF v_project_new IS NOT NULL AND v_project_new IS DISTINCT FROM v_project_old AND EXISTS (
+    SELECT 1 FROM projects WHERE id = v_project_new AND estado_proyecto = 'cerrado'
+  ) THEN
+    RAISE EXCEPTION 'El proyecto % está cerrado: solo consulta (RG fila 27; CC-042)', v_project_new;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- Aplicado (modo entre paréntesis) en: trees, sectors, work_orders,
+-- incidents ('direct'); tree_data_versions, inspections, evaluations,
+-- tree_assessments, maintenance_records, photos ('via_tree');
+-- classification_adjustments ('via_evaluation'); incident_reporters
+-- ('via_incident'). Sin trigger en project_members (el Administrador
+-- sigue gestionando miembros con el proyecto cerrado).
+CREATE TRIGGER trg_trees_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON trees FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('direct');
+CREATE TRIGGER trg_sectors_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON sectors FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('direct');
+CREATE TRIGGER trg_work_orders_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON work_orders FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('direct');
+CREATE TRIGGER trg_incidents_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON incidents FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('direct');
+CREATE TRIGGER trg_tree_data_versions_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON tree_data_versions FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('via_tree');
+CREATE TRIGGER trg_inspections_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON inspections FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('via_tree');
+CREATE TRIGGER trg_evaluations_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON evaluations FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('via_tree');
+CREATE TRIGGER trg_tree_assessments_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON tree_assessments FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('via_tree');
+CREATE TRIGGER trg_maintenance_records_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON maintenance_records FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('via_tree');
+CREATE TRIGGER trg_photos_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON photos FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('via_tree');
+CREATE TRIGGER trg_classification_adjustments_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON classification_adjustments FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('via_evaluation');
+CREATE TRIGGER trg_incident_reporters_proyecto_cerrado BEFORE INSERT OR UPDATE OR DELETE ON incident_reporters FOR EACH ROW EXECUTE FUNCTION fn_check_proyecto_no_cerrado('via_incident');
+
+-- La propia fila de projects: decisión de la responsable (2026-10-21)
+-- — "solo consulta" (RG fila 27) incluye la propia fila del proyecto:
+-- con el proyecto cerrado se bloquea cualquier cambio salvo la
+-- transición de estado_proyecto (cerrar/reabrir).
+CREATE FUNCTION public.fn_check_project_self_closed() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF OLD.estado_proyecto = 'cerrado'
+     AND NEW.estado_proyecto = 'cerrado'
+     AND NEW IS DISTINCT FROM OLD THEN
+    RAISE EXCEPTION 'El proyecto % está cerrado: solo puede reabrirse, no editarse (RG fila 27; CC-042)', OLD.id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_projects_self_closed
+  BEFORE UPDATE ON projects
+  FOR EACH ROW EXECUTE FUNCTION fn_check_project_self_closed();
+
 -- =====================================================================
 -- FIN schema.sql
 --
 -- Pendientes explícitos que este esquema NO resuelve (por diseño):
 --   - probability_thresholds: sin filas (rangos numéricos por entregar)
 --   - risk_evaluations: sin lógica de cálculo (impacto/consecuencias/matriz)
---   - RLS: definida en migraciones (005, 006, 007, 008, 010, 011), no aquí.
---     spatial_ref_sys (PostGIS) conserva privilegios de escritura para los
---     roles de la API: la tabla pertenece a supabase_admin (issue #9).
+--   - RLS: definida en migraciones (005, 006, 007, 008, 010, 011, 017), no
+--     aquí. 017 (CC-033) deja todas las tablas solo con políticas SELECT
+--     por rol; las políticas y los GRANT/REVOKE viven solo en la
+--     migración. spatial_ref_sys (PostGIS) conserva privilegios de
+--     escritura para los roles de la API: la tabla pertenece a
+--     supabase_admin (issue #9).
+--   - Storage (fotos): sin bucket ni políticas todavía — AM-14 (roadmap).
 --   - M04 (clasificación global de infraestructura) y M05 (prioridad):
 --     sin implementar; tree_infrastructure_assessments guarda datos crudos.
 --   - Inmutabilidad de inspections.estado='completada': enforzada en
