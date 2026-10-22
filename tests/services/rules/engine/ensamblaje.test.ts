@@ -132,7 +132,92 @@ describe("resolverValorEfectivo", () => {
       valorAjustado: "alto",
       nuevoValorCalculado: "bajo",
       adjustmentId: "adj-2",
+      motivo: "el valor recalculado no coincide con el valor calculado sobre el que se hizo el ajuste",
     });
+  });
+
+  it("valorAjustado fuera del dominio ('muy_alto') → se descarta sin usarlo nunca, nunca queda null (regresión del hallazgo de la responsable)", () => {
+    const ajuste: AjusteVigente<ClasificacionRiesgoCodigo> = {
+      valorAjustado: "muy_alto" as unknown as ClasificacionRiesgoCodigo,
+      valorCalculadoEnElAjuste: "bajo",
+      adjustmentId: "adj-3",
+    };
+    const r = resolverValorEfectivo<ClasificacionRiesgoCodigo>("clasificacion_riesgo", "bajo", ajuste);
+    expect(r.valorEfectivo).toBe("bajo");
+    expect(r.ajusteMantenidoId).toBeNull();
+    expect(r.ajusteDescartado).toEqual({
+      campo: "clasificacion_riesgo",
+      valorCalculadoAnterior: "bajo",
+      valorAjustado: "muy_alto",
+      nuevoValorCalculado: "bajo",
+      adjustmentId: "adj-3",
+      motivo: "valor ajustado fuera del dominio",
+    });
+  });
+
+  it("valorAjustado = no_determinado → se descarta: un ajuste nunca resuelve a 'no_determinado' (CC-044)", () => {
+    const ajuste: AjusteVigente<ClasificacionRiesgoCodigo> = {
+      valorAjustado: "no_determinado",
+      valorCalculadoEnElAjuste: "bajo",
+      adjustmentId: "adj-4",
+    };
+    const r = resolverValorEfectivo<ClasificacionRiesgoCodigo>("clasificacion_riesgo", "bajo", ajuste);
+    expect(r.valorEfectivo).toBe("bajo");
+    expect(r.ajusteDescartado?.motivo).toBe("valor ajustado fuera del dominio");
+  });
+
+  it("CC-044: valorCalculado = no_determinado con un ajuste a un valor determinado válido → se mantiene", () => {
+    const ajuste: AjusteVigente<ClasificacionRiesgoCodigo> = {
+      valorAjustado: "alto",
+      valorCalculadoEnElAjuste: "no_determinado",
+      adjustmentId: "adj-5",
+    };
+    const r = resolverValorEfectivo<ClasificacionRiesgoCodigo>("clasificacion_riesgo", "no_determinado", ajuste);
+    expect(r.valorEfectivo).toBe("alto");
+    expect(r.ajusteMantenidoId).toBe("adj-5");
+    expect(r.ajusteDescartado).toBeNull();
+  });
+
+  it("CC-044: ajuste hecho sobre no_determinado, recálculo posterior con datos completos y valor distinto → se descarta, requiere revisión", () => {
+    const ajuste: AjusteVigente<ClasificacionRiesgoCodigo> = {
+      valorAjustado: "alto",
+      valorCalculadoEnElAjuste: "no_determinado",
+      adjustmentId: "adj-6",
+    };
+    const r = resolverValorEfectivo<ClasificacionRiesgoCodigo>("clasificacion_riesgo", "moderado", ajuste);
+    expect(r.valorEfectivo).toBe("moderado");
+    expect(r.ajusteMantenidoId).toBeNull();
+    expect(r.ajusteDescartado).toEqual({
+      campo: "clasificacion_riesgo",
+      valorCalculadoAnterior: "no_determinado",
+      valorAjustado: "alto",
+      nuevoValorCalculado: "moderado",
+      adjustmentId: "adj-6",
+      motivo: "el valor recalculado no coincide con el valor calculado sobre el que se hizo el ajuste",
+    });
+  });
+
+  it("CC-044: ajuste hecho sobre no_determinado, recálculo que sigue no_determinado → se mantiene", () => {
+    const ajuste: AjusteVigente<ClasificacionRiesgoCodigo> = {
+      valorAjustado: "alto",
+      valorCalculadoEnElAjuste: "no_determinado",
+      adjustmentId: "adj-7",
+    };
+    const r = resolverValorEfectivo<ClasificacionRiesgoCodigo>("clasificacion_riesgo", "no_determinado", ajuste);
+    expect(r.valorEfectivo).toBe("alto");
+    expect(r.ajusteMantenidoId).toBe("adj-7");
+    expect(r.ajusteDescartado).toBeNull();
+  });
+
+  it("infraestructura: valorAjustado = no_aplica → se descarta (nunca es un valor ajustado válido)", () => {
+    const ajuste: AjusteVigente<"bajo" | "moderado" | "alto" | "critico" | "no_aplica"> = {
+      valorAjustado: "no_aplica",
+      valorCalculadoEnElAjuste: "no_aplica",
+      adjustmentId: "adj-8",
+    };
+    const r = resolverValorEfectivo("clasificacion_infraestructura", "no_aplica", ajuste);
+    expect(r.valorEfectivo).toBe("no_aplica");
+    expect(r.ajusteDescartado?.motivo).toBe("valor ajustado fuera del dominio");
   });
 });
 
@@ -213,6 +298,17 @@ describe("ensamblarResultadoEvaluacion", () => {
     expect(r.inspeccion.fechaProximaInspeccionSugerida.noDeterminable).toBe(true);
     expect(r.inspeccion.fechaProximaInspeccionSugerida.motivo).toMatch(/no se inventa/);
     expect(r.inspeccion.fechaProximoMonitoreoSugerida.noDeterminable).toBe(true);
+  });
+
+  it("CC-044: riesgo calculado = no_determinado, con un ajuste hecho sobre ese estado → se mantiene y alimenta M05/fechas", () => {
+    const args = argsEvaluacionSana();
+    args.variablesCalculo = { ...args.variablesCalculo, angulo_inclinacion: null }; // rompe R01 → no_determinado
+    args.ajustes = { riesgo: { valorAjustado: "alto", valorCalculadoEnElAjuste: "no_determinado", adjustmentId: "adj-nd1" } };
+    const r = ensamblarResultadoEvaluacion(args);
+    expect(r.clasificacion_riesgo_calculada).toBe("no_determinado");
+    expect(r.clasificacion_riesgo_ajustada).toBe("alto"); // el ajuste sobre no_determinado se mantiene
+    expect(r.inspeccion.nivelRiesgo).toBe("alto"); // D-210: usa el efectivo, no el calculado
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.noDeterminable).toBe(false); // ya hay fecha, porque el efectivo está determinado
   });
 
   it("calculados incluye superficie_alcorque_m2 y cumplimiento_distancia_seguridad_bt_mt", () => {

@@ -22,6 +22,21 @@
  * `ensamblarResultadoEvaluacion`) con nivel_riesgo = riesgo efectivo
  * (D-210: "igual a clasificacion_riesgo... incluido su ajuste").
  *
+ * CC-044 (2026-10-22): el Inspector puede ajustar una clasificación
+ * cuyo valor calculado es `no_determinado` (riesgo/prioridad) o
+ * `no_aplica` (infraestructura), con justificación — D-181 y PR-008
+ * v2.0 permiten el ajuste justificado pero el Excel no decía si aplica
+ * cuando el cálculo no está determinado. `valorCalculadoEnElAjuste`
+ * admite esos dos valores sin problema (es solo una foto del momento);
+ * lo que NUNCA es válido es que el **valor ajustado** mismo sea
+ * `no_determinado`/`no_aplica` — un ajuste siempre resuelve a una
+ * categoría concreta. `resolverValorEfectivo` valida esto (y cualquier
+ * otro código fuera de dominio) antes de aceptar el ajuste; si no pasa,
+ * se descarta con motivo "valor ajustado fuera del dominio" — nunca se
+ * usa un valor inválido ni se afirma con "!" un resultado que podría
+ * no existir (ver el comentario sobre `m05.clasificacionPrioridad` más
+ * abajo, que corrige exactamente ese hallazgo).
+ *
  * Bloqueos — no inventados, reportados:
  * (a) CC-040 (d) solo cubre el recálculo disparado por una OT
  *     completada ("el ajuste se mantiene en la evaluación recalculada
@@ -379,7 +394,21 @@ export interface AjusteDescartado {
   valorAjustado: string;
   nuevoValorCalculado: string;
   adjustmentId: string;
+  motivo: string;
 }
+
+/**
+ * Valores de clasificación determinada admitidos como **valor ajustado**
+ * en cada campo. `no_determinado` (riesgo, prioridad) y `no_aplica`
+ * (infraestructura) son resultados calculados legítimos, pero el
+ * Inspector nunca ajusta *a* ellos — un ajuste siempre resuelve a una
+ * categoría concreta (D-181, PR-008 v2.0).
+ */
+const CODIGOS_AJUSTE_VALIDOS: Record<AjusteDescartado["campo"], readonly string[]> = {
+  clasificacion_riesgo: ["bajo", "moderado", "alto", "extremo"],
+  clasificacion_infraestructura: ["bajo", "moderado", "alto", "critico"],
+  clasificacion_prioridad: ["baja", "media", "alta", "critica"],
+};
 
 export interface AjustesEntrada {
   riesgo?: AjusteVigente<ClasificacionRiesgoCodigo> | null;
@@ -401,6 +430,17 @@ interface ResolucionValorEfectivo<T extends string> {
  * el descarte. Esta función no sabe qué OT o evento disparó el
  * recálculo — eso lo filtra quien llama (ver bloqueo (a) en el
  * encabezado del archivo).
+ *
+ * CC-044 (2026-10-22): `valorCalculado`/`valorCalculadoEnElAjuste`
+ * pueden legítimamente ser `no_determinado` (riesgo/prioridad) o
+ * `no_aplica` (infraestructura) — el Inspector puede ajustar una
+ * clasificación cuyo valor calculado no está determinado, con
+ * justificación. Lo que nunca es válido es que el **valor ajustado**
+ * (`valorAjustado`, el destino del ajuste) sea uno de esos dos
+ * valores: un ajuste siempre resuelve a una categoría concreta. Si
+ * llega un `valorAjustado` fuera de dominio o igual a `no_determinado`/
+ * `no_aplica`, el ajuste se descarta sin comparar fechas — nunca se
+ * usa un valor que no es una clasificación determinada válida.
  */
 function resolverValorEfectivo<T extends string>(
   campo: AjusteDescartado["campo"],
@@ -414,6 +454,20 @@ function resolverValorEfectivo<T extends string>(
   if (!ajuste) {
     return { valorEfectivo: valorCalculado, ajusteMantenidoId: null, ajusteDescartado: null };
   }
+  if (!CODIGOS_AJUSTE_VALIDOS[campo].includes(ajuste.valorAjustado)) {
+    return {
+      valorEfectivo: valorCalculado,
+      ajusteMantenidoId: null,
+      ajusteDescartado: {
+        campo,
+        valorCalculadoAnterior: ajuste.valorCalculadoEnElAjuste,
+        valorAjustado: ajuste.valorAjustado,
+        nuevoValorCalculado: valorCalculado,
+        adjustmentId: ajuste.adjustmentId,
+        motivo: "valor ajustado fuera del dominio",
+      },
+    };
+  }
   if (ajuste.valorCalculadoEnElAjuste === valorCalculado) {
     return { valorEfectivo: ajuste.valorAjustado, ajusteMantenidoId: ajuste.adjustmentId, ajusteDescartado: null };
   }
@@ -426,6 +480,7 @@ function resolverValorEfectivo<T extends string>(
       valorAjustado: ajuste.valorAjustado,
       nuevoValorCalculado: valorCalculado,
       adjustmentId: ajuste.adjustmentId,
+      motivo: "el valor recalculado no coincide con el valor calculado sobre el que se hizo el ajuste",
     },
   };
 }
@@ -464,10 +519,14 @@ function resolverAjustesYPrioridad(
 
   const m05 = evaluarM05(resRiesgo.valorEfectivo, resInfraestructura.valorEfectivo);
   // m05.clasificacionPrioridad solo es null si a evaluarM05 se le pasó
-  // un valor sin valor o fuera de dominio — resRiesgo/resInfraestructura
-  // siempre entregan un código válido del catálogo (nunca null), así
-  // que esta rama es inalcanzable en la práctica; se afirma con "!".
-  const prioridadCalculada: ClasificacionPrioridadCodigo = m05.clasificacionPrioridad!;
+  // un valor sin valor o fuera de dominio. Como resolverValorEfectivo ya
+  // descarta cualquier valorAjustado fuera de dominio, resRiesgo.
+  // valorEfectivo/resInfraestructura.valorEfectivo siempre son códigos
+  // válidos (calculado o ajustado-validado) — este null no debería
+  // alcanzarse. Aun así, no se afirma con "!": si ocurriera, se trata
+  // como no_determinado en vez de propagar un null silencioso con un
+  // tipo que promete string.
+  const prioridadCalculada: ClasificacionPrioridadCodigo = m05.clasificacionPrioridad ?? "no_determinado";
 
   const resPrioridad = resolverValorEfectivo("clasificacion_prioridad", prioridadCalculada, ajustes?.prioridad);
 

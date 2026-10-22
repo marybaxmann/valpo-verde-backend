@@ -3,17 +3,20 @@
  * `fecha_proxima_inspeccion`, D-213 `fecha_proximo_monitoreo`). Fuente:
  * Excel maestro 2.1.0. Entrada: `nivel_riesgo` (D-210, igual a
  * `clasificacion_riesgo` del REGISTRO_EVALUACION vinculado, incluido
- * su ajuste) y `fecha_inspeccion`. Salida: el **inicio** del rango
- * sugerido — SIVU solo lo muestra como recordatorio; no agenda nada
- * automáticamente (D-212/D-213, validación y dependencias).
+ * su ajuste) y `fecha_inspeccion`. Salida: el rango sugerido completo
+ * (inicio y fin) — SIVU solo lo muestra como recordatorio; no agenda
+ * nada automáticamente (D-212/D-213, validación y dependencias).
  *
- * D-212 (reinspección): Bajo 24 meses; Moderado 12 meses; Alto 1 a 3
- * meses (inicio = 1 mes); Extremo 1 a 4 semanas (inicio = 1 semana).
- * D-213 (monitoreo): Bajo 12 meses; Moderado 3 a 6 meses (inicio = 3
- * meses); Alto 2 a 4 semanas (inicio = 2 semanas); Extremo "inmediato
- * y continuo mientras persista el peligro" — no es un desplazamiento
- * de fecha, se modela aparte (`inmediatoYContinuo`), con la fecha de
- * inspección como punto de partida.
+ * D-212 (reinspección): Bajo 24 meses (sin rango, un solo valor);
+ * Moderado 12 meses (sin rango); Alto 1 a 3 meses; Extremo 1 a 4
+ * semanas. D-213 (monitoreo): Bajo 12 meses (sin rango); Moderado 3 a
+ * 6 meses; Alto 2 a 4 semanas; Extremo "inmediato y continuo mientras
+ * persista el peligro" — no es un desplazamiento de fecha ni tiene
+ * fin, se modela aparte (`inmediatoYContinuo`), con la fecha de
+ * inspección como único punto (`fechaInicio`, `fechaFin: null`).
+ *
+ * Cuando el Excel da un solo valor (Bajo en ambas, Moderado en D-212),
+ * `fechaFin` es igual a `fechaInicio`: no hay una franja, es un punto.
  *
  * `nivel_riesgo = no_determinado`: el Excel no define una fecha
  * sugerida para este caso. Se reporta como bloqueo (`noDeterminable`
@@ -28,16 +31,17 @@
  * fecha de entrada y de salida son fechas de calendario de Chile
  * (AAAA-MM-DD), no un instante que haya que convertir.
  *
- * Nota (a confirmar): sumar un mes a una fecha de fin de mes sigue la
- * normalización estándar de JavaScript (p. ej. 31 de enero + 1 mes →
- * 2 o 3 de marzo, porque febrero no tiene 31 días) — no se recorta al
- * último día del mes de destino.
+ * Fin de mes (corregido, 2026-10-22): sumar N meses a una fecha se
+ * recorta al último día del mes de destino cuando ese mes es más
+ * corto (31 ene + 1 mes → 28 feb, no 2/3 mar). Sumar semanas es
+ * siempre exacto (7 × N días); no hay nada que recortar.
  */
 
 import { ClasificacionRiesgoCodigo, esCodigoVigente } from "./catalogs";
 
 export interface FechaSugeridaResultado {
-  fecha: string | null; // AAAA-MM-DD, inicio del rango; null si noDeterminable
+  fechaInicio: string | null; // AAAA-MM-DD, inicio del rango sugerido; null si noDeterminable
+  fechaFin: string | null; // AAAA-MM-DD, fin del rango sugerido; igual a fechaInicio si el Excel da un solo valor; null si noDeterminable o si no aplica (Extremo en D-213)
   inmediatoYContinuo?: boolean; // true solo en fecha_proximo_monitoreo con nivel_riesgo = extremo (D-213)
   noDeterminable: boolean;
   motivo?: string;
@@ -54,9 +58,19 @@ function esFechaValida(fecha: string): boolean {
   );
 }
 
+/** Último día del mes `mesIndiceUTC` (0-indexado) del año `y`. */
+function ultimoDiaDelMes(y: number, mesIndiceUTC: number): number {
+  return new Date(Date.UTC(y, mesIndiceUTC + 1, 0)).getUTCDate();
+}
+
+/** Suma `meses` a `fechaISO`, recortando al último día del mes de destino cuando ese mes es más corto. */
 function sumarMeses(fechaISO: string, meses: number): string {
   const [y, m, d] = fechaISO.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1 + meses, d)).toISOString().slice(0, 10);
+  const mesDestinoAbsoluto = m - 1 + meses;
+  const anioDestino = y + Math.floor(mesDestinoAbsoluto / 12);
+  const mesIndiceDestino = ((mesDestinoAbsoluto % 12) + 12) % 12;
+  const diaFinal = Math.min(d, ultimoDiaDelMes(anioDestino, mesIndiceDestino));
+  return new Date(Date.UTC(anioDestino, mesIndiceDestino, diaFinal)).toISOString().slice(0, 10);
 }
 
 function sumarSemanas(fechaISO: string, semanas: number): string {
@@ -72,20 +86,31 @@ function validarEntradas(
   citaExcel: string,
 ): FechaSugeridaResultado | { nivelRiesgo: NivelRiesgoDeterminado; fechaInspeccionISO: string } {
   if (fechaInspeccionISO === null) {
-    return { fecha: null, noDeterminable: true, motivo: "fecha_inspeccion sin valor" };
+    return { fechaInicio: null, fechaFin: null, noDeterminable: true, motivo: "fecha_inspeccion sin valor" };
   }
   if (!esFechaValida(fechaInspeccionISO)) {
-    return { fecha: null, noDeterminable: true, motivo: `fecha_inspeccion no es una fecha de calendario válida (AAAA-MM-DD): "${fechaInspeccionISO}"` };
+    return {
+      fechaInicio: null,
+      fechaFin: null,
+      noDeterminable: true,
+      motivo: `fecha_inspeccion no es una fecha de calendario válida (AAAA-MM-DD): "${fechaInspeccionISO}"`,
+    };
   }
   if (nivelRiesgo === null) {
-    return { fecha: null, noDeterminable: true, motivo: "nivel_riesgo sin valor (D-210, obligatorio)" };
+    return { fechaInicio: null, fechaFin: null, noDeterminable: true, motivo: "nivel_riesgo sin valor (D-210, obligatorio)" };
   }
   if (!esCodigoVigente("clasificacion_riesgo", nivelRiesgo)) {
-    return { fecha: null, noDeterminable: true, motivo: `nivel_riesgo tiene un código no reconocido ("${nivelRiesgo}")` };
+    return {
+      fechaInicio: null,
+      fechaFin: null,
+      noDeterminable: true,
+      motivo: `nivel_riesgo tiene un código no reconocido ("${nivelRiesgo}")`,
+    };
   }
   if (nivelRiesgo === "no_determinado") {
     return {
-      fecha: null,
+      fechaInicio: null,
+      fechaFin: null,
       noDeterminable: true,
       motivo: `nivel_riesgo = no_determinado: el Excel no define la fecha sugerida para este caso (${citaExcel}); se reporta como bloqueo, no se inventa`,
     };
@@ -100,16 +125,21 @@ export function calcularFechaProximaInspeccion(
 ): FechaSugeridaResultado {
   const entrada = validarEntradas(nivelRiesgo, fechaInspeccionISO, "D-212");
   if ("noDeterminable" in entrada) return entrada;
+  const { fechaInspeccionISO: f } = entrada;
 
   switch (entrada.nivelRiesgo) {
-    case "bajo":
-      return { fecha: sumarMeses(entrada.fechaInspeccionISO, 24), noDeterminable: false };
-    case "moderado":
-      return { fecha: sumarMeses(entrada.fechaInspeccionISO, 12), noDeterminable: false };
+    case "bajo": {
+      const fecha = sumarMeses(f, 24); // sin rango: un solo valor
+      return { fechaInicio: fecha, fechaFin: fecha, noDeterminable: false };
+    }
+    case "moderado": {
+      const fecha = sumarMeses(f, 12); // sin rango: un solo valor
+      return { fechaInicio: fecha, fechaFin: fecha, noDeterminable: false };
+    }
     case "alto":
-      return { fecha: sumarMeses(entrada.fechaInspeccionISO, 1), noDeterminable: false }; // inicio del rango 1–3 meses
+      return { fechaInicio: sumarMeses(f, 1), fechaFin: sumarMeses(f, 3), noDeterminable: false }; // rango 1 a 3 meses
     case "extremo":
-      return { fecha: sumarSemanas(entrada.fechaInspeccionISO, 1), noDeterminable: false }; // inicio del rango 1–4 semanas
+      return { fechaInicio: sumarSemanas(f, 1), fechaFin: sumarSemanas(f, 4), noDeterminable: false }; // rango 1 a 4 semanas
   }
 }
 
@@ -120,18 +150,21 @@ export function calcularFechaProximoMonitoreo(
 ): FechaSugeridaResultado {
   const entrada = validarEntradas(nivelRiesgo, fechaInspeccionISO, "D-213");
   if ("noDeterminable" in entrada) return entrada;
+  const { fechaInspeccionISO: f } = entrada;
 
   switch (entrada.nivelRiesgo) {
-    case "bajo":
-      return { fecha: sumarMeses(entrada.fechaInspeccionISO, 12), noDeterminable: false };
+    case "bajo": {
+      const fecha = sumarMeses(f, 12); // sin rango: un solo valor
+      return { fechaInicio: fecha, fechaFin: fecha, noDeterminable: false };
+    }
     case "moderado":
-      return { fecha: sumarMeses(entrada.fechaInspeccionISO, 3), noDeterminable: false }; // inicio del rango 3–6 meses
+      return { fechaInicio: sumarMeses(f, 3), fechaFin: sumarMeses(f, 6), noDeterminable: false }; // rango 3 a 6 meses
     case "alto":
-      return { fecha: sumarSemanas(entrada.fechaInspeccionISO, 2), noDeterminable: false }; // inicio del rango 2–4 semanas
+      return { fechaInicio: sumarSemanas(f, 2), fechaFin: sumarSemanas(f, 4), noDeterminable: false }; // rango 2 a 4 semanas
     case "extremo":
       // D-213: "inmediato y continuo mientras persista el peligro" — no
-      // es un desplazamiento de fecha; el punto de partida es la propia
-      // fecha de inspección.
-      return { fecha: entrada.fechaInspeccionISO, inmediatoYContinuo: true, noDeterminable: false };
+      // es un desplazamiento de fecha ni tiene fin; el punto de partida
+      // es la propia fecha de inspección.
+      return { fechaInicio: f, fechaFin: null, inmediatoYContinuo: true, noDeterminable: false };
   }
 }

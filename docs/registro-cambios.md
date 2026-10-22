@@ -1986,3 +1986,39 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día. Pendiente llevar el texto al Excel. |
+
+---
+
+### CC-044 — Ajuste justificado sobre una clasificación calculada como No determinado / No aplica
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-22 |
+| Origen | Fase 5 (motor de reglas), implementación del ensamblaje (`ensamblaje.ts`, `resolverValorEfectivo`). D-181 y PR-008 v2.0 permiten el ajuste justificado de `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad`, pero no dicen si el Inspector puede ajustar cuando el valor calculado es `No determinado` (riesgo/prioridad) o `No aplica` (infraestructura). |
+| Tipo | 2 — metodológico (regla de ajuste, PR-008) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | D-181 (`clasificacion_riesgo`), D-170 (`clasificacion_infraestructura`), D-172 (`clasificacion_prioridad`); `classification_adjustments` (diseño §3.10); CC-040 (d). |
+| Versión anterior | No definida: el Excel no contempla el caso de ajustar sobre un valor calculado No determinado / No aplica. |
+| Versión nueva | El Inspector **sí puede** ajustar una clasificación cuyo valor calculado es `No determinado` (riesgo, prioridad) o `No aplica` (infraestructura), con `justificacion_ajuste_clasificacion` obligatoria (NOT NULL en la base). Se conservan el valor calculado, el valor ajustado, el Inspector y la fecha del ajuste (D-181). El valor ajustado alimenta M05 y las fechas sugeridas (D-212/D-213) igual que cualquier otro ajuste. La regla de descarte de CC-040 (d) aplica sin cambios: en un recálculo posterior, si el valor calculado deja de ser No determinado/No aplica y no coincide con el valor sobre el que se hizo el ajuste, el ajuste se descarta y `requiere_revision_ajuste = true`. Lo único que **nunca** es válido es que el **valor ajustado** (el destino del ajuste, no el valor sobre el que se ajustó) sea él mismo `No determinado`/`No aplica`: un ajuste siempre resuelve a una categoría concreta. |
+| Motivo | El Excel permite el ajuste justificado pero no resuelve este caso; dejarlo indefinido bloquearía al Inspector justo en el escenario donde más necesita poder corregir el resultado (datos insuficientes para el cálculo automático, pero con criterio profesional suficiente para clasificar). |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-22. |
+| Archivos afectados | `src/services/rules/engine/ensamblaje.ts` (implementación); esta ficha. Pendiente: `docs/excel/Base de Datos Valpo Verde.xlsx` (D-181, D-170, D-172), en la próxima versión del paquete. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: agregar el texto de esta decisión a D-181, D-170 y D-172, en la próxima versión del paquete. |
+| Impacto en BD | Ninguno nuevo: `classification_adjustments` (diseño §3.10) ya admite esto sin cambios de esquema — la columna `valor_calculado` ya acepta `No determinado`/`No aplica` porque son valores legítimos de `clasificacion_*_calculada`. |
+| Impacto en backend | Implementado en el motor (Fase 5): `resolverValorEfectivo` en `ensamblaje.ts` valida que el valor ajustado sea una categoría determinada antes de aceptarlo, independientemente de cuál sea el valor calculado. |
+| Impacto en API | Ninguno todavía (Fase 6). |
+| Impacto en frontend | Ninguno todavía (Fase 7): el formulario de ajuste debe permitir ajustar aunque la clasificación muestre "Sin determinar"/"No aplica". |
+| Pruebas necesarias | Implementadas: ajuste sobre No determinado se mantiene; recálculo posterior con datos completos y valor distinto → descartado con marca de revisión; recálculo que sigue No determinado → se mantiene; valor ajustado = No determinado/No aplica → siempre se descarta (`tests/services/rules/engine/ensamblaje.test.ts`). |
+| Dependencias | CC-024 (No determinado), CC-029 (prioridad No determinado), CC-040 (d) (descarte de ajustes), D-180 (No aplica en infraestructura). |
+| rule_version | 2.1 (sin cambio de versión del paquete: el Excel en sí no se modificó todavía; la sincronización queda pendiente, ver "Impacto en Excel metodológico"). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-22 |
+| Fecha de implementación | 2026-10-22 (rama `feature/fase5-motor-reglas`) |
+| Commits / PR asociados | Rama `feature/fase5-motor-reglas` (sin PR todavía). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día. Pendiente llevar el texto al Excel. |
