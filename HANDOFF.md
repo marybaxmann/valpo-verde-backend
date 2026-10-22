@@ -9,19 +9,28 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-21 (Fase 3 cerrada: PR #31 y #33 fusionados; 2.1.0 en preparación de publicación, PR de este relevo pendiente de fusión por la autora)
+- **Última actualización:** 2026-10-21 (Fase 4 en curso: respaldo, reactivación, limpieza y migración 012 aplicados en `valpo-verde-conecta-pruebas`)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
-- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `34d8e99` (PR #31 Fase 3 + PR #33 AM-12); frontend `main` = `187a90d` (PR #5).
+- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `00b3a84` (PR #34 y #35, 2.1.0 publicada; tag `metodologia-v2.1.0`); frontend `main` = `187a90d` (PR #5). Fase 4 en la rama `feature/fase4-migraciones-012-017` (sin PR todavía).
 - **Ramas de trabajo:** `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Fase 3 (diseño del modelo, paquete 2.1.0) cerrada en contenido. Publicación de 2.1.0 preparada (este PR); falta VERSION fila 6 y el tag, a cargo de la sesión de auditoría, y la fusión de la autora. Después: respaldo de la base, reactivación de la base de prueba y Fase 4.
+- **Resumen:** 2.1.0 publicada (tag `metodologia-v2.1.0`). Fase 4 en curso: migración 012 aplicada y probada en `valpo-verde-conecta-pruebas`; siguen 013 a 017. **Importante:** 012–017 solo existen en `valpo-verde-conecta-pruebas` hasta que la Fase 8 lo autorice (issue #45) — `valpo-verde-conecta` sigue en la revisión 6 de `schema.sql`.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
 ---
 
-## ▶ Novedad 2026-10-21 — Fase 3 cerrada; publicación de 2.1.0 preparada (leer primero)
+## ▶ Novedad 2026-10-21 — Fase 4 en curso (leer primero)
+
+- **Protocolo de 9 fases:** van 4 cerradas (0 a 3); Fase 4 (base de datos) en curso, en la rama `feature/fase4-migraciones-012-017` del backend, sin PR todavía (se abre al terminar 012–017 y W1–W12; no se fusiona sin autorización expresa).
+- **Paso 0 (#36) y paso 1 (#37), hechos:** respaldo nuevo de `valpo-verde-conecta` (`C:\Users\usuario\respaldos\sivu\2026-10-21\`); `valpo-verde-conecta-pruebas` reactivada (`restore_project`, plan free, sin costo); inventario y limpieza de los datos simulados en una transacción (`database/fase4/00_limpieza_datos_simulados.sql`) — **solo** en `valpo-verde-conecta-pruebas`; no se tocaron `roles` ni `user_profiles`.
+- **Migración 012 (#38), hecha:** roles `inspector`/`encargado_mantencion`; `user_profiles.codigo_usuario` (`USR-000`); `species` adaptada a catálogo (CC-039); `projects.status` → `estado_proyecto` (CC-042). Aplicar → revertir → reaplicar probado en `valpo-verde-conecta-pruebas`. `schema.sql` en revisión 7.
+- **CRÍTICO — alcance de 012 a 017:** se aplican y prueban únicamente en `valpo-verde-conecta-pruebas` (diseño §7: "primero en pruebas, con W1–W12 y las de cada down; después en `valpo-verde-conecta`"). `valpo-verde-conecta` (la base con la demo/dev actual) **no se toca** hasta el issue #45, que requiere aprobación expresa de la autora. Cualquier agente que continúe la Fase 4 debe seguir aplicando contra `gmlbmyreoxgoqrolhyxo` (pruebas), nunca contra `ytcxswbulsmboucardxa` (conecta).
+- **Historial de migraciones de Supabase:** en `valpo-verde-conecta-pruebas` hay 2 entradas antiguas (`demo_valpo_verde_schema`, `demo_real_data_schema_v2`) que no corresponden a 001–011 (la estructura llegó por `pg_restore`, no por replay). No se editaron a mano; `apply_migration` registra 012 en adelante con normalidad. Si hace falta reconciliar esas 2 entradas, se propone antes de tocarlas.
+- **Siguen:** 013 (sectores y árboles, #39), 014 (OT/inspección/evaluación/mantenimiento, #40), 015 (incidencias y fotos, #41), 016 (vistas, #42), 017 (RLS + W1–W12, #43).
+
+## ▶ Novedad 2026-10-21 — Fase 3 cerrada; publicación de 2.1.0 preparada
 
 - **Fase 3 (diseño del modelo de datos) cerrada en contenido.** PR #31 (propuesta de diseño, `docs/diseno/fase3-modelo-datos-2.0.0.md`) y PR #33 (AM-12: textos de CC-040 en el Excel) fusionados por la autora en `main` (`34d8e99`). Del protocolo de 9 fases (0 a 8) van 4 cerradas.
 - **CC-040** (alcance de la evaluación según el tipo de inspección, evaluación vigente compuesta por campo, fotografías por tipo de inspección) y **CC-042** (`estado_proyecto` Activo/Cerrado) pasan a `FUENTE SINCRONIZADA` — paquete **2.1.0**, publicada el 2026-10-21. CC-041 (decisiones de diseño sin impacto en el Excel) queda `APROBADO METODOLÓGICAMENTE`, fuera del paquete.
