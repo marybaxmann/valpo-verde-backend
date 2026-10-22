@@ -1,7 +1,10 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 12 — posterior a la migración 017 (Fase 4: RLS por rol
+--   (revisión 13 — posterior a la migración 018a (Fase 6, planificación:
+--   trees.qr_token, token aleatorio no adivinable para el QR público de
+--   incidencias, PR-022 — nunca tree_code, que es correlativo); antes
+--   revisión 12, posterior a la migración 017 (Fase 4: RLS por rol
 --   CC-033 en las 21 tablas de datos — solo políticas SELECT, ninguna de
 --   escritura, en ningún rol —; bloqueo de proyecto cerrado con trigger,
 --   RG fila 27/CC-042, incluida la propia fila de projects;
@@ -296,6 +299,7 @@ CREATE TABLE trees (
 
   tree_code             TEXT UNIQUE NOT NULL
                           DEFAULT ('A-' || LPAD(nextval('tree_code_seq')::text, 6, '0')),
+  qr_token              UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(), -- migración 018a; QR público (PR-022); NUNCA tree_code (correlativo, enumerable)
   legacy_id             TEXT UNIQUE,           -- ID del catastro/Informe Técnico 2026 (Anexo 2), si aplica
                                                  -- UNIQUE simple: Postgres permite múltiples NULL de forma nativa
 
