@@ -56,6 +56,37 @@ export const CATALOGO: readonly CatalogEntry[] = [
   // --- direccion_grieta: D-79 (direccion_grieta) ---
   { catalogo: "direccion_grieta", codigo: "longitudinal", etiqueta: "Longitudinal", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "direccion_grieta", codigo: "transversal", etiqueta: "Transversal", orden: 1, estado: "vigente", cc: "PR-021" },
+
+  // --- zona_objetivo: D-167 (M01) ---
+  { catalogo: "zona_objetivo", codigo: "bajo_la_copa", etiqueta: "Bajo la copa", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "zona_objetivo", codigo: "entre_limite_copa_y_una_altura", etiqueta: "Entre el límite de la copa y 1× la altura del árbol", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "zona_objetivo", codigo: "entre_una_y_1_5_alturas", etiqueta: "Entre 1× y 1,5× la altura del árbol", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "zona_objetivo", codigo: "mas_alla_de_1_5_alturas", etiqueta: "Más allá de 1,5× la altura del árbol", orden: 3, estado: "vigente", cc: "PR-021" },
+
+  // --- tasa_ocupacion: D-168 (M01) ---
+  { catalogo: "tasa_ocupacion", codigo: "rara", etiqueta: "Rara", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tasa_ocupacion", codigo: "ocasional", etiqueta: "Ocasional", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tasa_ocupacion", codigo: "frecuente", etiqueta: "Frecuente", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "tasa_ocupacion", codigo: "constante", etiqueta: "Constante", orden: 3, estado: "vigente", cc: "PR-021" },
+
+  // --- probabilidad_impacto: D-169, salida de M01 ---
+  { catalogo: "probabilidad_impacto", codigo: "muy_baja", etiqueta: "Muy baja", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "probabilidad_impacto", codigo: "baja", etiqueta: "Baja", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "probabilidad_impacto", codigo: "media", etiqueta: "Media", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "probabilidad_impacto", codigo: "alta", etiqueta: "Alta", orden: 3, estado: "vigente", cc: "PR-021" },
+
+  // --- consecuencia: D-170/171/172 (consecuencia_raices_cuello/_tronco/_copa_ramas), entrada de M03 ---
+  { catalogo: "consecuencia", codigo: "insignificante", etiqueta: "Insignificante", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "consecuencia", codigo: "menor", etiqueta: "Menor", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "consecuencia", codigo: "significativa", etiqueta: "Significativa", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "consecuencia", codigo: "severa", etiqueta: "Severa", orden: 3, estado: "vigente", cc: "PR-021" },
+
+  // --- clasificacion_riesgo: D-176/177/178 (por componente), D-181 (R04) ---
+  { catalogo: "clasificacion_riesgo", codigo: "bajo", etiqueta: "Bajo", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_riesgo", codigo: "moderado", etiqueta: "Moderado", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_riesgo", codigo: "alto", etiqueta: "Alto", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_riesgo", codigo: "extremo", etiqueta: "Extremo", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clasificacion_riesgo", codigo: "no_determinado", etiqueta: "No determinado", estado: "vigente", cc: "CC-024" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {
@@ -87,3 +118,12 @@ export type ResultadoCavidadInternaCodigo = "si" | "no" | "requiere_evaluacion_i
 export type CondicionHeridaCodigo = "abierta" | "en_proceso_de_cierre" | "cerrada";
 export type AfectacionGrietaCodigo = "solo_corteza" | "penetra_en_madera";
 export type DireccionGrietaCodigo = "longitudinal" | "transversal";
+export type ZonaObjetivoCodigo =
+  | "bajo_la_copa"
+  | "entre_limite_copa_y_una_altura"
+  | "entre_una_y_1_5_alturas"
+  | "mas_alla_de_1_5_alturas";
+export type TasaOcupacionCodigo = "rara" | "ocasional" | "frecuente" | "constante";
+export type ProbabilidadImpactoCodigo = "muy_baja" | "baja" | "media" | "alta";
+export type ConsecuenciaCodigo = "insignificante" | "menor" | "significativa" | "severa";
+export type ClasificacionRiesgoCodigo = "bajo" | "moderado" | "alto" | "extremo" | "no_determinado";

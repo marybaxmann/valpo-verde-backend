@@ -24,6 +24,7 @@
  */
 
 import { esCodigoVigente, ProbabilidadFallaCodigo, ResultadoCavidadInternaCodigo, SeveridadCodigo } from "./catalogs";
+import { esBooleanoValido, motivoFueraDominioSiNo } from "./dominio";
 import { calcularRRadioBasalCm, calcularSLBasalPct, calcularTRBasal, ResultadoCalculo } from "./variables-calculo";
 
 export interface R01Input {
@@ -85,6 +86,9 @@ function evaluarEstabilidad(input: R01Input): IndicadorResultado {
   if (levantamiento === null) {
     return noDeterminado("levantamiento_del_plato_radicular sin valor (RC-EST, obligatorio)");
   }
+  if (!esBooleanoValido(levantamiento)) {
+    return noDeterminado(motivoFueraDominioSiNo("levantamiento_del_plato_radicular", levantamiento, "D-46"));
+  }
   if (angulo === null) {
     return noDeterminado("angulo_inclinacion sin valor (RC-EST, obligatorio)");
   }
@@ -111,13 +115,22 @@ function evaluarRaicesExpuestas(input: R01Input): IndicadorResultado {
   if (input.raices_expuestas === null) {
     return noDeterminado("raices_expuestas sin valor (RC-REX, obligatorio)");
   }
+  if (!esBooleanoValido(input.raices_expuestas)) {
+    return noDeterminado(motivoFueraDominioSiNo("raices_expuestas", input.raices_expuestas, "D-43"));
+  }
   if (!input.raices_expuestas) return indicador("despreciable"); // RC-REX-01, necrosis/cortadas no se activan
 
   if (input.necrosis_radicular === null) {
     return noDeterminado("necrosis_radicular sin valor (RC-REX, condicional activado por raices_expuestas = Sí)");
   }
+  if (!esBooleanoValido(input.necrosis_radicular)) {
+    return noDeterminado(motivoFueraDominioSiNo("necrosis_radicular", input.necrosis_radicular, "D-44"));
+  }
   if (input.raices_cortadas === null) {
     return noDeterminado("raices_cortadas sin valor (RC-REX, condicional activado por raices_expuestas = Sí)");
+  }
+  if (!esBooleanoValido(input.raices_cortadas)) {
+    return noDeterminado(motivoFueraDominioSiNo("raices_cortadas", input.raices_cortadas, "D-45"));
   }
   const necrosis = input.necrosis_radicular;
   const cortadas = input.raices_cortadas;
@@ -154,6 +167,9 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
   if (input.cavidad_pudricion_basal === null) {
     return { indicador: noDeterminado("cavidad_pudricion_basal sin valor (RC-CAV, obligatorio)") };
   }
+  if (!esBooleanoValido(input.cavidad_pudricion_basal)) {
+    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_pudricion_basal", input.cavidad_pudricion_basal, "D-49")) };
+  }
   if (!input.cavidad_pudricion_basal) return { indicador: indicador("despreciable") }; // RC-CAV-01
 
   if (input.cavidad_basal_interna === null) {
@@ -172,6 +188,9 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
     return {
       indicador: noDeterminado("cavidad_basal_externa sin valor (RC-CAV, condicional activado por cavidad_pudricion_basal = Sí)"),
     };
+  }
+  if (!esBooleanoValido(input.cavidad_basal_externa)) {
+    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_basal_externa", input.cavidad_basal_externa, "D-50")) };
   }
 
   let SL_basal_pct: ResultadoCalculo | undefined;

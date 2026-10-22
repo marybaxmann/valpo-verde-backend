@@ -319,6 +319,24 @@ describe("Puntaje total P_RC — tramos de MATRICES_CALCULO", () => {
   });
 });
 
+describe("Valores fuera del dominio Sí/No (nunca truthy/falsy por coerción)", () => {
+  it.each(["Sí", "no", 1, 0])("levantamiento_del_plato_radicular = %p → no_determinado", (valor) => {
+    const r = evaluarR01({ ...base(), levantamiento_del_plato_radicular: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.estabilidad.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("raices_expuestas = %p → no_determinado", (valor) => {
+    const r = evaluarR01({ ...base(), raices_expuestas: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.raicesExpuestas.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("cavidad_pudricion_basal = %p → no_determinado", (valor) => {
+    const r = evaluarR01({ ...base(), cavidad_pudricion_basal: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.cavidadBasal.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+});
+
 describe("Campos faltantes → no_determinado (el motor nunca rellena ni supone)", () => {
   it("levantamiento_del_plato_radicular = null → no_determinado", () => {
     const r = evaluarR01({ ...base(), levantamiento_del_plato_radicular: null });

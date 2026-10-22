@@ -212,6 +212,24 @@ describe("Puntaje total P_CR — tramos de MATRICES_CALCULO", () => {
   });
 });
 
+describe("Valores fuera del dominio Sí/No (nunca truthy/falsy por coerción)", () => {
+  it.each(["Sí", "no", 1, 0])("ramas_secas = %p → no_determinado", (valor) => {
+    const r = evaluarR03({ ...base(), ramas_secas: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.ramasSecas.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("ramas_quebradas = %p → no_determinado", (valor) => {
+    const r = evaluarR03({ ...base(), ramas_quebradas: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.ramasQuebradas.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("desequilibrio_copa = %p → no_determinado", (valor) => {
+    const r = evaluarR03({ ...base(), desequilibrio_copa: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.desequilibrioCopa.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+});
+
 describe("Campos faltantes → no_determinado (el motor nunca rellena ni supone)", () => {
   it("ramas_secas = null → no_determinado", () => {
     const r = evaluarR03({ ...base(), ramas_secas: null });

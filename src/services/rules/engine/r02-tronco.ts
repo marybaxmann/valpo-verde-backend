@@ -32,6 +32,7 @@ import {
   SeveridadCodigo,
 } from "./catalogs";
 import { calcularRRadioTroncoCm, calcularSLTroncoPct, calcularTRTronco, ResultadoCalculo } from "./variables-calculo";
+import { esBooleanoValido, motivoFueraDominioSiNo } from "./dominio";
 
 export interface R02Input {
   // --- Cavidad del tronco (TR-CAV) ---
@@ -120,6 +121,11 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
   if (input.presenta_cavidad_pudricion_tronco === null) {
     return { indicador: noDeterminado("presenta_cavidad_pudricion_tronco sin valor (TR-CAV, obligatorio)") };
   }
+  if (!esBooleanoValido(input.presenta_cavidad_pudricion_tronco)) {
+    return {
+      indicador: noDeterminado(motivoFueraDominioSiNo("presenta_cavidad_pudricion_tronco", input.presenta_cavidad_pudricion_tronco, "D-61")),
+    };
+  }
   if (!input.presenta_cavidad_pudricion_tronco) return { indicador: indicador("despreciable") }; // TR-CAV-01
 
   if (input.cavidad_interna_tronco === null) {
@@ -137,6 +143,9 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
     return {
       indicador: noDeterminado("cavidad_externa_tronco sin valor (TR-CAV, condicional activado por presenta_cavidad_pudricion_tronco = Sí)"),
     };
+  }
+  if (!esBooleanoValido(input.cavidad_externa_tronco)) {
+    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_externa_tronco", input.cavidad_externa_tronco, "D-62")) };
   }
 
   let SL_tronco_pct: ResultadoCalculo | undefined;
@@ -200,6 +209,9 @@ function evaluarHeridas(input: R02Input): IndicadorResultado {
   if (input.presenta_heridas_tronco === null) {
     return noDeterminado("presenta_heridas_tronco sin valor (TR-HER, obligatorio)");
   }
+  if (!esBooleanoValido(input.presenta_heridas_tronco)) {
+    return noDeterminado(motivoFueraDominioSiNo("presenta_heridas_tronco", input.presenta_heridas_tronco, "D-72"));
+  }
   if (!input.presenta_heridas_tronco) return indicador("despreciable"); // TR-HER-01
 
   if (input.condicion_heridas_tronco === null) {
@@ -218,6 +230,9 @@ function evaluarCortezaMuertaAusente(input: R02Input): IndicadorResultado {
   if (input.corteza_muerta_ausente === null) {
     return noDeterminado("corteza_muerta_ausente sin valor (TR-COR, obligatorio)");
   }
+  if (!esBooleanoValido(input.corteza_muerta_ausente)) {
+    return noDeterminado(motivoFueraDominioSiNo("corteza_muerta_ausente", input.corteza_muerta_ausente, "D-74"));
+  }
   return input.corteza_muerta_ausente ? indicador("moderada") : indicador("despreciable"); // TR-COR-02 / TR-COR-01
 }
 
@@ -226,6 +241,9 @@ function evaluarExudaciones(input: R02Input): IndicadorResultado {
   if (input.presenta_exudaciones === null) {
     return noDeterminado("presenta_exudaciones sin valor (TR-EXU, obligatorio)");
   }
+  if (!esBooleanoValido(input.presenta_exudaciones)) {
+    return noDeterminado(motivoFueraDominioSiNo("presenta_exudaciones", input.presenta_exudaciones, "D-75"));
+  }
   return input.presenta_exudaciones ? indicador("leve") : indicador("despreciable"); // TR-EXU-02 / TR-EXU-01
 }
 
@@ -233,6 +251,9 @@ function evaluarExudaciones(input: R02Input): IndicadorResultado {
 function evaluarFisurasGrietas(input: R02Input): IndicadorResultado {
   if (input.presenta_fisura_grieta_tronco === null) {
     return noDeterminado("presenta_fisura_grieta_tronco sin valor (TR-GRI, obligatorio)");
+  }
+  if (!esBooleanoValido(input.presenta_fisura_grieta_tronco)) {
+    return noDeterminado(motivoFueraDominioSiNo("presenta_fisura_grieta_tronco", input.presenta_fisura_grieta_tronco, "D-77"));
   }
   if (!input.presenta_fisura_grieta_tronco) return indicador("despreciable"); // TR-GRI-01
 
@@ -259,15 +280,24 @@ function evaluarCodominancia(input: R02Input): IndicadorResultado {
   if (input.troncos_codominantes === null) {
     return noDeterminado("troncos_codominantes sin valor (TR-COD, obligatorio)");
   }
+  if (!esBooleanoValido(input.troncos_codominantes)) {
+    return noDeterminado(motivoFueraDominioSiNo("troncos_codominantes", input.troncos_codominantes, "D-82"));
+  }
   if (!input.troncos_codominantes) return indicador("despreciable"); // TR-COD-01
 
   if (input.grieta_union_codominante === null) {
     return noDeterminado("grieta_union_codominante sin valor (TR-COD, condicional activado por troncos_codominantes = Sí)");
   }
+  if (!esBooleanoValido(input.grieta_union_codominante)) {
+    return noDeterminado(motivoFueraDominioSiNo("grieta_union_codominante", input.grieta_union_codominante, "D-84"));
+  }
   if (input.grieta_union_codominante) return indicador("severa"); // TR-COD-02
 
   if (input.corteza_incluida === null) {
     return noDeterminado("corteza_incluida sin valor (TR-COD, condicional activado por troncos_codominantes = Sí)");
+  }
+  if (!esBooleanoValido(input.corteza_incluida)) {
+    return noDeterminado(motivoFueraDominioSiNo("corteza_incluida", input.corteza_incluida, "D-83"));
   }
   return input.corteza_incluida ? indicador("moderada") : indicador("leve"); // TR-COD-03 / TR-COD-04
 }

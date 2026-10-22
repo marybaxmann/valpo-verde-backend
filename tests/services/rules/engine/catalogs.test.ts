@@ -71,6 +71,63 @@ describe("catálogo direccion_grieta vs DICCIONARIO_CAMPOS (fila direccion_griet
   });
 });
 
+describe("catálogo zona_objetivo vs DICCIONARIO_CAMPOS (fila zona_objetivo)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "zona_objetivo");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("zona_objetivo").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo tasa_ocupacion vs DICCIONARIO_CAMPOS (fila tasa_ocupacion_objetivo)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "tasa_ocupacion_objetivo");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("tasa_ocupacion").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo probabilidad_impacto vs DICCIONARIO_CAMPOS (fila probabilidad_impacto)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "probabilidad_impacto");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("probabilidad_impacto").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo consecuencia vs DICCIONARIO_CAMPOS (fila consecuencia_raices_cuello)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "consecuencia_raices_cuello");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("consecuencia").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("catálogo clasificacion_riesgo vs DICCIONARIO_CAMPOS (fila clasificacion_raices_cuello)", () => {
+  it("las etiquetas vigentes distintas de no_determinado coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "clasificacion_raices_cuello");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("clasificacion_riesgo")
+      .filter((c) => c.codigo !== "no_determinado")
+      .map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
 describe("esCodigoVigente", () => {
   it("true para un código vigente conocido", () => {
     expect(esCodigoVigente("resultado_cavidad_interna", "si")).toBe(true);

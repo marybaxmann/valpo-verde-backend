@@ -19,6 +19,7 @@
  */
 
 import { ProbabilidadFallaCodigo, SeveridadCodigo } from "./catalogs";
+import { esBooleanoValido, motivoFueraDominioSiNo } from "./dominio";
 
 export interface R03Input {
   // --- Ramas secas (CR-RSE) ---
@@ -62,6 +63,9 @@ function evaluarRamasSecas(input: R03Input): IndicadorResultado {
   if (input.ramas_secas === null) {
     return noDeterminado("ramas_secas sin valor (CR-RSE, obligatorio)");
   }
+  if (!esBooleanoValido(input.ramas_secas)) {
+    return noDeterminado(motivoFueraDominioSiNo("ramas_secas", input.ramas_secas, "D-86"));
+  }
   if (!input.ramas_secas) return indicador("despreciable"); // CR-RSE-01
 
   const pct = input.ramas_secas_pct_copa;
@@ -84,6 +88,9 @@ function evaluarRamasQuebradas(input: R03Input): IndicadorResultado {
   if (input.ramas_quebradas === null) {
     return noDeterminado("ramas_quebradas sin valor (CR-RQU, obligatorio)");
   }
+  if (!esBooleanoValido(input.ramas_quebradas)) {
+    return noDeterminado(motivoFueraDominioSiNo("ramas_quebradas", input.ramas_quebradas, "D-89"));
+  }
   return input.ramas_quebradas ? indicador("leve") : indicador("despreciable"); // CR-RQU-02 / CR-RQU-01
 }
 
@@ -91,6 +98,9 @@ function evaluarRamasQuebradas(input: R03Input): IndicadorResultado {
 function evaluarDesequilibrioCopa(input: R03Input): IndicadorResultado {
   if (input.desequilibrio_copa === null) {
     return noDeterminado("desequilibrio_copa sin valor (CR-DES, obligatorio)");
+  }
+  if (!esBooleanoValido(input.desequilibrio_copa)) {
+    return noDeterminado(motivoFueraDominioSiNo("desequilibrio_copa", input.desequilibrio_copa, "D-96"));
   }
   return input.desequilibrio_copa ? indicador("leve") : indicador("despreciable"); // CR-DES-02 / CR-DES-01
 }

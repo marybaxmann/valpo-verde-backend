@@ -315,6 +315,39 @@ describe("Puntaje total P_T — tramos de MATRICES_CALCULO", () => {
   });
 });
 
+describe("Valores fuera del dominio Sí/No (nunca truthy/falsy por coerción)", () => {
+  it.each(["Sí", "no", 1, 0])("presenta_cavidad_pudricion_tronco = %p → no_determinado", (valor) => {
+    const r = evaluarR02({ ...base(), presenta_cavidad_pudricion_tronco: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.cavidadTronco.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("presenta_heridas_tronco = %p → no_determinado", (valor) => {
+    const r = evaluarR02({ ...base(), presenta_heridas_tronco: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.heridas.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("corteza_muerta_ausente = %p → no_determinado", (valor) => {
+    const r = evaluarR02({ ...base(), corteza_muerta_ausente: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.cortezaMuertaAusente.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("presenta_exudaciones = %p → no_determinado", (valor) => {
+    const r = evaluarR02({ ...base(), presenta_exudaciones: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.exudaciones.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("presenta_fisura_grieta_tronco = %p → no_determinado", (valor) => {
+    const r = evaluarR02({ ...base(), presenta_fisura_grieta_tronco: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.fisurasGrietas.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+  it.each(["Sí", "no", 1, 0])("troncos_codominantes = %p → no_determinado", (valor) => {
+    const r = evaluarR02({ ...base(), troncos_codominantes: valor as unknown as boolean });
+    expect(r.probabilidadFalla).toBe("no_determinado");
+    expect(r.indicadores.codominancia.motivo).toMatch(/fuera del dominio Sí\/No/);
+  });
+});
+
 describe("Campos faltantes → no_determinado (el motor nunca rellena ni supone)", () => {
   it("presenta_cavidad_pudricion_tronco = null → no_determinado", () => {
     const r = evaluarR02({ ...base(), presenta_cavidad_pudricion_tronco: null });
