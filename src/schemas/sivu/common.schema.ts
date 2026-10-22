@@ -20,16 +20,33 @@ export function textoObligatorio(nombreCampo: string) {
 }
 
 /**
- * D-9/D-10 (ARBOLES): coordenada UTM. El huso (19S) y el datum (WGS84)
- * son fijos en todo SIVU (D-11/D-12) — no son datos que ingrese el
- * usuario, así que este esquema valida solo el valor numérico. El
- * Excel no fija un rango explícito más allá de "valor numérico"; no se
- * inventa uno — solo se exige que sea un número finito y positivo.
+ * D-9/D-10 (ARBOLES): coordenadas UTM huso 19S, datum WGS84 (EPSG:32719).
+ * El huso y el datum son fijos en todo SIVU (D-11/D-12) — no son datos
+ * que ingrese el usuario. El Excel no fija un rango numérico explícito
+ * más allá de "valor numérico"; los rangos de abajo son del dominio de
+ * la proyección UTM (no se inventan, son una propiedad matemática fija
+ * del huso 19S en el hemisferio sur, dada por la responsable) y no una
+ * regla metodológica adicional:
+ * - `utm_este`: 166000–834000 m (ancho de una zona UTM de 6° a cualquier
+ *   latitud, con el margen estándar de 500000 ± 334000).
+ * - `utm_norte`: 0–10000000 m (falso norte del hemisferio sur: 0 en el
+ *   polo Sur, 10000000 en el ecuador).
+ *
+ * Esquemas separados porque un valor de Este fuera de rango y uno de
+ * Norte fuera de rango son errores distintos (D-9 vs. D-10), con
+ * mensajes propios.
  */
-export const coordenadaUtm = z
+export const coordenadaUtmEste = z
   .number()
   .finite("debe ser un número finito")
-  .positive("debe ser mayor que 0");
+  .min(166000, "utm_este fuera de rango para UTM 19S (166000–834000 m)")
+  .max(834000, "utm_este fuera de rango para UTM 19S (166000–834000 m)");
+
+export const coordenadaUtmNorte = z
+  .number()
+  .finite("debe ser un número finito")
+  .min(0, "utm_norte fuera de rango para el hemisferio sur (0–10000000 m)")
+  .max(10000000, "utm_norte fuera de rango para el hemisferio sur (0–10000000 m)");
 
 /**
  * D-265 (SECTORES.geometria_sector): "Delimitación en el mapa o

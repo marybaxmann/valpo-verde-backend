@@ -44,12 +44,33 @@ describe("altaMunicipalArbolSchema", () => {
     expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_este: "256000" }).success).toBe(false);
   });
 
-  it("rechaza utm_norte = 0 (no es > 0)", () => {
-    expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_norte: 0 }).success).toBe(false);
+  it("acepta utm_norte = 0 (falso norte del hemisferio sur, límite inferior del rango)", () => {
+    expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_norte: 0 }).success).toBe(true);
   });
 
   it("rechaza utm_este = NaN/Infinity", () => {
     expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_este: Infinity }).success).toBe(false);
+  });
+
+  it("rechaza utm_este fuera del rango de UTM 19S (165999 < 166000)", () => {
+    expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_este: 165999 }).success).toBe(false);
+  });
+
+  it("rechaza utm_este fuera del rango de UTM 19S (834001 > 834000)", () => {
+    expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_este: 834001 }).success).toBe(false);
+  });
+
+  it("rechaza utm_norte fuera del rango del hemisferio sur (-1 < 0)", () => {
+    expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_norte: -1 }).success).toBe(false);
+  });
+
+  it("rechaza utm_norte fuera del rango del hemisferio sur (10000001 > 10000000)", () => {
+    expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_norte: 10000001 }).success).toBe(false);
+  });
+
+  it("acepta los límites exactos del rango (166000/834000 este, 0/10000000 norte)", () => {
+    expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_este: 166000, utm_norte: 0 }).success).toBe(true);
+    expect(altaMunicipalArbolSchema.safeParse({ ...altaValida(), utm_este: 834000, utm_norte: 10000000 }).success).toBe(true);
   });
 
   it("rechaza datos técnicos fuera de alcance del alta municipal (.strict()): multifustal, dap_cm", () => {

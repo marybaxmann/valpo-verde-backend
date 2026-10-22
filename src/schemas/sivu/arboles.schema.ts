@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { coordenadaUtm, textoObligatorio } from "./common.schema";
+import { coordenadaUtmEste, coordenadaUtmNorte, textoObligatorio } from "./common.schema";
 
 /**
  * Body de POST /api/sivu/projects/:id/trees — alta municipal mínima
@@ -30,8 +30,8 @@ export const altaMunicipalArbolSchema = z
   .object({
     sector: textoObligatorio("sector"),
     ubicacion_descriptiva: textoObligatorio("ubicacion_descriptiva"),
-    utm_este: coordenadaUtm,
-    utm_norte: coordenadaUtm,
+    utm_este: coordenadaUtmEste,
+    utm_norte: coordenadaUtmNorte,
     especie_cientifica: textoObligatorio("especie_cientifica").optional(),
     nombre_comun: textoObligatorio("nombre_comun").optional(),
   })
