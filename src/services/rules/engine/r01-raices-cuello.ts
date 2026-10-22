@@ -23,7 +23,7 @@
  * con variables-calculo.ts — nunca los recibe ya calculados.
  */
 
-import { ProbabilidadFallaCodigo, ResultadoCavidadInternaCodigo, SeveridadCodigo } from "./catalogs";
+import { esCodigoVigente, ProbabilidadFallaCodigo, ResultadoCavidadInternaCodigo, SeveridadCodigo } from "./catalogs";
 import { calcularRRadioBasalCm, calcularSLBasalPct, calcularTRBasal, ResultadoCalculo } from "./variables-calculo";
 
 export interface R01Input {
@@ -160,6 +160,10 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
     return {
       indicador: noDeterminado("cavidad_basal_interna sin valor (RC-CAV, condicional activado por cavidad_pudricion_basal = Sí)"),
     };
+  }
+  if (!esCodigoVigente("resultado_cavidad_interna", input.cavidad_basal_interna)) {
+    // Fuera de dominio: nunca se trata como la rama "si"/"no" más cercana.
+    return { indicador: noDeterminado(`cavidad_basal_interna tiene un código no reconocido ("${input.cavidad_basal_interna}")`) };
   }
   if (input.cavidad_basal_interna === "requiere_evaluacion_instrumental") {
     return { indicador: noDeterminado("cavidad_basal_interna = Requiere evaluación instrumental (RC-CAV-09)") };

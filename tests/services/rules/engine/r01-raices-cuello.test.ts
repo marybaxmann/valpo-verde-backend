@@ -244,6 +244,15 @@ describe("RC-CAV — Cavidad basal", () => {
     expect(r.probabilidadFalla).toBe("no_determinado");
   });
 
+  it("cavidad_basal_interna con un código fuera de dominio → no_determinado, nunca se trata como 'si'/'no'", () => {
+    const r = evaluarR01({
+      ...base(), cavidad_pudricion_basal: true,
+      cavidad_basal_interna: "tal_vez" as unknown as R01Input["cavidad_basal_interna"],
+    });
+    expect(r.indicadores.cavidadBasal.noDeterminado).toBe(true);
+    expect(r.indicadores.cavidadBasal.motivo).toMatch(/código no reconocido/);
+  });
+
   it("D-51: pudrición = Sí con externa = No e interna = No es una combinación inválida → no_determinado, sin inventar un valor", () => {
     const r = evaluarR01({ ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: false, cavidad_basal_interna: "no" });
     expect(r.indicadores.cavidadBasal.noDeterminado).toBe(true);

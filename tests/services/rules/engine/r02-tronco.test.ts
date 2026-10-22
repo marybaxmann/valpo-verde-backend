@@ -121,6 +121,15 @@ describe("TR-CAV — Cavidad del tronco", () => {
     });
     expect(r.indicadores.cavidadTronco.severidad).toBe("severa");
   });
+  it("cavidad_interna_tronco con un código fuera de dominio → no_determinado, nunca se trata como 'si'/'no'", () => {
+    const r = evaluarR02({
+      ...base(), presenta_cavidad_pudricion_tronco: true,
+      cavidad_interna_tronco: "tal_vez" as unknown as R02Input["cavidad_interna_tronco"],
+    });
+    expect(r.indicadores.cavidadTronco.noDeterminado).toBe(true);
+    expect(r.indicadores.cavidadTronco.motivo).toMatch(/código no reconocido/);
+  });
+
   it("D-62/D-63: pudrición = Sí con externa = No e interna = No es una combinación inválida → no_determinado", () => {
     const r = evaluarR02({ ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: false, cavidad_interna_tronco: "no" });
     expect(r.indicadores.cavidadTronco.noDeterminado).toBe(true);
@@ -151,6 +160,14 @@ describe("TR-HER — Heridas", () => {
   it("TR-HER-04: condición = Abierta → moderada", () => {
     const r = evaluarR02({ ...base(), presenta_heridas_tronco: true, condicion_heridas_tronco: "abierta" });
     expect(r.indicadores.heridas.severidad).toBe("moderada");
+  });
+  it("condicion_heridas_tronco con un código fuera de dominio → no_determinado, nunca se trata como 'abierta'", () => {
+    const r = evaluarR02({
+      ...base(), presenta_heridas_tronco: true,
+      condicion_heridas_tronco: "sanando_mal" as unknown as R02Input["condicion_heridas_tronco"],
+    });
+    expect(r.indicadores.heridas.noDeterminado).toBe(true);
+    expect(r.indicadores.heridas.motivo).toMatch(/código no reconocido/);
   });
 });
 
@@ -196,6 +213,22 @@ describe("TR-GRI — Fisuras y grietas", () => {
       ...base(), presenta_fisura_grieta_tronco: true, afectacion_fisura_grieta: "penetra_en_madera", direccion_grieta: "transversal",
     });
     expect(r.indicadores.fisurasGrietas.severidad).toBe("severa");
+  });
+  it("afectacion_fisura_grieta con un código fuera de dominio → no_determinado", () => {
+    const r = evaluarR02({
+      ...base(), presenta_fisura_grieta_tronco: true,
+      afectacion_fisura_grieta: "no_se_sabe" as unknown as R02Input["afectacion_fisura_grieta"],
+    });
+    expect(r.indicadores.fisurasGrietas.noDeterminado).toBe(true);
+    expect(r.indicadores.fisurasGrietas.motivo).toMatch(/código no reconocido/);
+  });
+  it("direccion_grieta con un código fuera de dominio → no_determinado", () => {
+    const r = evaluarR02({
+      ...base(), presenta_fisura_grieta_tronco: true, afectacion_fisura_grieta: "penetra_en_madera",
+      direccion_grieta: "diagonal" as unknown as R02Input["direccion_grieta"],
+    });
+    expect(r.indicadores.fisurasGrietas.noDeterminado).toBe(true);
+    expect(r.indicadores.fisurasGrietas.motivo).toMatch(/código no reconocido/);
   });
 });
 

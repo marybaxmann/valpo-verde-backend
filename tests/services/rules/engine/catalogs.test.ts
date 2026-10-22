@@ -1,4 +1,4 @@
-import { CATALOGO, entradasVigentesDe } from "../../../../src/services/rules/engine/catalogs";
+import { CATALOGO, entradasVigentesDe, esCodigoVigente } from "../../../../src/services/rules/engine/catalogs";
 import { leerExportCsv } from "./testUtils/csvExport";
 
 describe("catálogo severidad vs REGLAS_INDICADORES (columna Categoría parcial)", () => {
@@ -68,6 +68,18 @@ describe("catálogo direccion_grieta vs DICCIONARIO_CAMPOS (fila direccion_griet
     const dominioExcel = fila![7].split("/").map((s) => s.trim());
     const etiquetasCatalogo = entradasVigentesDe("direccion_grieta").map((c) => c.etiqueta);
     expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
+describe("esCodigoVigente", () => {
+  it("true para un código vigente conocido", () => {
+    expect(esCodigoVigente("resultado_cavidad_interna", "si")).toBe(true);
+  });
+  it("false para un código que no existe en ese catálogo", () => {
+    expect(esCodigoVigente("resultado_cavidad_interna", "tal_vez")).toBe(false);
+  });
+  it("false para un código que existe, pero en otro catálogo", () => {
+    expect(esCodigoVigente("resultado_cavidad_interna", "abierta")).toBe(false);
   });
 });
 

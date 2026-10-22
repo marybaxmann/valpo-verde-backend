@@ -26,6 +26,7 @@ import {
   AfectacionGrietaCodigo,
   CondicionHeridaCodigo,
   DireccionGrietaCodigo,
+  esCodigoVigente,
   ProbabilidadFallaCodigo,
   ResultadoCavidadInternaCodigo,
   SeveridadCodigo,
@@ -126,6 +127,9 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
       indicador: noDeterminado("cavidad_interna_tronco sin valor (TR-CAV, condicional activado por presenta_cavidad_pudricion_tronco = Sí)"),
     };
   }
+  if (!esCodigoVigente("resultado_cavidad_interna", input.cavidad_interna_tronco)) {
+    return { indicador: noDeterminado(`cavidad_interna_tronco tiene un código no reconocido ("${input.cavidad_interna_tronco}")`) };
+  }
   if (input.cavidad_interna_tronco === "requiere_evaluacion_instrumental") {
     return { indicador: noDeterminado("cavidad_interna_tronco = Requiere evaluación instrumental (TR-CAV-09)") };
   }
@@ -201,6 +205,9 @@ function evaluarHeridas(input: R02Input): IndicadorResultado {
   if (input.condicion_heridas_tronco === null) {
     return noDeterminado("condicion_heridas_tronco sin valor (TR-HER, condicional activado por presenta_heridas_tronco = Sí)");
   }
+  if (!esCodigoVigente("condicion_herida", input.condicion_heridas_tronco)) {
+    return noDeterminado(`condicion_heridas_tronco tiene un código no reconocido ("${input.condicion_heridas_tronco}")`);
+  }
   if (input.condicion_heridas_tronco === "cerrada") return indicador("despreciable"); // TR-HER-02
   if (input.condicion_heridas_tronco === "en_proceso_de_cierre") return indicador("leve"); // TR-HER-03
   return indicador("moderada"); // TR-HER-04 (abierta)
@@ -232,11 +239,17 @@ function evaluarFisurasGrietas(input: R02Input): IndicadorResultado {
   if (input.afectacion_fisura_grieta === null) {
     return noDeterminado("afectacion_fisura_grieta sin valor (TR-GRI, condicional activado por presenta_fisura_grieta_tronco = Sí)");
   }
+  if (!esCodigoVigente("afectacion_grieta", input.afectacion_fisura_grieta)) {
+    return noDeterminado(`afectacion_fisura_grieta tiene un código no reconocido ("${input.afectacion_fisura_grieta}")`);
+  }
   if (input.afectacion_fisura_grieta === "solo_corteza") return indicador("leve"); // TR-GRI-02
 
   // afectacion_fisura_grieta = "penetra_en_madera"
   if (input.direccion_grieta === null) {
     return noDeterminado("direccion_grieta sin valor (TR-GRI, condicional activado por afectacion_fisura_grieta = penetra_en_madera)");
+  }
+  if (!esCodigoVigente("direccion_grieta", input.direccion_grieta)) {
+    return noDeterminado(`direccion_grieta tiene un código no reconocido ("${input.direccion_grieta}")`);
   }
   return input.direccion_grieta === "longitudinal" ? indicador("moderada") : indicador("severa"); // TR-GRI-03 / TR-GRI-04
 }

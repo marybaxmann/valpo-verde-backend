@@ -68,6 +68,19 @@ export function entradasVigentesDe(catalogo: string): CatalogEntry[] {
   return CATALOGO.filter((c) => c.catalogo === catalogo && c.estado === "vigente");
 }
 
+/**
+ * true solo si `codigo` es un código vigente de `catalogo`. El motor la usa
+ * para validar en tiempo de ejecución los campos de catálogo (3 o más
+ * valores): el tipo de TypeScript no protege contra un valor corrupto que
+ * llegue como string sin pasar por el compilador (p. ej. desde la base de
+ * datos). Un código no reconocido nunca se trata como la rama "else" de un
+ * valor conocido — ver variables-calculo.ts y los módulos R01–R03 sobre
+ * "valores fuera de dominio".
+ */
+export function esCodigoVigente(catalogo: string, codigo: string): boolean {
+  return CATALOGO.some((c) => c.catalogo === catalogo && c.codigo === codigo && c.estado === "vigente");
+}
+
 export type SeveridadCodigo = "despreciable" | "leve" | "moderada" | "severa";
 export type ProbabilidadFallaCodigo = "improbable" | "posible" | "probable" | "inminente" | "no_determinado";
 export type ResultadoCavidadInternaCodigo = "si" | "no" | "requiere_evaluacion_instrumental";
