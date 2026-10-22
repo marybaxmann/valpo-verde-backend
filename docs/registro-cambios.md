@@ -1950,3 +1950,111 @@ motivo)
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ajuste: el cierre se permite con OT o incidencias abiertas, que quedan congeladas hasta la reapertura (DICCIONARIO_CAMPOS L265, REGLAS_GENERALES B27). |
 | 2026-10-21 | APROBADO METODOLÓGICAMENTE | marybaxmann | La versión en preparación pasa de 2.0.1 a 2.1.0 (`rule_version` 2.1) e incluye CC-040 (AM-12). |
 | 2026-10-21 | FUENTE SINCRONIZADA | marybaxmann | Publicación de 2.1.0 (PR #31 y #33 fusionados en `main`, `34d8e99`). VERSION fila 6 y el tag `metodologia-v2.1.0` quedan para el PR aparte de la sesión de auditoría (como el PR #30 de 2.0.0). |
+
+---
+
+### CC-043 — M04: tratamiento de "Función no determinada" en `tipo_red_aerea` (IN-RAE)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-22 |
+| Origen | Fase 5 (motor de reglas), implementación de M04 / IN-RAE. El Excel define `tipo_red_aerea` (D-149) como selección múltiple con la opción "Función no determinada", pero las reglas IN-RAE-02 a 06 solo distinguen "incluye Eléctrica" / "no incluye Eléctrica"; no definen qué hacer cuando la selección incluye "Función no determinada" y no incluye "Eléctrica". |
+| Tipo | 2 — metodológico (regla de indicador, M04) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | REGLAS_INDICADORES: IN-RAE-02 a 06. DICCIONARIO_CAMPOS: D-149 (`tipo_red_aerea`). |
+| Versión anterior | No definida: el Excel no contempla el caso "Función no determinada" sin "Eléctrica" en IN-RAE. |
+| Versión nueva (opción B) | Si la selección de `tipo_red_aerea` incluye "Función no determinada" y **no** incluye "Eléctrica", el componente red aérea queda `no_determinado` (se excluye de M04 según D-180): no se puede descartar que la red sea eléctrica. Si la selección incluye "Eléctrica", se aplican IN-RAE-02 a 04 igual, aunque también esté marcada "Función no determinada". Si no incluye ninguna de las dos, se aplican IN-RAE-05/06 como hoy. |
+| Motivo | El Excel no define el caso y la regla del proyecto es no suponer datos: no se puede asumir que una red de función desconocida no es eléctrica (lo que subestimaría el riesgo tratándola como IN-RAE-05/06), ni asumir que sí lo es (lo que la sobreestimaría exigiéndole la distancia de seguridad sin que el Inspector la haya evaluado como tal). |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-22. |
+| Archivos afectados | `src/services/rules/engine/m04-infraestructura.ts` (implementación); esta ficha. Pendiente: `docs/excel/Base de Datos Valpo Verde.xlsx` (REGLAS_INDICADORES IN-RAE, DICCIONARIO_CAMPOS D-149). |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: agregar el texto de esta decisión a REGLAS_INDICADORES (IN-RAE) y a D-149, en la próxima versión del paquete. |
+| Impacto en BD | Ninguno: `tipo_red_aerea` no tiene columna propia todavía (Fase 6). |
+| Impacto en backend | Implementado en el motor (Fase 5): `evaluarRedAerea` en `m04-infraestructura.ts`. |
+| Impacto en API | Ninguno todavía (Fase 6). |
+| Impacto en frontend | Ninguno todavía (Fase 7). |
+| Pruebas necesarias | Implementadas: solo "Función no determinada"; "Eléctrica" + "Función no determinada"; "Telecomunicaciones" + "Función no determinada"; código desconocido; lista vacía (`tests/services/rules/engine/m04-infraestructura.test.ts`). |
+| Dependencias | D-180 (No aplica y No determinado se excluyen de M04). |
+| rule_version | 2.1 (sin cambio de versión del paquete: el Excel en sí no se modificó todavía; la sincronización queda pendiente, ver "Impacto en Excel metodológico"). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-22 |
+| Fecha de implementación | 2026-10-22 (rama `feature/fase5-motor-reglas`) |
+| Commits / PR asociados | Rama `feature/fase5-motor-reglas` (sin PR todavía). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día. Pendiente llevar el texto al Excel. |
+
+---
+
+### CC-044 — Ajuste justificado sobre una clasificación calculada como No determinado / No aplica
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-22 |
+| Origen | Fase 5 (motor de reglas), implementación del ensamblaje (`ensamblaje.ts`, `resolverValorEfectivo`). D-181 y PR-008 v2.0 permiten el ajuste justificado de `clasificacion_riesgo`, `clasificacion_infraestructura` y `clasificacion_prioridad`, pero no dicen si el Inspector puede ajustar cuando el valor calculado es `No determinado` (riesgo/prioridad) o `No aplica` (infraestructura). |
+| Tipo | 2 — metodológico (regla de ajuste, PR-008) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | D-181 (`clasificacion_riesgo`), D-170 (`clasificacion_infraestructura`), D-172 (`clasificacion_prioridad`); `classification_adjustments` (diseño §3.10); CC-040 (d). |
+| Versión anterior | No definida: el Excel no contempla el caso de ajustar sobre un valor calculado No determinado / No aplica. |
+| Versión nueva | El Inspector **sí puede** ajustar una clasificación cuyo valor calculado es `No determinado` (riesgo, prioridad) o `No aplica` (infraestructura), con `justificacion_ajuste_clasificacion` obligatoria (NOT NULL en la base). Se conservan el valor calculado, el valor ajustado, el Inspector y la fecha del ajuste (D-181). El valor ajustado alimenta M05 y las fechas sugeridas (D-212/D-213) igual que cualquier otro ajuste. La regla de descarte de CC-040 (d) aplica sin cambios: en un recálculo posterior, si el valor calculado deja de ser No determinado/No aplica y no coincide con el valor sobre el que se hizo el ajuste, el ajuste se descarta y `requiere_revision_ajuste = true`. Lo único que **nunca** es válido es que el **valor ajustado** (el destino del ajuste, no el valor sobre el que se ajustó) sea él mismo `No determinado`/`No aplica`: un ajuste siempre resuelve a una categoría concreta. |
+| Motivo | El Excel permite el ajuste justificado pero no resuelve este caso; dejarlo indefinido bloquearía al Inspector justo en el escenario donde más necesita poder corregir el resultado (datos insuficientes para el cálculo automático, pero con criterio profesional suficiente para clasificar). |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-22. |
+| Archivos afectados | `src/services/rules/engine/ensamblaje.ts` (implementación); esta ficha. Pendiente: `docs/excel/Base de Datos Valpo Verde.xlsx` (D-181, D-170, D-172), en la próxima versión del paquete. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: agregar el texto de esta decisión a D-181, D-170 y D-172, en la próxima versión del paquete. |
+| Impacto en BD | Ninguno nuevo: `classification_adjustments` (diseño §3.10) ya admite esto sin cambios de esquema — la columna `valor_calculado` ya acepta `No determinado`/`No aplica` porque son valores legítimos de `clasificacion_*_calculada`. |
+| Impacto en backend | Implementado en el motor (Fase 5): `resolverValorEfectivo` en `ensamblaje.ts` valida que el valor ajustado sea una categoría determinada antes de aceptarlo, independientemente de cuál sea el valor calculado. |
+| Impacto en API | Ninguno todavía (Fase 6). |
+| Impacto en frontend | Ninguno todavía (Fase 7): el formulario de ajuste debe permitir ajustar aunque la clasificación muestre "Sin determinar"/"No aplica". |
+| Pruebas necesarias | Implementadas: ajuste sobre No determinado se mantiene; recálculo posterior con datos completos y valor distinto → descartado con marca de revisión; recálculo que sigue No determinado → se mantiene; valor ajustado = No determinado/No aplica → siempre se descarta (`tests/services/rules/engine/ensamblaje.test.ts`). |
+| Dependencias | CC-024 (No determinado), CC-029 (prioridad No determinado), CC-040 (d) (descarte de ajustes), D-180 (No aplica en infraestructura). |
+| rule_version | 2.1 (sin cambio de versión del paquete: el Excel en sí no se modificó todavía; la sincronización queda pendiente, ver "Impacto en Excel metodológico"). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-22 |
+| Fecha de implementación | 2026-10-22 (rama `feature/fase5-motor-reglas`) |
+| Commits / PR asociados | Rama `feature/fase5-motor-reglas` (sin PR todavía). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día. Pendiente llevar el texto al Excel. |
+
+---
+
+### CC-045 — Dos bloqueos del ensamblaje cerrados: ajustes ante una inspección anulada y fechas sugeridas sin riesgo determinado
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-22 |
+| Origen | Dos bloqueos documentados en el encabezado de `ensamblaje.ts` al cerrar el PR #70 (Fase 5, motor de reglas): (a) CC-040 (d) no decía qué pasa con los ajustes cuando el recálculo de la vigente lo dispara una `inspeccion_anulada` en vez de una OT completada; (b) D-212/D-213 no definían una fecha sugerida cuando `nivel_riesgo` queda `No determinado`, pese a que ambas fechas son Obligatorias. |
+| Tipo | 2 — metodológico (dos decisiones, registradas juntas por haberse resuelto en la misma revisión) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | (a) CC-040 (d); `classification_adjustments`; `tree_assessments.evento`. (b) D-210 (`nivel_riesgo`), D-212 (`fecha_proxima_inspeccion`), D-213 (`fecha_proximo_monitoreo`). |
+| Versión anterior | (a) No definida: CC-040 (d) solo cubría explícitamente el recálculo por OT completada. (b) No definida: D-210 solo admitía Bajo/Moderado/Alto/Extremo: una inspección con `clasificacion_riesgo` calculada como No determinado (D-181) no podría finalizarse nunca. |
+| Versión nueva | **(a)** Principio: al anularse una inspección, la evaluación vigente se recompone como si esa inspección nunca hubiera existido. La regla de descarte de CC-040 (d) se generaliza: aplica a cualquier recálculo de la vigente, no solo al disparado por una OT completada. Los ajustes registrados en la inspección anulada **no se aplican nunca** a la vigente (se conservan en el historial). Los ajustes de inspecciones válidas anteriores se vuelven a evaluar con la regla normal de CC-040 (d): se mantienen si el valor recalculado coincide con el valor sobre el que se ajustaron; si no, se descartan con `requiere_revision_ajuste = true`. Un ajuste anterior que se había descartado solo por culpa de la inspección ahora anulada se vuelve a evaluar con esa misma regla (puede volver a quedar vigente). **(b)** `nivel_riesgo` admite `No determinado` (sigue siendo igual a `clasificacion_riesgo` efectiva, incluido su ajuste — nunca se convierte en Extremo). Si es `No determinado`, las fechas sugeridas usan los rangos de Extremo (próxima inspección: 1 a 4 semanas; próximo monitoreo: inmediato y continuo), con un motivo explícito ("criterio de precaución: nivel_riesgo No determinado (CC-045 b)") para que la interfaz pueda mostrarlo. Si el Inspector ajusta el riesgo (CC-044), las fechas usan el valor ajustado. El Inspector puede modificar las fechas con `justificacion_ajuste_fecha`, sin cambios respecto de hoy (validación de la Fase 6, no del motor). La inspección con riesgo No determinado puede quedar Finalizada. |
+| Motivo | (a) Sin esta regla, anular una inspección dejaría la evaluación vigente en un estado indefinido respecto de sus ajustes — ni el Excel ni CC-040 lo resolvían. (b) Dejar sin fecha una inspección con riesgo No determinado bloquearía su finalización, justo cuando más atención requiere: se optó por el criterio más conservador (rango de Extremo) en vez de omitir el campo o inventar un plazo distinto. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-22, tomada junto con su compañera. |
+| Archivos afectados | `src/services/rules/engine/ensamblaje.ts` (CC-045 a: `AjusteVigente.inspectionId`, `filtrarPorAnulacion`, `ArgsResultadoVigente.inspeccionAnuladaId`); `src/services/rules/engine/fechas-sugeridas.ts` (CC-045 b: caso `no_determinado` en ambas funciones); esta ficha. Pendiente: `docs/excel/Base de Datos Valpo Verde.xlsx` — (a) REGLAS_GENERALES "Historial y vigencia" y "Preguardado y finalización" (última oración); (b) D-210 (dominio), D-212, D-213 y REGLAS_GENERALES "Reinspección y monitoreo" — en la próxima versión del paquete. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente, ver "Archivos afectados". |
+| Impacto en BD | Ninguno nuevo: (a) usa `tree_assessments.evento` y `classification_adjustments`, que ya existen; (b) `inspections.fecha_proxima_inspeccion_sugerida`/`fecha_proximo_monitoreo_sugerida` ya admiten el caso, al no estar restringidas a un dominio distinto de fecha. |
+| Impacto en backend | Implementado en el motor (Fase 5): `ensamblaje.ts` y `fechas-sugeridas.ts`. Pendiente (Fase 6): que el recálculo por `inspeccion_anulada` identifique y pase el `inspectionId` de la anulada y, si corresponde, el ajuste de la inspección válida anterior. |
+| Impacto en API | Ninguno todavía (Fase 6). |
+| Impacto en frontend | Ninguno todavía (Fase 7): mostrar el motivo de precaución (b) cuando corresponda. |
+| Pruebas necesarias | Implementadas en `tests/services/rules/engine/ensamblaje.test.ts` y `fechas-sugeridas.test.ts`: (a) se anula la inspección que tenía el ajuste → vuelve al calculado; se anula una inspección sin ajuste y reaparece uno anterior que coincide → se mantiene; el anterior ya no coincide → se descarta con revisión. (b) riesgo No determinado → rango de Extremo con motivo; No determinado ajustado a Bajo → 24 y 12 meses, sin el motivo de precaución. |
+| Dependencias | CC-040 (d) (descarte de ajustes); CC-044 (ajuste sobre No determinado/No aplica); CC-024, CC-029 (No determinado); D-181. |
+| rule_version | 2.1 (sin cambio de versión del paquete: el Excel en sí no se modificó todavía; la sincronización queda pendiente, ver "Impacto en Excel metodológico"). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-22 |
+| Fecha de implementación | 2026-10-22 (rama `feature/fase5-motor-reglas`, PR #70) |
+| Commits / PR asociados | PR #70 (`feature/fase5-motor-reglas`), sin fusionar. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día, actualizando el PR #70. |

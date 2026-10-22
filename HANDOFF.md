@@ -21,6 +21,17 @@
 
 ---
 
+## ▶ Novedad 2026-10-22 — Fase 5 (motor de reglas): CC-043 registrado
+
+- **CC-043 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** M04/IN-RAE — si `tipo_red_aerea` incluye "Función no determinada" y no incluye "Eléctrica", el componente red aérea queda `no_determinado` (se excluye de M04, D-180); si incluye "Eléctrica", se aplican IN-RAE-02 a 04 igual. Ficha completa en `docs/registro-cambios.md`. Pendiente llevar el texto a REGLAS_INDICADORES (IN-RAE) y D-149 en la próxima versión del paquete.
+- **CC-044 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** el Inspector puede ajustar una clasificación (`clasificacion_riesgo`, `_infraestructura`, `_prioridad`) cuyo valor calculado es `No determinado`/`No aplica`, con justificación obligatoria; la regla de descarte de CC-040 (d) aplica igual en el siguiente recálculo. Lo que nunca es válido es que el **valor ajustado** mismo sea `No determinado`/`No aplica`. Ficha completa en `docs/registro-cambios.md`. Pendiente llevar el texto a D-181/D-170/D-172 en la próxima versión del paquete.
+- **CC-045 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** cierra los dos bloqueos del ensamblaje. **(a)** ajustes ante una `inspeccion_anulada`: se recompone la vigente como si esa inspección nunca hubiera existido; sus ajustes nunca aplican; los de inspecciones válidas anteriores se reevalúan con la regla normal de CC-040 (d) (`ensamblaje.ts`: `AjusteVigente.inspectionId`, `filtrarPorAnulacion`, `ArgsResultadoVigente.inspeccionAnuladaId`). **(b)** `nivel_riesgo = no_determinado`: las fechas sugeridas ya no quedan sin valor — usan los rangos de Extremo como criterio de precaución, con motivo (`fechas-sugeridas.ts`). Ficha completa en `docs/registro-cambios.md`. Pendiente llevar el texto al Excel (REGLAS_GENERALES, D-210/D-212/D-213) en la próxima versión del paquete.
+- **Próximos libres:** CC-046, ADR-017, PR-023.
+- Motor (rama `feature/fase5-motor-reglas`, PR #70 abierto contra `main`, sin fusionar): catálogos (PR-021), variables derivadas, R01–R04, M01–M05, `reglaId` por indicador, fechas sugeridas y el ensamblaje (`ensamblaje.ts`: `ensamblarResultadoEvaluacion`/`ensamblarResultadoVigente`) implementados con tests. Sin endpoints, sin tocar ninguna base. Los dos bloqueos que quedaban abiertos ya se cerraron con CC-045.
+- **Discrepancia encontrada contra el plan aprobado de la Fase 5 (resuelta con el esquema real, no en silencio):** `fecha_proxima_inspeccion(_sugerida)` y `fecha_proximo_monitoreo(_sugerida)` son columnas de `inspections`, no de `evaluations` (migración 014); `nivel_riesgo` no se guarda nunca (principio §1.5, se deriva con `v_inspections`). `ensamblarResultadoEvaluacion` las devuelve aparte, en `inspeccion: {...}`, con el comentario de a qué tabla va cada una — no se mezclan en el INSERT de `evaluations`.
+
+---
+
 ## ▶ Novedad 2026-10-21 — Fase 4: migraciones 012–017 completas (leer primero)
 
 - **Protocolo de 9 fases:** van 4 cerradas (0 a 3); Fase 4 (base de datos) con sus 6 migraciones (012–017) escritas, aplicadas y probadas en `valpo-verde-conecta-pruebas`, en la rama `feature/fase4-migraciones-012-017` del backend. **Falta abrir el PR** (con el script de limpieza, las 6 migraciones + `.down.sql` y `schema.sql`) y la revisión/aprobación de la responsable antes de fusionar o de pasar a `valpo-verde-conecta` (issue #45, Fase 8).
