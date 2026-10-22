@@ -1,7 +1,13 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 13 — posterior a la migración 018a (Fase 6, planificación:
+--   (revisión 14 — posterior a la migración 018b (Fase 6, issue #56:
+--   retiro físico de projects.institution_name/.responsible_professional,
+--   decisión ya aprobada en PR-005 v4.0 y nunca ejecutada por la 012;
+--   fn_build_sector_geometria/fn_create_project_with_sector/
+--   fn_update_sector_geometria — alta y edición atómica de PROYECTOS +
+--   SECTORES con validación PostGIS, solo service_role); antes revisión
+--   13, posterior a la migración 018a (Fase 6, planificación:
 --   trees.qr_token, token aleatorio no adivinable para el QR público de
 --   incidencias, PR-022 — nunca tree_code, que es correlativo); antes
 --   revisión 12, posterior a la migración 017 (Fase 4: RLS por rol
@@ -154,9 +160,10 @@ CREATE TABLE user_profiles (
 -- PROYECTOS Y MEMBRESÍAS (modelo multiproyecto — migración 002)
 -- ---------------------------------------------------------------------
 -- Un proyecto = una gestión/inventario de arbolado de una institución
--- (PR-005 v3.0 / ADR-005 v2.0). Sin eliminación física como flujo normal:
--- el cierre se representa con status = 'cerrado'. Sin UNIQUE en name ni en
--- (institution_name, name) por ahora.
+-- (PR-005 v4.0 / ADR-005 v2.0). Sin eliminación física como flujo normal:
+-- el cierre se representa con estado_proyecto = 'cerrado'. `institution_name`
+-- y `responsible_professional` (de la v3.0) se retiraron en la 018b: no
+-- están en el Excel (PR-005 v4.0).
 --
 -- project_members representa SOLO pertenencia (no rol). El rol
 -- (admin / usuario_municipal) sigue siendo global y vive en user_profiles.
@@ -166,8 +173,6 @@ CREATE TABLE user_profiles (
 CREATE TABLE projects (
   id                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nombre_proyecto           TEXT NOT NULL,                                 -- renombrado desde `name` (D-264; migración 012)
-  institution_name          TEXT NOT NULL,
-  responsible_professional  TEXT,                                       -- nullable por ahora
   created_by                UUID REFERENCES user_profiles(id) ON DELETE SET NULL,  -- auditoría nullable
   estado_proyecto           TEXT NOT NULL DEFAULT 'activo'               -- renombrado desde `status` (D-265; CC-042; migración 012)
                               CHECK (estado_proyecto IN ('activo', 'cerrado')),
@@ -223,6 +228,137 @@ CREATE TABLE sectors (
 );
 
 CREATE INDEX idx_sectors_geometria ON sectors USING GIST (geometria_sector);
+
+-- fn_build_sector_geometria / fn_create_project_with_sector /
+-- fn_update_sector_geometria (migración 018b; issue #56): alta y edición
+-- atómica de PROYECTOS + SECTORES, con la validación de D-265 (superficie
+-- válida y no vacía, sin puntos ni líneas, huecos interiores conservados,
+-- unión sin duplicar áreas superpuestas, MultiPolygon, SRID 4326) hecha en
+-- SQL/PostGIS. Solo `service_role`: la autorización (assertAdmin) ya
+-- ocurrió en el backend antes de invocarlas — a diferencia de
+-- fn_create_tree_with_measurement, no validan auth.uid() ni membresía
+-- adentro. Resuelven la revisión de ADR-017: este flujo no necesita
+-- node-postgres, una sola invocación ya es una transacción atómica.
+CREATE FUNCTION fn_build_sector_geometria(
+  p_formato text,
+  p_geometria_geojson jsonb,
+  p_geometria_kml text
+) RETURNS geography
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_geom geometry;
+BEGIN
+  IF p_formato = 'geojson' THEN
+    IF p_geometria_geojson IS NULL THEN
+      RAISE EXCEPTION 'geometria_geojson es obligatoria para formato geojson';
+    END IF;
+    BEGIN
+      v_geom := ST_SetSRID(ST_GeomFromGeoJSON(p_geometria_geojson::text), 4326);
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'GeoJSON inválido: no se pudo interpretar la geometría';
+    END;
+  ELSIF p_formato = 'kml' THEN
+    IF p_geometria_kml IS NULL OR TRIM(p_geometria_kml) = '' THEN
+      RAISE EXCEPTION 'geometria_kml es obligatoria para formato kml';
+    END IF;
+    BEGIN
+      v_geom := ST_SetSRID(ST_GeomFromKML(p_geometria_kml), 4326);
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'KML inválido: no se pudo interpretar la geometría';
+    END;
+  ELSE
+    RAISE EXCEPTION 'Formato de geometría no reconocido: %', p_formato;
+  END IF;
+
+  IF v_geom IS NULL OR ST_IsEmpty(v_geom) THEN
+    RAISE EXCEPTION 'La geometría del sector está vacía o no se pudo construir';
+  END IF;
+
+  IF GeometryType(v_geom) = 'GEOMETRYCOLLECTION' THEN
+    v_geom := ST_CollectionExtract(v_geom, 3);
+    IF v_geom IS NULL OR ST_IsEmpty(v_geom) THEN
+      RAISE EXCEPTION 'El archivo no contiene ninguna superficie poligonal válida (solo puntos o líneas)';
+    END IF;
+  ELSIF GeometryType(v_geom) NOT IN ('POLYGON', 'MULTIPOLYGON') THEN
+    RAISE EXCEPTION 'Tipo de geometría no admitido (%): el sector solo acepta superficies, nunca puntos ni líneas', GeometryType(v_geom);
+  END IF;
+
+  IF ST_XMin(v_geom) < -180 OR ST_XMax(v_geom) > 180
+     OR ST_YMin(v_geom) < -90 OR ST_YMax(v_geom) > 90 THEN
+    RAISE EXCEPTION 'Coordenadas fuera de rango geográfico válido (longitud -180..180, latitud -90..90)';
+  END IF;
+
+  IF NOT ST_IsValid(v_geom) THEN
+    RAISE EXCEPTION 'Geometría inválida: %', ST_IsValidReason(v_geom);
+  END IF;
+
+  v_geom := ST_Multi(ST_Union(v_geom));
+
+  IF NOT ST_IsValid(v_geom) THEN
+    RAISE EXCEPTION 'Geometría inválida tras normalizar: %', ST_IsValidReason(v_geom);
+  END IF;
+
+  RETURN v_geom::geography;
+END;
+$$;
+
+CREATE FUNCTION fn_create_project_with_sector(
+  p_nombre_proyecto text,
+  p_nombre_sector text,
+  p_formato text,
+  p_geometria_geojson jsonb,
+  p_geometria_kml text,
+  p_created_by uuid
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_geografia geography;
+  v_project_id uuid;
+  v_sector_id uuid;
+BEGIN
+  v_geografia := fn_build_sector_geometria(p_formato, p_geometria_geojson, p_geometria_kml);
+
+  INSERT INTO projects (nombre_proyecto, created_by)
+  VALUES (p_nombre_proyecto, p_created_by)
+  RETURNING id INTO v_project_id;
+
+  INSERT INTO sectors (project_id, nombre_sector, geometria_sector)
+  VALUES (v_project_id, p_nombre_sector, v_geografia)
+  RETURNING id INTO v_sector_id;
+
+  RETURN jsonb_build_object('project_id', v_project_id, 'sector_id', v_sector_id);
+END;
+$$;
+
+CREATE FUNCTION fn_update_sector_geometria(
+  p_sector_id uuid,
+  p_formato text,
+  p_geometria_geojson jsonb,
+  p_geometria_kml text
+) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_geografia geography;
+BEGIN
+  v_geografia := fn_build_sector_geometria(p_formato, p_geometria_geojson, p_geometria_kml);
+
+  -- trg_sectors_proyecto_cerrado (migración 017, CC-042) rechaza este
+  -- UPDATE si el proyecto está cerrado.
+  UPDATE sectors SET geometria_sector = v_geografia WHERE id = p_sector_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Sector no encontrado';
+  END IF;
+END;
+$$;
 
 CREATE TRIGGER trg_sectors_updated_at
   BEFORE UPDATE ON sectors

@@ -9,15 +9,32 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-22 (Fase 4 cerrada y fusionada en `main`, PR #68; Fase 5 — motor de reglas — en curso en `feature/fase5-motor-reglas`)
+- **Última actualización:** 2026-10-22 (Fase 6 — backend/API — en curso en `feature/fase6-backend-api`; issue #56 en revisión)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
-- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `3a5be8b` (PR #68 fusionado: migraciones 012–017b, RLS CC-033, schema.sql revisión 12); frontend `main` = `187a90d` (PR #5). Fase 5 en la rama `feature/fase5-motor-reglas` (sin PR todavía).
-- **Ramas de trabajo:** `feature/fase5-motor-reglas` (motor de reglas, en curso, ver la novedad del 2026-10-22 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
+- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `3a5be8b` (PR #68 fusionado: migraciones 012–017b, RLS CC-033, schema.sql revisión 12); frontend `main` = `187a90d` (PR #5). Fase 5 fusionada (PR #70, `874c938`). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
+- **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-22 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Fase 4 (base de datos) cerrada y fusionada en `main` (PR #68, issue #43 cerrado). `valpo-verde-conecta` **sigue sin tocar**: 012–017b solo existen en `valpo-verde-conecta-pruebas` hasta que la Fase 8 lo autorice (issue #45); la migración 018 (retiro de tablas 001 sin política) y el seed de desarrollo quedan **pendientes, con autorización aparte**. Fase 5 (motor de reglas) en curso en `feature/fase5-motor-reglas`: catálogos (PR-021), variables derivadas, R01 y R02 completos con tests; sigue R03.
+- **Resumen:** Fase 4 y 5 cerradas y fusionadas en `main`. `valpo-verde-conecta` **sigue sin tocar** (issue #45, Fase 8). Fase 6 (backend/API) en curso en `feature/fase6-backend-api`: `.gitignore`/ADR-017/018a (#54 Zod + #55 autorización) ya revisados; issue #56 (proyectos+sector, miembros, estado) implementado, en revisión antes de pasar a #57.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
+
+---
+
+## ▶ Novedad 2026-10-22 — Fase 6 (backend/API): issue #56 implementado, en revisión
+
+- **Rama `feature/fase6-backend-api`** (desde `main` en `874c938`, Fase 5 fusionada). Plan de la Fase 6 aprobado por la responsable (9 puntos: fuentes, convivencia con la demo, endpoints por flujo, Zod, autorización, seguridad, contrato API, pruebas, orden de trabajo en bloques). Avance por bloque:
+  - **Punto 0 + #54 (Zod) + #55 (autorización):** `.gitignore` con `.env.*`; ADR-017 (node-postgres para flujos transaccionales); 018a propuesta (sin aplicar: `trees.qr_token`); esquemas `src/schemas/sivu/*` (común, proyectos, árboles); `assertProjectRole` en `authorization.service.ts`. Revisado y aprobado por la responsable.
+  - **#56 (proyectos, miembros, estado del proyecto), implementado:**
+    - `coordenadaUtm` (débil, solo `> 0`) se dividió en `coordenadaUtmEste` (166000–834000 m) / `coordenadaUtmNorte` (0–10000000 m), con tests de rango (`common.schema.ts`, `arboles.schema.ts`).
+    - **ADR-017 revisado a v1.1:** "crear proyecto + sector" se sacó de los flujos que necesitan `node-postgres` — no tiene el motor de reglas en medio, así que una función Postgres `SECURITY DEFINER` (`fn_create_project_with_sector`, invocada una sola vez vía `supabase-js` con `service_role`) ya es una transacción atómica. Quedan solo dos flujos en ADR-017: completar OT y anular inspección. El rol de Postgres dedicado para esos dos sigue pendiente, **antes del issue #60** (no se necesitaba para #56).
+    - **Migración 018b** (propuesta, sin aplicar en ninguna base — mostrar antes de aplicar en pruebas): retira `projects.institution_name`/`.responsible_professional` (brecha encontrada: PR-005 v4.0 ya decía eliminarlas, la 012 nunca lo ejecutó); agrega `fn_build_sector_geometria` (valida D-265: superficie válida y no vacía, sin puntos ni líneas, huecos conservados, unión sin duplicar solapes, MultiPolygon, SRID 4326, rango lon/lat genérico, nunca `ST_MakeValid`), `fn_create_project_with_sector` y `fn_update_sector_geometria` (ambas `SECURITY DEFINER`, solo `service_role` — no repiten el patrón de `fn_create_tree_with_measurement`: la autorización ya ocurrió en el backend antes de invocarlas).
+    - KMZ: se resuelve en Node (desempaquetado del ZIP con `yauzl`, límites explícitos de entradas y tamaño descomprimido contra bombas ZIP) y se entrega a Postgres como texto KML crudo — PostGIS (`ST_GeomFromKML`) hace el parseo geométrico, no una librería de Node (`src/services/sivu/geometriaSector.service.ts`). `express.json` subido a 8mb (antes 100kb, el default).
+    - Nuevo stack `src/{repositories,services,controllers,routes}/sivu/project*.ts`, montado en `/api/sivu` (`src/routes/index.ts`, una sola línea nueva). Miembros: lecturas reutilizan `findMembership`/`listMembersByProject` de la demo (mismo criterio que `authorization.service.ts`: lecturas con el JWT del usuario); altas/bajas son nuevas (`service_role`, CC-033 ya no deja ninguna policy de escritura para `authenticated`). `removeProyectoMember` llama a `invalidateMembership` tras borrar.
+    - Cierre/reapertura (D-275, CC-042): el bloqueo de escritura en proyecto cerrado ya lo hacen los triggers de la migración 017 (`trg_projects_self_closed`, `trg_sectors_proyecto_cerrado`) — no se duplicó esa lógica en Node, solo se traduce el error a 409.
+    - Tests nuevos: `tests/schemas/sivu/common.schema.test.ts`, ampliación de `arboles.schema.test.ts`, `tests/services/sivu/project.service.test.ts`, `tests/services/sivu/projectMember.service.test.ts`. `npm test`: 784/784. `npx tsc --noEmit`: sin errores. **Sin tests de integración (supertest) para `/api/sivu` todavía** — solo esquemas y servicios con repositorios mockeados.
+  - **Pendiente de la responsable, NO implementada (solo anotada):** ¿un árbol debe quedar dentro de la delimitación (`geometria_sector`) de su proyecto? No hay regla en el Excel ni en project-rules.md que lo exija; el alta de árbol (#57) no valida esto hasta que la responsable decida.
+  - **Sigue #57** (alta municipal mínima del árbol) tras la revisión de #56.
 
 ---
 

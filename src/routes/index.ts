@@ -2,6 +2,7 @@ import { Router } from "express";
 import authRoutes from "./auth.routes";
 import projectRoutes from "./project.routes";
 import treeRoutes from "./tree.routes";
+import sivuRoutes from "./sivu";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { getCatalogs } from "../controllers/moduleRecords.controller";
 import { getSpecies } from "../controllers/species.controller";
@@ -13,6 +14,9 @@ router.use("/projects", projectRoutes);
 router.use("/trees", treeRoutes);
 router.get("/catalogs/modules", authMiddleware, getCatalogs);
 router.get("/species", authMiddleware, getSpecies);
+
+// Fase 6 (SIVU): modelo nuevo, separado por completo de la demo.
+router.use("/sivu", sivuRoutes);
 
 // Próximas rutas (Etapa 4, siguientes iteraciones — no implementadas aún):
 //   router.use("/inspections", inspectionRoutes);
