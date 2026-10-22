@@ -290,14 +290,16 @@ describe("ensamblarResultadoEvaluacion", () => {
     expect(r.clasificacion_prioridad_ajustada).toBe("critica"); // coincidió con el resultado de M05 ("baja"), se mantiene
   });
 
-  it("riesgo = no_determinado: ambas fechas sugeridas vienen con noDeterminable y motivo, no null en silencio", () => {
+  it("CC-045 (b): riesgo = no_determinado sin ajuste → ambas fechas sugeridas usan el rango de Extremo, con motivo de precaución (nunca sin fecha)", () => {
     const args = argsEvaluacionSana();
     args.variablesCalculo = { ...args.variablesCalculo, angulo_inclinacion: null }; // rompe R01 → no_determinado
     const r = ensamblarResultadoEvaluacion(args);
     expect(r.clasificacion_riesgo_calculada).toBe("no_determinado");
-    expect(r.inspeccion.fechaProximaInspeccionSugerida.noDeterminable).toBe(true);
-    expect(r.inspeccion.fechaProximaInspeccionSugerida.motivo).toMatch(/no se inventa/);
-    expect(r.inspeccion.fechaProximoMonitoreoSugerida.noDeterminable).toBe(true);
+    expect(r.inspeccion.nivelRiesgo).toBe("no_determinado");
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.noDeterminable).toBe(false);
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.motivo).toMatch(/CC-045/);
+    expect(r.inspeccion.fechaProximoMonitoreoSugerida.noDeterminable).toBe(false);
+    expect(r.inspeccion.fechaProximoMonitoreoSugerida.inmediatoYContinuo).toBe(true);
   });
 
   it("CC-044: riesgo calculado = no_determinado, con un ajuste hecho sobre ese estado → se mantiene y alimenta M05/fechas", () => {
@@ -309,6 +311,17 @@ describe("ensamblarResultadoEvaluacion", () => {
     expect(r.clasificacion_riesgo_ajustada).toBe("alto"); // el ajuste sobre no_determinado se mantiene
     expect(r.inspeccion.nivelRiesgo).toBe("alto"); // D-210: usa el efectivo, no el calculado
     expect(r.inspeccion.fechaProximaInspeccionSugerida.noDeterminable).toBe(false); // ya hay fecha, porque el efectivo está determinado
+  });
+
+  it("CC-045 (b): riesgo no_determinado ajustado a Bajo → las fechas usan Bajo (24 y 12 meses), no el rango de precaución", () => {
+    const args = argsEvaluacionSana();
+    args.variablesCalculo = { ...args.variablesCalculo, angulo_inclinacion: null }; // rompe R01 → no_determinado
+    args.ajustes = { riesgo: { valorAjustado: "bajo", valorCalculadoEnElAjuste: "no_determinado", adjustmentId: "adj-nd2" } };
+    const r = ensamblarResultadoEvaluacion(args);
+    expect(r.inspeccion.nivelRiesgo).toBe("bajo");
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.fechaInicio).toBe("2028-10-22"); // 24 meses desde 2026-10-22
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.motivo).toBeUndefined(); // ya no es el caso de precaución
+    expect(r.inspeccion.fechaProximoMonitoreoSugerida.fechaInicio).toBe("2027-10-22"); // 12 meses
   });
 
   it("calculados incluye superficie_alcorque_m2 y cumplimiento_distancia_seguridad_bt_mt", () => {
@@ -354,5 +367,51 @@ describe("ensamblarResultadoVigente", () => {
     expect(r.requiere_revision_ajuste).toBe(false);
     expect(r.adjustment_ids).toEqual(["adj-r9"]);
     expect(r.clasificacion_riesgo_ajustada).toBe("moderado");
+  });
+
+  describe("CC-045 (a) — ajustes cuando el recálculo lo dispara una inspección anulada", () => {
+    it("se anula la inspección que tenía el ajuste → la vigente vuelve a la clasificación anterior (el calculado, sin ajuste)", () => {
+      const r = ensamblarResultadoVigente({
+        variablesCalculo: arbolSano(),
+        ajustes: { riesgo: { valorAjustado: "extremo", valorCalculadoEnElAjuste: "bajo", adjustmentId: "adj-anulado", inspectionId: "insp-anulada" } },
+        inspeccionAnuladaId: "insp-anulada",
+        motorCommit: "abc1234",
+      });
+      expect(r.clasificacion_riesgo_ajustada).toBeNull(); // el ajuste de la inspección anulada nunca aplica
+      expect(r.clasificacion_riesgo_calculada).toBe("bajo");
+      expect(r.adjustment_ids).toEqual([]);
+      expect(r.ajustes_descartados).toEqual([]); // no es un descarte por CC-040 (d): simplemente se ignora
+      expect(r.requiere_revision_ajuste).toBe(false);
+    });
+
+    it("se anula una inspección sin ajuste propio → reaparece el ajuste anterior, porque su valor calculado coincide", () => {
+      const r = ensamblarResultadoVigente({
+        variablesCalculo: arbolSano(),
+        ajustes: {
+          riesgo: { valorAjustado: "moderado", valorCalculadoEnElAjuste: "bajo", adjustmentId: "adj-anterior", inspectionId: "insp-anterior" },
+        },
+        inspeccionAnuladaId: "insp-sin-ajuste", // no coincide con el inspectionId del ajuste: no se filtra
+        motorCommit: "abc1234",
+      });
+      expect(r.clasificacion_riesgo_ajustada).toBe("moderado");
+      expect(r.adjustment_ids).toEqual(["adj-anterior"]);
+      expect(r.requiere_revision_ajuste).toBe(false);
+    });
+
+    it("el ajuste anterior reaparecido ya no coincide con el valor recalculado → se descarta, con la marca de revisión", () => {
+      const r = ensamblarResultadoVigente({
+        variablesCalculo: arbolSano(), // clasificacion_riesgo_calculada = "bajo"
+        ajustes: {
+          riesgo: { valorAjustado: "moderado", valorCalculadoEnElAjuste: "alto", adjustmentId: "adj-anterior-2", inspectionId: "insp-anterior-2" },
+        },
+        inspeccionAnuladaId: "insp-sin-ajuste-2",
+        motorCommit: "abc1234",
+      });
+      expect(r.clasificacion_riesgo_ajustada).toBeNull();
+      expect(r.clasificacion_riesgo_calculada).toBe("bajo");
+      expect(r.ajustes_descartados).toHaveLength(1);
+      expect(r.ajustes_descartados[0].adjustmentId).toBe("adj-anterior-2");
+      expect(r.requiere_revision_ajuste).toBe(true);
+    });
   });
 });

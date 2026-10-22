@@ -37,22 +37,28 @@
  * no existir (ver el comentario sobre `m05.clasificacionPrioridad` más
  * abajo, que corrige exactamente ese hallazgo).
  *
- * Bloqueos — no inventados, reportados:
- * (a) CC-040 (d) solo cubre el recálculo disparado por una OT
- *     completada ("el ajuste se mantiene en la evaluación recalculada
- *     solo si el valor recalculado coincide..."). `tree_assessments`
- *     admite `evento IN ('ot_completada', 'inspeccion_anulada')`, pero
- *     el texto de CC-040 (d) no dice qué pasa con los ajustes cuando
- *     el recálculo lo dispara una anulación de inspección. Esta
- *     función aplica la misma regla de comparación en ambos casos
- *     porque es lo único que el Excel define — se asume que así debe
- *     ser para `inspeccion_anulada`, pero no está decidido por la
- *     responsable. Pendiente de decisión.
- * (b) D-212/D-213 no definen una fecha sugerida cuando nivel_riesgo =
- *     no_determinado. `fechas-sugeridas.ts` ya devuelve
- *     `noDeterminable: true` con motivo para este caso; aquí se
- *     conserva el `FechaSugeridaResultado` completo (no solo la
- *     fecha) para no perder el motivo. Pendiente de decisión.
+ * CC-045 (2026-10-22) — cierra los dos bloqueos que dejó abiertos la
+ * primera versión de este módulo:
+ * (a) Ajustes ante una inspección anulada. CC-040 (d) se generaliza:
+ *     aplica igual sin importar qué disparó el recálculo de la
+ *     vigente — una OT completada o una `inspeccion_anulada`. Los
+ *     ajustes que pertenecen a la inspección que se está anulando
+ *     nunca aplican a la vigente (se conservan en el historial, pero
+ *     eso es un hecho de la base de datos, no de este módulo):
+ *     `ensamblarResultadoVigente` recibe `inspeccionAnuladaId` y
+ *     filtra (`filtrarPorAnulacion`) cualquier `AjusteVigente` cuyo
+ *     `inspectionId` coincida, antes de siquiera intentar compararlo.
+ *     Un ajuste de una inspección válida anterior que haya quedado
+ *     descartado solo por culpa de la anulada se vuelve a evaluar con
+ *     la misma regla de CC-040 (d) — si quien llama lo pasa como el
+ *     ajuste candidato, esta función ya lo compara correctamente sin
+ *     necesitar saber que hubo una anulación de por medio.
+ * (b) Fechas sugeridas con `nivel_riesgo = no_determinado`. Ya no es
+ *     un bloqueo: `fechas-sugeridas.ts` devuelve el rango de Extremo
+ *     como criterio de precaución, con motivo "CC-045 (b)" — nunca
+ *     `noDeterminable: true` para este caso. Si el Inspector ajusta el
+ *     riesgo (CC-044), las fechas usan el valor ajustado (ya ocurre
+ *     así: `nivel_riesgo` siempre es el riesgo efectivo).
  *
  * Discrepancia encontrada contra el plan aprobado (reportada, no
  * resuelta en silencio): la migración 014 NO tiene columnas
@@ -380,12 +386,22 @@ type Indicadores = ReturnType<typeof calcularIndicadores>;
 // 3. Ajuste → valor efectivo → descarte (CC-040 d, PR-008 v2.0)
 // =====================================================================
 
-/** classification_adjustments: el ajuste vigente de un campo, tal como lo entrega quien llama (ya filtrado a la inspección que corresponde — ver bloqueo (a)). */
+/** classification_adjustments: el ajuste vigente de un campo, tal como lo entrega quien llama. */
 export interface AjusteVigente<T extends string = string> {
   valorAjustado: T;
   /** El valor calculado que el Inspector tenía delante cuando ajustó (classification_adjustments.valor_calculado). */
   valorCalculadoEnElAjuste: T;
   adjustmentId: string;
+  /**
+   * La inspección que registró este ajuste (evaluations.inspection_id
+   * de la fila de `classification_adjustments`). CC-045 (a): si en
+   * `ensamblarResultadoVigente` esta inspección es la que se está
+   * anulando (`inspeccionAnuladaId`), el ajuste se ignora por
+   * completo — como si no existiera, sin comparar nada. Opcional
+   * porque solo es necesario cuando el recálculo lo dispara una
+   * anulación; en `ensamblarResultadoEvaluacion` no aplica.
+   */
+  inspectionId?: string;
 }
 
 export interface AjusteDescartado {
@@ -427,9 +443,13 @@ interface ResolucionValorEfectivo<T extends string> {
  * CC-040 (d): el ajuste se mantiene solo si el valor recalculado
  * coincide con el valor calculado sobre el que se hizo. Si no, se
  * descarta: el valor efectivo vuelve a ser el calculado y se registra
- * el descarte. Esta función no sabe qué OT o evento disparó el
- * recálculo — eso lo filtra quien llama (ver bloqueo (a) en el
- * encabezado del archivo).
+ * el descarte. CC-045 (a) (2026-10-22): esta regla aplica igual sin
+ * importar qué disparó el recálculo — una OT completada o una
+ * inspección anulada; esta función en sí no distingue el evento,
+ * porque no necesita hacerlo. El filtrado específico de "el ajuste
+ * pertenece a la inspección que se está anulando, así que se ignora
+ * por completo" ocurre antes de llegar aquí (ver `filtrarPorAnulacion`
+ * y `resolverAjustesYPrioridad`).
  *
  * CC-044 (2026-10-22): `valorCalculado`/`valorCalculadoEnElAjuste`
  * pueden legítimamente ser `no_determinado` (riesgo/prioridad) o
@@ -488,6 +508,27 @@ function resolverValorEfectivo<T extends string>(
 /** Exportada para poder probarla de forma aislada. */
 export { resolverValorEfectivo };
 
+/**
+ * CC-045 (a): si `ajuste` pertenece a la inspección que se está
+ * anulando, se ignora por completo — nunca se compara, nunca se usa,
+ * como si no se hubiera pasado. "Se conservan en el historial" (la
+ * fila de `classification_adjustments` no se borra) es un hecho de la
+ * base de datos, no de esta función: aquí solo se decide si cuenta
+ * para la vigente que se está recalculando.
+ *
+ * Si `ajuste.inspectionId` no viene informado, no se filtra nada (no
+ * hay información suficiente para decidir) — quien llama debe
+ * informarlo siempre que pase `inspeccionAnuladaId`.
+ */
+function filtrarPorAnulacion<T extends string>(
+  ajuste: AjusteVigente<T> | null | undefined,
+  inspeccionAnuladaId: string | null | undefined,
+): AjusteVigente<T> | null | undefined {
+  if (!ajuste || !inspeccionAnuladaId) return ajuste;
+  if (ajuste.inspectionId === inspeccionAnuladaId) return null;
+  return ajuste;
+}
+
 interface ResultadoResolucionCompleta {
   riesgoEfectivo: ClasificacionRiesgoCodigo;
   infraestructuraEfectiva: ClasificacionInfraestructuraCodigo;
@@ -505,16 +546,31 @@ interface ResultadoResolucionCompleta {
  * calculados → efectivos → M05 con los efectivos → prioridad
  * calculada (salida de M05) → efectiva, comparada contra el ajuste de
  * prioridad si lo hay.
+ *
+ * CC-045 (a): si `inspeccionAnuladaId` viene informado (el recálculo
+ * lo dispara una inspección anulada), cualquier ajuste que pertenezca
+ * a esa inspección se ignora por completo antes de resolver — nunca
+ * se compara. Un ajuste de una inspección válida anterior que haya
+ * quedado descartado solo por culpa de la anulada se vuelve a evaluar
+ * aquí mismo con la regla normal de CC-040 (d), porque es exactamente
+ * el mismo mecanismo: si quien llama pasa ese ajuste anterior, esta
+ * función lo compara contra el nuevo valor calculado sin saber ni
+ * necesitar saber que hubo una anulación de por medio.
  */
 function resolverAjustesYPrioridad(
   nucleo: NucleoResultado,
   ajustes: AjustesEntrada | undefined,
+  inspeccionAnuladaId?: string | null,
 ): ResultadoResolucionCompleta {
-  const resRiesgo = resolverValorEfectivo("clasificacion_riesgo", nucleo.clasificacionRiesgoCalculada, ajustes?.riesgo);
+  const ajusteRiesgo = filtrarPorAnulacion(ajustes?.riesgo, inspeccionAnuladaId);
+  const ajusteInfraestructura = filtrarPorAnulacion(ajustes?.infraestructura, inspeccionAnuladaId);
+  const ajustePrioridad = filtrarPorAnulacion(ajustes?.prioridad, inspeccionAnuladaId);
+
+  const resRiesgo = resolverValorEfectivo("clasificacion_riesgo", nucleo.clasificacionRiesgoCalculada, ajusteRiesgo);
   const resInfraestructura = resolverValorEfectivo(
     "clasificacion_infraestructura",
     nucleo.clasificacionInfraestructuraCalculada,
-    ajustes?.infraestructura,
+    ajusteInfraestructura,
   );
 
   const m05 = evaluarM05(resRiesgo.valorEfectivo, resInfraestructura.valorEfectivo);
@@ -528,7 +584,7 @@ function resolverAjustesYPrioridad(
   // tipo que promete string.
   const prioridadCalculada: ClasificacionPrioridadCodigo = m05.clasificacionPrioridad ?? "no_determinado";
 
-  const resPrioridad = resolverValorEfectivo("clasificacion_prioridad", prioridadCalculada, ajustes?.prioridad);
+  const resPrioridad = resolverValorEfectivo("clasificacion_prioridad", prioridadCalculada, ajustePrioridad);
 
   const ajustesDescartados = [resRiesgo.ajusteDescartado, resInfraestructura.ajusteDescartado, resPrioridad.ajusteDescartado].filter(
     (a): a is AjusteDescartado => a !== null,
@@ -670,8 +726,24 @@ export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): Res
 export interface ArgsResultadoVigente {
   /** Composición campo por campo de v_tree_current_inputs (§3.10 bis), ya armada por la Fase 6. */
   variablesCalculo: NucleoEntradas;
-  /** Solo los ajustes de la inspección cuya OT (o anulación — bloqueo (a)) disparó este recálculo. */
+  /**
+   * Los ajustes candidatos a aplicar en este recálculo. Si el evento es
+   * una anulación, quien llama debe seguir pasando el ajuste de una
+   * inspección válida anterior si corresponde que reaparezca (CC-045
+   * a) — esta función no busca en el historial, solo decide si el
+   * ajuste que le llega cuenta o no.
+   */
   ajustes?: AjustesEntrada;
+  /**
+   * CC-045 (a): si este recálculo lo dispara la anulación de una
+   * inspección, su id. Cualquier ajuste en `ajustes` cuyo
+   * `inspectionId` coincida se ignora por completo, como si no se
+   * hubiera pasado — los ajustes de esa inspección nunca aplican a la
+   * vigente (se conservan en el historial, pero eso es un hecho de la
+   * base de datos, no de esta función). `undefined`/`null` cuando el
+   * recálculo lo dispara una OT completada.
+   */
+  inspeccionAnuladaId?: string | null;
   motorCommit: string;
 }
 
@@ -714,7 +786,7 @@ export interface ResultadoVigente {
  */
 export function ensamblarResultadoVigente(args: ArgsResultadoVigente): ResultadoVigente {
   const nucleo = calcularNucleo(args.variablesCalculo);
-  const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes);
+  const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes, args.inspeccionAnuladaId);
 
   return {
     entradas_vigentes: args.variablesCalculo,

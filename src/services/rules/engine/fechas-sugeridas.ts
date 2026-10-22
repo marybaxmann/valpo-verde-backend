@@ -18,10 +18,16 @@
  * Cuando el Excel da un solo valor (Bajo en ambas, Moderado en D-212),
  * `fechaFin` es igual a `fechaInicio`: no hay una franja, es un punto.
  *
- * `nivel_riesgo = no_determinado`: el Excel no define una fecha
- * sugerida para este caso. Se reporta como bloqueo (`noDeterminable`
- * con motivo) — no se inventa una fecha ni se omite el campo en
- * silencio.
+ * `nivel_riesgo = no_determinado` (CC-045 b, 2026-10-22): D-210 exige
+ * `nivel_riesgo` y D-212/D-213 son fechas Obligatorias, pero
+ * `clasificacion_riesgo` puede calcularse como No determinado (D-181)
+ * — una inspección en ese caso nunca podría finalizarse si las fechas
+ * quedaran sin valor. Decisión (opción B, criterio de precaución): se
+ * usan los mismos rangos que Extremo, con un motivo explícito para que
+ * la interfaz muestre por qué. `nivel_riesgo` sigue siendo el riesgo
+ * **efectivo** (D-210, incluido el ajuste del Inspector — CC-044): si
+ * se ajusta a un valor determinado, las fechas usan ese valor, no el
+ * de precaución.
  *
  * Aritmética de fechas: `fecha_inspeccion` es una fecha de calendario
  * (sin hora), así que sumar meses/semanas se hace con los componentes
@@ -78,13 +84,12 @@ function sumarSemanas(fechaISO: string, semanas: number): string {
   return new Date(Date.UTC(y, m - 1, d + semanas * 7)).toISOString().slice(0, 10);
 }
 
-type NivelRiesgoDeterminado = "bajo" | "moderado" | "alto" | "extremo";
+const MOTIVO_PRECAUCION_ND = "criterio de precaución: nivel_riesgo No determinado (CC-045 b)";
 
 function validarEntradas(
   nivelRiesgo: ClasificacionRiesgoCodigo | null,
   fechaInspeccionISO: string | null,
-  citaExcel: string,
-): FechaSugeridaResultado | { nivelRiesgo: NivelRiesgoDeterminado; fechaInspeccionISO: string } {
+): FechaSugeridaResultado | { nivelRiesgo: ClasificacionRiesgoCodigo; fechaInspeccionISO: string } {
   if (fechaInspeccionISO === null) {
     return { fechaInicio: null, fechaFin: null, noDeterminable: true, motivo: "fecha_inspeccion sin valor" };
   }
@@ -107,14 +112,6 @@ function validarEntradas(
       motivo: `nivel_riesgo tiene un código no reconocido ("${nivelRiesgo}")`,
     };
   }
-  if (nivelRiesgo === "no_determinado") {
-    return {
-      fechaInicio: null,
-      fechaFin: null,
-      noDeterminable: true,
-      motivo: `nivel_riesgo = no_determinado: el Excel no define la fecha sugerida para este caso (${citaExcel}); se reporta como bloqueo, no se inventa`,
-    };
-  }
   return { nivelRiesgo, fechaInspeccionISO };
 }
 
@@ -123,7 +120,7 @@ export function calcularFechaProximaInspeccion(
   nivelRiesgo: ClasificacionRiesgoCodigo | null,
   fechaInspeccionISO: string | null,
 ): FechaSugeridaResultado {
-  const entrada = validarEntradas(nivelRiesgo, fechaInspeccionISO, "D-212");
+  const entrada = validarEntradas(nivelRiesgo, fechaInspeccionISO);
   if ("noDeterminable" in entrada) return entrada;
   const { fechaInspeccionISO: f } = entrada;
 
@@ -140,6 +137,9 @@ export function calcularFechaProximaInspeccion(
       return { fechaInicio: sumarMeses(f, 1), fechaFin: sumarMeses(f, 3), noDeterminable: false }; // rango 1 a 3 meses
     case "extremo":
       return { fechaInicio: sumarSemanas(f, 1), fechaFin: sumarSemanas(f, 4), noDeterminable: false }; // rango 1 a 4 semanas
+    case "no_determinado":
+      // CC-045 (b): criterio de precaución, mismos rangos que Extremo.
+      return { fechaInicio: sumarSemanas(f, 1), fechaFin: sumarSemanas(f, 4), noDeterminable: false, motivo: MOTIVO_PRECAUCION_ND };
   }
 }
 
@@ -148,7 +148,7 @@ export function calcularFechaProximoMonitoreo(
   nivelRiesgo: ClasificacionRiesgoCodigo | null,
   fechaInspeccionISO: string | null,
 ): FechaSugeridaResultado {
-  const entrada = validarEntradas(nivelRiesgo, fechaInspeccionISO, "D-213");
+  const entrada = validarEntradas(nivelRiesgo, fechaInspeccionISO);
   if ("noDeterminable" in entrada) return entrada;
   const { fechaInspeccionISO: f } = entrada;
 
@@ -166,5 +166,8 @@ export function calcularFechaProximoMonitoreo(
       // es un desplazamiento de fecha ni tiene fin; el punto de partida
       // es la propia fecha de inspección.
       return { fechaInicio: f, fechaFin: null, inmediatoYContinuo: true, noDeterminable: false };
+    case "no_determinado":
+      // CC-045 (b): criterio de precaución, mismo tratamiento que Extremo.
+      return { fechaInicio: f, fechaFin: null, inmediatoYContinuo: true, noDeterminable: false, motivo: MOTIVO_PRECAUCION_ND };
   }
 }

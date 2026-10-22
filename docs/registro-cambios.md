@@ -2022,3 +2022,39 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día. Pendiente llevar el texto al Excel. |
+
+---
+
+### CC-045 — Dos bloqueos del ensamblaje cerrados: ajustes ante una inspección anulada y fechas sugeridas sin riesgo determinado
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-22 |
+| Origen | Dos bloqueos documentados en el encabezado de `ensamblaje.ts` al cerrar el PR #70 (Fase 5, motor de reglas): (a) CC-040 (d) no decía qué pasa con los ajustes cuando el recálculo de la vigente lo dispara una `inspeccion_anulada` en vez de una OT completada; (b) D-212/D-213 no definían una fecha sugerida cuando `nivel_riesgo` queda `No determinado`, pese a que ambas fechas son Obligatorias. |
+| Tipo | 2 — metodológico (dos decisiones, registradas juntas por haberse resuelto en la misma revisión) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | (a) CC-040 (d); `classification_adjustments`; `tree_assessments.evento`. (b) D-210 (`nivel_riesgo`), D-212 (`fecha_proxima_inspeccion`), D-213 (`fecha_proximo_monitoreo`). |
+| Versión anterior | (a) No definida: CC-040 (d) solo cubría explícitamente el recálculo por OT completada. (b) No definida: D-210 solo admitía Bajo/Moderado/Alto/Extremo: una inspección con `clasificacion_riesgo` calculada como No determinado (D-181) no podría finalizarse nunca. |
+| Versión nueva | **(a)** Principio: al anularse una inspección, la evaluación vigente se recompone como si esa inspección nunca hubiera existido. La regla de descarte de CC-040 (d) se generaliza: aplica a cualquier recálculo de la vigente, no solo al disparado por una OT completada. Los ajustes registrados en la inspección anulada **no se aplican nunca** a la vigente (se conservan en el historial). Los ajustes de inspecciones válidas anteriores se vuelven a evaluar con la regla normal de CC-040 (d): se mantienen si el valor recalculado coincide con el valor sobre el que se ajustaron; si no, se descartan con `requiere_revision_ajuste = true`. Un ajuste anterior que se había descartado solo por culpa de la inspección ahora anulada se vuelve a evaluar con esa misma regla (puede volver a quedar vigente). **(b)** `nivel_riesgo` admite `No determinado` (sigue siendo igual a `clasificacion_riesgo` efectiva, incluido su ajuste — nunca se convierte en Extremo). Si es `No determinado`, las fechas sugeridas usan los rangos de Extremo (próxima inspección: 1 a 4 semanas; próximo monitoreo: inmediato y continuo), con un motivo explícito ("criterio de precaución: nivel_riesgo No determinado (CC-045 b)") para que la interfaz pueda mostrarlo. Si el Inspector ajusta el riesgo (CC-044), las fechas usan el valor ajustado. El Inspector puede modificar las fechas con `justificacion_ajuste_fecha`, sin cambios respecto de hoy (validación de la Fase 6, no del motor). La inspección con riesgo No determinado puede quedar Finalizada. |
+| Motivo | (a) Sin esta regla, anular una inspección dejaría la evaluación vigente en un estado indefinido respecto de sus ajustes — ni el Excel ni CC-040 lo resolvían. (b) Dejar sin fecha una inspección con riesgo No determinado bloquearía su finalización, justo cuando más atención requiere: se optó por el criterio más conservador (rango de Extremo) en vez de omitir el campo o inventar un plazo distinto. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-22, tomada junto con su compañera. |
+| Archivos afectados | `src/services/rules/engine/ensamblaje.ts` (CC-045 a: `AjusteVigente.inspectionId`, `filtrarPorAnulacion`, `ArgsResultadoVigente.inspeccionAnuladaId`); `src/services/rules/engine/fechas-sugeridas.ts` (CC-045 b: caso `no_determinado` en ambas funciones); esta ficha. Pendiente: `docs/excel/Base de Datos Valpo Verde.xlsx` — (a) REGLAS_GENERALES "Historial y vigencia" y "Preguardado y finalización" (última oración); (b) D-210 (dominio), D-212, D-213 y REGLAS_GENERALES "Reinspección y monitoreo" — en la próxima versión del paquete. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente, ver "Archivos afectados". |
+| Impacto en BD | Ninguno nuevo: (a) usa `tree_assessments.evento` y `classification_adjustments`, que ya existen; (b) `inspections.fecha_proxima_inspeccion_sugerida`/`fecha_proximo_monitoreo_sugerida` ya admiten el caso, al no estar restringidas a un dominio distinto de fecha. |
+| Impacto en backend | Implementado en el motor (Fase 5): `ensamblaje.ts` y `fechas-sugeridas.ts`. Pendiente (Fase 6): que el recálculo por `inspeccion_anulada` identifique y pase el `inspectionId` de la anulada y, si corresponde, el ajuste de la inspección válida anterior. |
+| Impacto en API | Ninguno todavía (Fase 6). |
+| Impacto en frontend | Ninguno todavía (Fase 7): mostrar el motivo de precaución (b) cuando corresponda. |
+| Pruebas necesarias | Implementadas en `tests/services/rules/engine/ensamblaje.test.ts` y `fechas-sugeridas.test.ts`: (a) se anula la inspección que tenía el ajuste → vuelve al calculado; se anula una inspección sin ajuste y reaparece uno anterior que coincide → se mantiene; el anterior ya no coincide → se descarta con revisión. (b) riesgo No determinado → rango de Extremo con motivo; No determinado ajustado a Bajo → 24 y 12 meses, sin el motivo de precaución. |
+| Dependencias | CC-040 (d) (descarte de ajustes); CC-044 (ajuste sobre No determinado/No aplica); CC-024, CC-029 (No determinado); D-181. |
+| rule_version | 2.1 (sin cambio de versión del paquete: el Excel en sí no se modificó todavía; la sincronización queda pendiente, ver "Impacto en Excel metodológico"). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-22 |
+| Fecha de implementación | 2026-10-22 (rama `feature/fase5-motor-reglas`, PR #70) |
+| Commits / PR asociados | PR #70 (`feature/fase5-motor-reglas`), sin fusionar. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día, actualizando el PR #70. |

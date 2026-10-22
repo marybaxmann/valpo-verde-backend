@@ -26,13 +26,13 @@ describe("D-212 — fecha_proxima_inspeccion", () => {
     expect(r.fechaInicio).toBe("2026-10-29");
     expect(r.fechaFin).toBe("2026-11-19");
   });
-  it("nivel_riesgo = no_determinado: se reporta como bloqueo, no se inventa una fecha", () => {
+  it("CC-045 (b): nivel_riesgo = no_determinado → rango de Extremo (1 a 4 semanas), con motivo de precaución, nunca sin fecha", () => {
     const r = calcularFechaProximaInspeccion("no_determinado", "2026-10-22");
-    expect(r.fechaInicio).toBeNull();
-    expect(r.fechaFin).toBeNull();
-    expect(r.noDeterminable).toBe(true);
-    expect(r.motivo).toMatch(/no se inventa/);
-    expect(r.motivo).toMatch(/D-212/);
+    expect(r.fechaInicio).toBe("2026-10-29");
+    expect(r.fechaFin).toBe("2026-11-19");
+    expect(r.noDeterminable).toBe(false);
+    expect(r.motivo).toMatch(/CC-045/);
+    expect(r.motivo).toMatch(/precaución/);
   });
 });
 
@@ -59,12 +59,13 @@ describe("D-213 — fecha_proximo_monitoreo", () => {
     expect(r.inmediatoYContinuo).toBe(true);
     expect(r.noDeterminable).toBe(false);
   });
-  it("nivel_riesgo = no_determinado: se reporta como bloqueo, no se inventa una fecha", () => {
+  it("CC-045 (b): nivel_riesgo = no_determinado → inmediato y continuo (igual que Extremo), con motivo de precaución", () => {
     const r = calcularFechaProximoMonitoreo("no_determinado", "2026-10-22");
-    expect(r.fechaInicio).toBeNull();
+    expect(r.fechaInicio).toBe("2026-10-22");
     expect(r.fechaFin).toBeNull();
-    expect(r.noDeterminable).toBe(true);
-    expect(r.motivo).toMatch(/D-213/);
+    expect(r.inmediatoYContinuo).toBe(true);
+    expect(r.noDeterminable).toBe(false);
+    expect(r.motivo).toMatch(/CC-045/);
   });
 });
 
