@@ -1,66 +1,103 @@
 # Escenarios de prueba RLS (T1) — Auditoría postdemo 2026-10
 
-> **Estado: W1–W12 NO EJECUTADOS.** Son escenarios preparados. Solo se ejecutarán en un **entorno de pruebas aislado** (decisión de la autora, 2026-10-11) y con su autorización expresa.
+> **Estado: W1–W29 EJECUTADOS el 2026-10-21**, contra `valpo-verde-conecta-pruebas`, tras aplicar la migración 017 (RLS por rol, CC-033; bloqueo de proyecto cerrado, CC-042; `security_invoker` en las vistas de la 016). Autorización expresa de la responsable (2026-10-21).
 >
-> L1–L5 (solo lectura) **se ejecutaron** el 2026-10-11 contra `valpo-verde-conecta`, dentro de transacciones con `ROLLBACK` y sin escrituras.
+> L1–L5 (solo lectura) se ejecutaron por primera vez el 2026-10-11 contra `valpo-verde-conecta` (modelo anterior). Se repiten aquí contra el modelo nuevo, extendidas a los roles `inspector` y `encargado_mantencion`.
 
-**Repositorio público.** Los escenarios se describen con personas genéricas y resultados esperados, sin identificadores reales ni sentencias listas para ejecutar. La versión ejecutable se conserva fuera del repositorio.
+**Repositorio público.** Los escenarios se describen con personas genéricas y resultados esperados, sin identificadores reales ni sentencias listas para ejecutar. La versión ejecutable (fixtures sintéticos + SQL de cada caso) se conserva fuera del repositorio.
 
 ## Personas
 
 | Persona | Rol | Situación |
 |---|---|---|
-| A | `admin` | Acceso transversal de solo lectura (CC-022) |
-| M1 | `usuario_municipal` | Miembro del proyecto P1 |
+| A | `admin` | Acceso transversal de solo lectura (AMD-02) |
+| M1 | `usuario_municipal` | Miembro de P1 y de P3 |
 | M2 | `usuario_municipal` | Sin proyectos |
+| I1 | `inspector` | Miembro de P1 — **nueva** |
+| E1 | `encargado_mantencion` | Miembro de P1 — **nueva** |
 | ANON | sin sesión | — |
 
-P1 es un proyecto con árboles; P2 es otro proyecto del que M1 no es miembro.
+P1: proyecto activo con un sector, un árbol, una OT de inspección completada con su inspección finalizada y su evaluación, una OT de mantenimiento completada con su registro, y una incidencia con su reportante. P2: proyecto activo del que nadie de la lista es miembro (control negativo). P3: proyecto con su propio sector y árbol, miembro M1, **cerrado** durante los escenarios de proyecto cerrado y reabierto al terminar — **nuevo**.
+
+Todas las personas se crearon como filas sintéticas en `auth.users` (correo `@example.invalid`, sin contraseña) y `user_profiles`, solo en `valpo-verde-conecta-pruebas`, y se borraron junto con P1/P2/P3 y todo lo que colgaba de ellos al terminar (verificado con conteos en 0; los 4 usuarios reales de la base no se tocaron).
 
 ## Método
 
-En cada escenario, una transacción independiente adopta el rol de la persona (rol de base de datos y claims del JWT), intenta la operación y termina siempre en `ROLLBACK`.
+Lecturas y escrituras de `authenticated`/`anon`: una transacción con `SET LOCAL ROLE` + `set_config('request.jwt.claims', ...)`, termina en `ROLLBACK`. Escrituras con `service_role` (W23 a W28): `SET LOCAL ROLE service_role` — simula al backend, que escribe pasando por encima del RLS; lo único que puede detenerlo es un trigger. Se considera **rechazo** un error de permiso (RLS, GRANT o EXECUTE) o 0 filas afectadas en UPDATE/DELETE.
 
-Se considera **rechazo** un error de permiso o 0 filas afectadas en UPDATE/DELETE.
+## Lecturas
 
-## Lecturas (EJECUTADAS 2026-10-11)
+| ID | Persona | Intento | Esperado | Resultado |
+|---|---|---|---|---|
+| L1 | M1 | `SELECT` de proyectos | Ve P1 y P3 (es miembro de ambos) | ✔ Coincide |
+| L1b | I1 | `SELECT` de proyectos | Ve solo P1 | ✔ Coincide |
+| L1c | E1 | `SELECT` de proyectos | Ve solo P1 | ✔ Coincide |
+| L2 | M2 | `SELECT` de proyectos | 0 filas | ✔ Coincide |
+| L3 | A | `SELECT` de proyectos | Ve todos (transversal, solo lectura) | ✔ Coincide |
+| L4 | ANON | `SELECT` de proyectos | Rechaza | ✔ Coincide — **rechazado a nivel de GRANT** (`permission denied for table projects`), más fuerte que un filtro RLS a 0 filas |
+| L5 | A (cualquiera) | `SELECT` de `roles` | 0 filas / rechazo (solo vía funciones SECURITY DEFINER) | ✔ Coincide |
 
-| ID | Persona | Resultado esperado | Resultado obtenido |
+## Nuevas tablas y roles (W13–W22)
+
+| ID | Persona | Intento | Esperado | Resultado |
+|---|---|---|---|---|
+| W13 | I1 | Leer `trees`/`inspections`/`evaluations` de P1 | Acepta | ✔ Coincide (1 fila cada una) |
+| W14 | I1 | Leer `trees` de P2 | 0 filas | ✔ Coincide |
+| W15 | E1 | Leer `maintenance_records` de P1 | Acepta | ✔ Coincide |
+| W16 | M1 | Leer `incident_reporters` de P1 | Acepta (solo `usuario_municipal`) | ✔ Coincide |
+| W17 | I1 | Leer `incident_reporters` de P1 | 0 filas (ni inspector) | ✔ Coincide |
+| W18 | A | Leer `incident_reporters` de P1 | 0 filas (**PR-022**, no AMD-02: dato personal, ni el admin lo ve) | ✔ Coincide |
+| W20 | M1 | `SELECT` en las 6 vistas de la 016 (`v_tree_presence`, `v_inspections`, `v_tree_current_inputs`, `v_species_traits`, `v_upcoming_inspections`) | Filtradas igual que sus tablas base | ✔ Coincide (2/1/0/2/1 filas — el 0 de `v_tree_current_inputs` es porque la evaluación sintética no llevaba variables, no un fallo de la vista) |
+| W21 | M2 | `SELECT` en las mismas vistas | 0 filas | ✔ Coincide |
+| W22 | ANON | `SELECT` en cualquier vista o tabla | Rechaza | ✔ Coincide (igual que L4: a nivel de GRANT) |
+
+## Escrituras directas (CC-033: ninguna política de escritura, para ningún rol)
+
+| ID | Persona | Intento | Esperado | Resultado |
+|---|---|---|---|---|
+| W1/W9/W10/W19 | M1, A | `UPDATE trees` directo | Rechaza | ✔ Coincide — `permission denied for table trees` (rechazado a nivel de GRANT, ni siquiera llega a evaluar RLS) |
+| W11 | M1 | `UPDATE user_profiles` de su propia fila | Rechaza | ✔ Coincide |
+| W19b | I1, E1 | `UPDATE inspections` / `INSERT maintenance_records` | Rechaza | ✔ Coincide |
+| W12/W29 | ANON, M1 | `SELECT fn_refresh_tree_current(...)` | Rechaza | ✔ Coincide — `permission denied for function` |
+| W12/W29 | ANON, M1 | `SELECT fn_create_tree_with_measurement(...)` | Rechaza | ✔ Coincide — `permission denied for function`. **Nota:** esto deja sin función el alta de árbol actual hasta que la Fase 6 la reescriba sobre el modelo nuevo con `service_role`; hoy solo afecta a `valpo-verde-conecta-pruebas` |
+
+## Proyecto cerrado (RG fila 27; CC-042) — nuevo
+
+| ID | Persona | Intento | Esperado | Resultado |
+|---|---|---|---|---|
+| W23 | `service_role` | `INSERT work_orders` en P3 (cerrado) | Rechaza, aunque `service_role` tenga `BYPASSRLS` | ✔ Coincide — el trigger se ejecuta igual; `BYPASSRLS` solo omite políticas, nunca triggers |
+| W25 | `service_role` | `UPDATE projects` de P3 (cerrado), un campo distinto de `estado_proyecto` | Rechaza | ✔ Coincide |
+| W26 | `service_role` | `UPDATE project_members` de P3 (cerrado) | Acepta (excepción) | ✔ Coincide |
+| W24 | `service_role` | `UPDATE projects` de P3: `cerrado` → `activo` | Acepta | ✔ Coincide |
+| W27 | `service_role` | `DELETE` en una tabla protegida de un proyecto **activo** (P1) | Acepta | ✔ Coincide |
+| W28 | `service_role` | Validar una incidencia (`resultado_revision = 'validada'`) en P1 (activo) | Se borra la fila de `incident_reporters` de esa incidencia | ✔ Coincide |
+
+## Resultado global
+
+**29/29 escenarios con el resultado esperado.** Ningún hallazgo nuevo (a diferencia de la ronda de 2026-10-11, que encontró I1-b y las brechas S1/S3 — esas ya están resueltas por el diseño de la Fase 3 y la migración 017).
+
+## Condiciones con las que se ejecutó
+
+1. Entorno aislado (`valpo-verde-conecta-pruebas`, ref `gmlbmyreoxgoqrolhyxo`), confirmado antes de cada bloque de SQL.
+2. Usuarios y proyectos sintéticos propios del entorno de pruebas, borrados al terminar con verificación por conteo.
+3. Autorización expresa de la responsable (2026-10-21).
+4. Resultados registrados en este archivo, sin datos reales ni UUID literales.
+
+## Asesor de seguridad de Supabase, tras la 017 y la 017b (2026-10-21)
+
+Corrido contra `valpo-verde-conecta-pruebas` después de aplicar la 017 y la 017b (endurecimiento adicional pedido por la responsable: `search_path` en `set_updated_at` y `fn_next_codigo_usuario`; `REFERENCES`/`TRIGGER` revocados de `anon` y `authenticated` en las 30 tablas y 6 vistas de `public`; intento de revocar `EXECUTE` de `st_estimatedextent`).
+
+| Aviso | Nivel | Cantidad | Aceptado porque |
 |---|---|---|---|
-| L1 | M1 | Ve solo P1 y sus datos (árboles, mediciones, evaluaciones, incidencias, órdenes); solo su propia membresía y su propio perfil | ✔ Coincide |
-| L2 | M2 | No ve ningún proyecto ni dato de proyecto; ve su perfil y el catálogo de especies | ✔ Coincide |
-| L3 | A | Ve todos los proyectos y datos (lectura transversal) | ✔ Coincide |
-| L4 | ANON | No ve nada, ni siquiera especies | ✔ Coincide |
-| L5 | todos | La tabla de roles no es legible por la API (el rol se resuelve con funciones de la base) | ✔ Coincide |
+| `rls_enabled_no_policy` | INFO | 9 (`audit_log`, `component_assessments`, `defect_observations`, `defect_results`, `infrastructure_conflicts`, `probability_thresholds`, `risk_evaluations`, `roles`, `vitality_assessments`) | Tablas del modelo 001 que se retiran en la migración 018, o `roles` (se consulta solo desde funciones `SECURITY DEFINER`, nunca directo — así está desde la 010). |
+| `rls_disabled_in_public` | ERROR | 1 (`spatial_ref_sys`) | PostGIS; pertenece a `supabase_admin`. El rol que aplica migraciones no puede habilitarle RLS (issue #9/migración 010, ya documentado). |
+| `extension_in_public` | WARN | 1 (`postgis`) | Mover la extensión de esquema es una operación invasiva (recrearla, reapuntar todas las columnas `geography`); no se hizo sin autorización aparte. |
+| `anon_security_definer_function_executable` | WARN | 3 (`st_estimatedextent`, los 3 overloads) | **Intentado, sin efecto**: pertenecen a `supabase_admin`, igual que `spatial_ref_sys`. `REVOKE EXECUTE ... FROM PUBLIC` se ejecuta sin error pero no cambia el `proacl` (verificado antes y después) — el rol de las migraciones no tiene autoridad sobre un privilegio otorgado por `supabase_admin`. |
+| `authenticated_security_definer_function_executable` | WARN | 8 (`get_user_role`, `is_admin`, `is_project_member`, `is_municipal_member`, `has_project_role` — intencional, las usan las políticas de RLS; más los 3 overloads de `st_estimatedextent`, mismo caso de arriba) | Las 5 primeras son necesarias por diseño (§6). Las 3 de `st_estimatedextent`, igual que en la fila anterior. |
+| `auth_leaked_password_protection` | WARN | 1 | **No disponible en el plan gratuito de Supabase** (Supabase rechaza el cambio) — limitación aceptada, igual en `valpo-verde-conecta` y `valpo-verde-conecta-pruebas`. Mitigación verificada por la responsable en el panel (2026-10-21), idéntica en ambas bases: longitud mínima 12 caracteres; letras, dígitos y símbolos con mayúsculas y minúsculas (los cuatro tipos obligatorios); contraseña actual obligatoria para cambiarla. Pendiente para producción (ADR-013): plan Pro con la protección activada. Ver HANDOFF, PA-39. |
 
-Hallazgo derivado de L1: **I1-b**. M1 no puede leer los nombres de otros usuarios, por lo que la ficha muestra "—" como autor en los registros de otras personas.
-
-## Escrituras (NO EJECUTADAS)
-
-"Esperado hoy" se basa en la lectura de las políticas y permisos vigentes. "Objetivo" es el resultado tras implementar DA-01 / I1.
-
-| ID | Persona | Intento | Esperado hoy | Objetivo | Hallazgo |
-|---|---|---|---|---|---|
-| W1 | M1 | Registrar directamente una evaluación de riesgo con un resultado no calculado por el motor | Acepta | **Rechaza** | S1, C1 |
-| W2 | M1 | Registrar una evaluación atribuida a otro usuario | Acepta | **Rechaza** | S1, I1 |
-| W3 | M1 | Modificar columnas protegidas de un árbol de P1 (código, estado de ciclo de vida, autor) | Acepta | **Rechaza** | S1 |
-| W4 | M1 | Mover un árbol de P1 a P2 | Rechaza | Rechaza | Control positivo |
-| W5 | M1 | Crear un árbol sin medición inicial, sin pasar por la función atómica | Acepta | **Rechaza** | S1, ADR-016 |
-| W6 | M1 | Reescribir la bitácora, la descripción o el informante de una incidencia | Acepta | **Rechaza** | S1, I2 |
-| W7 | M1 | Registrar una incidencia a nombre de otro usuario | Acepta | **Rechaza** | S1, I1 |
-| W8 | M1 | Asignar a una orden un estado fuera del catálogo | Acepta | **Rechaza** | S1, I3 |
-| W9 | A | Escribir datos de P1 (CC-022: solo lectura) | Rechaza | Rechaza | C2 (control) |
-| W10 | M2 | Escribir datos de P1 | Rechaza | Rechaza | Control |
-| W11 | M1 | Modificar su perfil o rol, agregarse a P2 o borrar datos | Rechaza | Rechaza | Control |
-| W12 | ANON | Ejecutar la función de alta de árbol | Rechaza (la función exige sesión) | Rechaza, idealmente sin permiso de ejecución | S3 |
-
-## Condiciones para ejecutarlos
-
-1. Entorno aislado activo, con el esquema reproducido. Ojo: el historial de migraciones solo registra 007–011 (E1).
-2. Usuarios y proyectos sintéticos propios del entorno de pruebas.
-3. Autorización expresa de la autora.
-4. Resultados registrados en este archivo, con fecha, sin datos reales.
+**0 avisos nuevos sin explicación.** Los `ERROR`/`WARN` restantes son conocidos de antes de la Fase 4 o requieren una acción fuera del alcance de una migración (panel de Supabase, o cambiar el owner de objetos de la extensión PostGIS).
 
 ## Destino posterior
 
-Una vez ejecutados, los escenarios deberían pasar a pruebas automáticas del repositorio, corriendo en CI contra el entorno de pruebas (hallazgos T1 y T2).
+Estos 29 escenarios son candidatos directos a pruebas automáticas del repositorio (Jest + conexión a un entorno de pruebas), para que corran en CI contra cada cambio de RLS futuro, en vez de repetirse a mano.
