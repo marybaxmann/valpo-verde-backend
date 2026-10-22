@@ -1,11 +1,18 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 6 — posterior a la migración 011 (CC-022, Administrador solo
---   lectura); antes revisión 5, posterior a la migración 010: incluye 005–006 (RLS base,
---   tree_measurements + RPC de alta), 007 (evaluación de riesgo), 008
---   (infraestructura, mantención), 009 (códigos OT/INC) y 010 (RLS en
---   tablas expuestas). Sincronizado el 2026-10-09.)
+--   (revisión 7 — posterior a la migración 012 (Fase 4, paquete 2.1.0:
+--   roles nuevos, catálogo de especies, projects.estado_proyecto);
+--   antes revisión 6, posterior a la migración 011 (CC-022, Administrador
+--   solo lectura); revisión 5, posterior a la migración 010: incluye
+--   005–006 (RLS base, tree_measurements + RPC de alta), 007 (evaluación
+--   de riesgo), 008 (infraestructura, mantención), 009 (códigos OT/INC) y
+--   010 (RLS en tablas expuestas). Sincronizado el 2026-10-21.
+--
+--   **Aplicado solo en `valpo-verde-conecta-pruebas`** (012 en adelante;
+--   diseño Fase 3 §7). `valpo-verde-conecta` sigue en la revisión 6 hasta
+--   que la Fase 8 autorice aplicar 012–017 ahí (issue #45). Este archivo
+--   describe la base de pruebas, no la de desarrollo/demo actual.)
 --
 -- Este archivo es la referencia consolidada del esquema completo.
 -- El historial versionado de cambios vive en database/migrations/
@@ -86,16 +93,30 @@ CREATE TYPE clase_vitalidad AS ENUM (
 
 CREATE TABLE roles (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nombre      TEXT UNIQUE NOT NULL,          -- 'admin', 'usuario_municipal', extensible
+  nombre      TEXT UNIQUE NOT NULL,          -- 'admin', 'usuario_municipal', 'inspector',
+                                              -- 'encargado_mantencion' (CC-032, migración 012)
   descripcion TEXT
 );
 
+-- Secuencia y función de codigo_usuario (D-247; CC-041; migración 012):
+-- un solo nextval() por fila para no saltar valores en el DEFAULT.
+CREATE SEQUENCE user_profiles_codigo_seq START 1;
+
+CREATE FUNCTION fn_next_codigo_usuario() RETURNS TEXT AS $$
+DECLARE
+  v BIGINT := nextval('user_profiles_codigo_seq');
+BEGIN
+  RETURN 'USR-' || LPAD(v::text, GREATEST(3, length(v::text)), '0');
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE user_profiles (
-  id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role_id    UUID NOT NULL REFERENCES roles(id),
-  nombre     TEXT,
-  activo     BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  id             UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  role_id        UUID NOT NULL REFERENCES roles(id),
+  nombre         TEXT,
+  activo         BOOLEAN NOT NULL DEFAULT true,
+  codigo_usuario TEXT UNIQUE NOT NULL DEFAULT fn_next_codigo_usuario(),  -- D-247 (migración 012)
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ---------------------------------------------------------------------
@@ -117,8 +138,8 @@ CREATE TABLE projects (
   institution_name          TEXT NOT NULL,
   responsible_professional  TEXT,                                       -- nullable por ahora
   created_by                UUID REFERENCES user_profiles(id) ON DELETE SET NULL,  -- auditoría nullable
-  status                    TEXT NOT NULL DEFAULT 'activo'
-                              CHECK (status IN ('activo', 'cerrado')),
+  estado_proyecto           TEXT NOT NULL DEFAULT 'activo'               -- renombrado desde `status` (D-265; CC-042; migración 012)
+                              CHECK (estado_proyecto IN ('activo', 'cerrado')),
   created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at                TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -153,12 +174,36 @@ CREATE INDEX idx_project_members_user ON project_members (user_id);
 -- CATÁLOGO DE ESPECIES
 -- ---------------------------------------------------------------------
 
+-- Catálogo de especies (CATALOGO_ESPECIES; CC-039; migración 012).
+-- `nombre_comun` se retiró: es un dato del árbol (CC-028 P2; D-14), no
+-- del catálogo.
 CREATE TABLE species (
-  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nombre_cientifico  TEXT UNIQUE NOT NULL,
-  nombre_comun       TEXT,                    -- único lugar donde vive este dato (no se duplica en trees)
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  especie_cientifica    TEXT NOT NULL,                 -- renombrado desde `nombre_cientifico`; UNIQUE sobre la forma normalizada (índice abajo)
+  genero                TEXT,
+  familia               TEXT,
+  origen_biogeografico  TEXT
+    CHECK (origen_biogeografico IS NULL OR origen_biogeografico IN ('nativa', 'endemica', 'introducida')),
+  persistencia_follaje  TEXT
+    CHECK (persistencia_follaje IS NULL OR persistencia_follaje IN ('perennifolia', 'caducifolia', 'semicaducifolia')),
+  tipo_hoja             TEXT
+    CHECK (tipo_hoja IS NULL OR tipo_hoja IN ('latifoliada', 'acicular', 'escuamiforme', 'palmera')),
+  created_by            UUID REFERENCES user_profiles(id),
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  -- No admite "Género sp." ni "No determinado" (D-257).
+  CONSTRAINT chk_species_especie_cientifica_valida
+    CHECK (especie_cientifica !~* '\ssp\.?$' AND lower(trim(especie_cientifica)) <> 'no determinado')
 );
+
+-- UNIQUE sobre la forma normalizada (minúsculas, espacios simples).
+CREATE UNIQUE INDEX uq_species_especie_cientifica_norm
+  ON species (lower(regexp_replace(trim(especie_cientifica), '\s+', ' ', 'g')));
+
+CREATE TRIGGER trg_species_updated_at
+  BEFORE UPDATE ON species
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ---------------------------------------------------------------------
 -- CATÁLOGO DE ESPACIOS PÚBLICOS (plazas, parques)
