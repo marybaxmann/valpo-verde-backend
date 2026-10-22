@@ -1,7 +1,10 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 10 — posterior a la migración 015 (Fase 4: incidents
+--   (revisión 11 — posterior a la migración 016 (Fase 4: vistas
+--   v_tree_presence, v_inspections, v_tree_current_inputs,
+--   v_tree_current_assessment, v_species_traits, v_upcoming_inspections);
+--   antes revisión 10, posterior a la migración 015 (Fase 4: incidents
 --   adaptada con estado_incidencia/tipo_incidencia, incident_reporters,
 --   photos adaptada con vista y origen único); antes revisión 9,
 --   posterior a la migración 014 (Fase 4: work_orders,
@@ -1647,6 +1650,120 @@ $$;
 CREATE TRIGGER trg_photos_tree_coherente
   BEFORE INSERT OR UPDATE ON photos
   FOR EACH ROW EXECUTE FUNCTION fn_check_photo_tree_coherente();
+
+-- ---------------------------------------------------------------------
+-- VISTAS DE VALORES DERIVADOS (migración 016; §4)
+-- ---------------------------------------------------------------------
+
+-- estado_presencia y fecha_cambio_estado_presencia (D-28, D-29;
+-- PR-020 v1.1). Talado/Retirado solo con OT completada + mantenimiento
+-- aprobado de Tala o Retiro_tocón.
+CREATE VIEW v_tree_presence AS
+WITH cierre AS (
+  SELECT
+    wo.tree_id,
+    wo.subtipo_accion,
+    mr.fecha_revision,
+    ROW_NUMBER() OVER (PARTITION BY wo.tree_id ORDER BY mr.fecha_revision DESC) AS rn
+  FROM work_orders wo
+  JOIN maintenance_records mr ON mr.work_order_id = wo.id
+  WHERE wo.estado_ot = 'completada'
+    AND wo.subtipo_accion IN ('tala', 'retiro_tocon')
+    AND mr.estado_revision = 'aprobado'
+)
+SELECT
+  t.id AS tree_id,
+  CASE
+    WHEN c.subtipo_accion = 'tala' THEN 'talado'
+    WHEN c.subtipo_accion = 'retiro_tocon' THEN 'retirado'
+    ELSE 'presente'
+  END AS estado_presencia,
+  COALESCE(c.fecha_revision::date, t.fecha_registro) AS fecha_cambio_estado_presencia
+FROM trees t
+LEFT JOIN cierre c ON c.tree_id = t.id AND c.rn = 1;
+
+-- Inspección + nivel_riesgo (riesgo efectivo: ajustado si existe, si no,
+-- calculado). D-200.
+CREATE VIEW v_inspections AS
+SELECT
+  i.*,
+  COALESCE(e.clasificacion_riesgo_ajustada, e.clasificacion_riesgo_calculada) AS nivel_riesgo
+FROM inspections i
+LEFT JOIN evaluations e ON e.inspection_id = i.id;
+
+-- Entradas vigentes de REGISTRO_EVALUACION, compuestas campo por campo
+-- desde evaluations.variables (CC-040; RG "Historial y vigencia").
+-- entradas_vigentes: el valor más reciente de cada clave;
+-- origen_por_campo: la inspección que lo aportó.
+CREATE VIEW v_tree_current_inputs AS
+WITH validas AS (
+  SELECT
+    e.tree_id,
+    e.inspection_id,
+    wo.fecha_completada_ot,
+    kv.key,
+    kv.value
+  FROM evaluations e
+  JOIN inspections i ON i.id = e.inspection_id
+  JOIN work_orders wo ON wo.id = i.work_order_id
+  CROSS JOIN LATERAL jsonb_each(e.variables) AS kv(key, value)
+  WHERE i.estado_registro <> 'anulado'
+    AND wo.estado_ot = 'completada'
+),
+ranked AS (
+  SELECT
+    tree_id, key, value, inspection_id,
+    ROW_NUMBER() OVER (PARTITION BY tree_id, key ORDER BY fecha_completada_ot DESC) AS rn
+  FROM validas
+)
+SELECT
+  tree_id,
+  jsonb_object_agg(key, value) AS entradas_vigentes,
+  jsonb_object_agg(key, to_jsonb(inspection_id)) AS origen_por_campo
+FROM ranked
+WHERE rn = 1
+GROUP BY tree_id;
+
+-- Evaluación vigente del árbol = la fila más reciente de
+-- tree_assessments (D-242 L; CC-031; CC-040). Sin filas: "Evaluación
+-- pendiente" (lo interpreta la aplicación; no hay fila vacía aquí).
+CREATE VIEW v_tree_current_assessment AS
+SELECT DISTINCT ON (tree_id) *
+FROM tree_assessments
+ORDER BY tree_id, created_at DESC;
+
+-- Árbol + rasgos del catálogo por especie_cientifica normalizada
+-- (D-257 a D-262; CC-039). "no_determinado" si no hay especie en el
+-- catálogo.
+CREATE VIEW v_species_traits AS
+SELECT
+  t.id AS tree_id,
+  COALESCE(s.origen_biogeografico, 'no_determinado') AS origen_biogeografico,
+  s.persistencia_follaje,
+  s.tipo_hoja,
+  s.genero,
+  s.familia
+FROM trees t
+LEFT JOIN species s
+  ON lower(regexp_replace(trim(t.especie_cientifica), '\s+', ' ', 'g'))
+   = lower(regexp_replace(trim(s.especie_cientifica), '\s+', ' ', 'g'));
+
+-- Por proyecto: próxima inspección y monitoreo de cada árbol, con la
+-- fecha ajustada si existe (D-202, D-203; CC-037). El rango
+-- (inicio/término) lo calcula el backend desde nivel_riesgo con su
+-- tabla de plazos — "Impacto en BD: ninguno adicional" (CC-037).
+CREATE VIEW v_upcoming_inspections AS
+SELECT DISTINCT ON (t.id)
+  t.project_id,
+  t.id AS tree_id,
+  i.id AS inspection_id,
+  COALESCE(i.fecha_proxima_inspeccion, i.fecha_proxima_inspeccion_sugerida) AS fecha_proxima_inspeccion,
+  COALESCE(i.fecha_proximo_monitoreo, i.fecha_proximo_monitoreo_sugerida) AS fecha_proximo_monitoreo,
+  COALESCE(e.clasificacion_riesgo_ajustada, e.clasificacion_riesgo_calculada) AS nivel_riesgo
+FROM trees t
+JOIN inspections i ON i.tree_id = t.id AND i.estado_registro = 'finalizado'
+LEFT JOIN evaluations e ON e.inspection_id = i.id
+ORDER BY t.id, i.fecha_inspeccion DESC, i.created_at DESC;
 
 -- =====================================================================
 -- FIN schema.sql
