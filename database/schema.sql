@@ -1,7 +1,9 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 7 — posterior a la migración 012 (Fase 4, paquete 2.1.0:
+--   (revisión 8 — posterior a la migración 013 (Fase 4: sectors,
+--   trees.sector_id/valores vigentes aditivos, tree_data_versions); antes
+--   revisión 7, posterior a la migración 012 (Fase 4, paquete 2.1.0:
 --   roles nuevos, catálogo de especies, projects.estado_proyecto);
 --   antes revisión 6, posterior a la migración 011 (CC-022, Administrador
 --   solo lectura); revisión 5, posterior a la migración 010: incluye
@@ -171,6 +173,30 @@ CREATE TABLE project_members (
 CREATE INDEX idx_project_members_user ON project_members (user_id);
 
 -- ---------------------------------------------------------------------
+-- SECTORES (migración 013; D-252 a D-256; AMD-32; CC-041)
+-- ---------------------------------------------------------------------
+-- Un sector por proyecto (se crea junto con el proyecto, en la misma
+-- transacción, a cargo del backend — Fase 6). La delimitación territorial
+-- (polígono o multipolígono, importable desde KML/KMZ).
+
+CREATE TABLE sectors (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id            UUID NOT NULL UNIQUE
+                          REFERENCES projects(id) ON DELETE RESTRICT,
+  nombre_sector         TEXT NOT NULL,
+  geometria_sector      geography(MultiPolygon, 4326) NOT NULL,
+  superficie_sector_m2  NUMERIC GENERATED ALWAYS AS (ST_Area(geometria_sector)) STORED,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_sectors_geometria ON sectors USING GIST (geometria_sector);
+
+CREATE TRIGGER trg_sectors_updated_at
+  BEFORE UPDATE ON sectors
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ---------------------------------------------------------------------
 -- CATÁLOGO DE ESPECIES
 -- ---------------------------------------------------------------------
 
@@ -252,7 +278,6 @@ CREATE TABLE trees (
   direccion              TEXT,
   comuna                  TEXT,
   lugar_referencia          TEXT,                                -- texto descriptivo libre, NO representa la plaza/parque
-  ubicacion                  geography(Point, 4326),                -- PENDIENTE: sin poblar hasta recibir geolocalización
 
   -- DEPRECADO por ADR-016 (INV-1A): las dimensiones dendrométricas se registran en tree_measurements.
   -- Se conservan por compatibilidad legacy; no se usan para nuevas escrituras.
@@ -273,6 +298,51 @@ CREATE TABLE trees (
   created_at                                      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at                                        TIMESTAMPTZ NOT NULL DEFAULT now(),
 
+  -- -------------------------------------------------------------------
+  -- Identidad + valores vigentes (migración 013; §3.5; D-6 a D-29).
+  -- Los valores vigentes solo los escribe fn_refresh_tree_current
+  -- (§5.1, migración 014); el historial completo vive en
+  -- tree_data_versions.
+  -- -------------------------------------------------------------------
+  sector_id                     UUID NOT NULL REFERENCES sectors(id),            -- D-6; asignado por el sistema
+  fecha_registro                DATE NOT NULL,                                   -- D-4; hora de Chile
+  registrado_por                UUID NOT NULL REFERENCES user_profiles(id),      -- D-5; explícito (CC-033)
+  sector                        TEXT,                                           -- D-7 (valor vigente; distinto de sector_id)
+  ubicacion_descriptiva         TEXT,                                           -- D-8
+  utm_este                      NUMERIC(10,2),                                  -- D-9; coordenada canónica (CC-028 P1)
+  utm_norte                     NUMERIC(10,2),                                  -- D-10
+  huso                          TEXT CHECK (huso IS NULL OR huso = '19S'),       -- D-11
+  datum                         TEXT CHECK (datum IS NULL OR datum = 'WGS84'),   -- D-12
+  ubicacion                     geography(Point, 4326)                          -- ADR-010 v3.0: generada desde UTM (ya no manual)
+                                   GENERATED ALWAYS AS (
+                                     ST_Transform(ST_SetSRID(ST_MakePoint(utm_este, utm_norte), 32719), 4326)
+                                   ) STORED,
+  especie_cientifica            TEXT,                                           -- D-13
+  nombre_comun                  TEXT,                                           -- D-14
+  multifustal                   BOOLEAN,                                       -- D-15
+  numero_fustes                 INTEGER CHECK (numero_fustes IS NULL OR numero_fustes >= 2),  -- D-16
+  dap_fustes_cm                 NUMERIC(6,2)[],                                 -- D-17
+  dap_cm                        NUMERIC(6,2) CHECK (dap_cm IS NULL OR dap_cm > 0),  -- D-18
+  altura_total_m                NUMERIC(6,2) CHECK (altura_total_m IS NULL OR altura_total_m > 0),  -- D-19; AMD-13
+  diametro_copa_ns_m            NUMERIC(6,2),                                   -- D-20
+  diametro_copa_eo_m            NUMERIC(6,2),                                   -- D-21
+  copa_no_presenta              BOOLEAN,                                       -- RG "Ausencia"
+  diametro_copa_m               NUMERIC(6,2)                                    -- D-22; generada, promedio si ambas existen
+                                   GENERATED ALWAYS AS ((diametro_copa_ns_m + diametro_copa_eo_m) / 2) STORED,
+  altura_primera_rama_m         NUMERIC(6,2),                                   -- D-23
+  altura_primera_rama_no_presenta BOOLEAN,
+  altura_base_copa_viva_m       NUMERIC(6,2),                                   -- D-24
+  altura_base_copa_viva_no_presenta BOOLEAN,
+  clase_edad                    TEXT CHECK (clase_edad IS NULL OR clase_edad IN (  -- D-25
+    'Joven', 'Semimaduro', 'Tempranamente maduro', 'Maduro', 'Sobremaduro'
+  )),
+  rango_edad_estimada_anios     TEXT CHECK (rango_edad_estimada_anios IS NULL OR rango_edad_estimada_anios IN (  -- D-26; CC-039; opcional
+    '0_5', '6_10', '11_15', '16_20', '21_25', '26_30', '31_35', '36_40',
+    '41_45', '46_50', '51_55', '56_60', '61_65', '66_70', '71_75',
+    '76_80', '81_85', '86_90', '91_95', '96_100', 'mas_de_100'
+  )),
+  vigente_desde_inspection_id    UUID REFERENCES inspections(id),                -- última inspección que aportó algún valor vigente
+
   -- Modelo multiproyecto (migraciones 002/004). project_id NOT NULL final
   -- desde 004.
   CONSTRAINT trees_project_id_fkey
@@ -290,7 +360,10 @@ CREATE TABLE trees (
   -- (trees_public_space_id_fkey_transitoria) ya fue retirada en 004.
   CONSTRAINT trees_project_public_space_fkey
     FOREIGN KEY (project_id, public_space_id)
-    REFERENCES public_spaces (project_id, id) MATCH SIMPLE ON DELETE RESTRICT
+    REFERENCES public_spaces (project_id, id) MATCH SIMPLE ON DELETE RESTRICT,
+  -- Al menos especie_cientifica o nombre_comun en el alta (RG "Preguardado"; migración 013).
+  CONSTRAINT chk_trees_especie_o_comun
+    CHECK (especie_cientifica IS NOT NULL OR nombre_comun IS NOT NULL)
 );
 
 CREATE INDEX idx_trees_species ON trees (species_id);
@@ -300,6 +373,7 @@ CREATE INDEX idx_trees_species ON trees (species_id);
 CREATE INDEX idx_trees_public_space ON trees (project_id, public_space_id);
 CREATE INDEX idx_trees_ubicacion ON trees USING GIST (ubicacion);
 CREATE INDEX idx_trees_estado_ciclo_vida ON trees (estado_ciclo_vida);
+CREATE INDEX idx_trees_sector_id ON trees (sector_id);  -- migración 013
 
 CREATE TRIGGER trg_trees_updated_at
   BEFORE UPDATE ON trees
@@ -543,6 +617,57 @@ BEGIN
   );
 END;
 $$;
+
+-- ---------------------------------------------------------------------
+-- VERSIONES DE DATOS DEL ÁRBOL POR INSPECCIÓN (migración 013; §3.6)
+-- ---------------------------------------------------------------------
+-- Una fila por alta (sin inspección) y una por cada inspección que
+-- registra o confirma datos del árbol (D-26 "conservar el historial").
+-- Inspecciones parciales (CC-040): cada versión guarda solo los campos
+-- que registró (`campos_registrados`); fn_refresh_tree_current (§5.1,
+-- migración 014) compone los valores vigentes de `trees` a partir de
+-- estas filas.
+
+CREATE TABLE tree_data_versions (
+  id                                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tree_id                             UUID NOT NULL REFERENCES trees(id) ON DELETE RESTRICT,
+  inspection_id                       UUID UNIQUE REFERENCES inspections(id),  -- NULL solo en la versión del alta
+  campos_registrados                  TEXT[] NOT NULL,
+  sector                              TEXT,
+  ubicacion_descriptiva               TEXT,
+  utm_este                            NUMERIC(10,2),
+  utm_norte                           NUMERIC(10,2),
+  especie_cientifica                  TEXT,
+  nombre_comun                        TEXT,
+  multifustal                         BOOLEAN,
+  numero_fustes                       INTEGER CHECK (numero_fustes IS NULL OR numero_fustes >= 2),
+  dap_fustes_cm                       NUMERIC(6,2)[],
+  dap_cm                              NUMERIC(6,2) CHECK (dap_cm IS NULL OR dap_cm > 0),
+  altura_total_m                      NUMERIC(6,2) CHECK (altura_total_m IS NULL OR altura_total_m > 0),
+  diametro_copa_ns_m                  NUMERIC(6,2),
+  diametro_copa_eo_m                  NUMERIC(6,2),
+  copa_no_presenta                    BOOLEAN,
+  diametro_copa_m                     NUMERIC(6,2)
+                                        GENERATED ALWAYS AS ((diametro_copa_ns_m + diametro_copa_eo_m) / 2) STORED,
+  altura_primera_rama_m               NUMERIC(6,2),
+  altura_primera_rama_no_presenta     BOOLEAN,
+  altura_base_copa_viva_m             NUMERIC(6,2),
+  altura_base_copa_viva_no_presenta   BOOLEAN,
+  clase_edad                          TEXT CHECK (clase_edad IS NULL OR clase_edad IN (
+    'Joven', 'Semimaduro', 'Tempranamente maduro', 'Maduro', 'Sobremaduro'
+  )),
+  rango_edad_estimada_anios           TEXT CHECK (rango_edad_estimada_anios IS NULL OR rango_edad_estimada_anios IN (
+    '0_5', '6_10', '11_15', '16_20', '21_25', '26_30', '31_35', '36_40',
+    '41_45', '46_50', '51_55', '56_60', '61_65', '66_70', '71_75',
+    '76_80', '81_85', '86_90', '91_95', '96_100', 'mas_de_100'
+  )),
+  created_by                          UUID NOT NULL REFERENCES user_profiles(id),
+  created_at                          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_tree_data_versions_tree ON tree_data_versions (tree_id, created_at DESC);
+
+-- Las versiones no se modifican después de finalizar la inspección (PR-009 v5.0).
 
 -- ---------------------------------------------------------------------
 -- EVALUACIÓN TÉCNICA Y RIESGO (migración 007)
