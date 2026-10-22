@@ -83,6 +83,21 @@ Lecturas y escrituras de `authenticated`/`anon`: una transacción con `SET LOCAL
 3. Autorización expresa de la responsable (2026-10-21).
 4. Resultados registrados en este archivo, sin datos reales ni UUID literales.
 
+## Asesor de seguridad de Supabase, tras la 017 y la 017b (2026-10-21)
+
+Corrido contra `valpo-verde-conecta-pruebas` después de aplicar la 017 y la 017b (endurecimiento adicional pedido por la responsable: `search_path` en `set_updated_at` y `fn_next_codigo_usuario`; `REFERENCES`/`TRIGGER` revocados de `anon` y `authenticated` en las 30 tablas y 6 vistas de `public`; intento de revocar `EXECUTE` de `st_estimatedextent`).
+
+| Aviso | Nivel | Cantidad | Aceptado porque |
+|---|---|---|---|
+| `rls_enabled_no_policy` | INFO | 9 (`audit_log`, `component_assessments`, `defect_observations`, `defect_results`, `infrastructure_conflicts`, `probability_thresholds`, `risk_evaluations`, `roles`, `vitality_assessments`) | Tablas del modelo 001 que se retiran en la migración 018, o `roles` (se consulta solo desde funciones `SECURITY DEFINER`, nunca directo — así está desde la 010). |
+| `rls_disabled_in_public` | ERROR | 1 (`spatial_ref_sys`) | PostGIS; pertenece a `supabase_admin`. El rol que aplica migraciones no puede habilitarle RLS (issue #9/migración 010, ya documentado). |
+| `extension_in_public` | WARN | 1 (`postgis`) | Mover la extensión de esquema es una operación invasiva (recrearla, reapuntar todas las columnas `geography`); no se hizo sin autorización aparte. |
+| `anon_security_definer_function_executable` | WARN | 3 (`st_estimatedextent`, los 3 overloads) | **Intentado, sin efecto**: pertenecen a `supabase_admin`, igual que `spatial_ref_sys`. `REVOKE EXECUTE ... FROM PUBLIC` se ejecuta sin error pero no cambia el `proacl` (verificado antes y después) — el rol de las migraciones no tiene autoridad sobre un privilegio otorgado por `supabase_admin`. |
+| `authenticated_security_definer_function_executable` | WARN | 8 (`get_user_role`, `is_admin`, `is_project_member`, `is_municipal_member`, `has_project_role` — intencional, las usan las políticas de RLS; más los 3 overloads de `st_estimatedextent`, mismo caso de arriba) | Las 5 primeras son necesarias por diseño (§6). Las 3 de `st_estimatedextent`, igual que en la fila anterior. |
+| `auth_leaked_password_protection` | WARN | 1 | Se activa desde el panel de Supabase (Auth → Policies), no por SQL/migración. Pendiente en ambas bases — ver HANDOFF, PA-39. |
+
+**0 avisos nuevos sin explicación.** Los `ERROR`/`WARN` restantes son conocidos de antes de la Fase 4 o requieren una acción fuera del alcance de una migración (panel de Supabase, o cambiar el owner de objetos de la extensión PostGIS).
+
 ## Destino posterior
 
 Estos 29 escenarios son candidatos directos a pruebas automáticas del repositorio (Jest + conexión a un entorno de pruebas), para que corran en CI contra cada cambio de RLS futuro, en vez de repetirse a mano.
