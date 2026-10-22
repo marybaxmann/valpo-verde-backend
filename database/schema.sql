@@ -1,7 +1,10 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 9 — posterior a la migración 014 (Fase 4: work_orders,
+--   (revisión 10 — posterior a la migración 015 (Fase 4: incidents
+--   adaptada con estado_incidencia/tipo_incidencia, incident_reporters,
+--   photos adaptada con vista y origen único); antes revisión 9,
+--   posterior a la migración 014 (Fase 4: work_orders,
 --   inspections reutilizada con estado_registro/anulación, evaluations,
 --   classification_adjustments, tree_assessments, maintenance_records,
 --   fn_refresh_tree_current); antes revisión 8, posterior a la migración
@@ -1388,22 +1391,34 @@ CREATE INDEX idx_tree_infra_assessments_tree_id
 -- maestro), migración 009.
 CREATE SEQUENCE incidents_codigo_seq;
 
+-- Adaptada en la migración 015 (§3.12; D-174 a D-190; CC-036). Columnas
+-- antiguas que el diseño retira (reportado_por_user_id, observacion,
+-- actualizado_por, prioridad) NO se eliminan aquí: eso es la migración
+-- 018.
 CREATE TABLE incidents (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   codigo_incidencia TEXT DEFAULT ('INC-' || lpad(nextval('incidents_codigo_seq')::text, 6, '0')),
-  tree_id          UUID,                        -- nullable: puede reportarse sin árbol identificado aún; ver FK compuesta al pie de la tabla
+  tree_id          UUID NOT NULL,               -- entrada siempre por QR (D-175; AMD-34; migración 015)
   project_id        UUID NOT NULL,                -- multiproyecto (002/004): DIRECTO (tree_id es nullable). NOT NULL final desde 004
-  tipo              TEXT NOT NULL,               -- 'ramas_peligrosas', 'arbol_inclinado', ...
+  tipo_incidencia   TEXT NOT NULL,               -- renombrado desde `tipo` (D-180; migración 015)
   descripcion         TEXT,
-  estado                TEXT NOT NULL DEFAULT 'pendiente',
+  estado_incidencia     TEXT NOT NULL DEFAULT 'ingresada'  -- renombrado desde `estado` (D-184; migración 015)
+                          CHECK (estado_incidencia IN ('ingresada', 'en_revision', 'derivada', 'resuelta', 'descartada')),
   prioridad               TEXT,
-  origen_reporte              TEXT,                   -- 'ciudadania', 'inspeccion', 'usuario_plataforma', ...
-                                                        -- texto libre (no ENUM): categoría de origen aún no cerrada
+  origen_reporte              TEXT                   -- D-177; migración 015: tighten a los 4 códigos del Excel
+                                CHECK (origen_reporte IS NULL OR origen_reporte IN ('comunidad', 'municipalidad', 'bomberos', 'otro_organismo')),
   reportado_por_user_id         UUID REFERENCES user_profiles(id),  -- nullable: solo si el reporte
                                                                      -- viene de un usuario identificado del sistema
   observacion                     TEXT,                   -- bitácora de lo realizado (rol usuario)
   actualizado_por                 UUID REFERENCES user_profiles(id),
-  fecha_actualizacion                TIMESTAMPTZ,
+  fecha_actualizacion_estado         TIMESTAMPTZ,            -- renombrado desde `fecha_actualizacion` (D-190; migración 015)
+  fecha_reporte                        DATE,                    -- D-176; migración 015
+  ubicacion                              TEXT,                    -- D-182: copia de ubicacion_descriptiva del árbol al reportar
+  fecha_revision                           TIMESTAMPTZ,
+  revisado_por                               UUID REFERENCES user_profiles(id),
+  resultado_revision                           TEXT CHECK (resultado_revision IS NULL OR resultado_revision IN ('validada', 'descartada', 'requiere_antecedentes')),
+  observaciones_revision                         TEXT,
+  prioridad_municipal                               TEXT CHECK (prioridad_municipal IS NULL OR prioridad_municipal IN ('critica', 'alta', 'media', 'baja')),
   created_at                            TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at                              TIMESTAMPTZ NOT NULL DEFAULT now(),
 
@@ -1429,16 +1444,43 @@ CREATE INDEX idx_incidents_tree ON incidents (tree_id, project_id);
 -- Scoping directo por proyecto (project_id no es líder de ningún otro
 -- índice de incidents; respalda el RESTRICT al borrar un project).
 CREATE INDEX idx_incidents_project ON incidents (project_id);
-CREATE INDEX idx_incidents_estado ON incidents (estado);
+CREATE INDEX idx_incidents_estado ON incidents (estado_incidencia);
 CREATE UNIQUE INDEX uq_incidents_codigo ON incidents (codigo_incidencia);
--- Estados (validados en backend, no como CHECK): estado_incidencia del
--- Excel maestro — ingresada, en_revision, derivada, resuelta, descartada.
--- El backend registra las incidencias nuevas como 'ingresada'; el DEFAULT
--- 'pendiente' se conserva para filas históricas.
 
 CREATE TRIGGER trg_incidents_updated_at
   BEFORE UPDATE ON incidents
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- incident_reporters (nueva, migración 015): datos personales del
+-- reportante (PR-022), separados para que la RLS los muestre solo al
+-- Usuario municipal del proyecto (§6).
+CREATE TABLE incident_reporters (
+  incident_id       UUID PRIMARY KEY REFERENCES incidents(id) ON DELETE CASCADE,
+  nombre_reportante TEXT NOT NULL CHECK (char_length(nombre_reportante) <= 100),
+  -- Formato (NN...N-D o NN...N-K); el dígito verificador se valida en
+  -- el backend (Zod), no aquí.
+  rut_reportante    TEXT NOT NULL CHECK (rut_reportante ~ '^[0-9]{1,8}-[0-9kK]$')
+);
+
+-- Al validar o descartar, se borra la fila (nombre y RUT). Con
+-- "requiere_antecedentes" se conserva.
+CREATE FUNCTION fn_clear_incident_reporter() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF NEW.resultado_revision IN ('validada', 'descartada') THEN
+    DELETE FROM incident_reporters WHERE incident_id = NEW.id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_incidents_clear_reporter
+  AFTER UPDATE ON incidents
+  FOR EACH ROW
+  WHEN (NEW.resultado_revision IS DISTINCT FROM OLD.resultado_revision)
+  EXECUTE FUNCTION fn_clear_incident_reporter();
 
 -- ---------------------------------------------------------------------
 -- MANTENIMIENTO / INTERVENCIONES
@@ -1546,6 +1588,9 @@ CREATE TRIGGER trg_maintenance_records_ot
 -- requiere garantía a nivel de base de datos, se añade un trigger
 -- BEFORE INSERT — no implementado en esta versión.
 
+-- Adaptada en la migración 015 (§3.13; D-27, D-183, D-206, D-224).
+-- photo_type / description no están en el Excel; el diseño no las lista
+-- para retiro explícito, se dejan para una decisión aparte.
 CREATE TABLE photos (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tree_id       UUID NOT NULL REFERENCES trees(id) ON DELETE RESTRICT,
@@ -1553,10 +1598,55 @@ CREATE TABLE photos (
   photo_type       TEXT,
   description        TEXT,
   uploaded_by          UUID REFERENCES user_profiles(id),
-  created_at             TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  inspection_id            UUID REFERENCES inspections(id),
+  maintenance_record_id     UUID REFERENCES maintenance_records(id),
+  incident_id                UUID REFERENCES incidents(id),
+  vista                         TEXT CHECK (vista IS NULL OR vista IN ('arbol_completo', 'base', 'tronco', 'copa')),
+
+  -- A lo más un origen (inspección, mantención o incidencia).
+  CONSTRAINT chk_photos_un_solo_origen
+    CHECK (
+      (CASE WHEN inspection_id IS NOT NULL THEN 1 ELSE 0 END)
+      + (CASE WHEN maintenance_record_id IS NOT NULL THEN 1 ELSE 0 END)
+      + (CASE WHEN incident_id IS NOT NULL THEN 1 ELSE 0 END)
+      <= 1
+    )
 );
 
 CREATE INDEX idx_photos_tree ON photos (tree_id);
+CREATE INDEX idx_photos_inspection ON photos (inspection_id);
+CREATE INDEX idx_photos_maintenance_record ON photos (maintenance_record_id);
+CREATE INDEX idx_photos_incident ON photos (incident_id);
+
+-- Coherencia: si la foto se vincula a una inspección, mantención o
+-- incidencia, debe ser del mismo árbol.
+CREATE FUNCTION fn_check_photo_tree_coherente() RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_ref_tree_id UUID;
+BEGIN
+  IF NEW.inspection_id IS NOT NULL THEN
+    SELECT tree_id INTO v_ref_tree_id FROM inspections WHERE id = NEW.inspection_id;
+  ELSIF NEW.maintenance_record_id IS NOT NULL THEN
+    SELECT tree_id INTO v_ref_tree_id FROM maintenance_records WHERE id = NEW.maintenance_record_id;
+  ELSIF NEW.incident_id IS NOT NULL THEN
+    SELECT tree_id INTO v_ref_tree_id FROM incidents WHERE id = NEW.incident_id;
+  ELSE
+    RETURN NEW;
+  END IF;
+  IF v_ref_tree_id IS DISTINCT FROM NEW.tree_id THEN
+    RAISE EXCEPTION 'photos.tree_id debe coincidir con el árbol de la inspección, mantención o incidencia vinculada';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_photos_tree_coherente
+  BEFORE INSERT OR UPDATE ON photos
+  FOR EACH ROW EXECUTE FUNCTION fn_check_photo_tree_coherente();
 
 -- =====================================================================
 -- FIN schema.sql
