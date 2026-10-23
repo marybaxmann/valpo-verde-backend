@@ -7,15 +7,19 @@ import {
   findProyectosForMember,
   findSectorByProyectoId,
   POSTGRES_RAISE_EXCEPTION,
+  previsualizarSuperficiesKmlRpc,
   ProyectoRow,
   SectorRow,
+  SQLSTATE_GEOMETRIA_SECTOR,
   updateEstadoProyecto,
   updateGeometriaSector,
   updateNombreProyecto,
   updateNombreSector,
+  VistaPreviaSuperficies,
 } from "../../repositories/sivu/project.repository";
 import { assertAdmin, assertProjectAccess, isAdmin } from "../authorization.service";
-import { resolverGeometriaSector } from "./geometriaSector.service";
+import { resolverGeometriaSector, resolverKmlParaVistaPrevia } from "./geometriaSector.service";
+import { VistaPreviaSectorBody } from "../../schemas/sivu/common.schema";
 import {
   CambiarEstadoProyectoBody,
   CrearProyectoConSectorBody,
@@ -30,6 +34,11 @@ export interface ProyectoConSector {
 export interface CrearProyectoConSectorResultado {
   projectId: string;
   sectorId: string;
+  superficiesExcluidas: number;
+}
+
+export interface EditarProyectoResultado {
+  superficiesExcluidas: number | null;
 }
 
 /**
@@ -83,13 +92,37 @@ export async function crearProyectoConSector(
   const geometria = await resolverGeometriaSector(body.sector.geometria_sector);
 
   try {
-    const { project_id, sector_id } = await crearProyectoConSectorRpc(
+    const { project_id, sector_id, superficies_excluidas } = await crearProyectoConSectorRpc(
       body.nombre_proyecto,
       body.sector.nombre_sector,
       geometria,
       user.id
     );
-    return { projectId: project_id, sectorId: sector_id };
+    return { projectId: project_id, sectorId: sector_id, superficiesExcluidas: superficies_excluidas };
+  } catch (err: unknown) {
+    throw traducirErrorProyectoOSector(err);
+  }
+}
+
+/**
+ * POST /api/sivu/projects/sector-preview. Solo admin; no guarda nada
+ * (D-265: "mostrar una vista previa... antes de guardar"; "si existen
+ * varias superficies, permitir seleccionar las que integrarán el
+ * sector"). Lista cada elemento del archivo con su índice y su estado
+ * (CC-047): `valida`, `invalida` (con motivo; no seleccionable) o
+ * `excluida` (punto o línea). Esos índices son los que
+ * `indicesSeleccionados` usa al crear o editar.
+ */
+export async function previsualizarSector(
+  user: AuthenticatedUser,
+  body: VistaPreviaSectorBody
+): Promise<VistaPreviaSuperficies> {
+  assertAdmin(user);
+
+  const kml = await resolverKmlParaVistaPrevia(body);
+
+  try {
+    return await previsualizarSuperficiesKmlRpc(kml);
   } catch (err: unknown) {
     throw traducirErrorProyectoOSector(err);
   }
@@ -105,9 +138,11 @@ export async function editarProyecto(
   projectId: string,
   body: EditarProyectoBody,
   accessToken: string
-): Promise<void> {
+): Promise<EditarProyectoResultado> {
   assertAdmin(user);
   await assertProyectoExists(accessToken, projectId);
+
+  let superficiesExcluidas: number | null = null;
 
   try {
     if (body.nombre_proyecto !== undefined) {
@@ -125,12 +160,15 @@ export async function editarProyecto(
           throw new AppError("Sector no encontrado", 404);
         }
         const geometria = await resolverGeometriaSector(body.sector.geometria_sector);
-        await updateGeometriaSector(sector.id, geometria);
+        const { superficies_excluidas } = await updateGeometriaSector(sector.id, geometria);
+        superficiesExcluidas = superficies_excluidas;
       }
     }
   } catch (err: unknown) {
     throw traducirErrorProyectoOSector(err);
   }
+
+  return { superficiesExcluidas };
 }
 
 /**
@@ -164,11 +202,12 @@ async function assertProyectoExists(accessToken: string, projectId: string): Pro
 
 /**
  * Traduce un error crudo de `fn_create_project_with_sector` /
- * `fn_update_sector_geometria` / los triggers de CC-042 a un `AppError`
- * con el código HTTP correcto. Se distingue por `cause` (el código de
- * Postgres, ver `project.repository.ts`) antes de mirar el mensaje: un
- * error de infraestructura (sin ese código) nunca se confunde con un
- * rechazo de negocio.
+ * `fn_update_sector_geometria` / `fn_extraer_superficies_kml` / los
+ * triggers de CC-042 a un `AppError` con el código HTTP correcto. Se
+ * distingue por `cause` (el código de Postgres, ver
+ * `project.repository.ts`) antes de mirar el mensaje: un error de
+ * infraestructura (sin ese código) nunca se confunde con un rechazo de
+ * negocio.
  */
 function traducirErrorProyectoOSector(err: unknown): Error {
   if (err instanceof AppError) {
@@ -176,7 +215,15 @@ function traducirErrorProyectoOSector(err: unknown): Error {
   }
 
   const error = err as Error;
-  const esRaiseDeNegocio = (error as { cause?: unknown }).cause === POSTGRES_RAISE_EXCEPTION;
+  const cause = (error as { cause?: unknown }).cause;
+
+  // Rechazo de la geometría del sector (D-265; CC-047): el pedido está
+  // bien formado, pero su contenido no se puede aceptar.
+  if (cause === SQLSTATE_GEOMETRIA_SECTOR) {
+    return new AppError(error.message, 422);
+  }
+
+  const esRaiseDeNegocio = cause === POSTGRES_RAISE_EXCEPTION;
   if (!esRaiseDeNegocio) {
     return error;
   }
@@ -189,8 +236,7 @@ function traducirErrorProyectoOSector(err: unknown): Error {
   if (msg.includes("Sector no encontrado")) {
     return new AppError(msg, 404);
   }
-  // Cualquier otro RAISE EXCEPTION de fn_build_sector_geometria
-  // (GeoJSON/KML inválido, tipo no admitido, coordenadas fuera de
-  // rango, geometría inválida o vacía): dato de entrada rechazado, 400.
+  // Cualquier otro RAISE EXCEPTION de negocio sin código propio: dato
+  // de entrada rechazado, 400.
   return new AppError(msg, 400);
 }

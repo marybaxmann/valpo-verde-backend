@@ -1,7 +1,7 @@
 import * as yauzl from "yauzl";
 import { Readable } from "stream";
 import { AppError } from "../../utils/AppError";
-import { GeometriaSectorInput } from "../../schemas/sivu/common.schema";
+import { GeometriaSectorInput, VistaPreviaSectorBody } from "../../schemas/sivu/common.schema";
 
 /**
  * Límites operativos del backend (elegidos acá, no definidos por el
@@ -26,23 +26,46 @@ export interface GeometriaParaRpc {
   formato: "geojson" | "kml";
   geometriaGeojson: Record<string, unknown> | null;
   geometriaKml: string | null;
+  indicesSeleccionados: number[] | null;
 }
 
 export async function resolverGeometriaSector(
   input: GeometriaSectorInput
 ): Promise<GeometriaParaRpc> {
   if (input.formato === "geojson") {
-    return { formato: "geojson", geometriaGeojson: input.geometria, geometriaKml: null };
+    return {
+      formato: "geojson",
+      geometriaGeojson: input.geometria,
+      geometriaKml: null,
+      indicesSeleccionados: null,
+    };
   }
 
   const archivo = decodificarArchivoBase64(input.archivoBase64);
+  const indicesSeleccionados = input.indicesSeleccionados ?? null;
 
   if (input.formato === "kml") {
-    return { formato: "kml", geometriaGeojson: null, geometriaKml: archivo.toString("utf-8") };
+    return {
+      formato: "kml",
+      geometriaGeojson: null,
+      geometriaKml: archivo.toString("utf-8"),
+      indicesSeleccionados,
+    };
   }
 
   const kml = await extraerKmlDeKmz(archivo);
-  return { formato: "kml", geometriaGeojson: null, geometriaKml: kml };
+  return { formato: "kml", geometriaGeojson: null, geometriaKml: kml, indicesSeleccionados };
+}
+
+/** Resuelve solo el texto KML crudo (KML o KMZ), para la vista previa. */
+export async function resolverKmlParaVistaPrevia(body: VistaPreviaSectorBody): Promise<string> {
+  const archivo = decodificarArchivoBase64(body.archivoBase64);
+
+  if (body.formato === "kml") {
+    return archivo.toString("utf-8");
+  }
+
+  return extraerKmlDeKmz(archivo);
 }
 
 function decodificarArchivoBase64(archivoBase64: string): Buffer {

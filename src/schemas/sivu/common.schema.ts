@@ -53,10 +53,19 @@ export const coordenadaUtmNorte = z
  * importación de archivo Google Earth en formato KML o KMZ." La
  * validación geométrica real (superficies válidas y no vacías, unión
  * sin duplicar áreas, exclusión de puntos/líneas, conservación de
- * huecos) se hace en el servicio contra PostGIS (ST_IsValid, ST_Union,
- * ST_Multi — ver ADR-017 y el bloque de integración de KML/KMZ, #56).
- * Este esquema solo valida la FORMA de lo que llega por API: o un
- * GeoJSON ya dibujado en el mapa, o un archivo KML/KMZ a convertir.
+ * huecos) se hace en la base contra PostGIS (migración 018b:
+ * `fn_extraer_superficies_kml`, `fn_unir_y_validar_superficies`). Este
+ * esquema solo valida la FORMA de lo que llega por API: o un GeoJSON ya
+ * dibujado en el mapa (una sola geometría, sin selección — el dibujo ya
+ * es lo que el usuario quiere), o un archivo KML/KMZ a convertir.
+ *
+ * `indicesSeleccionados` (solo KML/KMZ): un archivo puede traer varias
+ * superficies (D-265: "permitir seleccionar las que integrarán el
+ * sector"); son los índices devueltos por la vista previa
+ * (`POST /api/sivu/projects/sector-preview`). Opcional en la forma,
+ * pero la base lo exige si el archivo trae más de una superficie —
+ * nunca se incluyen todas por defecto — y rechaza un índice inválido o
+ * excluido (CC-047; `fn_build_sector_geometria`, 422).
  */
 export const geometriaSectorInput = z.union([
   z.object({
@@ -69,7 +78,26 @@ export const geometriaSectorInput = z.union([
   z.object({
     formato: z.enum(["kml", "kmz"]),
     archivoBase64: z.string().min(1, "archivoBase64 es obligatorio"),
+    indicesSeleccionados: z
+      .array(z.number().int().nonnegative())
+      .min(1, "debe seleccionar al menos una superficie")
+      .optional(),
   }),
 ]);
 
 export type GeometriaSectorInput = z.infer<typeof geometriaSectorInput>;
+
+/**
+ * Body de POST /api/sivu/projects/sector-preview: solo el archivo, sin
+ * `indicesSeleccionados` (la vista previa es justamente lo que permite
+ * elegirlos después). Solo KML/KMZ: un GeoJSON ya es una única
+ * geometría dibujada, sin nada que previsualizar o elegir.
+ */
+export const vistaPreviaSectorSchema = z
+  .object({
+    formato: z.enum(["kml", "kmz"]),
+    archivoBase64: z.string().min(1, "archivoBase64 es obligatorio"),
+  })
+  .strict();
+
+export type VistaPreviaSectorBody = z.infer<typeof vistaPreviaSectorSchema>;

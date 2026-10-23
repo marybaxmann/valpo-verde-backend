@@ -42,6 +42,34 @@ const SECTOR_COLUMNS = "id, project_id, nombre_sector, superficie_sector_m2, cre
 export const POSTGRES_RAISE_EXCEPTION = "P0001";
 
 /**
+ * SQLSTATE propio de los rechazos de geometría del sector (D-265;
+ * CC-047), en `fn_extraer_superficies_kml` / `fn_build_sector_geometria`
+ * / `fn_unir_y_validar_superficies` (migración 018b). El service lo
+ * traduce a 422 sin depender del texto del mensaje.
+ */
+export const SQLSTATE_GEOMETRIA_SECTOR = "SV265";
+
+/** Estado de cada elemento de un KML/KMZ en la vista previa (CC-047). */
+export type EstadoSuperficie = "valida" | "invalida" | "excluida";
+
+export interface SuperficieVistaPrevia {
+  indice: number;
+  estado: EstadoSuperficie;
+  tipo: string | null;
+  /** Motivo de `invalida` (error de lectura o ST_IsValidReason) o de `excluida`. */
+  motivo: string | null;
+  /** GeoJSON (SRID 4326); null si la geometría no se pudo leer. */
+  geometria: Record<string, unknown> | null;
+}
+
+export interface VistaPreviaSuperficies {
+  superficies: SuperficieVistaPrevia[];
+  validas: number;
+  invalidas: number;
+  excluidas: number;
+}
+
+/**
  * Lista todos los proyectos. Uso exclusivo de `admin` (acceso
  * transversal, PR-004 v7.0) — la restricción de rol se aplica en
  * authorization.service, no aquí. Lectura con el JWT del usuario
@@ -127,6 +155,7 @@ export async function findSectorByProyectoId(
 export interface CrearProyectoConSectorResult {
   project_id: string;
   sector_id: string;
+  superficies_excluidas: number;
 }
 
 /**
@@ -150,6 +179,7 @@ export async function crearProyectoConSectorRpc(
     p_formato: geometria.formato,
     p_geometria_geojson: geometria.geometriaGeojson,
     p_geometria_kml: geometria.geometriaKml,
+    p_indices_seleccionados: geometria.indicesSeleccionados,
     p_created_by: createdBy,
   });
 
@@ -158,6 +188,25 @@ export async function crearProyectoConSectorRpc(
   }
 
   return data as unknown as CrearProyectoConSectorResult;
+}
+
+/**
+ * Invoca `fn_extraer_superficies_kml` (migración 018b) para la vista
+ * previa (POST /api/sivu/projects/sector-preview): lista cada elemento
+ * de un KML/KMZ con su índice y estado, sin guardar nada, para que el
+ * Administrador elija cuáles integran el sector (D-265; CC-047) antes
+ * de crear o editar.
+ */
+export async function previsualizarSuperficiesKmlRpc(kml: string): Promise<VistaPreviaSuperficies> {
+  const { data, error } = await supabaseAdmin.rpc("fn_extraer_superficies_kml", {
+    p_kml: kml,
+  });
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return data as unknown as VistaPreviaSuperficies;
 }
 
 /**
@@ -195,17 +244,20 @@ export async function updateNombreSector(projectId: string, nombreSector: string
 export async function updateGeometriaSector(
   sectorId: string,
   geometria: GeometriaParaRpc
-): Promise<void> {
-  const { error } = await supabaseAdmin.rpc("fn_update_sector_geometria", {
+): Promise<{ superficies_excluidas: number }> {
+  const { data, error } = await supabaseAdmin.rpc("fn_update_sector_geometria", {
     p_sector_id: sectorId,
     p_formato: geometria.formato,
     p_geometria_geojson: geometria.geometriaGeojson,
     p_geometria_kml: geometria.geometriaKml,
+    p_indices_seleccionados: geometria.indicesSeleccionados,
   });
 
   if (error) {
     throw new Error(error.message, { cause: error.code });
   }
+
+  return data as unknown as { superficies_excluidas: number };
 }
 
 /**
