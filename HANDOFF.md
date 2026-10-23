@@ -9,13 +9,13 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-22 (Fase 6 — backend/API — en curso en `feature/fase6-backend-api`; issue #56 en revisión)
+- **Última actualización:** 2026-10-22 (Fase 6 — backend/API — en curso en `feature/fase6-backend-api`; issue #56 en revisión; Fase 5 cerrada y fusionada en `main`, PR #71)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
-- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `3a5be8b` (PR #68 fusionado: migraciones 012–017b, RLS CC-033, schema.sql revisión 12); frontend `main` = `187a90d` (PR #5). Fase 5 fusionada (PR #70, `874c938`). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
+- **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `a87292a` (PR #71 fusionado: cierre documental de la Fase 5, sobre `3a5be8b`/PR #68 y `874c938`/PR #70); frontend `main` = `187a90d` (PR #5). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-22 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Fase 4 y 5 cerradas y fusionadas en `main`. `valpo-verde-conecta` **sigue sin tocar** (issue #45, Fase 8). Fase 6 (backend/API) en curso en `feature/fase6-backend-api`: `.gitignore`/ADR-017/018a (#54 Zod + #55 autorización) ya revisados; issue #56 (proyectos+sector, miembros, estado) implementado, en revisión antes de pasar a #57.
+- **Resumen:** Fase 4 y 5 cerradas y fusionadas en `main` (PR #71 cierra la documentación de la Fase 5; issues #47–#52 cerrados, #53 abierto para la Fase 6). `valpo-verde-conecta` **sigue sin tocar** (issue #45, Fase 8). Fase 6 (backend/API) en curso en `feature/fase6-backend-api`: `.gitignore`/ADR-017/018a (#54 Zod + #55 autorización) ya revisados; issue #56 (proyectos+sector, miembros, estado) implementado, en revisión antes de pasar a #57.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -39,14 +39,17 @@
 
 ---
 
-## ▶ Novedad 2026-10-22 — Fase 5 (motor de reglas): CC-043 registrado
+## ▶ Novedad 2026-10-22 — Fase 5 (motor de reglas) cerrada y fusionada (PR #70, `874c938`; cierre documental PR #71, `a87292a`)
 
-- **CC-043 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** M04/IN-RAE — si `tipo_red_aerea` incluye "Función no determinada" y no incluye "Eléctrica", el componente red aérea queda `no_determinado` (se excluye de M04, D-180); si incluye "Eléctrica", se aplican IN-RAE-02 a 04 igual. Ficha completa en `docs/registro-cambios.md`. Pendiente llevar el texto a REGLAS_INDICADORES (IN-RAE) y D-149 en la próxima versión del paquete.
-- **CC-044 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** el Inspector puede ajustar una clasificación (`clasificacion_riesgo`, `_infraestructura`, `_prioridad`) cuyo valor calculado es `No determinado`/`No aplica`, con justificación obligatoria; la regla de descarte de CC-040 (d) aplica igual en el siguiente recálculo. Lo que nunca es válido es que el **valor ajustado** mismo sea `No determinado`/`No aplica`. Ficha completa en `docs/registro-cambios.md`. Pendiente llevar el texto a D-181/D-170/D-172 en la próxima versión del paquete.
-- **CC-045 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** cierra los dos bloqueos del ensamblaje. **(a)** ajustes ante una `inspeccion_anulada`: se recompone la vigente como si esa inspección nunca hubiera existido; sus ajustes nunca aplican; los de inspecciones válidas anteriores se reevalúan con la regla normal de CC-040 (d) (`ensamblaje.ts`: `AjusteVigente.inspectionId`, `filtrarPorAnulacion`, `ArgsResultadoVigente.inspeccionAnuladaId`). **(b)** `nivel_riesgo = no_determinado`: las fechas sugeridas ya no quedan sin valor — usan los rangos de Extremo como criterio de precaución, con motivo (`fechas-sugeridas.ts`). Ficha completa en `docs/registro-cambios.md`. Pendiente llevar el texto al Excel (REGLAS_GENERALES, D-210/D-212/D-213) en la próxima versión del paquete.
+- **Motor completo en `src/services/rules/engine/`** (catálogos PR-021, `dominio.ts`, variables derivadas, R01–R04, M01–M05, `reglaId` por indicador, fechas sugeridas, ensamblaje `ensamblarResultadoEvaluacion`/`ensamblarResultadoVigente`), con `rule_version = "2.1"`. Puro: sin endpoints, sin tocar ninguna base. `treeRisk.ts` **no se tocó** — sigue en uso por la demo contra `valpo-verde-conecta` hasta que la Fase 6/8 lo reemplace.
+- **CC-043 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** M04/IN-RAE — si `tipo_red_aerea` incluye "Función no determinada" y no incluye "Eléctrica", el componente red aérea queda `no_determinado` (se excluye de M04, D-180); si incluye "Eléctrica", se aplican IN-RAE-02 a 04 igual.
+- **CC-044 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** el Inspector puede ajustar una clasificación (`clasificacion_riesgo`, `_infraestructura`, `_prioridad`) cuyo valor calculado es `No determinado`/`No aplica`, con justificación obligatoria; la regla de descarte de CC-040 (d) aplica igual en el siguiente recálculo. Lo que nunca es válido es que el **valor ajustado** mismo sea `No determinado`/`No aplica`.
+- **CC-045 `APROBADO METODOLÓGICAMENTE` (2026-10-22):** cierra los dos bloqueos del ensamblaje. **(a)** ajustes ante una `inspeccion_anulada`: se recompone la vigente como si esa inspección nunca hubiera existido; sus ajustes nunca aplican; los de inspecciones válidas anteriores se reevalúan con la regla normal de CC-040 (d). **(b)** `nivel_riesgo = no_determinado`: las fechas sugeridas usan los rangos de Extremo como criterio de precaución, con motivo.
+- Las tres fichas completas en `docs/registro-cambios.md`. **Pendiente (AM-15, roadmap):** llevar CC-043/044/045 al Excel y publicar el paquete 2.2.0.
 - **Próximos libres:** CC-046, ADR-017, PR-023.
-- Motor (rama `feature/fase5-motor-reglas`, PR #70 abierto contra `main`, sin fusionar): catálogos (PR-021), variables derivadas, R01–R04, M01–M05, `reglaId` por indicador, fechas sugeridas y el ensamblaje (`ensamblaje.ts`: `ensamblarResultadoEvaluacion`/`ensamblarResultadoVigente`) implementados con tests. Sin endpoints, sin tocar ninguna base. Los dos bloqueos que quedaban abiertos ya se cerraron con CC-045.
 - **Discrepancia encontrada contra el plan aprobado de la Fase 5 (resuelta con el esquema real, no en silencio):** `fecha_proxima_inspeccion(_sugerida)` y `fecha_proximo_monitoreo(_sugerida)` son columnas de `inspections`, no de `evaluations` (migración 014); `nivel_riesgo` no se guarda nunca (principio §1.5, se deriva con `v_inspections`). `ensamblarResultadoEvaluacion` las devuelve aparte, en `inspeccion: {...}`, con el comentario de a qué tabla va cada una — no se mezclan en el INSERT de `evaluations`.
+- **Issues:** #47–#52 cerrados (los 6 bloques de la Fase 5). **#53 sigue abierto**, para la Fase 6: la composición real de valores vigentes desde `v_tree_current_inputs` (qué inspección aportó cada campo) no es trabajo del motor puro.
+- **Siguiente: Fase 6 (backend/API).** En planificación — ver la próxima novedad si ya hay un plan mostrado para revisión.
 
 ---
 
