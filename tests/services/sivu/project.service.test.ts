@@ -122,6 +122,7 @@ describe("crearProyectoConSector", () => {
     "El archivo contiene superficies inválidas (superficie 0: Self-intersection): selecciona la superficie válida (superficie 1) para integrar el sector",
     "La superficie 1 es inválida y no puede integrar el sector: Self-intersection[-71.575 -33.045]",
     "La superficie 2 es un punto o una línea y no puede integrar el sector",
+    "La superficie 27 (Plaza Victoria) es inválida y no puede integrar el sector: Self-intersection",
     "El archivo no contiene ninguna superficie válida (superficie 0: Self-intersection)",
   ])("un rechazo de geometría (SQLSTATE SV265) es 422 con el mensaje de la base: %s", async (mensaje) => {
     mockResolverGeometria.mockResolvedValueOnce(geometriaKml(null));
@@ -258,9 +259,9 @@ describe("previsualizarSector (D-265; CC-047)", () => {
   it("admin: devuelve cada elemento con su índice y estado, sin filtrar los inválidos", async () => {
     const vista = {
       superficies: [
-        { indice: 0, estado: "valida", tipo: "POLYGON", motivo: null, geometria: { type: "Polygon" } },
-        { indice: 1, estado: "invalida", tipo: "POLYGON", motivo: "Self-intersection", geometria: { type: "Polygon" } },
-        { indice: 2, estado: "excluida", tipo: "POINT", motivo: "Punto o línea", geometria: { type: "Point" } },
+        { indice: 0, nombre: "Plaza Victoria", estado: "valida", tipo: "POLYGON", motivo: null, geometria: { type: "Polygon" } },
+        { indice: 1, nombre: null, estado: "invalida", tipo: "POLYGON", motivo: "Self-intersection", geometria: { type: "Polygon" } },
+        { indice: 2, nombre: "A-001", estado: "excluida", tipo: "POINT", motivo: "Punto o línea", geometria: { type: "Point" } },
       ],
       validas: 1,
       invalidas: 1,

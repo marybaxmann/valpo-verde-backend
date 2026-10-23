@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+	<name>SIVU - sectores piloto (fixture de pruebas)</name>
+	<description>Fixture de pruebas de la 018b (D-265; CC-047) y del CC-046. Los 4 poligonos provienen de un levantamiento en Google Earth (coordenadas y altitud tal cual). Los 3 puntos son inventados: no corresponden a ningun arbol real.</description>
+	<Placemark>
+		<name>Plaza Victoria</name>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						-71.62005364370856,-33.04591539168755,0 -71.62015253411181,-33.04602572143386,0 -71.62028153786105,-33.04639266853273,0 -71.62026741646719,-33.04649095995709,0 -71.62017788928546,-33.04657608416072,0 -71.61975738814806,-33.04669454449954,0 -71.61963667545268,-33.04669075360331,0 -71.61955534102806,-33.04664640262119,0 -71.61933506315519,-33.04614972813612,0 -71.61936654125,-33.04604924907557,0 -71.61948704728401,-33.04598533471226,0 -71.61989797376903,-33.04589036306548,0 -71.62005364370856,-33.04591539168755,0
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark>
+		<name>Parque Italia</name>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						-71.61474110317711,-33.0472333667342,0 -71.61489799156381,-33.04818055843996,0 -71.61370261971497,-33.04848691667605,0 -71.61351450864498,-33.04757356643001,0 -71.61474110317711,-33.0472333667342,0
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark>
+		<name>Plaza O´Higgins</name>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						-71.60818075212187,-33.04848436893487,0 -71.60673773234871,-33.0485559663211,0 -71.60691349082524,-33.04758414808937,0 -71.60810061938986,-33.04763610696615,0 -71.60818075212187,-33.04848436893487,0
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark>
+		<name>Área de estudio</name>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						-71.61695208342172,-33.04557650224498,0 -71.61886894933303,-33.04531127818015,0 -71.61975134621365,-33.04776638068576,0 -71.61968579791345,-33.04795136110886,0 -71.61953506290378,-33.04806283076223,0 -71.61772183796776,-33.04864995537858,0 -71.61746504997906,-33.04829622954782,0 -71.61727404330313,-33.04762994312249,0 -71.61695208342172,-33.04557650224498,0
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark>
+		<name>Punto de prueba dentro de Plaza Victoria</name>
+		<Point>
+			<coordinates>-71.619831,-33.046292,0</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark>
+		<name>Punto de prueba dentro de Parque Italia</name>
+		<Point>
+			<coordinates>-71.614214,-33.047869,0</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark>
+		<name>Punto de prueba fuera de todas las superficies</name>
+		<Point>
+			<coordinates>-71.624282,-33.046292,0</coordinates>
+		</Point>
+	</Placemark>
+</Document>
+</kml>

@@ -70,7 +70,8 @@ ALTER TABLE projects
 -- motivo para que el Administrador las vea antes de guardar.
 --
 -- Cada elemento recibe un índice correlativo (en orden del documento;
--- cada parte de un Multi* es un elemento aparte) y un estado (CC-047):
+-- cada parte de un Multi* es un elemento aparte), el `nombre` del
+-- <name> de su Placemark (null si no tiene) y un estado (CC-047):
 --   valida   — superficie poligonal válida, no vacía, dentro de rango;
 --   invalida — superficie ilegible o inválida, con el motivo (error de
 --              lectura o ST_IsValidReason). Nunca se repara
@@ -84,8 +85,11 @@ SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_doc xml;
+  v_placemarks integer;
   v_nodos xml[];
   v_nodo xml;
+  v_total_nodos integer := 0;
+  v_nombre text;
   v_nombre_nodo text;
   v_geom geometry;
   v_parte geometry;
@@ -106,84 +110,102 @@ BEGIN
 
   -- Por local-name(): funciona con o sin namespace declarado, y da
   -- igual qué URI de namespace use el archivo (KML 2.1, 2.2, sin
-  -- prefijo…). Solo el nodo de geometría DIRECTO de cada Placemark —
-  -- ST_GeomFromKML no acepta <kml>/<Document>/<Placemark> alrededor.
-  v_nodos := xpath(
-    '//*[local-name()="Placemark"]/*[local-name()="Polygon" or local-name()="MultiGeometry" or local-name()="Point" or local-name()="LineString" or local-name()="LinearRing"]',
-    v_doc
-  );
+  -- prefijo…). Se recorre cada Placemark por su posición en el
+  -- documento completo, para leer su <name> (CC-047: el nombre se
+  -- muestra en la vista previa y en los mensajes) junto con su nodo de
+  -- geometría DIRECTO — ST_GeomFromKML no acepta
+  -- <kml>/<Document>/<Placemark> alrededor.
+  v_placemarks := (xpath('count(//*[local-name()="Placemark"])', v_doc))[1]::text::numeric::integer;
 
-  IF array_length(v_nodos, 1) IS NULL THEN
-    RAISE EXCEPTION 'El archivo KML no contiene ninguna marca (Placemark) con geometría' USING ERRCODE = 'SV265';
-  END IF;
+  FOR v_i IN 1 .. v_placemarks LOOP
+    -- string() devuelve el texto escapado como XML: se desescapa
+    -- (&amp; al final, para no desescapar dos veces). Sin <name> o con
+    -- <name> vacío, el nombre queda null.
+    v_nombre := (xpath(format('string((//*[local-name()="Placemark"])[%s]/*[local-name()="name"])', v_i), v_doc))[1]::text;
+    v_nombre := replace(replace(replace(replace(replace(v_nombre,
+      '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&apos;', ''''), '&amp;', '&');
+    v_nombre := NULLIF(btrim(v_nombre), '');
 
-  FOREACH v_nodo IN ARRAY v_nodos LOOP
-    -- Nombre del elemento (sin prefijo de namespace), para clasificar
-    -- un nodo que PostGIS no logra leer.
-    v_nombre_nodo := regexp_replace(substring(v_nodo::text from '^\s*<([A-Za-z0-9_.:-]+)'), '^.*:', '');
+    v_nodos := xpath(
+      format('(//*[local-name()="Placemark"])[%s]/*[local-name()="Polygon" or local-name()="MultiGeometry" or local-name()="Point" or local-name()="LineString" or local-name()="LinearRing"]', v_i),
+      v_doc
+    );
 
-    v_error := NULL;
-    BEGIN
-      -- ST_Force2D: un KML real trae altitud en las coordenadas; el
-      -- sector es una superficie horizontal (D-266), no se conserva Z.
-      v_geom := ST_Force2D(ST_GeomFromKML(v_nodo::text));
-    EXCEPTION WHEN OTHERS THEN
-      v_geom := NULL;
-      v_error := SQLERRM;
-    END;
+    FOREACH v_nodo IN ARRAY COALESCE(v_nodos, '{}') LOOP
+      v_total_nodos := v_total_nodos + 1;
 
-    IF v_geom IS NULL OR ST_IsEmpty(v_geom) THEN
-      IF v_nombre_nodo IN ('Point', 'LineString', 'LinearRing') THEN
-        v_estado := 'excluida';
-        v_motivo := 'Punto o línea: no es una superficie y se excluye del sector';
-        v_excluidas := v_excluidas + 1;
-      ELSE
-        v_estado := 'invalida';
-        v_motivo := 'No se pudo leer la geometría: ' || COALESCE(v_error, 'geometría vacía');
-        v_invalidas := v_invalidas + 1;
+      -- Nombre del elemento (sin prefijo de namespace), para clasificar
+      -- un nodo que PostGIS no logra leer.
+      v_nombre_nodo := regexp_replace(substring(v_nodo::text from '^\s*<([A-Za-z0-9_.:-]+)'), '^.*:', '');
+
+      v_error := NULL;
+      BEGIN
+        -- ST_Force2D: un KML real trae altitud en las coordenadas; el
+        -- sector es una superficie horizontal (D-266), no se conserva Z.
+        v_geom := ST_Force2D(ST_GeomFromKML(v_nodo::text));
+      EXCEPTION WHEN OTHERS THEN
+        v_geom := NULL;
+        v_error := SQLERRM;
+      END;
+
+      IF v_geom IS NULL OR ST_IsEmpty(v_geom) THEN
+        IF v_nombre_nodo IN ('Point', 'LineString', 'LinearRing') THEN
+          v_estado := 'excluida';
+          v_motivo := 'Punto o línea: no es una superficie y se excluye del sector';
+          v_excluidas := v_excluidas + 1;
+        ELSE
+          v_estado := 'invalida';
+          v_motivo := 'No se pudo leer la geometría: ' || COALESCE(v_error, 'geometría vacía');
+          v_invalidas := v_invalidas + 1;
+        END IF;
+
+        v_superficies := v_superficies || jsonb_build_array(jsonb_build_object(
+          'indice', v_indice, 'nombre', v_nombre, 'estado', v_estado, 'tipo', v_nombre_nodo,
+          'motivo', v_motivo, 'geometria', NULL));
+        v_indice := v_indice + 1;
+        CONTINUE;
       END IF;
 
-      v_superficies := v_superficies || jsonb_build_array(jsonb_build_object(
-        'indice', v_indice, 'estado', v_estado, 'tipo', v_nombre_nodo,
-        'motivo', v_motivo, 'geometria', NULL));
-      v_indice := v_indice + 1;
-      CONTINUE;
-    END IF;
+      -- ST_Dump devuelve partes atómicas (también dentro de un
+      -- MultiGeometry con tipos mezclados): cada una se clasifica sola,
+      -- con el nombre de su Placemark.
+      FOR v_parte IN SELECT (ST_Dump(v_geom)).geom LOOP
+        v_motivo := NULL;
 
-    -- ST_Dump devuelve partes atómicas (también dentro de un
-    -- MultiGeometry con tipos mezclados): cada una se clasifica sola.
-    FOR v_parte IN SELECT (ST_Dump(v_geom)).geom LOOP
-      v_motivo := NULL;
+        IF GeometryType(v_parte) <> 'POLYGON' THEN
+          v_estado := 'excluida';
+          v_motivo := 'Punto o línea: no es una superficie y se excluye del sector';
+          v_excluidas := v_excluidas + 1;
+        ELSIF ST_IsEmpty(v_parte) THEN
+          v_estado := 'invalida';
+          v_motivo := 'Superficie vacía';
+          v_invalidas := v_invalidas + 1;
+        ELSIF NOT ST_IsValid(v_parte) THEN
+          v_estado := 'invalida';
+          v_motivo := ST_IsValidReason(v_parte);
+          v_invalidas := v_invalidas + 1;
+        ELSIF ST_XMin(v_parte) < -180 OR ST_XMax(v_parte) > 180
+           OR ST_YMin(v_parte) < -90 OR ST_YMax(v_parte) > 90 THEN
+          v_estado := 'invalida';
+          v_motivo := 'Coordenadas fuera de rango geográfico válido (longitud -180..180, latitud -90..90)';
+          v_invalidas := v_invalidas + 1;
+        ELSE
+          v_estado := 'valida';
+          v_validas := v_validas + 1;
+        END IF;
 
-      IF GeometryType(v_parte) <> 'POLYGON' THEN
-        v_estado := 'excluida';
-        v_motivo := 'Punto o línea: no es una superficie y se excluye del sector';
-        v_excluidas := v_excluidas + 1;
-      ELSIF ST_IsEmpty(v_parte) THEN
-        v_estado := 'invalida';
-        v_motivo := 'Superficie vacía';
-        v_invalidas := v_invalidas + 1;
-      ELSIF NOT ST_IsValid(v_parte) THEN
-        v_estado := 'invalida';
-        v_motivo := ST_IsValidReason(v_parte);
-        v_invalidas := v_invalidas + 1;
-      ELSIF ST_XMin(v_parte) < -180 OR ST_XMax(v_parte) > 180
-         OR ST_YMin(v_parte) < -90 OR ST_YMax(v_parte) > 90 THEN
-        v_estado := 'invalida';
-        v_motivo := 'Coordenadas fuera de rango geográfico válido (longitud -180..180, latitud -90..90)';
-        v_invalidas := v_invalidas + 1;
-      ELSE
-        v_estado := 'valida';
-        v_validas := v_validas + 1;
-      END IF;
-
-      v_superficies := v_superficies || jsonb_build_array(jsonb_build_object(
-        'indice', v_indice, 'estado', v_estado, 'tipo', GeometryType(v_parte),
-        'motivo', v_motivo,
-        'geometria', ST_AsGeoJSON(ST_SetSRID(v_parte, 4326))::jsonb));
-      v_indice := v_indice + 1;
+        v_superficies := v_superficies || jsonb_build_array(jsonb_build_object(
+          'indice', v_indice, 'nombre', v_nombre, 'estado', v_estado, 'tipo', GeometryType(v_parte),
+          'motivo', v_motivo,
+          'geometria', ST_AsGeoJSON(ST_SetSRID(v_parte, 4326))::jsonb));
+        v_indice := v_indice + 1;
+      END LOOP;
     END LOOP;
   END LOOP;
+
+  IF v_total_nodos = 0 THEN
+    RAISE EXCEPTION 'El archivo KML no contiene ninguna marca (Placemark) con geometría' USING ERRCODE = 'SV265';
+  END IF;
 
   RETURN jsonb_build_object(
     'superficies', v_superficies,
@@ -285,6 +307,7 @@ DECLARE
   v_idx integer;
   v_detalle text;
   v_validas_txt text;
+  v_etiqueta text;
 BEGIN
   excluidas := 0;
 
@@ -321,7 +344,7 @@ BEGIN
     excluidas := (v_extraccion->>'excluidas')::integer;
 
     IF (v_extraccion->>'validas')::integer = 0 THEN
-      SELECT string_agg(format('superficie %s: %s', s->>'indice', s->>'motivo'), '; ' ORDER BY (s->>'indice')::integer)
+      SELECT string_agg(format('%s: %s', format('superficie %s%s', s->>'indice', COALESCE(' (' || (s->>'nombre') || ')', '')), s->>'motivo'), '; ' ORDER BY (s->>'indice')::integer)
       INTO v_detalle
       FROM jsonb_array_elements(v_superficies) AS s
       WHERE s->>'estado' = 'invalida';
@@ -343,20 +366,20 @@ BEGIN
         -- Hay inválidas junto a válidas: se rechaza igual (una inválida
         -- nunca queda fuera sin que alguien lo decida), diciendo cuál es
         -- inválida y por qué, y cuál es la válida a seleccionar (CC-047).
-        SELECT string_agg(format('superficie %s: %s', s->>'indice', s->>'motivo'), '; ' ORDER BY (s->>'indice')::integer)
+        SELECT string_agg(format('%s: %s', format('superficie %s%s', s->>'indice', COALESCE(' (' || (s->>'nombre') || ')', '')), s->>'motivo'), '; ' ORDER BY (s->>'indice')::integer)
         INTO v_detalle
         FROM jsonb_array_elements(v_superficies) AS s
         WHERE s->>'estado' = 'invalida';
 
         IF (v_extraccion->>'validas')::integer = 1 THEN
-          SELECT s->>'indice' INTO v_validas_txt
+          SELECT format('superficie %s%s', s->>'indice', COALESCE(' (' || (s->>'nombre') || ')', '')) INTO v_validas_txt
           FROM jsonb_array_elements(v_superficies) AS s
           WHERE s->>'estado' = 'valida';
-          RAISE EXCEPTION 'El archivo contiene superficies inválidas (%): selecciona la superficie válida (superficie %) para integrar el sector', v_detalle, v_validas_txt
+          RAISE EXCEPTION 'El archivo contiene superficies inválidas (%): selecciona la superficie válida (%) para integrar el sector', v_detalle, v_validas_txt
             USING ERRCODE = 'SV265';
         END IF;
 
-        SELECT string_agg(s->>'indice', ', ' ORDER BY (s->>'indice')::integer)
+        SELECT string_agg(format('superficie %s%s', s->>'indice', COALESCE(' (' || (s->>'nombre') || ')', '')), ', ' ORDER BY (s->>'indice')::integer)
         INTO v_validas_txt
         FROM jsonb_array_elements(v_superficies) AS s
         WHERE s->>'estado' = 'valida';
@@ -383,12 +406,13 @@ BEGIN
         -- El índice coincide con la posición en el arreglo: la
         -- extracción asigna uno correlativo a cada elemento que agrega.
         v_superficie := v_superficies->v_idx;
+        v_etiqueta := format('superficie %s%s', v_idx, COALESCE(' (' || (v_superficie->>'nombre') || ')', ''));
 
         IF v_superficie->>'estado' = 'invalida' THEN
-          RAISE EXCEPTION 'La superficie % es inválida y no puede integrar el sector: %', v_idx, v_superficie->>'motivo'
+          RAISE EXCEPTION 'La % es inválida y no puede integrar el sector: %', v_etiqueta, v_superficie->>'motivo'
             USING ERRCODE = 'SV265';
         ELSIF v_superficie->>'estado' = 'excluida' THEN
-          RAISE EXCEPTION 'La superficie % es un punto o una línea y no puede integrar el sector', v_idx
+          RAISE EXCEPTION 'La % es un punto o una línea y no puede integrar el sector', v_etiqueta
             USING ERRCODE = 'SV265';
         END IF;
 

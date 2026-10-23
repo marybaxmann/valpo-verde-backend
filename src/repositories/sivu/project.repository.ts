@@ -54,6 +54,8 @@ export type EstadoSuperficie = "valida" | "invalida" | "excluida";
 
 export interface SuperficieVistaPrevia {
   indice: number;
+  /** `<name>` del Placemark (CC-047); null si no tiene o está vacío. */
+  nombre: string | null;
   estado: EstadoSuperficie;
   tipo: string | null;
   /** Motivo de `invalida` (error de lectura o ST_IsValidReason) o de `excluida`. */

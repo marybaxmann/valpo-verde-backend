@@ -6,7 +6,7 @@
 -- (con autorización de la responsable). No escribe en ninguna tabla:
 -- invoca solo `fn_extraer_superficies_kml` y `fn_build_sector_geometria`,
 -- y todo corre dentro de BEGIN … ROLLBACK. Cada caso emite
--- `NOTICE 'Pn OK: …'` (P1–P8, R1–R3); cualquier falla aborta con `Pn FALLA: …`.
+-- `NOTICE 'Pn OK: …'` (P1–P9, R1–R3); cualquier falla aborta con `Pn FALLA: …`.
 --
 -- Coordenadas genéricas en lon/lat (no corresponden a ningún sector
 -- real). A y B: cuadrados disjuntos. X: "moño" autointersectado
@@ -160,6 +160,46 @@ EXCEPTION WHEN SQLSTATE 'SV265' THEN
     RAISE EXCEPTION 'P8 FALLA: mensaje inesperado: %', SQLERRM;
   END IF;
   RAISE NOTICE 'P8 OK: %', SQLERRM;
+END $$;
+
+-- P9 — nombre del Placemark (CC-047): en la vista previa y en los
+-- mensajes; null si no tiene <name> o si está vacío. El texto escapado
+-- (&amp;, &apos;) se devuelve desescapado. Nombre inventado.
+DO $$
+DECLARE v jsonb; v_kml text;
+BEGIN
+  v_kml := '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><Folder>'
+    || '<Placemark><name>Plaza &amp; Moño &apos;inventada&apos;</name>' || pg_temp.x() || '</Placemark>'
+    || '<Placemark><name>   </name>' || pg_temp.a() || '</Placemark>'
+    || '<Placemark>' || pg_temp.b() || '</Placemark>'
+    || '</Folder></Document></kml>';
+  v := fn_extraer_superficies_kml(v_kml);
+
+  IF v->'superficies'->0->>'nombre' IS DISTINCT FROM 'Plaza & Moño ''inventada''' THEN
+    RAISE EXCEPTION 'P9 FALLA: nombre 0 = %', v->'superficies'->0->'nombre';
+  END IF;
+  IF v->'superficies'->1->'nombre' <> 'null'::jsonb OR v->'superficies'->2->'nombre' <> 'null'::jsonb THEN
+    RAISE EXCEPTION 'P9 FALLA: sin nombre debería ser null: %, %', v->'superficies'->1->'nombre', v->'superficies'->2->'nombre';
+  END IF;
+
+  BEGIN
+    PERFORM fn_build_sector_geometria('kml', NULL, v_kml, ARRAY[0]);
+    RAISE EXCEPTION 'P9 FALLA: se aceptó una superficie inválida';
+  EXCEPTION WHEN SQLSTATE 'SV265' THEN
+    IF SQLERRM NOT LIKE 'La superficie 0 (Plaza & Moño ''inventada'') es inválida%' THEN
+      RAISE EXCEPTION 'P9 FALLA: mensaje sin el nombre: %', SQLERRM;
+    END IF;
+  END;
+
+  BEGIN
+    PERFORM fn_build_sector_geometria('kml', NULL, v_kml, NULL);
+    RAISE EXCEPTION 'P9 FALLA: se aceptó sin selección';
+  EXCEPTION WHEN SQLSTATE 'SV265' THEN
+    IF SQLERRM NOT LIKE 'El archivo contiene superficies inválidas (superficie 0 (Plaza & Moño ''inventada''): %' THEN
+      RAISE EXCEPTION 'P9 FALLA: mensaje sin el nombre: %', SQLERRM;
+    END IF;
+  END;
+  RAISE NOTICE 'P9 OK: nombre en la vista previa y en los mensajes; null sin <name>';
 END $$;
 
 -- Regresión de las correcciones anteriores de la 018b.

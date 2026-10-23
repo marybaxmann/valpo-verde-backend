@@ -42,8 +42,8 @@ describe("POST /api/sivu/projects/sector-preview (D-265; CC-047)", () => {
     authAsAdmin();
     const vista = {
       superficies: [
-        { indice: 0, estado: "valida", tipo: "POLYGON", motivo: null, geometria: { type: "Polygon" } },
-        { indice: 1, estado: "invalida", tipo: "POLYGON", motivo: "Self-intersection", geometria: { type: "Polygon" } },
+        { indice: 0, nombre: "Plaza Victoria", estado: "valida", tipo: "POLYGON", motivo: null, geometria: { type: "Polygon" } },
+        { indice: 1, nombre: null, estado: "invalida", tipo: "POLYGON", motivo: "Self-intersection", geometria: { type: "Polygon" } },
       ],
       validas: 1,
       invalidas: 1,

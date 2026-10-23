@@ -48,12 +48,12 @@ export async function resolverGeometriaSector(
     return {
       formato: "kml",
       geometriaGeojson: null,
-      geometriaKml: archivo.toString("utf-8"),
+      geometriaKml: textoKml(archivo),
       indicesSeleccionados,
     };
   }
 
-  const kml = await extraerKmlDeKmz(archivo);
+  const kml = quitarBom(await extraerKmlDeKmz(archivo));
   return { formato: "kml", geometriaGeojson: null, geometriaKml: kml, indicesSeleccionados };
 }
 
@@ -62,10 +62,25 @@ export async function resolverKmlParaVistaPrevia(body: VistaPreviaSectorBody): P
   const archivo = decodificarArchivoBase64(body.archivoBase64);
 
   if (body.formato === "kml") {
-    return archivo.toString("utf-8");
+    return textoKml(archivo);
   }
 
-  return extraerKmlDeKmz(archivo);
+  return quitarBom(await extraerKmlDeKmz(archivo));
+}
+
+/**
+ * Texto KML de un archivo ya decodificado, sin BOM. Un KML exportado
+ * por algunas herramientas (p. ej. Radio Mobile) empieza con la marca
+ * de orden de bytes U+FEFF, que `xmlparse` de Postgres puede rechazar
+ * como XML mal formado: se quita siempre antes de enviar el KML a la
+ * base, también el que viene dentro de un KMZ.
+ */
+function textoKml(archivo: Buffer): string {
+  return quitarBom(archivo.toString("utf-8"));
+}
+
+export function quitarBom(texto: string): string {
+  return texto.charCodeAt(0) === 0xfeff ? texto.slice(1) : texto;
 }
 
 function decodificarArchivoBase64(archivoBase64: string): Buffer {
