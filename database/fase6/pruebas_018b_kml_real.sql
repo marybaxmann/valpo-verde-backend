@@ -15,8 +15,9 @@
 --                     orden 27 puntos (A-001 a A-011 + 16 marcadores) y
 --                     4 polígonos: Plaza Victoria (~5.800 m²), Parque
 --                     Italia (~12.250 m²), Plaza O´Higgins (~12.400 m²) y
---                     Área de estudio (~67.300 m², se superpone en parte
---                     con Plaza Victoria). Coordenadas con Z.
+--                     Área de estudio (~67.300 m², NO se superpone con
+--                     Plaza Victoria — confirmado 2026-10-23, ver K5).
+--                     Coordenadas con Z.
 --   'taller4'       — "taller4.kml" (salida de Radio Mobile): 7 líneas y
 --                     2 puntos, ningún polígono.
 --
@@ -159,9 +160,12 @@ BEGIN
   SELECT sum(ST_Area(ST_SetSRID(ST_GeomFromGeoJSON(fn_extraer_superficies_kml(v_kml)->'superficies'->i.indice->'geometria'), 4326)::geography))
   INTO v_suma FROM kml_indices i WHERE i.nombre IN ('plaza_victoria', 'area_estudio');
 
-  IF r.area >= v_suma - 1 THEN RAISE EXCEPTION 'K5 FALLA: área % no es menor que la suma %', r.area, v_suma; END IF;
-  RAISE NOTICE 'K5 OK: % parte(s), área % m² < suma % m² (solape contado una vez: % m²)',
-    r.partes, round(r.area), round(v_suma), round(v_suma - r.area);
+  -- Plaza Victoria y Área de estudio NO se superponen en el KML real
+  -- (confirmado el 2026-10-23: análisis geométrico independiente, fuera
+  -- de PostGIS, mostró que no se tocan) → 2 partes disjuntas, área ≈ suma.
+  IF r.partes <> 2 THEN RAISE EXCEPTION 'K5 FALLA: partes = % (se esperaban 2, disjuntas)', r.partes; END IF;
+  IF abs(r.area - v_suma) > 1 THEN RAISE EXCEPTION 'K5 FALLA: área % vs suma % (debían ser iguales, sin solape)', r.area, v_suma; END IF;
+  RAISE NOTICE 'K5 OK: % partes disjuntas, área % m² ≈ suma % m²', r.partes, round(r.area), round(v_suma);
 END $$;
 
 -- K6 — una plaza + un punto → 422.

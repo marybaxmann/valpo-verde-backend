@@ -1,7 +1,13 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 15 — posterior a la migración 018c (Fase 6, CC-046: el
+--   (revisión 16 — posterior a la migración 018d (Fase 6, issue #57):
+--   fn_create_tree_alta — alta municipal atómica: trees + su versión de
+--   alta en tree_data_versions (inspection_id NULL, §3.6) en la misma
+--   transacción, para que fn_refresh_tree_current tenga de dónde
+--   respaldar un campo que ninguna inspección registre; campos_registrados
+--   lista exactamente lo ingresado; SECURITY DEFINER, solo service_role;
+--   antes revisión 15, posterior a la migración 018c (Fase 6, CC-046: el
 --   árbol debe quedar dentro de geometria_sector de su proyecto;
 --   ST_Covers, no ST_Contains; `trg_trees_dentro_sector` en el alta y en
 --   cualquier cambio de utm_este/utm_norte/sector_id, y
@@ -1335,6 +1341,115 @@ $$;
 CREATE TRIGGER trg_tree_data_versions_dentro_sector
   BEFORE INSERT OR UPDATE OF utm_este, utm_norte ON tree_data_versions
   FOR EACH ROW EXECUTE FUNCTION fn_check_version_dentro_sector();
+
+-- fn_create_tree_alta (migración 018d; #57): alta municipal atómica —
+-- escribe trees y, en la misma transacción, su versión de alta en
+-- tree_data_versions (inspection_id NULL; §3.6). Sin esta fila,
+-- fn_refresh_tree_current (más abajo) no tiene de dónde respaldar un
+-- campo que ninguna inspección válida haya registrado, y lo deja en
+-- NULL la primera vez que se complete una OT parcial (defecto
+-- encontrado por la responsable, 2026-10-23). sector_id lo resuelve el
+-- backend (nunca el body); fecha_registro la calcula el backend en
+-- hora de Chile y se pasa como parámetro. campos_registrados lista
+-- exactamente lo ingresado: los 4 obligatorios siempre, especie/nombre
+-- solo si vinieron. SECURITY DEFINER, solo service_role — mismo patrón
+-- que fn_create_project_with_sector (018b). sector/ubicacion_descriptiva/
+-- utm_este/utm_norte son Obligatorio en el Excel (D-7 a D-10) pero
+-- NULLABLE en la columna física — se rechazan al inicio (SQLSTATE
+-- SV057) para que ningún árbol quede sin coordenadas (y sin que
+-- trg_trees_dentro_sector lo detecte, que no valida sin coordenada).
+CREATE FUNCTION fn_create_tree_alta(
+  p_project_id uuid,
+  p_sector_id uuid,
+  p_sector text,
+  p_ubicacion_descriptiva text,
+  p_utm_este numeric,
+  p_utm_norte numeric,
+  p_especie_cientifica text,
+  p_nombre_comun text,
+  p_fecha_registro date,
+  p_registrado_por uuid
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_tree record;
+  v_campos text[];
+BEGIN
+  IF p_sector IS NULL OR btrim(p_sector) = '' THEN
+    RAISE EXCEPTION 'sector es obligatorio' USING ERRCODE = 'SV057';
+  END IF;
+  IF p_ubicacion_descriptiva IS NULL OR btrim(p_ubicacion_descriptiva) = '' THEN
+    RAISE EXCEPTION 'ubicacion_descriptiva es obligatoria' USING ERRCODE = 'SV057';
+  END IF;
+  IF p_utm_este IS NULL THEN
+    RAISE EXCEPTION 'utm_este es obligatorio' USING ERRCODE = 'SV057';
+  END IF;
+  IF p_utm_norte IS NULL THEN
+    RAISE EXCEPTION 'utm_norte es obligatorio' USING ERRCODE = 'SV057';
+  END IF;
+
+  INSERT INTO trees (
+    project_id, sector_id, sector, ubicacion_descriptiva,
+    utm_este, utm_norte, especie_cientifica, nombre_comun,
+    fecha_registro, registrado_por
+  )
+  VALUES (
+    p_project_id, p_sector_id, p_sector, p_ubicacion_descriptiva,
+    p_utm_este, p_utm_norte, p_especie_cientifica, p_nombre_comun,
+    p_fecha_registro, p_registrado_por
+  )
+  RETURNING
+    id, tree_code, project_id, sector_id, sector, ubicacion_descriptiva,
+    utm_este, utm_norte, especie_cientifica, nombre_comun,
+    estado_ciclo_vida, fecha_registro, registrado_por, created_at
+  INTO v_tree;
+
+  -- array_append, no ||: con un literal sin tipo a la derecha, Postgres
+  -- resuelve la ambigüedad de || probando anyarray||anyarray primero e
+  -- intenta parsear el literal como arreglo (22P02: malformed array literal).
+  v_campos := ARRAY['sector', 'ubicacion_descriptiva', 'utm_este', 'utm_norte'];
+  IF p_especie_cientifica IS NOT NULL THEN
+    v_campos := array_append(v_campos, 'especie_cientifica');
+  END IF;
+  IF p_nombre_comun IS NOT NULL THEN
+    v_campos := array_append(v_campos, 'nombre_comun');
+  END IF;
+
+  INSERT INTO tree_data_versions (
+    tree_id, inspection_id, campos_registrados,
+    sector, ubicacion_descriptiva, utm_este, utm_norte,
+    especie_cientifica, nombre_comun, created_by
+  )
+  VALUES (
+    v_tree.id, NULL, v_campos,
+    p_sector, p_ubicacion_descriptiva, p_utm_este, p_utm_norte,
+    p_especie_cientifica, p_nombre_comun, p_registrado_por
+  );
+
+  RETURN jsonb_build_object(
+    'id', v_tree.id,
+    'tree_code', v_tree.tree_code,
+    'project_id', v_tree.project_id,
+    'sector_id', v_tree.sector_id,
+    'sector', v_tree.sector,
+    'ubicacion_descriptiva', v_tree.ubicacion_descriptiva,
+    'utm_este', v_tree.utm_este,
+    'utm_norte', v_tree.utm_norte,
+    'especie_cientifica', v_tree.especie_cientifica,
+    'nombre_comun', v_tree.nombre_comun,
+    'estado_ciclo_vida', v_tree.estado_ciclo_vida,
+    'fecha_registro', v_tree.fecha_registro,
+    'registrado_por', v_tree.registrado_por,
+    'created_at', v_tree.created_at
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION fn_create_tree_alta(uuid, uuid, text, text, numeric, numeric, text, text, date, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION fn_create_tree_alta(uuid, uuid, text, text, numeric, numeric, text, text, date, uuid) TO service_role;
 
 -- Las versiones no se modifican después de finalizar la inspección (PR-009 v5.0).
 

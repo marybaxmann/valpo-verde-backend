@@ -13,6 +13,7 @@ import {
   listMiembros,
   removeMiembro,
 } from "../../controllers/sivu/projectMember.controller";
+import { altaMunicipalArbolController } from "../../controllers/sivu/tree.controller";
 
 const router = Router();
 
@@ -31,5 +32,9 @@ router.patch("/:id/estado", authMiddleware, cambiarEstadoProyectoController);
 router.get("/:id/members", authMiddleware, listMiembros);
 router.post("/:id/members", authMiddleware, addMiembro);
 router.delete("/:id/members/:userId", authMiddleware, removeMiembro);
+
+// Alta municipal mínima del árbol (#57). Solo usuario_municipal; el
+// sector lo resuelve el servidor desde el proyecto (nunca del body).
+router.post("/:id/trees", authMiddleware, altaMunicipalArbolController);
 
 export default router;
