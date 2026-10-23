@@ -6,7 +6,9 @@
 -- (con autorización de la responsable). No escribe en ninguna tabla:
 -- invoca solo `fn_extraer_superficies_kml` y `fn_build_sector_geometria`,
 -- y todo corre dentro de BEGIN … ROLLBACK. Cada caso emite
--- `NOTICE 'Pn OK: …'` (P1–P9, R1–R3); cualquier falla aborta con `Pn FALLA: …`.
+-- `NOTICE 'Pn OK: …'` (P1–P9, R1–R3, G1–G7; cualquier falla aborta con
+-- `Pn FALLA: …`). G1–G7 son formato 'geojson' (sector dibujado en el
+-- mapa) — P1–P9 y R1–R3 son todas formato 'kml'.
 --
 -- Coordenadas genéricas en lon/lat (no corresponden a ningún sector
 -- real). A y B: cuadrados disjuntos. X: "moño" autointersectado
@@ -244,6 +246,91 @@ BEGIN
     RAISE EXCEPTION 'R3 FALLA: se perdió el hueco interior';
   END IF;
   RAISE NOTICE 'R3 OK: hueco interior conservado';
+END $$;
+
+-- G1 a G7 — formato 'geojson' (sector dibujado en el mapa). Hasta el
+-- 2026-10-23 esta rama nunca se había ejecutado contra PostGIS real
+-- (los tests de Jest simulan la base): fallaba siempre, con cualquier
+-- polígono, por un array_agg(ST_Dump(...)) que Postgres rechaza. Ver
+-- el punto 4 del encabezado de esta migración.
+
+-- G1 — polígono válido → se acepta.
+DO $$
+DECLARE r record;
+BEGIN
+  SELECT * INTO r FROM fn_build_sector_geometria('geojson',
+    '{"type":"Polygon","coordinates":[[[-71.62,-33.05],[-71.61,-33.05],[-71.61,-33.04],[-71.62,-33.04],[-71.62,-33.05]]]}'::jsonb,
+    NULL, NULL);
+  IF r.geografia IS NULL OR ST_Area(r.geografia) <= 0 THEN
+    RAISE EXCEPTION 'G1 FALLA: sector vacío';
+  END IF;
+  RAISE NOTICE 'G1 OK: polígono válido, área % m²', round(ST_Area(r.geografia)::numeric);
+END $$;
+
+-- G2 — multipolígono (dos superficies disjuntas) → se acepta.
+DO $$
+DECLARE r record;
+BEGIN
+  SELECT * INTO r FROM fn_build_sector_geometria('geojson',
+    '{"type":"MultiPolygon","coordinates":[[[[-71.62,-33.05],[-71.61,-33.05],[-71.61,-33.04],[-71.62,-33.04],[-71.62,-33.05]]],[[[-71.60,-33.05],[-71.59,-33.05],[-71.59,-33.04],[-71.60,-33.04],[-71.60,-33.05]]]]}'::jsonb,
+    NULL, NULL);
+  IF ST_NumGeometries(r.geografia::geometry) <> 2 THEN
+    RAISE EXCEPTION 'G2 FALLA: se esperaban 2 partes, hay %', ST_NumGeometries(r.geografia::geometry);
+  END IF;
+  RAISE NOTICE 'G2 OK: multipolígono de 2 partes, área % m²', round(ST_Area(r.geografia)::numeric);
+END $$;
+
+-- G3 — coordenadas con altitud (Z) → se guarda en 2D.
+DO $$
+DECLARE r record;
+BEGIN
+  SELECT * INTO r FROM fn_build_sector_geometria('geojson',
+    '{"type":"Polygon","coordinates":[[[-71.62,-33.05,12],[-71.61,-33.05,15],[-71.61,-33.04,20],[-71.62,-33.04,18],[-71.62,-33.05,12]]]}'::jsonb,
+    NULL, NULL);
+  IF ST_NDims(r.geografia::geometry) <> 2 THEN
+    RAISE EXCEPTION 'G3 FALLA: la geometría conserva Z';
+  END IF;
+  RAISE NOTICE 'G3 OK: Z descartada';
+END $$;
+
+-- G4 — polígono que se cruza a sí mismo ("moño") → 422 (SV265).
+DO $$
+BEGIN
+  PERFORM fn_build_sector_geometria('geojson',
+    '{"type":"Polygon","coordinates":[[[-71.58,-33.05],[-71.57,-33.04],[-71.58,-33.04],[-71.57,-33.05],[-71.58,-33.05]]]}'::jsonb,
+    NULL, NULL);
+  RAISE EXCEPTION 'G4 FALLA: se aceptó un polígono autointersectado';
+EXCEPTION WHEN SQLSTATE 'SV265' THEN
+  RAISE NOTICE 'G4 OK: %', SQLERRM;
+END $$;
+
+-- G5 — geometría vacía → 422 (SV265).
+DO $$
+BEGIN
+  PERFORM fn_build_sector_geometria('geojson', '{"type":"Polygon","coordinates":[]}'::jsonb, NULL, NULL);
+  RAISE EXCEPTION 'G5 FALLA: se aceptó una geometría vacía';
+EXCEPTION WHEN SQLSTATE 'SV265' THEN
+  RAISE NOTICE 'G5 OK: %', SQLERRM;
+END $$;
+
+-- G6 — GeoJSON mal formado (sin type/coordinates reconocibles) → 422 (SV265).
+DO $$
+BEGIN
+  PERFORM fn_build_sector_geometria('geojson', '{"foo":"bar"}'::jsonb, NULL, NULL);
+  RAISE EXCEPTION 'G6 FALLA: se aceptó un GeoJSON mal formado';
+EXCEPTION WHEN SQLSTATE 'SV265' THEN
+  RAISE NOTICE 'G6 OK: %', SQLERRM;
+END $$;
+
+-- G7 — coordenadas fuera de rango geográfico → 422 (SV265).
+DO $$
+BEGIN
+  PERFORM fn_build_sector_geometria('geojson',
+    '{"type":"Polygon","coordinates":[[[200,-33.05],[201,-33.05],[201,-33.04],[200,-33.04],[200,-33.05]]]}'::jsonb,
+    NULL, NULL);
+  RAISE EXCEPTION 'G7 FALLA: se aceptaron coordenadas fuera de rango';
+EXCEPTION WHEN SQLSTATE 'SV265' THEN
+  RAISE NOTICE 'G7 OK: %', SQLERRM;
 END $$;
 
 ROLLBACK;

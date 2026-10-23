@@ -10,6 +10,7 @@ import {
   previsualizarSuperficiesKmlRpc,
   ProyectoRow,
   SectorRow,
+  SQLSTATE_ARBOL_FUERA_SECTOR,
   SQLSTATE_GEOMETRIA_SECTOR,
   updateEstadoProyecto,
   updateGeometriaSector,
@@ -217,9 +218,10 @@ function traducirErrorProyectoOSector(err: unknown): Error {
   const error = err as Error;
   const cause = (error as { cause?: unknown }).cause;
 
-  // Rechazo de la geometría del sector (D-265; CC-047): el pedido está
-  // bien formado, pero su contenido no se puede aceptar.
-  if (cause === SQLSTATE_GEOMETRIA_SECTOR) {
+  // Rechazo de la geometría del sector (D-265; CC-047), o de una nueva
+  // delimitación que deja árboles fuera (CC-046): el pedido está bien
+  // formado, pero su contenido no se puede aceptar.
+  if (cause === SQLSTATE_GEOMETRIA_SECTOR || cause === SQLSTATE_ARBOL_FUERA_SECTOR) {
     return new AppError(error.message, 422);
   }
 

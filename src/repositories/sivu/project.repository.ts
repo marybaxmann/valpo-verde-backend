@@ -49,6 +49,14 @@ export const POSTGRES_RAISE_EXCEPTION = "P0001";
  */
 export const SQLSTATE_GEOMETRIA_SECTOR = "SV265";
 
+/**
+ * SQLSTATE propio del rechazo "árbol fuera del sector" (CC-046), en
+ * `fn_check_arbol_dentro_sector` (trigger de `trees`) y en
+ * `fn_update_sector_geometria` (migración 018c). El service lo traduce
+ * a 422, igual que SQLSTATE_GEOMETRIA_SECTOR.
+ */
+export const SQLSTATE_ARBOL_FUERA_SECTOR = "SV046";
+
 /** Estado de cada elemento de un KML/KMZ en la vista previa (CC-047). */
 export type EstadoSuperficie = "valida" | "invalida" | "excluida";
 

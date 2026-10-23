@@ -53,6 +53,20 @@
 -- ejecutado por la 012); `SECURITY DEFINER` solo en las funciones que
 -- escriben, `service_role` únicamente (ADR-014 v2.0; ADR-017 v1.1 —
 -- este flujo no necesita node-postgres).
+--
+-- 4. (encontrado 2026-10-23, al probar la 018c contra PostGIS real; no
+--    lo detectaron los tests de Jest porque simulan la base y nunca
+--    ejecutan estas funciones) la rama `formato = 'geojson'` de
+--    `fn_build_sector_geometria` fallaba siempre, con cualquier
+--    polígono: `array_agg(ST_Force2D((ST_Dump(v_geom)).geom))` llama a
+--    una función que devuelve conjunto (`ST_Dump`) dentro de una
+--    función de agregación, algo que Postgres rechaza ("aggregate
+--    function calls cannot contain set-returning function calls").
+--    Se corrige moviendo `ST_Dump` a un `FROM` (sugerencia del propio
+--    error de Postgres): `FROM ST_Dump(v_geom) AS d`. Se revisó el
+--    resto de la 018b, la 018c y `schema.sql` buscando el mismo patrón
+--    (una función que devuelve conjunto dentro de un agregado): esta
+--    era la única aparición.
 
 -- ---------------------------------------------------------------------
 -- 1. Retiro de columnas que no están en el Excel (PR-005 v4.0)
@@ -332,7 +346,13 @@ BEGIN
 
     -- Un dibujo en el mapa ya es lo que el usuario quiere: sin
     -- selección. Cada parte se valida en fn_unir_y_validar_superficies.
-    SELECT array_agg(ST_Force2D((ST_Dump(v_geom)).geom)) INTO v_geoms;
+    -- ST_Dump (una función que devuelve conjunto) no puede llamarse
+    -- directamente dentro de array_agg — Postgres lo rechaza con
+    -- "aggregate function calls cannot contain set-returning function
+    -- calls"; se mueve a un FROM (encontrado y corregido 2026-10-23,
+    -- sin probar hasta entonces: los tests de Jest simulan la base y
+    -- nunca ejecutaron esta rama contra PostGIS real).
+    SELECT array_agg(ST_Force2D(d.geom)) INTO v_geoms FROM ST_Dump(v_geom) AS d;
 
   ELSIF p_formato = 'kml' THEN
     IF p_geometria_kml IS NULL OR TRIM(p_geometria_kml) = '' THEN

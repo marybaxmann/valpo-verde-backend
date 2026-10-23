@@ -9,6 +9,7 @@ import {
   findSectorByProyectoId,
   POSTGRES_RAISE_EXCEPTION,
   previsualizarSuperficiesKmlRpc,
+  SQLSTATE_ARBOL_FUERA_SECTOR,
   SQLSTATE_GEOMETRIA_SECTOR,
   updateEstadoProyecto,
   updateGeometriaSector,
@@ -195,6 +196,20 @@ describe("editarProyecto", () => {
     mockResolverGeometria.mockResolvedValueOnce(geometriaKml([1]));
     const mensaje = "La superficie 1 es inválida y no puede integrar el sector: Self-intersection";
     mockUpdateGeometria.mockRejectedValueOnce(rechazoGeometria(mensaje));
+    const bodyConSector: EditarProyectoBody = { sector: { geometria_sector: sectorInput().geometria_sector } };
+
+    await expect(editarProyecto(usuario("admin"), PROJECT_ID, bodyConSector, TOKEN)).rejects.toMatchObject({
+      statusCode: 422,
+      message: mensaje,
+    });
+  });
+
+  it("editar geometria_sector: una nueva delimitación que deja árboles fuera es 422 con sus tree_code (CC-046)", async () => {
+    mockFindProyectoById.mockResolvedValueOnce({ id: PROJECT_ID });
+    mockFindSectorByProyectoId.mockResolvedValueOnce({ id: "s1" });
+    mockResolverGeometria.mockResolvedValueOnce(geometriaKml(null));
+    const mensaje = "La nueva delimitación deja fuera a los árboles: A-000003, A-000007";
+    mockUpdateGeometria.mockRejectedValueOnce(new Error(mensaje, { cause: SQLSTATE_ARBOL_FUERA_SECTOR }));
     const bodyConSector: EditarProyectoBody = { sector: { geometria_sector: sectorInput().geometria_sector } };
 
     await expect(editarProyecto(usuario("admin"), PROJECT_ID, bodyConSector, TOKEN)).rejects.toMatchObject({

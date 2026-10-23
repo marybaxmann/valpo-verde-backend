@@ -2058,3 +2058,78 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial; implementado en el motor el mismo día, actualizando el PR #70. |
+
+---
+
+### CC-046 — El árbol debe quedar dentro del sector de su proyecto (D-265; D-9/D-10)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-22 |
+| Origen | Fase 6, issue #56. Al implementar el alta y la edición de PROYECTOS + SECTORES se detectó que el Excel no define si la ubicación del árbol debe quedar dentro de la delimitación (`geometria_sector`) de su proyecto — quedó anotado en el HANDOFF como pendiente, sin implementar, hasta que la responsable decidiera. |
+| Tipo | 2 — metodológico (regla espacial; D-265, D-9, D-10) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | D-9 (`utm_este`), D-10 (`utm_norte`), D-265 (`geometria_sector`); REGLAS_GENERALES (sección de ubicación del árbol, a ubicar en la próxima versión del paquete). |
+| Versión anterior | No definida: el Excel no exige que la ubicación del árbol esté dentro del sector de su proyecto. |
+| Versión nueva | La ubicación del árbol (`trees.ubicacion`, generada desde `utm_este`/`utm_norte` por ADR-010 v3.0) debe quedar dentro de `geometria_sector` (D-265) de su proyecto. Si queda fuera, el registro se rechaza con un mensaje claro — nunca una advertencia. Un árbol exactamente sobre el borde del sector cuenta como dentro: la comparación usa `ST_Covers`, no `ST_Contains`. Si una nueva delimitación del sector (edición de `geometria_sector`) deja fuera a uno o más árboles ya registrados, el cambio se rechaza e informa los `tree_code` afectados. Se valida en el alta del árbol (#57) y en cualquier cambio de su ubicación. La comparación se hace en PostGIS — `trees.ubicacion` es `geography(Point, 4326)`, generada desde UTM 19S/WGS84 (ADR-010); `sectors.geometria_sector` es `geography(MultiPolygon, 4326)` — nunca en Node. La garantiza la base (función de alta o un trigger); el backend traduce el rechazo a 422. |
+| Motivo | Un árbol fuera de la delimitación de su sector no tiene sentido territorial para SIVU (el sector es la unidad de gestión); dejarlo sin regla permitiría inconsistencias que ningún cálculo posterior detectaría. `ST_Covers` en vez de `ST_Contains`: un árbol justo en el límite (p. ej. en la vereda que define el borde del sector) es un caso real y no debe rechazarse solo por estar sobre la línea. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-22. |
+| Archivos afectados | `database/migrations/018c_arbol_dentro_del_sector.sql` y `.down.sql` (`fn_check_arbol_dentro_sector`/`trg_trees_dentro_sector`, `fn_check_version_dentro_sector`/`trg_tree_data_versions_dentro_sector`, `fn_update_sector_geometria` con `CREATE OR REPLACE`); `database/schema.sql`; `src/repositories/sivu/project.repository.ts` (`SQLSTATE_ARBOL_FUERA_SECTOR`); `src/services/sivu/project.service.ts` (traductor de errores); `database/fase6/pruebas_018c_arbol_sector.sql` (V1–V9); `HANDOFF.md`; esta ficha. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: agregar el texto a D-9, D-10, D-265 y REGLAS_GENERALES, en la próxima versión del paquete (AM-15). |
+| Impacto en BD | Implementado y probado en `valpo-verde-conecta-pruebas` (migración 018c): `trg_trees_dentro_sector` (alta y cambio de ubicación en `trees`) y `trg_tree_data_versions_dentro_sector` (alta e inspección en `tree_data_versions` — el error aparece al registrar la coordenada, no al completar la OT; `trees` queda como última barrera). Un sector no encontrado o no visible (RLS) se rechaza con SV046, nunca se salta la validación — mismo criterio en `fn_update_sector_geometria`, verificado explícitamente antes de calcular qué árboles quedarían fuera. |
+| Impacto en backend | Implementado: `traducirErrorProyectoOSector` traduce `SQLSTATE_ARBOL_FUERA_SECTOR` (SV046) a 422, igual que `SQLSTATE_GEOMETRIA_SECTOR` (CC-047). |
+| Impacto en API | Implementado para la edición del sector (`PATCH /api/sivu/projects/:id` ya rechaza con 422 si la nueva delimitación deja árboles fuera). Pendiente para el alta del árbol (#57, todavía no implementado) — el trigger de `trees` ya protege cualquier forma en que se inserte, incluida la futura función de alta. |
+| Impacto en frontend | Ninguno todavía (Fase 7). |
+| Pruebas necesarias | Implementadas y corridas dos rondas en `valpo-verde-conecta-pruebas` (`database/fase6/pruebas_018c_arbol_sector.sql`, V1–V9): árbol dentro → se acepta (V1); árbol fuera → se rechaza (V2); árbol sobre el borde → se acepta, `ST_Covers` (V3); árbol dentro de un hueco interior → se rechaza (V4); multipolígono, árbol en la segunda superficie → se acepta (V5); cambio de ubicación que lo deja fuera → se rechaza (V6); nueva delimitación que deja árboles fuera → se rechaza con la lista de `tree_code` (V7); coordenada rechazada en `tree_data_versions` al registrarla, no al completar la OT (V8); sector inexistente → se rechaza con SV046, no se salta la validación (V9). |
+| Dependencias | CC-047 (detalle de D-265 para la importación de `geometria_sector`); ADR-010 v3.0 (`trees.ubicacion`); migración 018b (`sectors.geometria_sector`). |
+| rule_version | 2.1 (sin cambio de versión del paquete todavía; sincronización pendiente, AM-15). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-22 |
+| Fecha de implementación | 2026-10-23 (migración 018c, rama `feature/fase6-backend-api`); aplicada y probada en `valpo-verde-conecta-pruebas` el mismo día (dos rondas: aplicar, revertir, reaplicar). |
+| Commits / PR asociados | `feature/fase6-backend-api`, sin PR todavía. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial. Implementación en la 018c pendiente; se muestra el SQL antes de aplicar. |
+| 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Implementada en la 018c (con el ajuste de "sector no encontrado = error" y el trigger de `tree_data_versions`, pedidos por la responsable); aplicada, revertida y reaplicada en `valpo-verde-conecta-pruebas`, V1–V9 (9/9) en ambas rondas; asesor de seguridad sin avisos nuevos. |
+
+---
+
+### CC-047 — Detalle de D-265: selección obligatoria con varias superficies y superficies inválidas en el KML/KMZ
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-22 |
+| Origen | Issue #56 (Fase 6). Al revisar la 018b (correcciones de la responsable sobre `fn_build_sector_geometria`) surgieron dos puntos que D-265 no resuelve: qué hacer cuando el archivo trae varias superficies y no llega una selección explícita, y cómo tratar una superficie que PostGIS no puede leer o que es inválida. |
+| Tipo | 2 — metodológico (detalle de D-265) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | D-265 (`geometria_sector`). |
+| Versión anterior | D-265 dice "aceptar únicamente superficies válidas y no vacías" y "si existen varias superficies, permitir seleccionar las que integrarán el sector", pero no dice qué pasa sin selección explícita, ni cómo tratar una superficie ilegible o inválida. |
+| Versión nueva | **(1) Selección.** Si el archivo trae una sola superficie válida, no es necesario seleccionarla. Si trae más de una (válida o inválida), `indicesSeleccionados` es obligatorio; sin selección se rechaza con 422. Si entre las superficies no seleccionadas hay alguna inválida, el mensaje la nombra (con su índice y motivo) y dice cuál es la superficie válida que debe seleccionarse, en vez de decir solo "varias superficies". Nunca se incluyen todas por defecto. **(2) Superficie inválida o ilegible.** Nunca se cuenta como "excluida" — ese término queda solo para puntos y líneas (lo que D-265 dice excluir). La vista previa lista cada superficie del archivo con su índice y su estado: `valida`, `invalida` (con el motivo: `ST_IsValidReason` o el error de lectura) o `excluida` (punto o línea). Las inválidas no se pueden seleccionar. El guardado (crear o editar el sector) se rechaza con 422 si alguna superficie que se iba a incluir es inválida — porque se seleccionó o porque es la única del archivo —, con un mensaje que dice cuál es y por qué. Si el archivo no tiene ninguna superficie válida, se rechaza. Nunca se usa `ST_MakeValid`. |
+| Motivo | Sin esta regla, D-265 dejaría ambigüedad justo en el caso de más riesgo: una superficie inválida podría quedar incluida sin que nadie la elija (si se incluyeran todas por defecto) o excluida en silencio (si se tratara igual que un punto o una línea), contradiciendo "informar su exclusión" y "aceptar únicamente superficies válidas". |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-22, en dos partes: aprobación inicial y, el mismo día, el ajuste del mensaje del punto (1) para que nombre la superficie inválida. |
+| Archivos afectados | `database/migrations/018b_proyectos_sector_funciones.sql` (`fn_extraer_superficies_kml`, `fn_build_sector_geometria`); `database/schema.sql`; `src/schemas/sivu/common.schema.ts`; `src/services/sivu/project.service.ts` y `geometriaSector.service.ts`; `src/controllers/sivu/project.controller.ts`; `src/routes/sivu/project.routes.ts`; `src/repositories/sivu/project.repository.ts`; sus tests; `database/fase6/pruebas_018b_sector.sql` (P1–P9) y `pruebas_018b_kml_real.sql` (K1–K7); esta ficha. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: agregar el texto a D-265, en la próxima versión del paquete (AM-15). |
+| Impacto en BD | Implementado y probado en `valpo-verde-conecta-pruebas` (migración 018b, commits `3e11e7d` y `9771770` en `feature/fase6-backend-api`): `fn_extraer_superficies_kml` clasifica cada elemento (válida/inválida/excluida, con nombre e índice, tomado del `<name>` de su Placemark); `fn_build_sector_geometria` exige selección si hay más de una superficie y rechaza (SQLSTATE `SV265`) una inválida seleccionada, el caso sin selección con inválidas presentes, y el archivo sin ninguna superficie válida. |
+| Impacto en backend | Implementado: `POST /api/sivu/projects/sector-preview` (vista previa, solo Administrador, no guarda nada); todo rechazo con SQLSTATE `SV265` se traduce a 422 (antes algunos casos daban 400). |
+| Impacto en API | Implementado: `POST /api/sivu/projects/sector-preview` nuevo; `PATCH /api/sivu/projects/:id` ahora responde 200 con `{ superficiesExcluidas }` (antes 204 sin cuerpo). |
+| Impacto en frontend | Ninguno todavía (Fase 7): el formulario de delimitación debe mostrar la vista previa con el estado de cada superficie antes de guardar. |
+| Pruebas necesarias | Implementadas y corridas en `valpo-verde-conecta-pruebas`: P1 a P9 y R1 a R3 (`database/fase6/pruebas_018b_sector.sql`) y K1 a K7 con KML reales (`pruebas_018b_kml_real.sql`), incluida la reversión y reaplicación completa de la 018a/018b (2026-10-23) y el asesor de seguridad, sin avisos nuevos. |
+| Dependencias | D-265; CC-046 (usa esta clasificación en el #57/018c para exigir que la superficie elegida sea válida antes de comparar con la ubicación del árbol). |
+| rule_version | 2.1 (sin cambio de versión del paquete todavía; sincronización pendiente, AM-15). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-22 |
+| Fecha de implementación | 2026-10-22 (commit `3e11e7d`; ajuste del mensaje, commit `9771770`); aplicada y probada en `valpo-verde-conecta-pruebas` el 2026-10-23. |
+| Commits / PR asociados | `3e11e7d`, `9771770` (`feature/fase6-backend-api`, sin PR todavía). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial (detalle de D-265: selección y superficies inválidas). |
+| 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ajuste del mensaje del punto (1): nombra la superficie inválida y la válida a seleccionar. |
+| 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Aplicada y probada en `valpo-verde-conecta-pruebas` (018a/018b; P1–P9, R1–R3, K1–K7; reversión y reaplicación); asesor de seguridad sin avisos nuevos. |

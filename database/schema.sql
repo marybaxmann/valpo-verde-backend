@@ -1,7 +1,22 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 14 — posterior a la migración 018b (Fase 6, issue #56:
+--   (revisión 15 — posterior a la migración 018c (Fase 6, CC-046: el
+--   árbol debe quedar dentro de geometria_sector de su proyecto;
+--   ST_Covers, no ST_Contains; `trg_trees_dentro_sector` en el alta y en
+--   cualquier cambio de utm_este/utm_norte/sector_id, y
+--   `trg_tree_data_versions_dentro_sector` en el alta e inspección (el
+--   error aparece al registrar la coordenada, no al completar la OT;
+--   trees queda como última barrera); un sector no encontrado o no
+--   visible (RLS) se rechaza, nunca se salta la validación, igual en
+--   `fn_update_sector_geometria`, que también rechaza una nueva
+--   delimitación que deja árboles fuera, con sus tree_code; SQLSTATE
+--   SV046; de paso, corregida en `fn_build_sector_geometria` la rama
+--   `geojson` de la 018b — fallaba siempre contra PostGIS real,
+--   `array_agg` no admite una función que devuelve conjunto
+--   (`ST_Dump`) dentro de su argumento; los tests de Jest nunca lo
+--   detectaron porque simulan la base); antes
+--   revisión 14, posterior a la migración 018b (Fase 6, issue #56:
 --   retiro físico de projects.institution_name/.responsible_professional,
 --   decisión ya aprobada en PR-005 v4.0 y nunca ejecutada por la 012;
 --   fn_extraer_superficies_kml (xpath por local-name, un KML completo no
@@ -517,7 +532,11 @@ BEGIN
 
     -- Un dibujo en el mapa ya es lo que el usuario quiere: sin
     -- selección. Cada parte se valida en fn_unir_y_validar_superficies.
-    SELECT array_agg(ST_Force2D((ST_Dump(v_geom)).geom)) INTO v_geoms;
+    -- ST_Dump (una función que devuelve conjunto) no puede llamarse
+    -- directamente dentro de array_agg — se mueve a un FROM (corregido
+    -- 2026-10-23; los tests de Jest nunca ejecutaron esta rama contra
+    -- PostGIS real).
+    SELECT array_agg(ST_Force2D(d.geom)) INTO v_geoms FROM ST_Dump(v_geom) AS d;
 
   ELSIF p_formato = 'kml' THEN
     IF p_geometria_kml IS NULL OR TRIM(p_geometria_kml) = '' THEN
@@ -647,6 +666,10 @@ BEGIN
 END;
 $$;
 
+-- fn_update_sector_geometria (migración 018c, CC-046): antes de
+-- aplicar la nueva geometría, rechaza si deja fuera a algún árbol que
+-- ya pertenece a este sector, con la lista de tree_code (SQLSTATE
+-- SV046) — mismo cálculo que fn_check_arbol_dentro_sector.
 CREATE FUNCTION fn_update_sector_geometria(
   p_sector_id uuid,
   p_formato text,
@@ -661,9 +684,33 @@ AS $$
 DECLARE
   v_geografia geography;
   v_excluidas integer;
+  v_existe boolean;
+  v_fuera text[];
 BEGIN
   SELECT geografia, excluidas INTO v_geografia, v_excluidas
   FROM fn_build_sector_geometria(p_formato, p_geometria_geojson, p_geometria_kml, p_indices_seleccionados);
+
+  -- Se comprueba la existencia del sector explícitamente, antes de
+  -- calcular qué árboles quedarían fuera — no se confía solo en el
+  -- NOT FOUND del UPDATE final (mismo criterio de fn_check_arbol_dentro_sector).
+  SELECT TRUE INTO v_existe FROM sectors WHERE id = p_sector_id;
+  IF v_existe IS NULL THEN
+    RAISE EXCEPTION 'Sector no encontrado';
+  END IF;
+
+  SELECT array_agg(tree_code ORDER BY tree_code) INTO v_fuera
+  FROM trees
+  WHERE sector_id = p_sector_id
+    AND utm_este IS NOT NULL AND utm_norte IS NOT NULL
+    AND NOT ST_Covers(
+      v_geografia,
+      ST_Transform(ST_SetSRID(ST_MakePoint(utm_este, utm_norte), 32719), 4326)::geography
+    );
+
+  IF v_fuera IS NOT NULL THEN
+    RAISE EXCEPTION 'La nueva delimitación deja fuera a los árboles: %', array_to_string(v_fuera, ', ')
+      USING ERRCODE = 'SV046';
+  END IF;
 
   -- trg_sectors_proyecto_cerrado (migración 017, CC-042) rechaza este
   -- UPDATE si el proyecto está cerrado.
@@ -884,6 +931,58 @@ CREATE INDEX idx_trees_sector_id ON trees (sector_id);  -- migración 013
 CREATE TRIGGER trg_trees_updated_at
   BEFORE UPDATE ON trees
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- fn_check_arbol_dentro_sector / trg_trees_dentro_sector (migración
+-- 018c; CC-046): el árbol debe quedar dentro de geometria_sector (D-265)
+-- de su proyecto. Un árbol exactamente sobre el borde cuenta como
+-- dentro (ST_Covers, no ST_Contains). Se dispara solo si cambian
+-- utm_este/utm_norte/sector_id — en el alta y en cualquier cambio de
+-- ubicación. Sin coordenadas todavía no valida (D-9/D-10 Obligatorio se
+-- exige en el formulario, no aquí). Recalcula la geometría con la misma
+-- fórmula de la columna generada `ubicacion` (ADR-010 v3.0): un trigger
+-- BEFORE no puede leer todavía el valor final de una columna GENERATED
+-- ALWAYS AS. SQLSTATE SV046; el backend lo traduce a 422. Última barrera
+-- (ver también fn_check_version_dentro_sector, junto a tree_data_versions).
+CREATE FUNCTION fn_check_arbol_dentro_sector()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_punto geography;
+  v_geometria_sector geography;
+BEGIN
+  IF NEW.utm_este IS NULL OR NEW.utm_norte IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  v_punto := ST_Transform(ST_SetSRID(ST_MakePoint(NEW.utm_este, NEW.utm_norte), 32719), 4326)::geography;
+
+  SELECT geometria_sector INTO v_geometria_sector
+  FROM sectors
+  WHERE id = NEW.sector_id;
+
+  -- geometria_sector es NOT NULL: un resultado NULL solo puede
+  -- significar que el sector no existe o que no es visible (RLS) — en
+  -- ningún caso se salta la validación (decisión de la responsable,
+  -- 2026-10-23).
+  IF v_geometria_sector IS NULL THEN
+    RAISE EXCEPTION 'No se encontró el sector % del árbol % (o no es visible)', NEW.sector_id, COALESCE(NEW.tree_code, '(nuevo)')
+      USING ERRCODE = 'SV046';
+  END IF;
+
+  IF NOT ST_Covers(v_geometria_sector, v_punto) THEN
+    RAISE EXCEPTION 'El árbol % queda fuera de la delimitación del sector de su proyecto', COALESCE(NEW.tree_code, '(nuevo)')
+      USING ERRCODE = 'SV046';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_trees_dentro_sector
+  BEFORE INSERT OR UPDATE OF utm_este, utm_norte, sector_id ON trees
+  FOR EACH ROW EXECUTE FUNCTION fn_check_arbol_dentro_sector();
 
 -- ---------------------------------------------------------------------
 -- MEDICIONES DENDROMÉTRICAS (INV-1A / CC-020 / ADR-016 v1.0)
@@ -1191,6 +1290,51 @@ CREATE TABLE tree_data_versions (
 );
 
 CREATE INDEX idx_tree_data_versions_tree ON tree_data_versions (tree_id, created_at DESC);
+
+-- fn_check_version_dentro_sector / trg_tree_data_versions_dentro_sector
+-- (migración 018c; CC-046): el error aparece al registrar la coordenada
+-- (alta o inspección), no al completar la OT — fn_check_arbol_dentro_sector
+-- (trigger de trees) queda como última barrera. El sector es el del
+-- árbol de la versión (tree_id → trees.sector_id). Mismo criterio que
+-- fn_check_arbol_dentro_sector: sin coordenadas no valida; un sector no
+-- encontrado o no visible se rechaza, nunca se salta la validación.
+CREATE FUNCTION fn_check_version_dentro_sector()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_punto geography;
+  v_geometria_sector geography;
+BEGIN
+  IF NEW.utm_este IS NULL OR NEW.utm_norte IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  v_punto := ST_Transform(ST_SetSRID(ST_MakePoint(NEW.utm_este, NEW.utm_norte), 32719), 4326)::geography;
+
+  SELECT s.geometria_sector INTO v_geometria_sector
+  FROM trees t
+  JOIN sectors s ON s.id = t.sector_id
+  WHERE t.id = NEW.tree_id;
+
+  IF v_geometria_sector IS NULL THEN
+    RAISE EXCEPTION 'No se encontró el sector del árbol asociado a esta versión (tree_id %)', NEW.tree_id
+      USING ERRCODE = 'SV046';
+  END IF;
+
+  IF NOT ST_Covers(v_geometria_sector, v_punto) THEN
+    RAISE EXCEPTION 'La coordenada registrada queda fuera de la delimitación del sector del árbol (tree_id %)', NEW.tree_id
+      USING ERRCODE = 'SV046';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_tree_data_versions_dentro_sector
+  BEFORE INSERT OR UPDATE OF utm_este, utm_norte ON tree_data_versions
+  FOR EACH ROW EXECUTE FUNCTION fn_check_version_dentro_sector();
 
 -- Las versiones no se modifican después de finalizar la inspección (PR-009 v5.0).
 
