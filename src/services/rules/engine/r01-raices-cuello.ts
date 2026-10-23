@@ -18,7 +18,7 @@
  * solo se detectan.
  *
  * SL_basal_pct, R_radio_basal_cm y t_R_basal son "Calculado por
- * plataforma... No admite ingreso manual" (D-56, D-58, D-59): este
+ * plataforma... No admite ingreso manual" (D-46, D-48, D-49): este
  * módulo recibe las mediciones crudas (D, d, Cc, C, t) y los calcula
  * con variables-calculo.ts — nunca los recibe ya calculados.
  *
@@ -37,7 +37,7 @@ import { calcularRRadioBasalCm, calcularSLBasalPct, calcularTRBasal, ResultadoCa
 export interface R01Input {
   // --- Estabilidad (RC-EST) — ambos obligatorios ---
   levantamiento_del_plato_radicular: boolean | null;
-  angulo_inclinacion: number | null; // grados, 0°–90° (D-47)
+  angulo_inclinacion: number | null; // grados, 0°–90° (D-37)
 
   // --- Raíces expuestas (RC-REX) ---
   raices_expuestas: boolean | null; // obligatorio
@@ -49,13 +49,13 @@ export interface R01Input {
   cavidad_basal_externa: boolean | null; // condicional: activado por cavidad_pudricion_basal = Sí
   cavidad_basal_interna: ResultadoCavidadInternaCodigo | null; // condicional: activado por cavidad_pudricion_basal = Sí
 
-  // Mediciones crudas (D-52 a D-55, D-57). SL_basal_pct, R_radio_basal_cm
+  // Mediciones crudas (D-42 a D-45, D-47). SL_basal_pct, R_radio_basal_cm
   // y t_R_basal se calculan a partir de éstas — ver variables-calculo.ts.
-  D_diametro_basal_tronco_cm: number | null; // D-52, condicional: cavidad_pudricion_basal = Sí
-  d_diametro_cavidad_basal_cm: number | null; // D-53, condicional: cavidad_basal_externa = Sí
-  Cc_longitud_abertura_cavidad_cm: number | null; // D-54, condicional: cavidad_basal_externa = Sí
-  C_circunferencia_basal_cm: number | null; // D-55, condicional: cavidad_basal_externa = Sí
-  t_pared_residual_basal_cm: number | null; // D-57, condicional: cavidad_basal_interna = "si"
+  D_diametro_basal_tronco_cm: number | null; // D-42, condicional: cavidad_pudricion_basal = Sí
+  d_diametro_cavidad_basal_cm: number | null; // D-43, condicional: cavidad_basal_externa = Sí
+  Cc_longitud_abertura_cavidad_cm: number | null; // D-44, condicional: cavidad_basal_externa = Sí
+  C_circunferencia_basal_cm: number | null; // D-45, condicional: cavidad_basal_externa = Sí
+  t_pared_residual_basal_cm: number | null; // D-47, condicional: cavidad_basal_interna = "si"
 }
 
 export interface IndicadorResultado {
@@ -95,16 +95,16 @@ function evaluarEstabilidad(input: R01Input): IndicadorResultado {
     return noDeterminado("levantamiento_del_plato_radicular sin valor (RC-EST, obligatorio)");
   }
   if (!esBooleanoValido(levantamiento)) {
-    return noDeterminado(motivoFueraDominioSiNo("levantamiento_del_plato_radicular", levantamiento, "D-46"));
+    return noDeterminado(motivoFueraDominioSiNo("levantamiento_del_plato_radicular", levantamiento, "D-36"));
   }
   if (angulo === null) {
     return noDeterminado("angulo_inclinacion sin valor (RC-EST, obligatorio)");
   }
   if (!Number.isFinite(angulo)) {
-    return noDeterminado(`angulo_inclinacion no es un número finito (${angulo}) (D-47)`);
+    return noDeterminado(`angulo_inclinacion no es un número finito (${angulo}) (D-37)`);
   }
   if (angulo < 0 || angulo > 90) {
-    return noDeterminado(`angulo_inclinacion fuera de rango 0°–90° (${angulo}) (D-47)`);
+    return noDeterminado(`angulo_inclinacion fuera de rango 0°–90° (${angulo}) (D-37)`);
   }
   if (levantamiento) {
     if (angulo < 15) return indicador("leve", "RC-EST-01");
@@ -124,7 +124,7 @@ function evaluarRaicesExpuestas(input: R01Input): IndicadorResultado {
     return noDeterminado("raices_expuestas sin valor (RC-REX, obligatorio)");
   }
   if (!esBooleanoValido(input.raices_expuestas)) {
-    return noDeterminado(motivoFueraDominioSiNo("raices_expuestas", input.raices_expuestas, "D-43"));
+    return noDeterminado(motivoFueraDominioSiNo("raices_expuestas", input.raices_expuestas, "D-33"));
   }
   if (!input.raices_expuestas) return indicador("despreciable", "RC-REX-01"); // necrosis/cortadas no se activan
 
@@ -132,13 +132,13 @@ function evaluarRaicesExpuestas(input: R01Input): IndicadorResultado {
     return noDeterminado("necrosis_radicular sin valor (RC-REX, condicional activado por raices_expuestas = Sí)");
   }
   if (!esBooleanoValido(input.necrosis_radicular)) {
-    return noDeterminado(motivoFueraDominioSiNo("necrosis_radicular", input.necrosis_radicular, "D-44"));
+    return noDeterminado(motivoFueraDominioSiNo("necrosis_radicular", input.necrosis_radicular, "D-34"));
   }
   if (input.raices_cortadas === null) {
     return noDeterminado("raices_cortadas sin valor (RC-REX, condicional activado por raices_expuestas = Sí)");
   }
   if (!esBooleanoValido(input.raices_cortadas)) {
-    return noDeterminado(motivoFueraDominioSiNo("raices_cortadas", input.raices_cortadas, "D-45"));
+    return noDeterminado(motivoFueraDominioSiNo("raices_cortadas", input.raices_cortadas, "D-35"));
   }
   const necrosis = input.necrosis_radicular;
   const cortadas = input.raices_cortadas;
@@ -176,7 +176,7 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
     return { indicador: noDeterminado("cavidad_pudricion_basal sin valor (RC-CAV, obligatorio)") };
   }
   if (!esBooleanoValido(input.cavidad_pudricion_basal)) {
-    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_pudricion_basal", input.cavidad_pudricion_basal, "D-49")) };
+    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_pudricion_basal", input.cavidad_pudricion_basal, "D-39")) };
   }
   if (!input.cavidad_pudricion_basal) return { indicador: indicador("despreciable", "RC-CAV-01") };
 
@@ -198,7 +198,7 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
     };
   }
   if (!esBooleanoValido(input.cavidad_basal_externa)) {
-    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_basal_externa", input.cavidad_basal_externa, "D-50")) };
+    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_basal_externa", input.cavidad_basal_externa, "D-40")) };
   }
 
   let SL_basal_pct: ResultadoCalculo | undefined;
@@ -223,13 +223,13 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
   }
 
   if (porSL === null && porTR === null) {
-    // D-51: con cavidad_pudricion_basal = Sí, externa e interna no pueden
+    // D-41: con cavidad_pudricion_basal = Sí, externa e interna no pueden
     // ser ambas No. No se inventa una categoría: queda no_determinado,
     // con el motivo, para que la Fase 6 lo rechace antes de guardar.
     return {
       indicador: noDeterminado(
         "Combinación inválida: cavidad_pudricion_basal = Sí con cavidad_basal_externa = No y " +
-          "cavidad_basal_interna = No (D-51); la Fase 6 debe rechazar esta combinación antes de guardar.",
+          "cavidad_basal_interna = No (D-41); la Fase 6 debe rechazar esta combinación antes de guardar.",
       ),
       SL_basal_pct,
       R_radio_basal_cm,
@@ -270,7 +270,7 @@ export interface R01Resultado {
     raicesExpuestas: IndicadorResultado;
     cavidadBasal: IndicadorResultado;
   };
-  /** Variables calculadas (D-56, D-58, D-59), solo cuando la rama correspondiente se activó. */
+  /** Variables calculadas (D-46, D-48, D-49), solo cuando la rama correspondiente se activó. */
   variablesCalculo: {
     SL_basal_pct?: ResultadoCalculo;
     R_radio_basal_cm?: ResultadoCalculo;

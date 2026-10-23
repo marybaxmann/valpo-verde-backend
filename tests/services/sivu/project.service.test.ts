@@ -108,7 +108,7 @@ describe("crearProyectoConSector", () => {
     expect(resultado).toEqual({ projectId: "p1", sectorId: "s1", superficiesExcluidas: 0 });
   });
 
-  it("pasa indicesSeleccionados al RPC e informa los puntos y líneas excluidos (D-265)", async () => {
+  it("pasa indicesSeleccionados al RPC e informa los puntos y líneas excluidos (D-255)", async () => {
     mockResolverGeometria.mockResolvedValueOnce(geometriaKml([1]));
     mockCrearRpc.mockResolvedValueOnce({ project_id: "p1", sector_id: "s1", superficies_excluidas: 2 });
 
@@ -177,7 +177,7 @@ describe("editarProyecto", () => {
     expect(resultado).toEqual({ superficiesExcluidas: null });
   });
 
-  it("editar geometria_sector: pasa la selección e informa los excluidos (D-265)", async () => {
+  it("editar geometria_sector: pasa la selección e informa los excluidos (D-255)", async () => {
     mockFindProyectoById.mockResolvedValueOnce({ id: PROJECT_ID });
     mockFindSectorByProyectoId.mockResolvedValueOnce({ id: "s1" });
     mockResolverGeometria.mockResolvedValueOnce(geometriaKml([0]));
@@ -262,7 +262,7 @@ describe("cambiarEstadoProyecto", () => {
   });
 });
 
-describe("previsualizarSector (D-265; CC-047)", () => {
+describe("previsualizarSector (D-255; CC-047)", () => {
   const body = { formato: "kml" as const, archivoBase64: "PGttbC8+" };
 
   it("rechaza si no es admin, sin leer el archivo", async () => {

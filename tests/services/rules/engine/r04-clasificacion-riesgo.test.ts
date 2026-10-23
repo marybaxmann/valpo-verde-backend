@@ -1,7 +1,7 @@
 import { evaluarR04 } from "../../../../src/services/rules/engine/r04-clasificacion-riesgo";
 import { ClasificacionRiesgoCodigo } from "../../../../src/services/rules/engine/catalogs";
 
-describe("R04 — el nivel más alto entre los tres componentes (D-181)", () => {
+describe("R04 — el nivel más alto entre los tres componentes (D-171)", () => {
   it("los tres Bajo → Bajo", () => {
     const r = evaluarR04("bajo", "bajo", "bajo");
     expect(r.clasificacionRiesgo).toBe("bajo");
@@ -26,12 +26,12 @@ describe("R04 — el nivel más alto entre los tres componentes (D-181)", () => 
   });
 });
 
-describe("R04 — no_determinado se propaga (D-181), nunca se calcula con los otros dos", () => {
+describe("R04 — no_determinado se propaga (D-171), nunca se calcula con los otros dos", () => {
   it("raíces y cuello = no_determinado, tronco y copa Bajo → no_determinado", () => {
     const r = evaluarR04("no_determinado", "bajo", "bajo");
     expect(r.noDeterminado).toBe(true);
     expect(r.motivo).toMatch(/clasificacion_raices_cuello/);
-    expect(r.motivo).toMatch(/D-181/);
+    expect(r.motivo).toMatch(/D-171/);
   });
   it("tronco = no_determinado, aunque copa sea Extremo → no_determinado (no se ignora el que falta)", () => {
     const r = evaluarR04("bajo", "no_determinado", "extremo");

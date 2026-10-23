@@ -7,7 +7,7 @@ import {
 const KML = '<kml xmlns="http://www.opengis.net/kml/2.2"><Document></Document></kml>';
 const KML_BASE64 = Buffer.from(KML, "utf-8").toString("base64");
 
-describe("resolverGeometriaSector — indicesSeleccionados (D-265; CC-047)", () => {
+describe("resolverGeometriaSector — indicesSeleccionados (D-255; CC-047)", () => {
   it("geojson: sin selección (un dibujo ya es lo que el usuario quiere)", async () => {
     const geometria = { type: "Polygon" as const, coordinates: [] };
     const r = await resolverGeometriaSector({ formato: "geojson", geometria });

@@ -76,12 +76,12 @@ describe("RC-EST — Estabilidad", () => {
     expect(r.indicadores.estabilidad.severidad).toBe("severa");
   });
 
-  it("D-47: ángulo < 0° → no_determinado (fuera de rango, no se clasifica)", () => {
+  it("D-37: ángulo < 0° → no_determinado (fuera de rango, no se clasifica)", () => {
     const r = evaluarR01({ ...base(), angulo_inclinacion: -1 });
     expect(r.indicadores.estabilidad.noDeterminado).toBe(true);
     expect(r.indicadores.estabilidad.motivo).toMatch(/fuera de rango/);
   });
-  it("D-47: ángulo > 90° → no_determinado (fuera de rango, no se clasifica)", () => {
+  it("D-37: ángulo > 90° → no_determinado (fuera de rango, no se clasifica)", () => {
     const r = evaluarR01({ ...base(), angulo_inclinacion: 91 });
     expect(r.indicadores.estabilidad.noDeterminado).toBe(true);
     expect(r.indicadores.estabilidad.motivo).toMatch(/fuera de rango/);
@@ -253,10 +253,10 @@ describe("RC-CAV — Cavidad basal", () => {
     expect(r.indicadores.cavidadBasal.motivo).toMatch(/código no reconocido/);
   });
 
-  it("D-51: pudrición = Sí con externa = No e interna = No es una combinación inválida → no_determinado, sin inventar un valor", () => {
+  it("D-41: pudrición = Sí con externa = No e interna = No es una combinación inválida → no_determinado, sin inventar un valor", () => {
     const r = evaluarR01({ ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: false, cavidad_basal_interna: "no" });
     expect(r.indicadores.cavidadBasal.noDeterminado).toBe(true);
-    expect(r.indicadores.cavidadBasal.motivo).toMatch(/D-51/);
+    expect(r.indicadores.cavidadBasal.motivo).toMatch(/D-41/);
     expect(r.probabilidadFalla).toBe("no_determinado");
   });
 });
@@ -410,7 +410,7 @@ describe("reglaId — el ID de REGLAS_INDICADORES que produjo cada resultado", (
       }).indicadores.cavidadBasal.reglaId,
     ).toBe("RC-CAV-10");
   });
-  it("cortes genéricos (campo faltante, fuera de dominio, combinación inválida D-51) → reglaId null", () => {
+  it("cortes genéricos (campo faltante, fuera de dominio, combinación inválida D-41) → reglaId null", () => {
     expect(evaluarR01({ ...base(), levantamiento_del_plato_radicular: null }).indicadores.estabilidad.reglaId).toBeNull();
     expect(evaluarR01({ ...base(), cavidad_pudricion_basal: true, cavidad_basal_externa: false, cavidad_basal_interna: "no" }).indicadores.cavidadBasal.reglaId).toBeNull();
   });

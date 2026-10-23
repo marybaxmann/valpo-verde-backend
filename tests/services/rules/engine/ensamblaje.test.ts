@@ -267,7 +267,7 @@ describe("ensamblarResultadoEvaluacion", () => {
     expect(r.clasificacion_riesgo_calculada).toBe("bajo"); // el calculado no cambia
     expect(r.clasificacion_riesgo_ajustada).toBe("extremo"); // el efectivo es el ajustado
     expect(r.clasificacion_prioridad_calculada).toBe("critica"); // M05(extremo, *) = Crítica siempre
-    expect(r.inspeccion.nivelRiesgo).toBe("extremo"); // D-210: nivel_riesgo = riesgo efectivo
+    expect(r.inspeccion.nivelRiesgo).toBe("extremo"); // D-200: nivel_riesgo = riesgo efectivo
   });
 
   it("ajuste de riesgo que NO coincide con el calculado → se descarta; M05 usa el calculado, no el ajuste viejo", () => {
@@ -309,7 +309,7 @@ describe("ensamblarResultadoEvaluacion", () => {
     const r = ensamblarResultadoEvaluacion(args);
     expect(r.clasificacion_riesgo_calculada).toBe("no_determinado");
     expect(r.clasificacion_riesgo_ajustada).toBe("alto"); // el ajuste sobre no_determinado se mantiene
-    expect(r.inspeccion.nivelRiesgo).toBe("alto"); // D-210: usa el efectivo, no el calculado
+    expect(r.inspeccion.nivelRiesgo).toBe("alto"); // D-200: usa el efectivo, no el calculado
     expect(r.inspeccion.fechaProximaInspeccionSugerida.noDeterminable).toBe(false); // ya hay fecha, porque el efectivo está determinado
   });
 

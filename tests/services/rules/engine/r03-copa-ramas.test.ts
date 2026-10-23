@@ -49,12 +49,12 @@ describe("CR-RSE — Ramas secas", () => {
     expect(r.indicadores.ramasSecas.motivo).toMatch(/CR-RSE-05/);
     expect(r.probabilidadFalla).toBe("no_determinado");
   });
-  it("D-87: pct = 0 es fuera de rango (debe ser > 0 si ramas_secas = Sí) → no_determinado", () => {
+  it("D-77: pct = 0 es fuera de rango (debe ser > 0 si ramas_secas = Sí) → no_determinado", () => {
     const r = evaluarR03({ ...base(), ramas_secas: true, ramas_secas_pct_copa: 0 });
     expect(r.indicadores.ramasSecas.noDeterminado).toBe(true);
     expect(r.indicadores.ramasSecas.motivo).toMatch(/fuera de rango/);
   });
-  it("D-87: pct > 100 → no_determinado, nunca se clasifica", () => {
+  it("D-77: pct > 100 → no_determinado, nunca se clasifica", () => {
     const r = evaluarR03({ ...base(), ramas_secas: true, ramas_secas_pct_copa: 101 });
     expect(r.indicadores.ramasSecas.noDeterminado).toBe(true);
   });

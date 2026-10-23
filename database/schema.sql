@@ -33,7 +33,7 @@
 --   hay varias, SQLSTATE SV265) /
 --   fn_build_sector_geometria/fn_create_project_with_sector/
 --   fn_update_sector_geometria — alta y edición atómica de PROYECTOS +
---   SECTORES con validación PostGIS (2D siempre, D-266; SRID 4326),
+--   SECTORES con validación PostGIS (2D siempre, D-255; SRID 4326),
 --   solo service_role); antes revisión 13, posterior a la migración
 --   018a (Fase 6, planificación:
 --   trees.qr_token, token aleatorio no adivinable para el QR público de
@@ -264,10 +264,10 @@ CREATE TRIGGER trg_sectors_updated_at
 -- fn_extraer_superficies_kml / fn_unir_y_validar_superficies /
 -- fn_build_sector_geometria / fn_create_project_with_sector /
 -- fn_update_sector_geometria (migración 018b; issue #56): alta y edición
--- atómica de PROYECTOS + SECTORES, con la validación de D-265 hecha en
+-- atómica de PROYECTOS + SECTORES, con la validación de D-255 hecha en
 -- SQL/PostGIS: superficie válida y no vacía, sin puntos ni líneas (y se
 -- informa cuántos se excluyeron; detalle de CC-047), huecos interiores conservados, unión
--- sin duplicar áreas superpuestas, 2D (D-266: superficie horizontal,
+-- sin duplicar áreas superpuestas, 2D (D-255: superficie horizontal,
 -- nunca Z), MultiPolygon, SRID 4326. ST_GeomFromKML solo acepta el
 -- fragmento de geometría de cada Placemark, nunca el documento KML
 -- completo — se extrae con xpath() antes de convertir. La validez se
@@ -293,7 +293,7 @@ CREATE TRIGGER trg_sectors_updated_at
 --   invalida — superficie ilegible o inválida, con el motivo (error de
 --              lectura o ST_IsValidReason). Nunca se repara
 --              (ST_MakeValid) y nunca se puede seleccionar;
---   excluida — punto o línea (D-265: "excluir puntos y líneas e
+--   excluida — punto o línea (D-255: "excluir puntos y líneas e
 --              informar su exclusión"). Solo esto cuenta como excluido.
 CREATE FUNCTION fn_extraer_superficies_kml(p_kml text)
 RETURNS jsonb
@@ -358,7 +358,7 @@ BEGIN
       v_error := NULL;
       BEGIN
         -- ST_Force2D: un KML real trae altitud en las coordenadas; el
-        -- sector es una superficie horizontal (D-266), no se conserva Z.
+        -- sector es una superficie horizontal (D-255), no se conserva Z.
         v_geom := ST_Force2D(ST_GeomFromKML(v_nodo::text));
       EXCEPTION WHEN OTHERS THEN
         v_geom := NULL;
@@ -433,7 +433,7 @@ BEGIN
 END;
 $$;
 
--- fn_unir_y_validar_superficies — valida cada parte y une (D-265).
+-- fn_unir_y_validar_superficies — valida cada parte y une (D-255).
 CREATE FUNCTION fn_unir_y_validar_superficies(p_geoms geometry[])
 RETURNS geography
 LANGUAGE plpgsql
@@ -451,7 +451,7 @@ BEGIN
   -- Cada parte se valida POR SEPARADO antes de unir. Validar el
   -- conjunto combinado (antes de ST_Union) rechazaba partes
   -- individualmente válidas que solo se superponían entre sí —
-  -- exactamente lo que D-265 pide unir, no rechazar.
+  -- exactamente lo que D-255 pide unir, no rechazar.
   FOREACH v_parte IN ARRAY p_geoms LOOP
     IF NOT ST_IsValid(v_parte) THEN
       RAISE EXCEPTION 'La superficie % es inválida: %', v_posicion, ST_IsValidReason(v_parte)
@@ -939,7 +939,7 @@ CREATE TRIGGER trg_trees_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- fn_check_arbol_dentro_sector / trg_trees_dentro_sector (migración
--- 018c; CC-046): el árbol debe quedar dentro de geometria_sector (D-265)
+-- 018c; CC-046): el árbol debe quedar dentro de geometria_sector (D-255)
 -- de su proyecto. Un árbol exactamente sobre el borde cuenta como
 -- dentro (ST_Covers, no ST_Contains). Se dispara solo si cambian
 -- utm_este/utm_norte/sector_id — en el alta y en cualquier cambio de

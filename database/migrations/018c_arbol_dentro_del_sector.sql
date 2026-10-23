@@ -3,7 +3,7 @@
 -- =====================================================================
 --
 -- Decisión de la responsable (2026-10-22, CC-046): la ubicación del
--- árbol debe quedar dentro de `geometria_sector` (D-265) del sector al
+-- árbol debe quedar dentro de `geometria_sector` (D-255) del sector al
 -- que pertenece. Un árbol exactamente sobre el borde cuenta como
 -- dentro (ST_Covers, no ST_Contains). Se garantiza en la base, con
 -- triggers — no en una función de alta específica, porque el #57 (alta

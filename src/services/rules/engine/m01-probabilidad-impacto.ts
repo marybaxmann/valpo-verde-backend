@@ -1,7 +1,7 @@
 /**
  * M01 — Matriz de probabilidad de impacto (MATRICES_CALCULO, columnas
  * A–E). Entradas: zona_objetivo × tasa_ocupacion_objetivo. Salida:
- * probabilidad_impacto (D-169). Es una tabla de consulta directa del
+ * probabilidad_impacto (D-159). Es una tabla de consulta directa del
  * Excel, celda por celda — no se deriva de ninguna fórmula ni de
  * ningún puntaje.
  *
@@ -30,13 +30,13 @@ export function evaluarM01(
   tasaOcupacionObjetivo: TasaOcupacionCodigo | null,
 ): M01Resultado {
   if (zonaObjetivo === null) {
-    return { probabilidadImpacto: null, noDeterminado: true, motivo: "zona_objetivo sin valor (D-167, obligatorio)" };
+    return { probabilidadImpacto: null, noDeterminado: true, motivo: "zona_objetivo sin valor (D-157, obligatorio)" };
   }
   if (!esCodigoVigente("zona_objetivo", zonaObjetivo)) {
     return { probabilidadImpacto: null, noDeterminado: true, motivo: `zona_objetivo tiene un código no reconocido ("${zonaObjetivo}")` };
   }
   if (tasaOcupacionObjetivo === null) {
-    return { probabilidadImpacto: null, noDeterminado: true, motivo: "tasa_ocupacion_objetivo sin valor (D-168, obligatorio)" };
+    return { probabilidadImpacto: null, noDeterminado: true, motivo: "tasa_ocupacion_objetivo sin valor (D-158, obligatorio)" };
   }
   if (!esCodigoVigente("tasa_ocupacion", tasaOcupacionObjetivo)) {
     return {

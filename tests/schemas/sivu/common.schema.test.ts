@@ -37,7 +37,7 @@ describe("coordenadaUtmNorte (D-10, falso norte hemisferio sur: 0–10000000 m)"
   });
 });
 
-describe("geometriaSectorInput — indicesSeleccionados (D-265; CC-047)", () => {
+describe("geometriaSectorInput — indicesSeleccionados (D-255; CC-047)", () => {
   const kml = { formato: "kml" as const, archivoBase64: "PGttbC8+" };
 
   it("acepta un KML sin selección (la base exige la selección solo si hay varias superficies)", () => {

@@ -30,12 +30,12 @@
 --    Earth trae altitud en las coordenadas (p. ej. "...,0"), lo que
 --    produce una geometría con Z. `sectors.geometria_sector` es
 --    geography(MultiPolygon, 4326) — 2D estricto — y el cast falla con
---    "Geometry has Z dimension but column does not". D-266 ya dice que
+--    "Geometry has Z dimension but column does not". D-255 ya dice que
 --    la superficie es horizontal ("no corresponde a la superficie
 --    inclinada del terreno"), así que se aplica ST_Force2D de forma
 --    sistemática, antes de cualquier validación.
 --
--- Además, D-265 pide informar la exclusión de puntos/líneas (no en
+-- Además, D-255 pide informar la exclusión de puntos/líneas (no en
 -- silencio) y permitir elegir qué superficies integran el sector si el
 -- archivo trae varias. Detalle aprobado por la responsable (CC-047):
 -- `fn_extraer_superficies_kml` lista cada elemento del archivo con su
@@ -76,7 +76,7 @@ ALTER TABLE projects
   DROP COLUMN responsible_professional;
 
 -- ---------------------------------------------------------------------
--- 2. fn_extraer_superficies_kml — lectura y clasificación (D-265; CC-047)
+-- 2. fn_extraer_superficies_kml — lectura y clasificación (D-255; CC-047)
 -- ---------------------------------------------------------------------
 -- Sin SECURITY DEFINER: no toca ninguna tabla, solo XML/geometría. Es
 -- también la vista previa (POST /api/sivu/projects/sector-preview): no
@@ -90,7 +90,7 @@ ALTER TABLE projects
 --   invalida — superficie ilegible o inválida, con el motivo (error de
 --              lectura o ST_IsValidReason). Nunca se repara
 --              (ST_MakeValid) y nunca se puede seleccionar;
---   excluida — punto o línea (D-265: "excluir puntos y líneas e
+--   excluida — punto o línea (D-255: "excluir puntos y líneas e
 --              informar su exclusión"). Solo esto cuenta como excluido.
 CREATE FUNCTION public.fn_extraer_superficies_kml(p_kml text)
 RETURNS jsonb
@@ -155,7 +155,7 @@ BEGIN
       v_error := NULL;
       BEGIN
         -- ST_Force2D: un KML real trae altitud en las coordenadas; el
-        -- sector es una superficie horizontal (D-266), no se conserva Z.
+        -- sector es una superficie horizontal (D-255), no se conserva Z.
         v_geom := ST_Force2D(ST_GeomFromKML(v_nodo::text));
       EXCEPTION WHEN OTHERS THEN
         v_geom := NULL;
@@ -234,7 +234,7 @@ REVOKE ALL ON FUNCTION public.fn_extraer_superficies_kml(text) FROM PUBLIC, anon
 GRANT EXECUTE ON FUNCTION public.fn_extraer_superficies_kml(text) TO service_role;
 
 -- ---------------------------------------------------------------------
--- 3. fn_unir_y_validar_superficies — validar cada parte y unir (D-265)
+-- 3. fn_unir_y_validar_superficies — validar cada parte y unir (D-255)
 -- ---------------------------------------------------------------------
 CREATE FUNCTION public.fn_unir_y_validar_superficies(p_geoms geometry[])
 RETURNS geography
@@ -253,7 +253,7 @@ BEGIN
   -- Cada parte se valida POR SEPARADO antes de unir. Validar el
   -- conjunto combinado (antes de ST_Union) rechazaba partes
   -- individualmente válidas que solo se superponían entre sí —
-  -- exactamente lo que D-265 pide unir, no rechazar.
+  -- exactamente lo que D-255 pide unir, no rechazar.
   FOREACH v_parte IN ARRAY p_geoms LOOP
     IF NOT ST_IsValid(v_parte) THEN
       RAISE EXCEPTION 'La superficie % es inválida: %', v_posicion, ST_IsValidReason(v_parte)

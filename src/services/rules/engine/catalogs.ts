@@ -39,49 +39,49 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "probabilidad_falla", codigo: "inminente", etiqueta: "Inminente", orden: 3, estado: "vigente", cc: "PR-021" },
   { catalogo: "probabilidad_falla", codigo: "no_determinado", etiqueta: "No determinado", estado: "vigente", cc: "CC-024" },
 
-  // --- resultado_cavidad_interna: D-51 (cavidad_basal_interna), D-63 (cavidad_interna_tronco) ---
+  // --- resultado_cavidad_interna: D-41 (cavidad_basal_interna), D-53 (cavidad_interna_tronco) ---
   { catalogo: "resultado_cavidad_interna", codigo: "si", etiqueta: "Sí", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "resultado_cavidad_interna", codigo: "no", etiqueta: "No", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "resultado_cavidad_interna", codigo: "requiere_evaluacion_instrumental", etiqueta: "Requiere evaluación instrumental", orden: 2, estado: "vigente", cc: "CC-040" },
 
-  // --- condicion_herida: D-73 (condicion_heridas_tronco) ---
+  // --- condicion_herida: D-63 (condicion_heridas_tronco) ---
   { catalogo: "condicion_herida", codigo: "abierta", etiqueta: "Abierta", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "condicion_herida", codigo: "en_proceso_de_cierre", etiqueta: "En proceso de cierre", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "condicion_herida", codigo: "cerrada", etiqueta: "Cerrada", orden: 2, estado: "vigente", cc: "PR-021" },
 
-  // --- afectacion_grieta: D-78 (afectacion_fisura_grieta) ---
+  // --- afectacion_grieta: D-68 (afectacion_fisura_grieta) ---
   { catalogo: "afectacion_grieta", codigo: "solo_corteza", etiqueta: "Solo corteza", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "afectacion_grieta", codigo: "penetra_en_madera", etiqueta: "Penetra en madera", orden: 1, estado: "vigente", cc: "PR-021" },
 
-  // --- direccion_grieta: D-79 (direccion_grieta) ---
+  // --- direccion_grieta: D-69 (direccion_grieta) ---
   { catalogo: "direccion_grieta", codigo: "longitudinal", etiqueta: "Longitudinal", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "direccion_grieta", codigo: "transversal", etiqueta: "Transversal", orden: 1, estado: "vigente", cc: "PR-021" },
 
-  // --- zona_objetivo: D-167 (M01) ---
+  // --- zona_objetivo: D-157 (M01) ---
   { catalogo: "zona_objetivo", codigo: "bajo_la_copa", etiqueta: "Bajo la copa", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "zona_objetivo", codigo: "entre_limite_copa_y_una_altura", etiqueta: "Entre el límite de la copa y 1× la altura del árbol", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "zona_objetivo", codigo: "entre_una_y_1_5_alturas", etiqueta: "Entre 1× y 1,5× la altura del árbol", orden: 2, estado: "vigente", cc: "PR-021" },
   { catalogo: "zona_objetivo", codigo: "mas_alla_de_1_5_alturas", etiqueta: "Más allá de 1,5× la altura del árbol", orden: 3, estado: "vigente", cc: "PR-021" },
 
-  // --- tasa_ocupacion: D-168 (M01) ---
+  // --- tasa_ocupacion: D-158 (M01) ---
   { catalogo: "tasa_ocupacion", codigo: "rara", etiqueta: "Rara", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "tasa_ocupacion", codigo: "ocasional", etiqueta: "Ocasional", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "tasa_ocupacion", codigo: "frecuente", etiqueta: "Frecuente", orden: 2, estado: "vigente", cc: "PR-021" },
   { catalogo: "tasa_ocupacion", codigo: "constante", etiqueta: "Constante", orden: 3, estado: "vigente", cc: "PR-021" },
 
-  // --- probabilidad_impacto: D-169, salida de M01 ---
+  // --- probabilidad_impacto: D-159, salida de M01 ---
   { catalogo: "probabilidad_impacto", codigo: "muy_baja", etiqueta: "Muy baja", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "probabilidad_impacto", codigo: "baja", etiqueta: "Baja", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "probabilidad_impacto", codigo: "media", etiqueta: "Media", orden: 2, estado: "vigente", cc: "PR-021" },
   { catalogo: "probabilidad_impacto", codigo: "alta", etiqueta: "Alta", orden: 3, estado: "vigente", cc: "PR-021" },
 
-  // --- consecuencia: D-170/171/172 (consecuencia_raices_cuello/_tronco/_copa_ramas), entrada de M03 ---
+  // --- consecuencia: D-160/161/162 (consecuencia_raices_cuello/_tronco/_copa_ramas), entrada de M03 ---
   { catalogo: "consecuencia", codigo: "insignificante", etiqueta: "Insignificante", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "consecuencia", codigo: "menor", etiqueta: "Menor", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "consecuencia", codigo: "significativa", etiqueta: "Significativa", orden: 2, estado: "vigente", cc: "PR-021" },
   { catalogo: "consecuencia", codigo: "severa", etiqueta: "Severa", orden: 3, estado: "vigente", cc: "PR-021" },
 
-  // --- clasificacion_riesgo: D-176/177/178 (por componente), D-181 (R04) ---
+  // --- clasificacion_riesgo: D-166/167/168 (por componente), D-171 (R04) ---
   { catalogo: "clasificacion_riesgo", codigo: "bajo", etiqueta: "Bajo", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_riesgo", codigo: "moderado", etiqueta: "Moderado", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_riesgo", codigo: "alto", etiqueta: "Alto", orden: 2, estado: "vigente", cc: "PR-021" },
@@ -89,7 +89,7 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_riesgo", codigo: "no_determinado", etiqueta: "No determinado", estado: "vigente", cc: "CC-024" },
 
   // --- probabilidad_falla_impacto: salida intermedia de M02, sin columna
-  //     propia en evaluations/tree_assessments (D-176 a D-178 tratan
+  //     propia en evaluations/tree_assessments (D-166 a D-168 tratan
   //     M02+M03 como un solo paso); se registra igual para que
   //     evaluarM03 pueda validar su dominio antes de indexar la matriz. ---
   { catalogo: "probabilidad_falla_impacto", codigo: "poco_probable", etiqueta: "Poco probable", orden: 0, estado: "vigente", cc: "PR-021" },
@@ -97,7 +97,7 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "probabilidad_falla_impacto", codigo: "probable", etiqueta: "Probable", orden: 2, estado: "vigente", cc: "PR-021" },
   { catalogo: "probabilidad_falla_impacto", codigo: "muy_probable", etiqueta: "Muy probable", orden: 3, estado: "vigente", cc: "PR-021" },
 
-  // --- si_no_no_determinado: D-148 (red_subterranea_presente), D-156
+  // --- si_no_no_determinado: D-138 (red_subterranea_presente), D-146
   //     (compromete_funcionalidad_red_subterranea) ---
   { catalogo: "si_no_no_determinado", codigo: "si", etiqueta: "Sí", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "si_no_no_determinado", codigo: "no", etiqueta: "No", orden: 1, estado: "vigente", cc: "PR-021" },
@@ -118,14 +118,14 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_infraestructura", codigo: "critico", etiqueta: "Crítico", orden: 3, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_infraestructura", codigo: "no_aplica", etiqueta: "No aplica", orden: 4, estado: "vigente", cc: "PR-021" },
 
-  // --- tipo_inspeccion_realizada: D-206 (INSPECCION) ---
+  // --- tipo_inspeccion_realizada: D-196 (INSPECCION) ---
   { catalogo: "tipo_inspeccion_realizada", codigo: "evaluacion_inicial", etiqueta: "Evaluación inicial", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "tipo_inspeccion_realizada", codigo: "reevaluacion", etiqueta: "Reevaluación", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "tipo_inspeccion_realizada", codigo: "evaluacion_instrumental", etiqueta: "Evaluación instrumental", orden: 2, estado: "vigente", cc: "PR-021" },
   { catalogo: "tipo_inspeccion_realizada", codigo: "monitoreo", etiqueta: "Monitoreo", orden: 3, estado: "vigente", cc: "PR-021" },
   { catalogo: "tipo_inspeccion_realizada", codigo: "levantamiento", etiqueta: "Levantamiento", orden: 4, estado: "vigente", cc: "PR-021" },
 
-  // --- subtipo_inspeccion: D-207 (INSPECCION), dominio dependiente de
+  // --- subtipo_inspeccion: D-197 (INSPECCION), dominio dependiente de
   //     tipo_inspeccion_realizada — un campo, dominio irregular, no
   //     separado por "/" como los demás (ver catalogs.test.ts). ---
   { catalogo: "subtipo_inspeccion", codigo: "seguimiento", etiqueta: "Seguimiento", padre: "reevaluacion", estado: "vigente", cc: "PR-021" },
@@ -137,12 +137,12 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "subtipo_inspeccion", codigo: "estructural", etiqueta: "Estructural", padre: "monitoreo", estado: "vigente", cc: "PR-021" },
   { catalogo: "subtipo_inspeccion", codigo: "vitalidad", etiqueta: "Vitalidad", padre: "monitoreo", estado: "vigente", cc: "PR-021" },
 
-  // --- forma_alcorque: D-131 ---
+  // --- forma_alcorque: D-121 ---
   { catalogo: "forma_alcorque", codigo: "rectangular", etiqueta: "Rectangular", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "forma_alcorque", codigo: "circular", etiqueta: "Circular", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "forma_alcorque", codigo: "irregular", etiqueta: "Irregular", orden: 2, estado: "vigente", cc: "PR-021" },
 
-  // --- tipo_red_aerea: D-149, selección múltiple ---
+  // --- tipo_red_aerea: D-139, selección múltiple ---
   { catalogo: "tipo_red_aerea", codigo: "electrica", etiqueta: "Eléctrica", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "tipo_red_aerea", codigo: "telecomunicaciones", etiqueta: "Telecomunicaciones", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "tipo_red_aerea", codigo: "alumbrado_publico", etiqueta: "Alumbrado público", orden: 2, estado: "vigente", cc: "PR-021" },

@@ -1,31 +1,31 @@
 /**
- * Fechas sugeridas de reinspección y monitoreo (INSPECCION: D-212
- * `fecha_proxima_inspeccion`, D-213 `fecha_proximo_monitoreo`). Fuente:
- * Excel maestro 2.1.0. Entrada: `nivel_riesgo` (D-210, igual a
+ * Fechas sugeridas de reinspección y monitoreo (INSPECCION: D-202
+ * `fecha_proxima_inspeccion`, D-203 `fecha_proximo_monitoreo`). Fuente:
+ * Excel maestro 2.1.0. Entrada: `nivel_riesgo` (D-200, igual a
  * `clasificacion_riesgo` del REGISTRO_EVALUACION vinculado, incluido
  * su ajuste) y `fecha_inspeccion`. Salida: el rango sugerido completo
  * (inicio y fin) — SIVU solo lo muestra como recordatorio; no agenda
- * nada automáticamente (D-212/D-213, validación y dependencias).
+ * nada automáticamente (D-202/D-203, validación y dependencias).
  *
- * D-212 (reinspección): Bajo 24 meses (sin rango, un solo valor);
+ * D-202 (reinspección): Bajo 24 meses (sin rango, un solo valor);
  * Moderado 12 meses (sin rango); Alto 1 a 3 meses; Extremo 1 a 4
- * semanas. D-213 (monitoreo): Bajo 12 meses (sin rango); Moderado 3 a
+ * semanas. D-203 (monitoreo): Bajo 12 meses (sin rango); Moderado 3 a
  * 6 meses; Alto 2 a 4 semanas; Extremo "inmediato y continuo mientras
  * persista el peligro" — no es un desplazamiento de fecha ni tiene
  * fin, se modela aparte (`inmediatoYContinuo`), con la fecha de
  * inspección como único punto (`fechaInicio`, `fechaFin: null`).
  *
- * Cuando el Excel da un solo valor (Bajo en ambas, Moderado en D-212),
+ * Cuando el Excel da un solo valor (Bajo en ambas, Moderado en D-202),
  * `fechaFin` es igual a `fechaInicio`: no hay una franja, es un punto.
  *
- * `nivel_riesgo = no_determinado` (CC-045 b, 2026-10-22): D-210 exige
- * `nivel_riesgo` y D-212/D-213 son fechas Obligatorias, pero
- * `clasificacion_riesgo` puede calcularse como No determinado (D-181)
+ * `nivel_riesgo = no_determinado` (CC-045 b, 2026-10-22): D-200 exige
+ * `nivel_riesgo` y D-202/D-203 son fechas Obligatorias, pero
+ * `clasificacion_riesgo` puede calcularse como No determinado (D-171)
  * — una inspección en ese caso nunca podría finalizarse si las fechas
  * quedaran sin valor. Decisión (opción B, criterio de precaución): se
  * usan los mismos rangos que Extremo, con un motivo explícito para que
  * la interfaz muestre por qué. `nivel_riesgo` sigue siendo el riesgo
- * **efectivo** (D-210, incluido el ajuste del Inspector — CC-044): si
+ * **efectivo** (D-200, incluido el ajuste del Inspector — CC-044): si
  * se ajusta a un valor determinado, las fechas usan ese valor, no el
  * de precaución.
  *
@@ -47,8 +47,8 @@ import { ClasificacionRiesgoCodigo, esCodigoVigente } from "./catalogs";
 
 export interface FechaSugeridaResultado {
   fechaInicio: string | null; // AAAA-MM-DD, inicio del rango sugerido; null si noDeterminable
-  fechaFin: string | null; // AAAA-MM-DD, fin del rango sugerido; igual a fechaInicio si el Excel da un solo valor; null si noDeterminable o si no aplica (Extremo en D-213)
-  inmediatoYContinuo?: boolean; // true solo en fecha_proximo_monitoreo con nivel_riesgo = extremo (D-213)
+  fechaFin: string | null; // AAAA-MM-DD, fin del rango sugerido; igual a fechaInicio si el Excel da un solo valor; null si noDeterminable o si no aplica (Extremo en D-203)
+  inmediatoYContinuo?: boolean; // true solo en fecha_proximo_monitoreo con nivel_riesgo = extremo (D-203)
   noDeterminable: boolean;
   motivo?: string;
 }
@@ -102,7 +102,7 @@ function validarEntradas(
     };
   }
   if (nivelRiesgo === null) {
-    return { fechaInicio: null, fechaFin: null, noDeterminable: true, motivo: "nivel_riesgo sin valor (D-210, obligatorio)" };
+    return { fechaInicio: null, fechaFin: null, noDeterminable: true, motivo: "nivel_riesgo sin valor (D-200, obligatorio)" };
   }
   if (!esCodigoVigente("clasificacion_riesgo", nivelRiesgo)) {
     return {
@@ -115,7 +115,7 @@ function validarEntradas(
   return { nivelRiesgo, fechaInspeccionISO };
 }
 
-/** D-212: fecha_proxima_inspeccion. */
+/** D-202: fecha_proxima_inspeccion. */
 export function calcularFechaProximaInspeccion(
   nivelRiesgo: ClasificacionRiesgoCodigo | null,
   fechaInspeccionISO: string | null,
@@ -143,7 +143,7 @@ export function calcularFechaProximaInspeccion(
   }
 }
 
-/** D-213: fecha_proximo_monitoreo. */
+/** D-203: fecha_proximo_monitoreo. */
 export function calcularFechaProximoMonitoreo(
   nivelRiesgo: ClasificacionRiesgoCodigo | null,
   fechaInspeccionISO: string | null,
@@ -162,7 +162,7 @@ export function calcularFechaProximoMonitoreo(
     case "alto":
       return { fechaInicio: sumarSemanas(f, 2), fechaFin: sumarSemanas(f, 4), noDeterminable: false }; // rango 2 a 4 semanas
     case "extremo":
-      // D-213: "inmediato y continuo mientras persista el peligro" — no
+      // D-203: "inmediato y continuo mientras persista el peligro" — no
       // es un desplazamiento de fecha ni tiene fin; el punto de partida
       // es la propia fecha de inspección.
       return { fechaInicio: f, fechaFin: null, inmediatoYContinuo: true, noDeterminable: false };

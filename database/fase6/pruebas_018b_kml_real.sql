@@ -1,5 +1,5 @@
 -- =====================================================================
--- Pruebas de la migración 018b con KML reales (D-265; CC-047)
+-- Pruebas de la migración 018b con KML reales (D-255; CC-047)
 -- =====================================================================
 --
 -- Solo en `valpo-verde-conecta-pruebas`, con la 018b aplicada. Todo

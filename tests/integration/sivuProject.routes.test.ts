@@ -37,7 +37,7 @@ function authAsMunicipal() {
   mockFindUserProfileById.mockResolvedValue(municipalProfileRow());
 }
 
-describe("POST /api/sivu/projects/sector-preview (D-265; CC-047)", () => {
+describe("POST /api/sivu/projects/sector-preview (D-255; CC-047)", () => {
   it("admin -> 200 con cada elemento, su índice y su estado", async () => {
     authAsAdmin();
     const vista = {
@@ -110,7 +110,7 @@ describe("POST /api/sivu/projects/sector-preview (D-265; CC-047)", () => {
 describe("PATCH /api/sivu/projects/:id — delimitación del sector", () => {
   const body = { sector: { geometria_sector: { formato: "kml", archivoBase64: KML_BASE64, indicesSeleccionados: [0] } } };
 
-  it("admin -> 200 con superficiesExcluidas (D-265: informar la exclusión también al modificar)", async () => {
+  it("admin -> 200 con superficiesExcluidas (D-255: informar la exclusión también al modificar)", async () => {
     authAsAdmin();
     mockFindProyectoById.mockResolvedValue({ id: PROJECT_ID });
     mockFindSectorByProyectoId.mockResolvedValue({ id: "s1" });

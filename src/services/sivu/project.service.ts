@@ -107,7 +107,7 @@ export async function crearProyectoConSector(
 
 /**
  * POST /api/sivu/projects/sector-preview. Solo admin; no guarda nada
- * (D-265: "mostrar una vista previa... antes de guardar"; "si existen
+ * (D-255: "mostrar una vista previa... antes de guardar"; "si existen
  * varias superficies, permitir seleccionar las que integrarán el
  * sector"). Lista cada elemento del archivo con su índice y su estado
  * (CC-047): `valida`, `invalida` (con motivo; no seleccionable) o
@@ -173,7 +173,7 @@ export async function editarProyecto(
 }
 
 /**
- * PATCH /api/sivu/projects/:id/estado (D-275; CC-042). Solo admin.
+ * PATCH /api/sivu/projects/:id/estado (D-265; CC-042). Solo admin.
  */
 export async function cambiarEstadoProyecto(
   user: AuthenticatedUser,
@@ -218,7 +218,7 @@ function traducirErrorProyectoOSector(err: unknown): Error {
   const error = err as Error;
   const cause = (error as { cause?: unknown }).cause;
 
-  // Rechazo de la geometría del sector (D-265; CC-047), o de una nueva
+  // Rechazo de la geometría del sector (D-255; CC-047), o de una nueva
   // delimitación que deja árboles fuera (CC-046): el pedido está bien
   // formado, pero su contenido no se puede aceptar.
   if (cause === SQLSTATE_GEOMETRIA_SECTOR || cause === SQLSTATE_ARBOL_FUERA_SECTOR) {

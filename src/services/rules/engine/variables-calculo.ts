@@ -1,13 +1,13 @@
 /**
  * Variables "Calculado por plataforma... No admite ingreso manual"
- * (DICCIONARIO_CAMPOS): SL_basal_pct (D-56), R_radio_basal_cm (D-58),
- * t_R_basal (D-59); SL_tronco_pct (D-68), R_radio_tronco_cm (D-70),
- * t_R_tronco (D-71); superficie_alcorque_m2 (D-135). R01 y R02 reciben
+ * (DICCIONARIO_CAMPOS): SL_basal_pct (D-46), R_radio_basal_cm (D-48),
+ * t_R_basal (D-49); SL_tronco_pct (D-58), R_radio_tronco_cm (D-60),
+ * t_R_tronco (D-61); superficie_alcorque_m2 (D-125). R01 y R02 reciben
  * las mediciones crudas (D, d, Cc, C, t) y llaman a estas funciones —
  * nunca reciben el resultado ya calculado ni lo aceptan como entrada.
  *
  * superficie_alcorque_m2 es un caso especial: cuando forma_alcorque =
- * "Irregular", el Excel dice "ingreso manual" (D-135) — ahí la
+ * "Irregular", el Excel dice "ingreso manual" (D-125) — ahí la
  * plataforma NO calcula nada, solo valida que el Inspector haya
  * informado un valor > 0 m² y lo deja pasar tal cual. Rectangular y
  * Circular sí se calculan aquí, desde largo×ancho o el diámetro.
@@ -41,7 +41,7 @@ function campoFaltanteOInvalido(valor: number | null, nombre: string): string | 
 }
 
 /**
- * SL% = [(d³ + (Cc/C) × (D³ − d³)) / D³] × 100 (D-56, D-68).
+ * SL% = [(d³ + (Cc/C) × (D³ − d³)) / D³] × 100 (D-46, D-58).
  * D = diámetro de la sección; d = diámetro de la cavidad; Cc = longitud
  * de la abertura; C = circunferencia de la sección.
  */
@@ -69,8 +69,8 @@ function calcularSeveridadLongitud(m: {
   if (d <= 0) return { valor: null, motivo: "d debe ser > 0" };
   if (Cc <= 0) return { valor: null, motivo: "Cc debe ser > 0" };
   if (C <= 0) return { valor: null, motivo: "C debe ser > 0" };
-  if (d > D) return { valor: null, motivo: "d debe ser ≤ D (D-56)" };
-  if (Cc >= C) return { valor: null, motivo: "Cc debe ser < C (D-56)" };
+  if (d > D) return { valor: null, motivo: "d debe ser ≤ D (D-46)" };
+  if (Cc >= C) return { valor: null, motivo: "Cc debe ser < C (D-46)" };
 
   const valor = ((d ** 3 + (Cc / C) * (D ** 3 - d ** 3)) / D ** 3) * 100;
   if (!Number.isFinite(valor)) return { valor: null, motivo: `resultado no finito (${valor})` };
@@ -78,7 +78,7 @@ function calcularSeveridadLongitud(m: {
   return { valor };
 }
 
-/** R = D / 2 (D-58, D-70). */
+/** R = D / 2 (D-48, D-60). */
 function calcularRadio(D: number | null): ResultadoCalculo {
   const error = campoFaltanteOInvalido(D, "D");
   if (error) return { valor: null, motivo: error };
@@ -89,7 +89,7 @@ function calcularRadio(D: number | null): ResultadoCalculo {
   return { valor };
 }
 
-/** t/R = t / R (D-59, D-71). */
+/** t/R = t / R (D-49, D-61). */
 function calcularEspesorSobreRadio(t: number | null, R: ResultadoCalculo): ResultadoCalculo {
   if (R.valor === null) return { valor: null, motivo: `R no calculable: ${R.motivo}` };
   const error = campoFaltanteOInvalido(t, "t");
@@ -164,7 +164,7 @@ export function calcularTRTronco(
 // ---------------------------------------------------------------------
 
 /**
- * superficie_alcorque_m2 (D-135): Rectangular → largo × ancho; Circular
+ * superficie_alcorque_m2 (D-125): Rectangular → largo × ancho; Circular
  * → π × (diámetro/2)²; Irregular → ingreso manual del Inspector (no se
  * calcula: solo se valida que sea un número finito > 0 m² y se deja
  * pasar tal cual).
@@ -177,7 +177,7 @@ export function calcularSuperficieAlcorqueM2(m: {
   superficie_alcorque_m2_manual: number | null; // solo tiene sentido si forma_alcorque = "irregular"
 }): ResultadoCalculo {
   if (m.forma_alcorque === null) {
-    return { valor: null, motivo: "forma_alcorque sin valor (D-131, condicional activado por existe_alcorque = Sí)" };
+    return { valor: null, motivo: "forma_alcorque sin valor (D-121, condicional activado por existe_alcorque = Sí)" };
   }
   if (!esCodigoVigente("forma_alcorque", m.forma_alcorque)) {
     return { valor: null, motivo: `forma_alcorque tiene un código no reconocido ("${m.forma_alcorque}")` };
@@ -190,8 +190,8 @@ export function calcularSuperficieAlcorqueM2(m: {
     if (errorAncho) return { valor: null, motivo: errorAncho };
     const largo = m.largo_alcorque_m as number;
     const ancho = m.ancho_alcorque_m as number;
-    if (largo <= 0) return { valor: null, motivo: "largo_alcorque_m debe ser > 0 (D-132)" };
-    if (ancho <= 0) return { valor: null, motivo: "ancho_alcorque_m debe ser > 0 (D-133)" };
+    if (largo <= 0) return { valor: null, motivo: "largo_alcorque_m debe ser > 0 (D-122)" };
+    if (ancho <= 0) return { valor: null, motivo: "ancho_alcorque_m debe ser > 0 (D-123)" };
     const valor = largo * ancho;
     if (!Number.isFinite(valor) || valor <= 0) return { valor: null, motivo: `resultado inválido (${valor})` };
     return { valor };
@@ -201,18 +201,18 @@ export function calcularSuperficieAlcorqueM2(m: {
     const errorDiametro = campoFaltanteOInvalido(m.diametro_alcorque_m, "diametro_alcorque_m");
     if (errorDiametro) return { valor: null, motivo: errorDiametro };
     const diametro = m.diametro_alcorque_m as number;
-    if (diametro <= 0) return { valor: null, motivo: "diametro_alcorque_m debe ser > 0 (D-134)" };
+    if (diametro <= 0) return { valor: null, motivo: "diametro_alcorque_m debe ser > 0 (D-124)" };
     const valor = Math.PI * (diametro / 2) ** 2;
     if (!Number.isFinite(valor) || valor <= 0) return { valor: null, motivo: `resultado inválido (${valor})` };
     return { valor };
   }
 
-  // forma_alcorque === "irregular": D-135 dice "ingreso manual" — la
+  // forma_alcorque === "irregular": D-125 dice "ingreso manual" — la
   // plataforma no calcula nada aquí, solo valida el valor que informó
   // el Inspector y lo deja pasar tal cual.
   const errorManual = campoFaltanteOInvalido(m.superficie_alcorque_m2_manual, "superficie_alcorque_m2_manual");
   if (errorManual) return { valor: null, motivo: errorManual };
   const manual = m.superficie_alcorque_m2_manual as number;
-  if (manual <= 0) return { valor: null, motivo: "superficie_alcorque_m2_manual debe ser > 0 m² (D-135)" };
+  if (manual <= 0) return { valor: null, motivo: "superficie_alcorque_m2_manual debe ser > 0 m² (D-125)" };
   return { valor: manual };
 }

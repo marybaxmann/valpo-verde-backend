@@ -14,7 +14,7 @@
  * con motivo — nunca 0 (CC-024) — y se propaga al resultado completo.
  *
  * `defoliacion_estimada_pct` no es un cálculo de la plataforma — es
- * una estimación visual directa del Inspector (D-93, Obligatorio), a
+ * una estimación visual directa del Inspector (D-83, Obligatorio), a
  * diferencia de SL_basal_pct/SL_tronco_pct de R01/R02.
  *
  * `reglaId`: el ID exacto de REGLAS_INDICADORES que produjo el
@@ -38,7 +38,7 @@ export interface R03Input {
   desequilibrio_copa: boolean | null; // obligatorio
 
   // --- Defoliación (CR-DEF) ---
-  defoliacion_estimada_pct: number | null; // obligatorio; [0, 100] (D-93)
+  defoliacion_estimada_pct: number | null; // obligatorio; [0, 100] (D-83)
 }
 
 export interface IndicadorResultado {
@@ -70,7 +70,7 @@ function evaluarRamasSecas(input: R03Input): IndicadorResultado {
     return noDeterminado("ramas_secas sin valor (CR-RSE, obligatorio)");
   }
   if (!esBooleanoValido(input.ramas_secas)) {
-    return noDeterminado(motivoFueraDominioSiNo("ramas_secas", input.ramas_secas, "D-86"));
+    return noDeterminado(motivoFueraDominioSiNo("ramas_secas", input.ramas_secas, "D-76"));
   }
   if (!input.ramas_secas) return indicador("despreciable", "CR-RSE-01");
 
@@ -82,7 +82,7 @@ function evaluarRamasSecas(input: R03Input): IndicadorResultado {
     return noDeterminado(`ramas_secas_pct_copa no es un número finito (${pct})`);
   }
   if (pct <= 0 || pct > 100) {
-    return noDeterminado(`ramas_secas_pct_copa fuera de rango (0–100 %, estrictamente > 0) (${pct}) (D-87)`);
+    return noDeterminado(`ramas_secas_pct_copa fuera de rango (0–100 %, estrictamente > 0) (${pct}) (D-77)`);
   }
   if (pct < 10) return indicador("leve", "CR-RSE-02");
   if (pct <= 50) return indicador("moderada", "CR-RSE-03");
@@ -95,7 +95,7 @@ function evaluarRamasQuebradas(input: R03Input): IndicadorResultado {
     return noDeterminado("ramas_quebradas sin valor (CR-RQU, obligatorio)");
   }
   if (!esBooleanoValido(input.ramas_quebradas)) {
-    return noDeterminado(motivoFueraDominioSiNo("ramas_quebradas", input.ramas_quebradas, "D-89"));
+    return noDeterminado(motivoFueraDominioSiNo("ramas_quebradas", input.ramas_quebradas, "D-79"));
   }
   return input.ramas_quebradas ? indicador("leve", "CR-RQU-02") : indicador("despreciable", "CR-RQU-01");
 }
@@ -106,7 +106,7 @@ function evaluarDesequilibrioCopa(input: R03Input): IndicadorResultado {
     return noDeterminado("desequilibrio_copa sin valor (CR-DES, obligatorio)");
   }
   if (!esBooleanoValido(input.desequilibrio_copa)) {
-    return noDeterminado(motivoFueraDominioSiNo("desequilibrio_copa", input.desequilibrio_copa, "D-96"));
+    return noDeterminado(motivoFueraDominioSiNo("desequilibrio_copa", input.desequilibrio_copa, "D-86"));
   }
   return input.desequilibrio_copa ? indicador("leve", "CR-DES-02") : indicador("despreciable", "CR-DES-01");
 }
@@ -121,7 +121,7 @@ function evaluarDefoliacion(input: R03Input): IndicadorResultado {
     return noDeterminado(`defoliacion_estimada_pct no es un número finito (${pct})`);
   }
   if (pct < 0 || pct > 100) {
-    return noDeterminado(`defoliacion_estimada_pct fuera de rango 0–100 % (${pct}) (D-93)`);
+    return noDeterminado(`defoliacion_estimada_pct fuera de rango 0–100 % (${pct}) (D-83)`);
   }
   if (pct <= 10) return indicador("despreciable", "CR-DEF-01");
   if (pct <= 25) return indicador("leve", "CR-DEF-02");

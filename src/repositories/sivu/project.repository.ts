@@ -42,7 +42,7 @@ const SECTOR_COLUMNS = "id, project_id, nombre_sector, superficie_sector_m2, cre
 export const POSTGRES_RAISE_EXCEPTION = "P0001";
 
 /**
- * SQLSTATE propio de los rechazos de geometría del sector (D-265;
+ * SQLSTATE propio de los rechazos de geometría del sector (D-255;
  * CC-047), en `fn_extraer_superficies_kml` / `fn_build_sector_geometria`
  * / `fn_unir_y_validar_superficies` (migración 018b). El service lo
  * traduce a 422 sin depender del texto del mensaje.
@@ -171,7 +171,7 @@ export interface CrearProyectoConSectorResult {
 /**
  * Invoca `fn_create_project_with_sector` (migración 018b): PROYECTOS +
  * SECTORES en una sola transacción (una sola invocación de la función
- * ya lo es), con la validación geométrica de D-265 hecha en SQL. Con
+ * ya lo es), con la validación geométrica de D-255 hecha en SQL. Con
  * `supabaseAdmin` (`service_role`): la autorización (`assertAdmin`) ya
  * ocurrió en el service antes de llamar esto (ADR-014 v2.0; ADR-017
  * v1.1) — no se repite el patrón de `fn_create_tree_with_measurement`,
@@ -204,7 +204,7 @@ export async function crearProyectoConSectorRpc(
  * Invoca `fn_extraer_superficies_kml` (migración 018b) para la vista
  * previa (POST /api/sivu/projects/sector-preview): lista cada elemento
  * de un KML/KMZ con su índice y estado, sin guardar nada, para que el
- * Administrador elija cuáles integran el sector (D-265; CC-047) antes
+ * Administrador elija cuáles integran el sector (D-255; CC-047) antes
  * de crear o editar.
  */
 export async function previsualizarSuperficiesKmlRpc(kml: string): Promise<VistaPreviaSuperficies> {
@@ -248,7 +248,7 @@ export async function updateNombreSector(projectId: string, nombreSector: string
 
 /**
  * PATCH geometria_sector, vía `fn_update_sector_geometria` (migración
- * 018b): misma validación de D-265 que al crear. Bloqueado si el
+ * 018b): misma validación de D-255 que al crear. Bloqueado si el
  * proyecto está cerrado (trg_sectors_proyecto_cerrado).
  */
 export async function updateGeometriaSector(
@@ -271,7 +271,7 @@ export async function updateGeometriaSector(
 }
 
 /**
- * PATCH estado_proyecto (D-275; CC-042). El trigger `trg_projects_self_closed`
+ * PATCH estado_proyecto (D-265; CC-042). El trigger `trg_projects_self_closed`
  * solo deja pasar la transición de estado (cerrar/reabrir), nunca otro
  * cambio mientras está cerrado.
  */

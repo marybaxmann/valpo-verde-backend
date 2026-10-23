@@ -3,7 +3,7 @@
  * columnas finales). Entradas: clasificacion_riesgo × clasificacion_
  * infraestructura. Salida: clasificacion_prioridad.
  *
- * Reglas (D-182, PR-008 v2.0):
+ * Reglas (D-172, PR-008 v2.0):
  * - Si clasificacion_infraestructura = No aplica, usar la columna Bajo.
  * - Todo riesgo Extremo entrega prioridad Crítica (la fila Extremo de
  *   la matriz ya es Crítica en las cuatro columnas; no es un caso
@@ -70,7 +70,7 @@ export function evaluarM05(
     };
   }
 
-  // D-182: No aplica usa la columna Bajo.
+  // D-172: No aplica usa la columna Bajo.
   const columna: ColumnaInfraestructura =
     clasificacionInfraestructuraEfectiva === "no_aplica" ? "bajo" : clasificacionInfraestructuraEfectiva;
 

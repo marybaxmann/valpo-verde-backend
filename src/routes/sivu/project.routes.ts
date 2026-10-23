@@ -22,7 +22,7 @@ const router = Router();
 // desde los services (mismo patrón que project.routes.ts, sin subcarpeta).
 router.get("/", authMiddleware, listProyectos);
 router.post("/", authMiddleware, crearProyecto);
-// Vista previa del sector (D-265; CC-047): no guarda nada. Antes de
+// Vista previa del sector (D-255; CC-047): no guarda nada. Antes de
 // "/:id" para que no se lea "sector-preview" como un id.
 router.post("/sector-preview", authMiddleware, previsualizarSectorController);
 router.get("/:id", authMiddleware, getProyecto);

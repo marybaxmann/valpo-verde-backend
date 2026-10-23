@@ -352,7 +352,7 @@ describe("IN-RSU — Red subterránea", () => {
     });
     expect(r.componentes.redSubterranea.categoria).toBe("sin_afectacion");
   });
-  it("IN-RSU-07: afectación física = No, compromete = No determinado → No determinado (D-180: se excluye)", () => {
+  it("IN-RSU-07: afectación física = No, compromete = No determinado → No determinado (D-170: se excluye)", () => {
     const r = evaluarM04({
       ...base(), ...conRedes, red_subterranea_presente: "si",
       afectacion_fisica_red_subterranea: false, compromete_funcionalidad_red_subterranea: "no_determinado",
@@ -461,7 +461,7 @@ describe("reglaId — el ID de REGLAS_INDICADORES (o del gate IN-GEN-01) que pro
   });
 });
 
-describe("M04 — normalización P_I% (D-180: No aplica y No determinado se excluyen de P_I y n)", () => {
+describe("M04 — normalización P_I% (D-170: No aplica y No determinado se excluyen de P_I y n)", () => {
   it("n = 0 (los seis componentes excluidos) → clasificacion_infraestructura = No aplica", () => {
     const r = evaluarM04({
       ...base(),

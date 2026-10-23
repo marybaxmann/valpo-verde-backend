@@ -17,7 +17,7 @@
  * propaga al resultado completo.
  *
  * SL_tronco_pct, R_radio_tronco_cm y t_R_tronco son "Calculado por
- * plataforma... No admite ingreso manual" (D-68, D-70, D-71): este
+ * plataforma... No admite ingreso manual" (D-58, D-60, D-61): este
  * módulo recibe las mediciones crudas y los calcula con
  * variables-calculo.ts — nunca los recibe ya calculados.
  *
@@ -46,11 +46,11 @@ export interface R02Input {
   presenta_cavidad_pudricion_tronco: boolean | null; // obligatorio
   cavidad_externa_tronco: boolean | null; // condicional: activado por presenta_cavidad_pudricion_tronco = Sí
   cavidad_interna_tronco: ResultadoCavidadInternaCodigo | null; // condicional: activado por presenta_cavidad_pudricion_tronco = Sí
-  D_diametro_tronco_cm: number | null; // D-64, condicional: presenta_cavidad_pudricion_tronco = Sí
-  d_diametro_cavidad_tronco_cm: number | null; // D-65, condicional: cavidad_externa_tronco = Sí
-  Cc_longitud_abertura_tronco_cm: number | null; // D-66, condicional: cavidad_externa_tronco = Sí
-  C_circunferencia_tronco_cm: number | null; // D-67, condicional: cavidad_externa_tronco = Sí
-  t_pared_residual_tronco_cm: number | null; // D-69, condicional: cavidad_interna_tronco = "si"
+  D_diametro_tronco_cm: number | null; // D-54, condicional: presenta_cavidad_pudricion_tronco = Sí
+  d_diametro_cavidad_tronco_cm: number | null; // D-55, condicional: cavidad_externa_tronco = Sí
+  Cc_longitud_abertura_tronco_cm: number | null; // D-56, condicional: cavidad_externa_tronco = Sí
+  C_circunferencia_tronco_cm: number | null; // D-57, condicional: cavidad_externa_tronco = Sí
+  t_pared_residual_tronco_cm: number | null; // D-59, condicional: cavidad_interna_tronco = "si"
 
   // --- Heridas (TR-HER) ---
   presenta_heridas_tronco: boolean | null; // obligatorio
@@ -131,7 +131,7 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
   }
   if (!esBooleanoValido(input.presenta_cavidad_pudricion_tronco)) {
     return {
-      indicador: noDeterminado(motivoFueraDominioSiNo("presenta_cavidad_pudricion_tronco", input.presenta_cavidad_pudricion_tronco, "D-61")),
+      indicador: noDeterminado(motivoFueraDominioSiNo("presenta_cavidad_pudricion_tronco", input.presenta_cavidad_pudricion_tronco, "D-51")),
     };
   }
   if (!input.presenta_cavidad_pudricion_tronco) return { indicador: indicador("despreciable", "TR-CAV-01") };
@@ -153,7 +153,7 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
     };
   }
   if (!esBooleanoValido(input.cavidad_externa_tronco)) {
-    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_externa_tronco", input.cavidad_externa_tronco, "D-62")) };
+    return { indicador: noDeterminado(motivoFueraDominioSiNo("cavidad_externa_tronco", input.cavidad_externa_tronco, "D-52")) };
   }
 
   let SL_tronco_pct: ResultadoCalculo | undefined;
@@ -178,7 +178,7 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
   }
 
   if (porSL === null && porTR === null) {
-    // D-62/D-63: con presenta_cavidad_pudricion_tronco = Sí, externa e
+    // D-52/D-53: con presenta_cavidad_pudricion_tronco = Sí, externa e
     // interna no pueden ser ambas No. No se inventa una categoría.
     return {
       indicador: noDeterminado(
@@ -224,7 +224,7 @@ function evaluarHeridas(input: R02Input): IndicadorResultado {
     return noDeterminado("presenta_heridas_tronco sin valor (TR-HER, obligatorio)");
   }
   if (!esBooleanoValido(input.presenta_heridas_tronco)) {
-    return noDeterminado(motivoFueraDominioSiNo("presenta_heridas_tronco", input.presenta_heridas_tronco, "D-72"));
+    return noDeterminado(motivoFueraDominioSiNo("presenta_heridas_tronco", input.presenta_heridas_tronco, "D-62"));
   }
   if (!input.presenta_heridas_tronco) return indicador("despreciable", "TR-HER-01");
 
@@ -245,7 +245,7 @@ function evaluarCortezaMuertaAusente(input: R02Input): IndicadorResultado {
     return noDeterminado("corteza_muerta_ausente sin valor (TR-COR, obligatorio)");
   }
   if (!esBooleanoValido(input.corteza_muerta_ausente)) {
-    return noDeterminado(motivoFueraDominioSiNo("corteza_muerta_ausente", input.corteza_muerta_ausente, "D-74"));
+    return noDeterminado(motivoFueraDominioSiNo("corteza_muerta_ausente", input.corteza_muerta_ausente, "D-64"));
   }
   return input.corteza_muerta_ausente ? indicador("moderada", "TR-COR-02") : indicador("despreciable", "TR-COR-01");
 }
@@ -256,7 +256,7 @@ function evaluarExudaciones(input: R02Input): IndicadorResultado {
     return noDeterminado("presenta_exudaciones sin valor (TR-EXU, obligatorio)");
   }
   if (!esBooleanoValido(input.presenta_exudaciones)) {
-    return noDeterminado(motivoFueraDominioSiNo("presenta_exudaciones", input.presenta_exudaciones, "D-75"));
+    return noDeterminado(motivoFueraDominioSiNo("presenta_exudaciones", input.presenta_exudaciones, "D-65"));
   }
   return input.presenta_exudaciones ? indicador("leve", "TR-EXU-02") : indicador("despreciable", "TR-EXU-01");
 }
@@ -267,7 +267,7 @@ function evaluarFisurasGrietas(input: R02Input): IndicadorResultado {
     return noDeterminado("presenta_fisura_grieta_tronco sin valor (TR-GRI, obligatorio)");
   }
   if (!esBooleanoValido(input.presenta_fisura_grieta_tronco)) {
-    return noDeterminado(motivoFueraDominioSiNo("presenta_fisura_grieta_tronco", input.presenta_fisura_grieta_tronco, "D-77"));
+    return noDeterminado(motivoFueraDominioSiNo("presenta_fisura_grieta_tronco", input.presenta_fisura_grieta_tronco, "D-67"));
   }
   if (!input.presenta_fisura_grieta_tronco) return indicador("despreciable", "TR-GRI-01");
 
@@ -295,7 +295,7 @@ function evaluarCodominancia(input: R02Input): IndicadorResultado {
     return noDeterminado("troncos_codominantes sin valor (TR-COD, obligatorio)");
   }
   if (!esBooleanoValido(input.troncos_codominantes)) {
-    return noDeterminado(motivoFueraDominioSiNo("troncos_codominantes", input.troncos_codominantes, "D-82"));
+    return noDeterminado(motivoFueraDominioSiNo("troncos_codominantes", input.troncos_codominantes, "D-72"));
   }
   if (!input.troncos_codominantes) return indicador("despreciable", "TR-COD-01");
 
@@ -303,7 +303,7 @@ function evaluarCodominancia(input: R02Input): IndicadorResultado {
     return noDeterminado("grieta_union_codominante sin valor (TR-COD, condicional activado por troncos_codominantes = Sí)");
   }
   if (!esBooleanoValido(input.grieta_union_codominante)) {
-    return noDeterminado(motivoFueraDominioSiNo("grieta_union_codominante", input.grieta_union_codominante, "D-84"));
+    return noDeterminado(motivoFueraDominioSiNo("grieta_union_codominante", input.grieta_union_codominante, "D-74"));
   }
   if (input.grieta_union_codominante) return indicador("severa", "TR-COD-02");
 
@@ -311,7 +311,7 @@ function evaluarCodominancia(input: R02Input): IndicadorResultado {
     return noDeterminado("corteza_incluida sin valor (TR-COD, condicional activado por troncos_codominantes = Sí)");
   }
   if (!esBooleanoValido(input.corteza_incluida)) {
-    return noDeterminado(motivoFueraDominioSiNo("corteza_incluida", input.corteza_incluida, "D-83"));
+    return noDeterminado(motivoFueraDominioSiNo("corteza_incluida", input.corteza_incluida, "D-73"));
   }
   return input.corteza_incluida ? indicador("moderada", "TR-COD-03") : indicador("leve", "TR-COD-04");
 }
@@ -325,7 +325,7 @@ export interface R02Resultado {
     fisurasGrietas: IndicadorResultado;
     codominancia: IndicadorResultado;
   };
-  /** Variables calculadas (D-68, D-70, D-71), solo cuando la rama correspondiente se activó. */
+  /** Variables calculadas (D-58, D-60, D-61), solo cuando la rama correspondiente se activó. */
   variablesCalculo: {
     SL_tronco_pct?: ResultadoCalculo;
     R_radio_tronco_cm?: ResultadoCalculo;

@@ -7,7 +7,7 @@ import { GeometriaSectorInput, VistaPreviaSectorBody } from "../../schemas/sivu/
  * Límites operativos del backend (elegidos acá, no definidos por el
  * Excel, que no fija ningún tamaño): protección contra archivos
  * KML/KMZ desproporcionados y contra bombas ZIP (un KMZ pequeño que se
- * descomprime a un KML enorme). D-265 no pide un tamaño — esto es una
+ * descomprime a un KML enorme). D-255 no pide un tamaño — esto es una
  * medida operativa, igual que el límite de `express.json` en `app.ts`.
  */
 const ARCHIVO_MAX_BYTES = 5 * 1024 * 1024; // 5 MB, antes de descomprimir
@@ -19,7 +19,7 @@ const ARCHIVO_BASE64_MAX_CHARS = Math.ceil((ARCHIVO_MAX_BYTES * 4) / 3) + 100;
  * Forma de la geometría ya resuelta a lo que esperan
  * `fn_create_project_with_sector`/`fn_update_sector_geometria`: GeoJSON
  * como objeto, o KML como texto crudo (un KMZ ya se desempaquetó acá;
- * la base nunca ve un ZIP, solo el KML que contiene — D-265: "En KMZ,
+ * la base nunca ve un ZIP, solo el KML que contiene — D-255: "En KMZ,
  * extraer el contenido KML").
  */
 export interface GeometriaParaRpc {

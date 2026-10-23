@@ -73,7 +73,7 @@ export async function editarProyectoController(
       throw new AppError(parsedBody.error.issues[0]?.message ?? "Datos inválidos", 400);
     }
 
-    // 200 con cuerpo (no 204): D-265 pide informar los puntos y líneas
+    // 200 con cuerpo (no 204): D-255 pide informar los puntos y líneas
     // excluidos también al modificar la delimitación.
     const data = await editarProyecto(req.user!, parsedParams.data.id, parsedBody.data, req.accessToken!);
     res.json({ data });

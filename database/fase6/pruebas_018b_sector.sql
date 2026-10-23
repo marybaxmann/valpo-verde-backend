@@ -1,5 +1,5 @@
 -- =====================================================================
--- Pruebas de la migración 018b — geometría del sector (D-265; CC-047)
+-- Pruebas de la migración 018b — geometría del sector (D-255; CC-047)
 -- =====================================================================
 --
 -- Solo en `valpo-verde-conecta-pruebas`, DESPUÉS de aplicar la 018b

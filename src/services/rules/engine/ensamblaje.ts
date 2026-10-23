@@ -3,15 +3,17 @@
  * formato de salida de `evaluations` y `tree_assessments` (migración
  * 014). Puro: no consulta Supabase, `work_orders`, `v_tree_current_
  * inputs` ni `classification_adjustments` — recibe todo ya armado. La
- * composición de valores vigentes (§3.10 bis, D-180 bis) la entrega la
- * Fase 6 desde `v_tree_current_inputs`; este módulo no la recalcula.
+ * composición de valores vigentes (diseño Fase 3, §3.10 bis; REGLAS_
+ * GENERALES "Preguardado y finalización"; CC-040) la entrega la Fase 6
+ * desde `v_tree_current_inputs`; este módulo no la recalcula.
  *
  * Dos funciones, no una, porque `evaluations` y `tree_assessments` son
- * conceptualmente distintas (D-214): `evaluations` es el resultado de
- * *esta* inspección (`variables_calculo` = lo registrado + lo vigente
- * en ese momento); `tree_assessments` es la evaluación *vigente* del
- * árbol, recompuesta campo por campo tras cada OT completada o
- * inspección anulada (§3.10 bis).
+ * conceptualmente distintas (diseño Fase 3, §3.9 y §3.10 bis):
+ * `evaluations` es el resultado de *esta* inspección
+ * (`variables_calculo` = lo registrado + lo vigente en ese momento);
+ * `tree_assessments` es la evaluación *vigente* del árbol, recompuesta
+ * campo por campo tras cada OT completada o inspección anulada
+ * (diseño Fase 3, §3.10 bis).
  *
  * Orden de cálculo (corregido por la responsable, 2026-10-22): R04
  * (riesgo calculado) y M04 (infraestructura calculada) → se resuelve
@@ -20,11 +22,11 @@
  * el valor efectivo de prioridad comparando contra el resultado de
  * M05 que se acaba de calcular → fechas sugeridas (solo en
  * `ensamblarResultadoEvaluacion`) con nivel_riesgo = riesgo efectivo
- * (D-210: "igual a clasificacion_riesgo... incluido su ajuste").
+ * (D-200: "igual a clasificacion_riesgo... incluido su ajuste").
  *
  * CC-044 (2026-10-22): el Inspector puede ajustar una clasificación
  * cuyo valor calculado es `no_determinado` (riesgo/prioridad) o
- * `no_aplica` (infraestructura), con justificación — D-181 y PR-008
+ * `no_aplica` (infraestructura), con justificación — D-171 y PR-008
  * v2.0 permiten el ajuste justificado pero el Excel no decía si aplica
  * cuando el cálculo no está determinado. `valorCalculadoEnElAjuste`
  * admite esos dos valores sin problema (es solo una foto del momento);
@@ -64,7 +66,7 @@
  * resuelta en silencio): la migración 014 NO tiene columnas
  * `fecha_proxima_inspeccion`/`fecha_proximo_monitoreo` en `evaluations`
  * — esas dos columnas (más sus `_sugerida`) viven en `inspections`
- * (§3.8; D-212/D-213). Tampoco existe una columna `nivel_riesgo`: por
+ * (§3.8; D-202/D-203). Tampoco existe una columna `nivel_riesgo`: por
  * diseño (§1 principio 5, "valores derivados no se duplican") nunca
  * se guarda — se deriva en vivo con la vista `v_inspections` (D-200).
  * Por eso esta función devuelve `inspeccion: { nivelRiesgo,
@@ -101,7 +103,7 @@ import { RULE_VERSION } from "./version";
 // 1. Alcance por tipo de inspección (CC-040 a, b)
 // =====================================================================
 
-/** R01: las entradas de la cavidad basal (D-49 a D-59). */
+/** R01: las entradas de la cavidad basal (D-39 a D-47). */
 const CAMPOS_INSTRUMENTAL_R01 = [
   "cavidad_pudricion_basal",
   "cavidad_basal_externa",
@@ -113,7 +115,7 @@ const CAMPOS_INSTRUMENTAL_R01 = [
   "t_pared_residual_basal_cm",
 ] as const;
 
-/** R02: las entradas de la cavidad del tronco (D-61 a D-69). */
+/** R02: las entradas de la cavidad del tronco (D-51 a D-59). */
 const CAMPOS_INSTRUMENTAL_R02 = [
   "presenta_cavidad_pudricion_tronco",
   "cavidad_externa_tronco",
@@ -137,7 +139,7 @@ const CAMPOS_FITOSANITARIO = new Set<string>([
   "presenta_exudaciones",
 ]);
 
-/** Todas las entradas de R01 (D-33 a D-59). */
+/** Todas las entradas de R01 (D-33 a D-47). */
 const CAMPOS_R01 = [
   "levantamiento_del_plato_radicular",
   "angulo_inclinacion",
@@ -154,7 +156,7 @@ const CAMPOS_R01 = [
   "t_pared_residual_basal_cm",
 ] as const;
 
-/** Todas las entradas de R02 (D-61 a D-84). */
+/** Todas las entradas de R02 (D-51 a D-74). */
 const CAMPOS_R02 = [
   "presenta_cavidad_pudricion_tronco",
   "cavidad_externa_tronco",
@@ -176,7 +178,7 @@ const CAMPOS_R02 = [
   "corteza_incluida",
 ] as const;
 
-/** Todas las entradas de R03 (D-86 a D-93). */
+/** Todas las entradas de R03 (D-76 a D-86). */
 const CAMPOS_R03 = ["ramas_secas", "ramas_secas_pct_copa", "ramas_quebradas", "desequilibrio_copa", "defoliacion_estimada_pct"] as const;
 
 /** Monitoreo, subtipo Estructural (CC-040 decisión a): entradas de R01 + R02 + R03. */
@@ -253,7 +255,7 @@ export function validarAlcance(
 // =====================================================================
 
 /**
- * Entradas de alcorque (D-130 a D-135): no las consume ninguna regla
+ * Entradas de alcorque (D-120 a D-125): no las consume ninguna regla
  * de clasificación de M04 (M04 solo usa las 3 condiciones booleanas
  * de IN-ALC) — se agregan aquí solo para poder calcular
  * `superficie_alcorque_m2` y exponerla en `calculados`, tal como pidió
@@ -288,9 +290,9 @@ export interface NucleoResultado {
   clasificacionRaicesCuello: ClasificacionRiesgoCodigo;
   clasificacionTronco: ClasificacionRiesgoCodigo;
   clasificacionCopaRamas: ClasificacionRiesgoCodigo;
-  /** "no_determinado" (D-181) cuando algún componente no se pudo clasificar. */
+  /** "no_determinado" (D-171) cuando algún componente no se pudo clasificar. */
   clasificacionRiesgoCalculada: ClasificacionRiesgoCodigo;
-  /** Nunca "no_determinado" (D-180): bajo/moderado/alto/critico/no_aplica. */
+  /** Nunca "no_determinado" (D-170): bajo/moderado/alto/critico/no_aplica. */
   clasificacionInfraestructuraCalculada: ClasificacionInfraestructuraCodigo;
 }
 
@@ -349,7 +351,7 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
     R_radio_tronco_cm: nucleo.r02.variablesCalculo.R_radio_tronco_cm,
     t_R_tronco: nucleo.r02.variablesCalculo.t_R_tronco,
     superficie_alcorque_m2: calcularSuperficieAlcorqueM2(entradas),
-    // D-152, calculado desde distancia_copa_red_aerea_m (D-150) — no es
+    // D-142, calculado desde distancia_copa_red_aerea_m (D-140) — no es
     // un ResultadoCalculo con `motivo`; es "cumple"/"no_cumple"/null.
     cumplimiento_distancia_seguridad_bt_mt: calcularCumplimientoDistanciaSeguridad(entradas.distancia_copa_red_aerea_m),
   };
@@ -418,7 +420,7 @@ export interface AjusteDescartado {
  * en cada campo. `no_determinado` (riesgo, prioridad) y `no_aplica`
  * (infraestructura) son resultados calculados legítimos, pero el
  * Inspector nunca ajusta *a* ellos — un ajuste siempre resuelve a una
- * categoría concreta (D-181, PR-008 v2.0).
+ * categoría concreta (D-171, PR-008 v2.0).
  */
 const CODIGOS_AJUSTE_VALIDOS: Record<AjusteDescartado["campo"], readonly string[]> = {
   clasificacion_riesgo: ["bajo", "moderado", "alto", "extremo"],
@@ -611,7 +613,7 @@ function resolverAjustesYPrioridad(
 // =====================================================================
 
 export interface ArgsResultadoEvaluacion {
-  /** Solo lo registrado en esta inspección (D-214). Se usa para el alcance (CC-040) y se devuelve tal cual — nunca para calcular. */
+  /** Solo lo registrado en esta inspección (diseño Fase 3, §3.10 bis; REGLAS_GENERALES "Preguardado y finalización"; CC-040). Se usa para el alcance y se devuelve tal cual — nunca para calcular. */
   variables: Record<string, unknown>;
   /** Registrado + vigente en ese momento, ya compuesto por la Fase 6 (§3.9). Esto es lo que se calcula. */
   variablesCalculo: NucleoEntradas;
@@ -659,7 +661,7 @@ export interface ResultadoEvaluacion {
    * `evaluations`.
    */
   inspeccion: {
-    nivelRiesgo: ClasificacionRiesgoCodigo; // D-210; informativo, no se persiste
+    nivelRiesgo: ClasificacionRiesgoCodigo; // D-200; informativo, no se persiste
     fechaProximaInspeccionSugerida: FechaSugeridaResultado; // -> inspections.fecha_proxima_inspeccion_sugerida
     fechaProximoMonitoreoSugerida: FechaSugeridaResultado; // -> inspections.fecha_proximo_monitoreo_sugerida
   };
@@ -778,7 +780,7 @@ export interface ResultadoVigente {
 }
 
 /**
- * No calcula fechas sugeridas: D-212/D-213 son columnas de
+ * No calcula fechas sugeridas: D-202/D-203 son columnas de
  * `inspections`, y `tree_assessments` no tiene columnas de fecha (ver
  * la discrepancia documentada en el encabezado del archivo). Tampoco
  * valida alcance: la composición por tipo de inspección ya ocurrió en

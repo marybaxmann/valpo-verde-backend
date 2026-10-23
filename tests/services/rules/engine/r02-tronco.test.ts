@@ -130,7 +130,7 @@ describe("TR-CAV — Cavidad del tronco", () => {
     expect(r.indicadores.cavidadTronco.motivo).toMatch(/código no reconocido/);
   });
 
-  it("D-62/D-63: pudrición = Sí con externa = No e interna = No es una combinación inválida → no_determinado", () => {
+  it("D-52/D-53: pudrición = Sí con externa = No e interna = No es una combinación inválida → no_determinado", () => {
     const r = evaluarR02({ ...base(), presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: false, cavidad_interna_tronco: "no" });
     expect(r.indicadores.cavidadTronco.noDeterminado).toBe(true);
     expect(r.probabilidadFalla).toBe("no_determinado");

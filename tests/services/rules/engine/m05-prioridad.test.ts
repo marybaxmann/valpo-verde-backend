@@ -41,7 +41,7 @@ describe("M05 — las 16 celdas de la matriz", () => {
   });
 });
 
-describe("M05 — D-182: infraestructura No aplica usa la columna Bajo", () => {
+describe("M05 — D-172: infraestructura No aplica usa la columna Bajo", () => {
   it.each([
     ["bajo", "baja"],
     ["moderado", "baja"],

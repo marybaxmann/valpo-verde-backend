@@ -1,10 +1,10 @@
 /**
  * R04 — Clasificación global de riesgo del árbol (DICCIONARIO_CAMPOS
- * D-181; MATRICES_CALCULO). Entradas: clasificacion_raices_cuello +
+ * D-171; MATRICES_CALCULO). Entradas: clasificacion_raices_cuello +
  * clasificacion_tronco + clasificacion_copa_ramas (salida de
  * M02+M03, uno por componente). Salida: clasificacion_riesgo.
  *
- * Regla (D-181): el nivel más alto entre los tres componentes, según
+ * Regla (D-171): el nivel más alto entre los tres componentes, según
  * la jerarquía Bajo < Moderado < Alto < Extremo. Si algún componente
  * queda no_determinado, el resultado completo queda no_determinado —
  * nunca se calcula con los otros dos ignorando el que falta.
@@ -62,12 +62,12 @@ export function evaluarR04(
 
   const noDeterminados = componentes.filter((c) => c.valor === "no_determinado");
   if (noDeterminados.length > 0) {
-    // D-181: si algún componente queda no_determinado, el valor calculado
+    // D-171: si algún componente queda no_determinado, el valor calculado
     // queda no_determinado — no se calcula con los dos restantes.
     return {
       clasificacionRiesgo: null,
       noDeterminado: true,
-      motivo: `${noDeterminados.map((c) => c.nombre).join(", ")} = no_determinado (D-181)`,
+      motivo: `${noDeterminados.map((c) => c.nombre).join(", ")} = no_determinado (D-171)`,
     };
   }
 

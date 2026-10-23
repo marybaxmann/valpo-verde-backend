@@ -4,11 +4,11 @@
  *
  * M02: probabilidad_falla_componente × probabilidad_impacto →
  * probabilidad_falla_impacto. Es un resultado intermedio: no tiene
- * columna propia en evaluations/tree_assessments (D-176 a D-178 usan
+ * columna propia en evaluations/tree_assessments (D-166 a D-168 usan
  * M02+M03 como un solo paso), pero se expone (`evaluarM02`) para
  * poder probar sus 16 celdas por separado.
  * M03: probabilidad_falla_impacto × consecuencia_componente →
- * clasificacion_riesgo_componente (D-176/177/178), también expuesta
+ * clasificacion_riesgo_componente (D-166/167/168), también expuesta
  * (`evaluarM03`) para probar sus 16 celdas.
  *
  * `evaluarClasificacionComponente` compone ambas matrices a partir de
@@ -103,7 +103,7 @@ export function evaluarM03(
     };
   }
   if (consecuencia === null) {
-    return { clasificacion: null, noDeterminado: true, motivo: "consecuencia_* sin valor (D-170/171/172, obligatorio)" };
+    return { clasificacion: null, noDeterminado: true, motivo: "consecuencia_* sin valor (D-160/161/162, obligatorio)" };
   }
   if (!esCodigoVigente("consecuencia", consecuencia)) {
     return { clasificacion: null, noDeterminado: true, motivo: `consecuencia_* tiene un código no reconocido ("${consecuencia}")` };

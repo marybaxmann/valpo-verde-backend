@@ -6,9 +6,9 @@ import { geometriaSectorInput, textoObligatorio } from "./common.schema";
  * sola transacción (diseño §3.3; un sector por proyecto). Solo
  * `admin` (PR-004 v7.0).
  *
- * - `nombre_proyecto`: D-274, obligatorio, no vacío.
- * - `sector.nombre_sector`: D-264, obligatorio, no vacío.
- * - `sector.geometria_sector`: D-265, obligatorio.
+ * - `nombre_proyecto`: D-264, obligatorio, no vacío.
+ * - `sector.nombre_sector`: D-254, obligatorio, no vacío.
+ * - `sector.geometria_sector`: D-255, obligatorio.
  */
 export const crearProyectoConSectorSchema = z
   .object({
@@ -48,7 +48,7 @@ export const editarProyectoSchema = z
 export type EditarProyectoBody = z.infer<typeof editarProyectoSchema>;
 
 /**
- * Body de PATCH /api/sivu/projects/:id/estado (D-275; CC-042). Solo
+ * Body de PATCH /api/sivu/projects/:id/estado (D-265; CC-042). Solo
  * `admin`. Códigos snake_case ya fijados en la base (migración 012):
  * `'activo'` / `'cerrado'`.
  */

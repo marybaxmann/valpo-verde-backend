@@ -409,6 +409,22 @@ metodológica ni la implementación.
    el Excel maestro ni el código. Una decisión pendiente
    no se implementa (§9).
 6. No se borran versiones anteriores: se marcan como reemplazadas (§4).
+7. **Citas `D-n` (fila de DICCIONARIO_CAMPOS):** `D-n` es la fila de la
+   hoja `DICCIONARIO_CAMPOS` en el `.xlsx` (encabezado en la fila 1; `D-2`
+   es la primera fila de datos) — **nunca** la línea del CSV exportado
+   por `scripts/metodologia/exportar_excel.py`. Ese CSV cita con comillas
+   y saltos de línea dentro de una celda (la columna "Validación y
+   dependencias" es la más larga); desde que la primera celda trae un
+   salto de línea, una fila de la hoja ocupa varias líneas físicas del
+   CSV y la numeración se desfasa del número de fila real (confirmado:
+   desfase de +10 desde aproximadamente la fila 33 en adelante, hasta al
+   menos la fila 267). Antes de citar `D-n` en un CC, un comentario de
+   código o un test, verificar la fila real con
+   `scripts/metodologia/fila_diccionario.py` — nunca contar líneas del
+   CSV ni asumir una correspondencia 1:1. (AM-16, roadmap: una entrada
+   anterior invirtió este criterio y mandó usar la línea del CSV "en
+   todo lo nuevo", lo que propagó el error a CC-043–CC-047, AM-15, el
+   motor de reglas y las migraciones 018b a 018d — corregido 2026-10-23.)
 
 ### 14.3 Cuándo se requiere un CC
 
