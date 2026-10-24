@@ -2138,3 +2138,153 @@ motivo)
 | 2026-10-22 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ajuste del mensaje del punto (1): nombra la superficie inválida y la válida a seleccionar. |
 | 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Aplicada y probada en `valpo-verde-conecta-pruebas` (018a/018b; P1–P9, R1–R3, K1–K7; reversión y reaplicación); asesor de seguridad sin avisos nuevos. |
 | 2026-10-23 | APROBADO METODOLÓGICAMENTE | Claude Code | Citas D-n corregidas a la fila real del Excel (D-265 → D-255; `geometria_sector`); error de numeración mío, no de la responsable (ver `scripts/metodologia/fila_diccionario.py`). |
+
+---
+
+### CC-048 — `evaluations` admite una fila en Preguardado
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-23 |
+| Origen | Planificación del #58 (OT e inspecciones por tipo). Al diseñar dónde se guardan los datos de REGISTRO_EVALUACION mientras una inspección está Preguardado, se encontró que el diseño de la Fase 3 (§3.6, §3.8, §3.9) y REGLAS_GENERALES "Historial y vigencia" ("Mientras una inspección está Preguardado, el Inspector puede modificar todos sus datos") y D-209 (Preguardado/Finalizado se calcula a partir de los datos ya guardados) suponen que esos datos se guardan, pero `evaluations` (migración 014) tenía `variables_calculo`, `rule_version` y `motor_commit` como NOT NULL sin default — ninguno de los tres existe hasta que el motor corre (al finalizar, §3.9), lo que impedía crear la fila antes de ese momento. `calculados` y `calculado_at` ya eran opcionales: el diseño sí previó una fila "antes del cálculo", pero quedó inconsistente con esos tres NOT NULL. |
+| Tipo | 3 — modelo de datos (consistencia física; sin impacto en el Excel, igual que CC-041) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | `evaluations.variables_calculo`, `.rule_version`, `.motor_commit` (pasan a ser opcionales); nuevo `CHECK chk_evaluations_calculado_coherente`. |
+| Versión anterior | `variables_calculo`, `rule_version` y `motor_commit` NOT NULL sin default — una fila de `evaluations` no podía existir hasta que el motor ya hubiera corrido. |
+| Versión nueva | Los tres pasan a ser opcionales. Nuevo CHECK de coherencia: si `calculado_at` es NULL, todas las columnas de resultado (`variables_calculo`, `rule_version`, `motor_commit`, `calculados`, `indicadores`, los puntajes y probabilidades de falla por componente, `probabilidad_impacto`, las clasificaciones calculadas y ajustadas) también son NULL — la fila es un borrador Preguardado. Si `calculado_at` tiene valor, `variables_calculo`, `rule_version` y `motor_commit` son obligatorios — el motor ya corrió. `variables` sigue NOT NULL: es obligatorio desde el primer guardado (es lo que el Inspector ya registró). Flujo del #58: el primer guardado del Inspector crea `inspections` (Preguardado) y `evaluations` solo con `variables`; los campos de ARBOLES van a `tree_data_versions` con el mismo `inspection_id`. Cada guardado siguiente actualiza esas mismas filas (nunca inserta una nueva), solo mientras la inspección siga Preguardado — se rechaza con SV058 si ya está Finalizada o Anulada. **Ajuste por CC-050 punto 3:** además, la OT debe estar **En ejecución** en cada guardado (no solo "distinta de Completada/Cancelada") — se rechaza con SV058 si está Pendiente, Programada, Completada o Cancelada. **Validaciones agregadas (2026-10-23, todas con SV058):** solo el Inspector asignado actual (`responsable_accion_id`), activo y con rol Inspector, puede crear o guardar — cubre la reasignación sin paso adicional (CC-050: el anterior queda bloqueado de inmediato); la OT debe ser `tipo_ot = Inspección`, `tipo_inspeccion_realizada` debe igualar la `Accion_solicitada` de la OT (D-196) y `subtipo_inspeccion` debe pertenecer a ese tipo (D-197); el árbol de la inspección debe ser el de la OT (salvo Levantamiento); si un guardado ya no trae campos de ARBOLES, se borra la fila de `tree_data_versions` de esa inspección. Todo en una función `SECURITY DEFINER` (`fn_save_inspection_draft`), mismo patrón sin motor en medio que `fn_create_tree_alta` (018d): una sola invocación ya es atómica. El cálculo real (motor, `variables_calculo`, `calculado_at`) sigue siendo del #59/#72, al finalizar — esta función nunca lo toca. |
+| Motivo | Sin esta corrección, el modelo físico no podía representar lo que el Excel exige (que los datos de una inspección Preguardado se guarden) — una inconsistencia entre el diseño (que ya dejó `calculados`/`calculado_at` opcionales) y el NOT NULL de las otras tres columnas, que nadie había resuelto hasta planificar el #58. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-23. |
+| Archivos afectados | `database/migrations/018e_evaluations_preguardado.sql` y `.down.sql`; `database/schema.sql`; `database/fase6/pruebas_018e_inspection_draft.sql` (B1–B4); esta ficha. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Ninguno: es una corrección del modelo físico, no de la metodología (igual que CC-041). |
+| Impacto en BD | Migración 018e (sin aplicar todavía): `ALTER COLUMN ... DROP NOT NULL` ×3, `CHECK chk_evaluations_calculado_coherente`, `CREATE TYPE tree_data_versions_arbol_input`, `fn_save_inspection_draft`. |
+| Impacto en backend | Fase 6 (#58): nuevo repositorio/servicio que invoca `fn_save_inspection_draft`. |
+| Impacto en API | Fase 6 (#58): endpoint de guardado (crear/actualizar) de una inspección en Preguardado. |
+| Impacto en frontend | Ninguno todavía (Fase 7). |
+| Pruebas necesarias | `database/fase6/pruebas_018e_inspection_draft.sql`: B0 (crear con la OT Pendiente se rechaza, SV058), B1 (primer guardado con la OT En ejecución crea las tres filas), B2 (segundo guardado en Preguardado actualiza, no duplica), B3 (la OT se cancela con la inspección todavía Preguardada — permitido — y el siguiente guardado se rechaza porque ya no está En ejecución), B4 (guardar sobre una inspección Finalizada se rechaza con SV058, sin modificar nada), B5 (violar el CHECK de coherencia con un UPDATE directo se rechaza), B7 (un usuario sin rol Inspector se rechaza), B8 (tipo distinto de la Accion_solicitada de la OT se rechaza), B9 (árbol distinto al de la OT se rechaza), B10 (un guardado sin campos de ARBOLES borra la fila de tree_data_versions). **B6 y B11 (otro Inspector / reasignación) quedan escritos pero bloqueados:** no existe ningún usuario con rol Inspector en `valpo-verde-conecta-pruebas` (verificado 2026-10-23; solo 2 admin y 2 usuario_municipal) — necesitan al menos dos. |
+| Dependencias | CC-040 (alcance por tipo de inspección); CC-050 (estados de la OT, punto 3); migración 014 (`evaluations`); migración 018d (`fn_create_tree_alta`, mismo patrón); #57; #59/#72 (consumen `variables_calculo`/`calculado_at` al finalizar). |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-23 |
+| Fecha de implementación | — |
+| Commits / PR asociados | `feature/fase6-backend-api`, sin PR todavía. |
+| Observaciones | Migración mostrada a la responsable antes de aplicar; pendiente de aprobación para aplicar en `valpo-verde-conecta-pruebas`. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial. Implementación en la 018e pendiente; se muestra el SQL antes de aplicar. |
+| 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Ajustada por CC-050 punto 3: la OT debe estar En ejecución en cada guardado, no solo distinta de Completada/Cancelada. Casos B0 y B3 agregados a las pruebas. |
+
+---
+
+### CC-049 — Política de Storage para fotos (cierre de AM-14)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-23 |
+| Origen | AM-14 (roadmap): el §6 de la Fase 3 no define la política de Storage para el bucket de fotos; la migración 017 (RLS, CC-033) no la tocó porque no existe ningún bucket ni política en `valpo-verde-conecta-pruebas` (verificado). Propuesta de la sesión al planificar el #58/#59 (las 4 vistas fotográficas son requisito de finalización, D-27/REGLAS_GENERALES), con los agregados de la responsable. |
+| Tipo | 2 — metodológico/operativo (política de Storage; sin impacto en el Excel más allá de lo ya vigente en PR-010 v4.0) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | Bucket de Supabase Storage para `photos` (ADR-011); `photos.storage_path`; el formulario público de incidencias (PR-022 v1.0). |
+| Versión anterior | Sin política definida (AM-14, PENDIENTE). |
+| Versión nueva | **(1) Bucket privado**, nunca público ni listable. **(2) Subida siempre a través del backend** (nunca el cliente directo a Storage), mismo principio de ADR-014 extendido a Storage. **(3) Lectura con enlaces firmados/temporales**, generados por el backend, solo para miembros del proyecto del árbol — el formulario público de incidencias solo sube, nunca lee fotos ajenas. **(4) Límite de tamaño: 10 MB por foto** (agregado de la responsable). **(5) Formato:** solo jpg/png (ya en el Excel, D-183/D-206/D-224), verificado **por el contenido real del archivo** (firma/`magic bytes`), no solo por la extensión o el `Content-Type` declarado (agregado de la responsable: cierra la vía de subir un archivo malicioso disfrazado de imagen). **(6) Fotos ciudadanas (formulario público, PR-022):** se les quitan los metadatos EXIF y GPS antes de guardarlas (agregado de la responsable: una fotografía con GPS revela la ubicación de quien reporta, no solo la del árbol) y se limitan los envíos del formulario público (rate limiting; cierra el pendiente ya anotado en el issue #62, "Límite de tasa del formulario público"). **(7)** `photos.storage_path` guarda la ruta privada; el backend resuelve la URL firmada al servir, nunca se guarda una URL pública fija. |
+| Motivo | Sin bucket privado ni subida por el backend, cualquiera con la URL podría ver fotos de árboles de otro proyecto. Sin verificar el contenido real del archivo, la extensión declarada no protege de un archivo ejecutable disfrazado de imagen. Sin quitar EXIF/GPS, una foto ciudadana expone dónde vive o trabaja quien reporta — un riesgo de privacidad que el Excel no contempla porque no es una decisión metodológica, es de seguridad operativa. |
+| Fundamento / fuente | Propuesta de la sesión (2026-10-23) con los agregados de la responsable (marybaxmann), mismo día. |
+| Archivos afectados | Esta ficha; pendiente de implementar: bucket y políticas de Storage, servicio de subida/lectura en el backend, límite de tasa del formulario público (#62). |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Ninguno: formato jpg/png y las 4 vistas ya estaban en el Excel (PR-010 v4.0); todo lo nuevo aquí es operativo (bucket, firmado, tamaño, EXIF/GPS, límite de tasa), no metodológico. |
+| Impacto en BD | Ninguno en el esquema (`photos` ya existe, migración 015); sí en Supabase Storage (bucket y políticas, fuera de `schema.sql`). |
+| Impacto en backend | Pendiente: servicio de subida (backend recibe el archivo, verifica contenido/tamaño, quita EXIF/GPS si es ciudadano, sube a Storage) y de lectura (URL firmada, verificando membresía del proyecto). |
+| Impacto en API | Pendiente: endpoint de subida por el backend; nunca una URL de Storage expuesta directamente al cliente. |
+| Impacto en frontend | Ninguno todavía (Fase 7). |
+| Pruebas necesarias | Por definir al implementar: archivo que no es jpg/png real aunque declare esa extensión → rechazado; foto > 10 MB → rechazada; foto ciudadana con EXIF/GPS → se guarda sin esos metadatos; lectura sin ser miembro del proyecto → rechazada; envíos excesivos del formulario público → limitados. |
+| Dependencias | AM-14 (cierra); PR-010 v4.0; PR-022 v1.0; ADR-011, ADR-014; issue #62 (límite de tasa del formulario público). |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-23 |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | Política aprobada; el bucket y las políticas de Storage todavía no se crean — queda para cuando se implemente la subida de fotos (Fase 6/7). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial. Cierra AM-14. Implementación (bucket, políticas, servicio de subida) pendiente. |
+
+---
+
+### CC-050 — Estados de la orden de trabajo (OT)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-23 |
+| Origen | DA-04 (roadmap, PA-07: "matrices y datos por transición, T-01 a T-13") — pendiente de decisión desde la auditoría postdemo. Decisión de la responsable al planificar el #58, para las OT de tipo Inspección. |
+| Tipo | 2 — metodológico (transiciones de estado; detalla y en un punto corrige D-239/D-241) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | `work_orders.estado_ot` (D-239), `.fecha_accion_programada` (D-241), `.responsable_accion_id` (D-244); `inspections.estado_registro` (indirectamente, vía `fn_save_inspection_draft`). |
+| Versión anterior | D-239 solo definía el dominio (Pendiente/Programada/En ejecución/Completada/Cancelada) y la regla de Mantenimiento; no decía quién hace cada transición de una OT de Inspección, ni qué pasa al cancelar o reasignar. D-241 decía que `fecha_accion_programada` la ingresa el Usuario municipal. |
+| Versión nueva | **Pendiente:** valor inicial, al crearla el Usuario municipal. **Pendiente → Programada → En ejecución:** solo las hace el responsable asignado (`responsable_accion_id`): el Inspector si `Tipo_ot = Inspección`, el Encargado de mantención si `Tipo_ot = Mantenimiento`. Al pasar a Programada, el responsable ingresa `fecha_accion_programada` — **cambia el "quién lo ingresa" de D-241** (hoy dice Usuario municipal); va a AM-15. **Registro de la inspección:** el Inspector solo puede crear o guardar una inspección (incluido el Preguardado) cuando la OT está **En ejecución** — implementado en `fn_save_inspection_draft` (018e; CC-048), rechaza con SV058 cualquier otro estado. **Completada (OT de Inspección):** la marca el Usuario municipal. Requisitos: ninguna inspección en Preguardado (D-239, ya vigente) **y al menos una Finalizada** (adición: D-239 no lo exigía — sin esto, una OT sin ninguna inspección registrada podría completarse trivialmente). Al completarla se registra `fecha_completada_ot` y los datos pasan a ser vigentes (#60). Las OT de Mantenimiento siguen como dice el Excel (D-239, REGLAS_GENERALES "Revisión de mantenimiento") — sin cambios. **Cancelada:** la cancela el Usuario municipal desde Pendiente, Programada o En ejecución, con motivo; se notifica al responsable (CC-051). Sus inspecciones en Preguardado se conservan como historial, de solo lectura, y nunca pasan a ser vigentes. Una OT cancelada no se reabre: si hace falta, se crea una nueva. **Cambio de responsable:** el Usuario municipal puede cambiarlo mientras la OT no esté Completada ni Cancelada; se notifica al nuevo y al anterior (CC-051). Los borradores en Preguardado se mantienen y solo el nuevo responsable puede continuarlos; el anterior pierde el acceso. Se conserva quién registró cada dato (autoría histórica, D-207). |
+| Motivo | DA-04/PA-07 quedaron pendientes desde la auditoría postdemo; sin estas reglas, el #58 no podía implementarse de forma consistente (¿quién puede guardar una inspección, y cuándo?) ni el #59/#61 (finalización, cierre de Mantenimiento). El requisito de "al menos una Finalizada" para completar cierra un vacío real: D-239 solo prohibía completar con inspecciones en Preguardado, pero no exigía que existiera al menos una — permitiendo completar una OT sin ninguna inspección real. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-23. |
+| Archivos afectados | `database/migrations/018e_evaluations_preguardado.sql` (`fn_save_inspection_draft`, punto "Registro de la inspección"); esta ficha. Pendiente de implementar: el resto de la máquina de estados (transiciones Pendiente→Programada→En ejecución por el responsable, Completada con el requisito nuevo, Cancelada, cambio de responsable) — no es parte del #58; corresponde a un issue propio, todavía sin número asignado. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: D-241 columna "¿Quién lo ingresa?" (Usuario municipal → el responsable asignado, al pasar a Programada) y D-239 columna de validación (agregar "y al menos una inspección Finalizada" al requisito de Completada) — en la próxima versión del paquete (AM-15). |
+| Impacto en BD | Implementado en 018e: `fn_save_inspection_draft` exige `estado_ot = 'en_ejecucion'`. Pendiente: triggers/funciones para el resto de las transiciones (issue por asignar). |
+| Impacto en backend | Parcial (#58, vía 018e). El resto — autorización por rol para cada transición, cancelación, reasignación — pendiente, issue por asignar. |
+| Impacto en API | Pendiente (issue por asignar). |
+| Impacto en frontend | Ninguno todavía (Fase 7). |
+| Pruebas necesarias | Implementadas en `database/fase6/pruebas_018e_inspection_draft.sql`: B0 (crear con la OT Pendiente se rechaza), B3 (la OT se cancela con la inspección Preguardada — permitido — y el guardado siguiente se rechaza). Pendientes (issue por asignar): Pendiente→Programada→En ejecución solo por el responsable; Completada exige al menos una Finalizada; cancelación con motivo y notificación; cambio de responsable con notificación y pérdida/transferencia de acceso al borrador. |
+| Dependencias | DA-04, PA-07 (roadmap); D-239, D-241, D-244; CC-048 (018e, punto "Registro de la inspección"); CC-051 (notificaciones de cancelación y reasignación); #58, #59, #61. |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-23 |
+| Fecha de implementación | Parcial: 2026-10-23 (018e, punto 3). El resto, pendiente. |
+| Commits / PR asociados | `feature/fase6-backend-api`, sin PR todavía. |
+| Observaciones | Decisión completa registrada ahora; la implementación de la máquina de estados completa (más allá del punto 3, ya en la 018e) necesita un issue propio — no se mezcla con el #58. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial. Punto 3 (OT En ejecución para guardar una inspección) implementado en la 018e; el resto queda pendiente de un issue propio. |
+
+---
+
+### CC-051 — Notificaciones (aviso en SIVU + correo)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-23 |
+| Origen | CC-050 (cancelación de una OT, cambio de responsable): ambos eventos requieren notificar a uno o más usuarios. Decisión de la responsable sobre el mecanismo. |
+| Tipo | 3 — modelo de datos / arquitectura (nuevo mecanismo transversal; sin impacto en el Excel) |
+| Estado | APROBADO — la propuesta técnica (tabla, proveedor, datos mínimos, tolerancia a fallos) aprobada el 2026-10-23 para cuando se implemente; bloque propio, independiente del #58 |
+| Regla / campo afectado | Ninguno del Excel. Mecanismo nuevo, transversal a cualquier evento que deba notificarse. |
+| Versión anterior | No existía ningún mecanismo de notificación. |
+| Versión nueva | Notificación por **dos vías**: un aviso dentro de SIVU (persistente, se puede marcar como leído) y un correo electrónico. Eventos iniciales (solo estos dos, por ahora): cancelación de una OT (al responsable) y cambio de responsable de una OT (al nuevo y al anterior). **Lectura de avisos:** `SELECT` por RLS, cada usuario solo ve los propios; **marcar como leído siempre a través del backend** (CC-033: ninguna escritura directa de `authenticated`/`anon`), nunca un `UPDATE` directo del cliente. **El proveedor de correo es un tercero que trata datos personales** (los correos de los usuarios notificados) — queda anotado como tal; su elección definitiva y el acuerdo/términos correspondientes quedan para cuando se implemente. **Dominio remitente verificado:** hace falta uno (p. ej. `notificaciones@sivu...`) antes de poder enviar correo con cualquier proveedor transaccional — lo consigue la responsable antes de implementar; sin él, este bloque no puede implementarse. Es un bloque propio, independiente del #58 — no se implementa como parte de él. |
+| Motivo | CC-050 exige notificar estos dos eventos; sin un mecanismo definido, no se puede implementar esa parte de CC-050. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-23. |
+| Archivos afectados | Ninguno todavía — propuesta escrita, sin implementar. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Pendiente de implementar: tabla `notifications` (`id`, `user_id`, `tipo`, `work_order_id`, `mensaje`, `leido_at` NULL = no leído, `email_enviado`, `email_error`, `created_at`); RLS: `SELECT` solo de filas propias, sin política de escritura para `authenticated`/`anon` (CC-033). |
+| Impacto en backend | Pendiente: servicio de notificaciones (aviso + correo), independiente del #58; endpoint para marcar como leído (único camino de escritura, con `service_role`, tras verificar que el aviso es del usuario autenticado). |
+| Impacto en API | Pendiente: listar avisos propios; marcar uno como leído (solo a través del backend). |
+| Impacto en frontend | Ninguno todavía (Fase 7): bandeja de avisos. |
+| Pruebas necesarias | Por definir al implementar: se crea el aviso al cancelar/reasignar; se marca como leído solo a través del backend (un intento directo del cliente se rechaza por RLS); el correo no bloquea el aviso dentro de SIVU si falla; el correo no incluye más datos personales que los mínimos necesarios; un usuario no puede leer avisos de otro. |
+| Dependencias | CC-050 (eventos que disparan la notificación); CC-033 (RLS, ninguna escritura directa); dominio remitente verificado (a conseguir por la responsable) y elección del proveedor de correo (tercero que trata datos personales) antes de implementar. |
+| rule_version | sin cambios |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-23 |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | Proveedor de correo sin elegir todavía (tercero que tratará datos personales — correos de los usuarios). Dominio remitente verificado: pendiente, lo consigue la responsable. Bloque propio: no se mezcla con el #58. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-23 | APROBADO METODOLÓGICAMENTE (el qué) | marybaxmann | Registro inicial. Diseño técnico (el cómo) propuesto por escrito. |
+| 2026-10-23 | APROBADO | marybaxmann | Propuesta técnica aprobada para cuando se implemente: tabla `notifications`, RLS de solo lectura propia con escritura (marcar leído) únicamente por el backend, proveedor de correo anotado como tercero que trata datos personales, dominio remitente verificado pendiente (lo consigue la responsable antes de implementar). |
