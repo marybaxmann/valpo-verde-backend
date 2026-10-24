@@ -48,9 +48,12 @@
 -- debe igualar `accion_solicitada` de la OT (D-196) y `subtipo_inspeccion`
 -- debe pertenecer a ese tipo (D-197, mismos pares que el registro de
 -- catálogos). (c) el árbol de la inspección debe ser el de la OT, salvo
--- Levantamiento. (d) si un guardado ya no trae campos de ARBOLES, se
--- borra la fila de `tree_data_versions` de esa inspección (el estado
--- del borrador es siempre el del guardado más reciente).
+-- Levantamiento — ahí (D-2; REGLAS_GENERALES fila 17: el Inspector
+-- puede registrar árboles nuevos sin alta municipal previa) el árbol
+-- debe ser del mismo proyecto que la OT (D-193), exista ya o se cree
+-- en esta inspección. (d) si un guardado ya no trae campos de ARBOLES,
+-- se borra la fila de `tree_data_versions` de esa inspección (el
+-- estado del borrador es siempre el del guardado más reciente).
 --
 -- El motor, `variables_calculo` y `calculado_at` son del #59/#72, al
 -- finalizar — esta función nunca los toca.
@@ -166,6 +169,8 @@ DECLARE
   v_accion_solicitada text;
   v_responsable_accion_id uuid;
   v_ot_tree_id uuid;
+  v_wo_project_id uuid;
+  v_tree_project_id uuid;
   v_rol text;
   v_activo boolean;
   v_subtipo_valido boolean;
@@ -175,8 +180,8 @@ DECLARE
 BEGIN
   -- La orden de trabajo debe existir, ser de tipo Inspección y estar En
   -- ejecución en cada guardado (CC-050 punto 3), no solo en el primero.
-  SELECT estado_ot, tipo_ot, accion_solicitada, responsable_accion_id, tree_id
-  INTO v_estado_ot, v_tipo_ot, v_accion_solicitada, v_responsable_accion_id, v_ot_tree_id
+  SELECT estado_ot, tipo_ot, accion_solicitada, responsable_accion_id, tree_id, project_id
+  INTO v_estado_ot, v_tipo_ot, v_accion_solicitada, v_responsable_accion_id, v_ot_tree_id, v_wo_project_id
   FROM public.work_orders WHERE id = p_work_order_id;
 
   IF v_estado_ot IS NULL THEN
@@ -243,9 +248,24 @@ BEGIN
   -- El árbol de la inspección debe ser el de la OT — salvo Levantamiento
   -- (OT.tree_id es NULL hasta que la inspección registra o reutiliza el
   -- árbol; mismo criterio que trg_inspections_tree_coherente, 014).
-  IF v_ot_tree_id IS NOT NULL AND v_ot_tree_id <> p_tree_id THEN
-    RAISE EXCEPTION 'El árbol de la inspección (%) no coincide con el árbol de la orden de trabajo (%)', p_tree_id, v_ot_tree_id
-      USING ERRCODE = 'SV058';
+  IF v_ot_tree_id IS NOT NULL THEN
+    IF v_ot_tree_id <> p_tree_id THEN
+      RAISE EXCEPTION 'El árbol de la inspección (%) no coincide con el árbol de la orden de trabajo (%)', p_tree_id, v_ot_tree_id
+        USING ERRCODE = 'SV058';
+    END IF;
+  ELSE
+    -- Levantamiento (D-2; REGLAS_GENERALES fila 17: el Inspector puede
+    -- registrar árboles nuevos sin alta municipal previa): el árbol,
+    -- exista ya o se cree en esta inspección, debe ser del mismo
+    -- proyecto que la OT (D-193) — nunca de otro proyecto.
+    SELECT project_id INTO v_tree_project_id FROM public.trees WHERE id = p_tree_id;
+    IF v_tree_project_id IS NULL THEN
+      RAISE EXCEPTION 'El árbol % no existe', p_tree_id USING ERRCODE = 'SV058';
+    END IF;
+    IF v_tree_project_id <> v_wo_project_id THEN
+      RAISE EXCEPTION 'El árbol % no pertenece al proyecto de la orden de trabajo de Levantamiento (D-193)', p_tree_id
+        USING ERRCODE = 'SV058';
+    END IF;
   END IF;
 
   IF v_inspection_id IS NULL THEN

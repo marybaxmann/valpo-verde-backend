@@ -1964,7 +1964,9 @@ CREATE TRIGGER trg_evaluations_updated_at
 -- (D-196) y subtipo_inspeccion debe pertenecer a ese tipo (D-197,
 -- mismos pares que catalogs.ts); el árbol de la inspección debe ser el
 -- de la OT, salvo Levantamiento (mismo criterio que
--- trg_inspections_tree_coherente). Si un guardado ya no trae campos de
+-- trg_inspections_tree_coherente) — ahí (D-2; REGLAS_GENERALES fila 17)
+-- el árbol debe ser del mismo proyecto que la OT (D-193), exista ya o
+-- se cree en esta inspección. Si un guardado ya no trae campos de
 -- ARBOLES, se borra la fila de tree_data_versions de esa inspección.
 CREATE TYPE tree_data_versions_arbol_input AS (
   sector                             text,
@@ -2020,6 +2022,8 @@ DECLARE
   v_accion_solicitada text;
   v_responsable_accion_id uuid;
   v_ot_tree_id uuid;
+  v_wo_project_id uuid;
+  v_tree_project_id uuid;
   v_rol text;
   v_activo boolean;
   v_subtipo_valido boolean;
@@ -2027,8 +2031,8 @@ DECLARE
   v_evaluation_id uuid;
   v_tree_data_version_id uuid;
 BEGIN
-  SELECT estado_ot, tipo_ot, accion_solicitada, responsable_accion_id, tree_id
-  INTO v_estado_ot, v_tipo_ot, v_accion_solicitada, v_responsable_accion_id, v_ot_tree_id
+  SELECT estado_ot, tipo_ot, accion_solicitada, responsable_accion_id, tree_id, project_id
+  INTO v_estado_ot, v_tipo_ot, v_accion_solicitada, v_responsable_accion_id, v_ot_tree_id, v_wo_project_id
   FROM work_orders WHERE id = p_work_order_id;
 
   IF v_estado_ot IS NULL THEN
@@ -2083,9 +2087,23 @@ BEGIN
       USING ERRCODE = 'SV058';
   END IF;
 
-  IF v_ot_tree_id IS NOT NULL AND v_ot_tree_id <> p_tree_id THEN
-    RAISE EXCEPTION 'El árbol de la inspección (%) no coincide con el árbol de la orden de trabajo (%)', p_tree_id, v_ot_tree_id
-      USING ERRCODE = 'SV058';
+  IF v_ot_tree_id IS NOT NULL THEN
+    IF v_ot_tree_id <> p_tree_id THEN
+      RAISE EXCEPTION 'El árbol de la inspección (%) no coincide con el árbol de la orden de trabajo (%)', p_tree_id, v_ot_tree_id
+        USING ERRCODE = 'SV058';
+    END IF;
+  ELSE
+    -- Levantamiento (D-2; REGLAS_GENERALES fila 17): el árbol, exista
+    -- ya o se cree en esta inspección, debe ser del mismo proyecto que
+    -- la OT (D-193) — nunca de otro proyecto.
+    SELECT project_id INTO v_tree_project_id FROM trees WHERE id = p_tree_id;
+    IF v_tree_project_id IS NULL THEN
+      RAISE EXCEPTION 'El árbol % no existe', p_tree_id USING ERRCODE = 'SV058';
+    END IF;
+    IF v_tree_project_id <> v_wo_project_id THEN
+      RAISE EXCEPTION 'El árbol % no pertenece al proyecto de la orden de trabajo de Levantamiento (D-193)', p_tree_id
+        USING ERRCODE = 'SV058';
+    END IF;
   END IF;
 
   IF v_inspection_id IS NULL THEN

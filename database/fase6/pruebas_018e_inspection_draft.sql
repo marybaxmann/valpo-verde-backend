@@ -36,6 +36,9 @@
 -- B10: un guardado sin campos de ARBOLES borra la fila de tree_data_versions.
 -- B11: tras reasignar la OT, el Inspector anterior se rechaza; el nuevo
 --      continúa el mismo borrador.
+-- B12: OT de Levantamiento (D-2; REGLAS_GENERALES fila 17), árbol de
+--      OTRO proyecto — se rechaza, SV058 (D-193).
+-- B13: OT de Levantamiento, árbol del MISMO proyecto que la OT — se acepta.
 
 BEGIN;
 
@@ -79,16 +82,20 @@ CREATE TEMP TABLE test_log (id serial PRIMARY KEY, msg text);
 DO $$
 DECLARE
   v_project_id uuid;
+  v_project_id_2 uuid;    -- otro proyecto, para B12
   v_sector_id uuid;
+  v_sector_id_2 uuid;
   v_inspector uuid;       -- Inspector 1 (responsable_accion_id de la mayoría de las OT de prueba)
   v_inspector_2 uuid;     -- Inspector 2 (B6, B11)
   v_no_inspector uuid;    -- usuario_municipal de prueba (B7)
   v_tree_res jsonb;
   v_tree_id uuid;
   v_tree2_id uuid;
+  v_tree3_id uuid;        -- árbol de v_project_id_2, para B12
   v_wo_id uuid;
   v_wo_id_2 uuid;
   v_wo_id_3 uuid;
+  v_wo_id_4 uuid;         -- OT de Levantamiento, para B12/B13
   v_res jsonb;
   v_inspection_id uuid;
   v_evaluation_id uuid;
@@ -115,6 +122,17 @@ BEGIN
     256100, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_no_inspector
   );
   v_tree2_id := (v_tree_res->>'id')::uuid;
+
+  -- Segundo proyecto, con su propio árbol — para B12 (Levantamiento,
+  -- árbol de otro proyecto).
+  INSERT INTO projects (nombre_proyecto) VALUES ('#58 018e prueba (otro proyecto)') RETURNING id INTO v_project_id_2;
+  INSERT INTO sectors (project_id, nombre_sector, geometria_sector)
+    VALUES (v_project_id_2, 'Sector de prueba 2', pg_temp.geom_sector()) RETURNING id INTO v_sector_id_2;
+  v_tree_res := fn_create_tree_alta(
+    v_project_id_2, v_sector_id_2, 'Otro barrio', 'En el otro proyecto',
+    256050, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_no_inspector
+  );
+  v_tree3_id := (v_tree_res->>'id')::uuid;
 
   INSERT INTO work_orders (
     project_id, tree_id, tipo_ot, accion_solicitada, estado_ot,
@@ -415,6 +433,47 @@ BEGIN
     RAISE EXCEPTION 'B11 FALLA: el nuevo responsable no continuó el mismo borrador (inspection_id distinto)';
   END IF;
   INSERT INTO test_log (msg) VALUES ('B11 OK');
+
+  -- ------------------------------------------------------------------
+  -- B12 — OT de Levantamiento (tree_id NULL en work_orders), árbol de
+  -- OTRO proyecto: se rechaza, SV058 (D-193).
+  -- ------------------------------------------------------------------
+  INSERT INTO work_orders (
+    project_id, tree_id, tipo_ot, accion_solicitada, estado_ot,
+    fecha_accion_programada, ot_creado_por, responsable_accion_id, observaciones
+  ) VALUES (
+    v_project_id, NULL, 'inspeccion', 'levantamiento', 'en_ejecucion',
+    current_date, v_no_inspector, v_inspector, 'Levantamiento de prueba'
+  ) RETURNING id INTO v_wo_id_4;
+
+  BEGIN
+    PERFORM fn_save_inspection_draft(
+      NULL, v_wo_id_4, v_tree3_id, v_inspector, current_date, current_date, '2.1',
+      'levantamiento', NULL, NULL, NULL, NULL, NULL, v_inspector,
+      '{}'::jsonb, '{}'::jsonb, NULL
+    );
+    RAISE EXCEPTION 'B12 FALLA: se aceptó un árbol de otro proyecto en un Levantamiento';
+  EXCEPTION WHEN SQLSTATE 'SV058' THEN
+    NULL;
+  END;
+  IF EXISTS (SELECT 1 FROM inspections WHERE work_order_id = v_wo_id_4) THEN
+    RAISE EXCEPTION 'B12 FALLA: quedó una inspección creada a pesar del rechazo';
+  END IF;
+  INSERT INTO test_log (msg) VALUES ('B12 OK');
+
+  -- ------------------------------------------------------------------
+  -- B13 — mismo Levantamiento, árbol del MISMO proyecto que la OT: se
+  -- acepta.
+  -- ------------------------------------------------------------------
+  v_res := fn_save_inspection_draft(
+    NULL, v_wo_id_4, v_tree_id, v_inspector, current_date, current_date, '2.1',
+    'levantamiento', NULL, NULL, NULL, NULL, NULL, v_inspector,
+    '{}'::jsonb, '{}'::jsonb, NULL
+  );
+  IF (v_res->>'inspection_id') IS NULL THEN
+    RAISE EXCEPTION 'B13 FALLA: no se creó la inspección con un árbol del mismo proyecto';
+  END IF;
+  INSERT INTO test_log (msg) VALUES ('B13 OK');
 END $$;
 
 SELECT id, msg FROM test_log ORDER BY id;
