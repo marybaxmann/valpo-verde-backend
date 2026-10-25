@@ -40,9 +40,7 @@ export function tipoSubtipoValido(tipo: string, subtipo: string | null): boolean
  *
  * Evaluación inicial, Reevaluación y Levantamiento: evaluación
  * completa (CC-040 punto 1) — el alcance es TODO REGISTRO_EVALUACION,
- * no una lista cerrada; este archivo no la enumera completa todavía
- * (D-33 a D-169, más los módulos de infraestructura/alcorque sin
- * revisar en esta pasada) — ver el aviso en `camposPermitidosPorTipo`.
+ * ver `CAMPOS_EVALUACION_COMPLETA` más abajo.
  */
 export const CAMPOS_EVALUACION_INSTRUMENTAL = [
   "cavidad_pudricion_basal",
@@ -115,31 +113,82 @@ export const CAMPOS_MONITOREO_ESTRUCTURAL = [
 ] as const;
 
 /**
- * CC-040 (a): Vitalidad = clasificacion_vitalidad (D-169). Vacío
- * metodológico sin cerrar todavía (reportado, no inventado): el Excel
- * define el dominio como texto libre con 5 categorías ("0 Exploración"
- * a "Resignación", más "Muerto"), pero `catalogs.ts` (PR-021: código
- * persistente por catálogo) no tiene aún un catálogo
- * "clasificacion_vitalidad" con los códigos que debe usar la API/base
- * (el ENUM `clase_vitalidad` de `schema.sql` es la clasificación de
- * SALIDA de un módulo de cálculo que todavía no existe para Vitalidad,
- * no necesariamente los mismos códigos de ENTRADA del Inspector). Por
- * eso este campo se valida aquí solo como texto no vacío — no se
- * inventa un catálogo de códigos sin que la responsable lo apruebe.
+ * CC-040 (a): Vitalidad = clasificacion_vitalidad (D-169). El dominio
+ * del Excel ("0 Exploración / 1 Degeneración / 2 Estancamiento /
+ * 3 Resignación / Muerto") ya tiene catálogo propio en `catalogs.ts`
+ * (AM-17, cerrado 2026-10-25) — distinto del ENUM `clase_vitalidad` de
+ * `schema.sql`, que es la salida de un módulo de cálculo que todavía
+ * no existe para Vitalidad, no necesariamente el mismo dominio de
+ * entrada del Inspector. El valor se valida en `inspeccion.schema.ts`
+ * (`validarAlcanceVariables`) contra `esCodigoVigente("clasificacion_vitalidad", ...)`.
  */
 export const CAMPOS_MONITOREO_VITALIDAD = ["clasificacion_vitalidad"] as const;
 
 /**
- * Alcance de REGISTRO_EVALUACION por tipo/subtipo (CC-040). Devuelve
- * `null` para Evaluación inicial, Reevaluación y Levantamiento: esos
- * tres exigen la evaluación COMPLETA (CC-040 punto 1), cuyo listado
- * total de campos (D-33 a D-169 y los módulos de infraestructura/
- * alcorque) todavía no está enumerado en este archivo — `null` señala
- * "sin lista cerrada todavía", no "cualquier campo es válido para
- * siempre". `guardarBorradorInspeccionSchema` trata `null` como
- * permisivo (acepta cualquier clave) y dejarlo así, documentado, en
- * vez de bloquear el guardado real de una Evaluación inicial/
- * Reevaluación/Levantamiento mientras esa lista no esté completa.
+ * CC-040 punto 1: Evaluación inicial, Reevaluación y Levantamiento
+ * exigen la evaluación COMPLETA — todo REGISTRO_EVALUACION que el
+ * Inspector ingresa (no lo que el Sistema calcula ni lo que vincula
+ * por id). Generado con `scripts/metodologia/campos_evaluacion_completa.py`
+ * desde DICCIONARIO_CAMPOS (Hoja = REGISTRO_EVALUACION, "¿Quién lo
+ * ingresa?" = "Inspector", sin combinar con Sistema/otro rol — ese
+ * filtro ya excluye los 16 campos calculados por la plataforma, los 2
+ * campos de vinculación (id_inspeccion/id_arbol) y las 3 salidas
+ * calculadas con ajuste del Inspector, clasificacion_riesgo/
+ * infraestructura/prioridad), más una exclusión manual documentada en
+ * el script: `justificacion_ajuste_clasificacion` (D-173, parte del
+ * ajuste posterior al cálculo, #59/#72 — no del guardado Preguardado).
+ * `tests/schemas/sivu/alcanceInspeccion.test.ts` compara esta lista
+ * contra el Excel para que no se desincronicen.
+ */
+export const CAMPOS_EVALUACION_COMPLETA = [
+  "raices_expuestas", "necrosis_radicular", "raices_cortadas", "levantamiento_del_plato_radicular",
+  "angulo_inclinacion", "direccion_inclinacion",
+  "cavidad_pudricion_basal", "cavidad_basal_externa", "cavidad_basal_interna",
+  "D_diametro_basal_tronco_cm", "d_diametro_cavidad_basal_cm", "Cc_longitud_abertura_cavidad_cm",
+  "C_circunferencia_basal_cm", "t_pared_residual_basal_cm", "observaciones_radicular",
+  "presenta_cavidad_pudricion_tronco", "cavidad_externa_tronco", "cavidad_interna_tronco",
+  "D_diametro_tronco_cm", "d_diametro_cavidad_tronco_cm", "Cc_longitud_abertura_tronco_cm",
+  "C_circunferencia_tronco_cm", "t_pared_residual_tronco_cm",
+  "presenta_heridas_tronco", "condicion_heridas_tronco", "corteza_muerta_ausente",
+  "presenta_exudaciones", "crecimiento_de_respuesta", "presenta_fisura_grieta_tronco",
+  "afectacion_fisura_grieta", "direccion_grieta", "profundidad_grieta_cm", "ancho_apertura_cm",
+  "troncos_codominantes", "corteza_incluida", "grieta_union_codominante", "observaciones_tronco",
+  "ramas_secas", "ramas_secas_pct_copa", "diametro_max_ramas_secas_cm",
+  "ramas_quebradas", "numero_ramas_quebradas", "diametro_max_ramas_quebradas_cm", "permanece_suspendida",
+  "defoliacion_estimada_pct", "clorosis_pct", "necrosis_pct", "desequilibrio_copa",
+  "copa_faltante_pct", "exposicion_luminica_copa_cle", "muerte_regresiva_copa_pct", "observaciones_copa",
+  "infraestructura_inmediata",
+  "existe_vereda", "materialidad_vereda", "dano_interferencia_vereda",
+  "presenta_levantamiento_vereda", "presenta_desplazamiento_horizontal_vereda", "presenta_grieta_vereda",
+  "presenta_rotura_vereda", "presenta_hundimiento_vereda", "desnivel_max_vereda_cm",
+  "numero_grietas_vereda", "ancho_max_grieta_vereda_cm", "longitud_max_grieta_vereda_cm",
+  "superficie_afectada_vereda_m2", "reduce_circulacion_peatonal", "ancho_libre_remanente_m", "impide_paso_seguro",
+  "existe_calzada", "materialidad_calzada", "dano_interferencia_calzada", "levantamiento_calzada",
+  "grieta_fisuracion_calzada", "hundimiento_calzada", "rotura_calzada", "desnivel_max_calzada_cm",
+  "superficie_afectada_calzada_m2", "afecta_circulacion_vehicular", "distancia_arbol_calzada_m",
+  "existe_superficie_permeable",
+  "existe_alcorque", "forma_alcorque", "largo_alcorque_m", "ancho_alcorque_m", "diametro_alcorque_m",
+  "dano_interferencia_alcorque", "indicios_compactacion_superficial", "suelo_sellado_impermeabilizado",
+  "obstaculos_crecimiento_radicular", "condicion_radicular_entorno",
+  "contacto_interferencia_infraestructura_vertical", "tipo_infraestructura_vertical",
+  "otro_tipo_infraestructura_vertical", "dano_fisico_observable_infraestructura_vertical",
+  "compromete_estabilidad_funcionalidad",
+  "interferencia_redes_servicios", "red_aerea_presente", "red_subterranea_presente",
+  "tipo_red_aerea", "distancia_copa_red_aerea_m", "dano_interferencia_red_aerea",
+  "tipo_red_subterranea", "distancia_arbol_red_subterranea_m", "afectacion_fisica_red_subterranea",
+  "compromete_funcionalidad_red_subterranea", "observaciones_infraestructura",
+  "presenta_tutorado", "tipo_tutorado", "condicion_tutorado", "interferencia_tutorado_arbol", "observaciones_tutorado",
+  "zona_objetivo", "tasa_ocupacion_objetivo",
+  "consecuencia_raices_cuello", "consecuencia_tronco", "consecuencia_copa_ramas",
+  "clasificacion_vitalidad",
+] as const;
+
+/**
+ * Alcance de REGISTRO_EVALUACION por tipo/subtipo (CC-040). Ya no
+ * devuelve `null`: los tres tipos de evaluación completa usan
+ * `CAMPOS_EVALUACION_COMPLETA` (corrección de la responsable,
+ * 2026-10-25 — antes el Zod quedaba permisivo con esos tres mientras
+ * la lista no estaba enumerada).
  */
 export function camposPermitidosPorTipo(tipo: string, subtipo: string | null): readonly string[] | null {
   if (tipo === "evaluacion_instrumental") return CAMPOS_EVALUACION_INSTRUMENTAL;
@@ -147,6 +196,9 @@ export function camposPermitidosPorTipo(tipo: string, subtipo: string | null): r
     if (subtipo === "fitosanitario") return CAMPOS_MONITOREO_FITOSANITARIO;
     if (subtipo === "estructural") return CAMPOS_MONITOREO_ESTRUCTURAL;
     if (subtipo === "vitalidad") return CAMPOS_MONITOREO_VITALIDAD;
+  }
+  if (tipo === "evaluacion_inicial" || tipo === "reevaluacion" || tipo === "levantamiento") {
+    return CAMPOS_EVALUACION_COMPLETA;
   }
   return null;
 }

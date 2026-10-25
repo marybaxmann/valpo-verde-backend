@@ -1,4 +1,5 @@
 import {
+  CAMPOS_EVALUACION_COMPLETA,
   CAMPOS_EVALUACION_INSTRUMENTAL,
   CAMPOS_MONITOREO_ESTRUCTURAL,
   CAMPOS_MONITOREO_FITOSANITARIO,
@@ -6,6 +7,7 @@ import {
   camposPermitidosPorTipo,
   tipoSubtipoValido,
 } from "../../../src/schemas/sivu/alcanceInspeccion";
+import { leerExportCsv } from "../../services/rules/engine/testUtils/csvExport";
 
 describe("tipoSubtipoValido (D-196/D-197)", () => {
   it("evaluacion_inicial y levantamiento solo aceptan subtipo null", () => {
@@ -70,9 +72,35 @@ describe("camposPermitidosPorTipo (CC-040)", () => {
     expect(camposPermitidosPorTipo("monitoreo", "vitalidad")).toEqual(CAMPOS_MONITOREO_VITALIDAD);
   });
 
-  it("evaluacion_inicial, reevaluacion y levantamiento devuelven null (evaluación completa, sin lista cerrada todavía)", () => {
-    expect(camposPermitidosPorTipo("evaluacion_inicial", null)).toBeNull();
-    expect(camposPermitidosPorTipo("reevaluacion", "seguimiento")).toBeNull();
-    expect(camposPermitidosPorTipo("levantamiento", null)).toBeNull();
+  it("evaluacion_inicial, reevaluacion y levantamiento usan CAMPOS_EVALUACION_COMPLETA", () => {
+    expect(camposPermitidosPorTipo("evaluacion_inicial", null)).toEqual(CAMPOS_EVALUACION_COMPLETA);
+    expect(camposPermitidosPorTipo("reevaluacion", "seguimiento")).toEqual(CAMPOS_EVALUACION_COMPLETA);
+    expect(camposPermitidosPorTipo("levantamiento", null)).toEqual(CAMPOS_EVALUACION_COMPLETA);
+  });
+});
+
+/**
+ * Compara CAMPOS_EVALUACION_COMPLETA contra DICCIONARIO_CAMPOS (mismo
+ * criterio que `scripts/metodologia/campos_evaluacion_completa.py`:
+ * Hoja = REGISTRO_EVALUACION, "¿Quién lo ingresa?" = "Inspector" exacto)
+ * para que el código y el Excel no se desincronicen (CC-040 punto 1).
+ * Lee el CSV ya exportado (docs/excel/export/), mismo mecanismo que
+ * catalogs.test.ts — nunca el .xlsx desde Jest.
+ */
+describe("CAMPOS_EVALUACION_COMPLETA vs DICCIONARIO_CAMPOS (CC-040 punto 1)", () => {
+  const EXCLUSIONES_MANUALES = new Set(["justificacion_ajuste_clasificacion"]);
+
+  it("coincide exactamente con los campos de REGISTRO_EVALUACION que ingresa el Inspector (sin exclusiones manuales)", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const campoEnExcel = (fila: string[]) =>
+      fila[0] === "REGISTRO_EVALUACION" &&
+      fila[3]?.trim() === "Inspector" &&
+      !EXCLUSIONES_MANUALES.has(fila[1]);
+    const camposExcel = filas.filter(campoEnExcel).map((f) => f[1]);
+
+    expect(new Set(CAMPOS_EVALUACION_COMPLETA)).toEqual(new Set(camposExcel));
+    // Ningún duplicado ni en el código ni en el Excel (si lo hubiera, el
+    // Set de arriba lo ocultaría).
+    expect(CAMPOS_EVALUACION_COMPLETA.length).toBe(camposExcel.length);
   });
 });

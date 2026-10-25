@@ -155,6 +155,22 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_prioridad", codigo: "alta", etiqueta: "Alta", orden: 2, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_prioridad", codigo: "critica", etiqueta: "Crítica", orden: 3, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_prioridad", codigo: "no_determinado", etiqueta: "No determinado", orden: 4, estado: "vigente", cc: "CC-029" },
+
+  // --- clasificacion_vitalidad: D-169 (REGISTRO_EVALUACION, Monitoreo/
+  //     Vitalidad). Dominio del Excel: "0 Exploración / 1 Degeneración /
+  //     2 Estancamiento / 3 Resignación / Muerto" — asignación visual
+  //     del Inspector (Roloff), nunca calculada (D-169: "no calcular
+  //     mediante suma de síntomas ni convertir automáticamente desde
+  //     muerte_regresiva_copa_pct"). Códigos propios, distintos del ENUM
+  //     `clase_vitalidad` de schema.sql (sin_vitalidad/clase_0-3/
+  //     no_clasificable): ese ENUM es la salida de un módulo de cálculo
+  //     que todavía no existe para Vitalidad, no necesariamente el
+  //     mismo dominio de entrada del Inspector (AM-17). ---
+  { catalogo: "clasificacion_vitalidad", codigo: "0_exploracion", etiqueta: "0 Exploración", orden: 0, estado: "vigente", cc: "AM-17" },
+  { catalogo: "clasificacion_vitalidad", codigo: "1_degeneracion", etiqueta: "1 Degeneración", orden: 1, estado: "vigente", cc: "AM-17" },
+  { catalogo: "clasificacion_vitalidad", codigo: "2_estancamiento", etiqueta: "2 Estancamiento", orden: 2, estado: "vigente", cc: "AM-17" },
+  { catalogo: "clasificacion_vitalidad", codigo: "3_resignacion", etiqueta: "3 Resignación", orden: 3, estado: "vigente", cc: "AM-17" },
+  { catalogo: "clasificacion_vitalidad", codigo: "muerto", etiqueta: "Muerto", orden: 4, estado: "vigente", cc: "AM-17" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {
@@ -199,6 +215,7 @@ export type SiNoNoDeterminadoCodigo = "si" | "no" | "no_determinado";
 export type CategoriaInfraestructuraCodigo = "no_aplica" | "sin_afectacion" | "leve" | "moderada" | "severa" | "no_determinado";
 export type ClasificacionInfraestructuraCodigo = "bajo" | "moderado" | "alto" | "critico" | "no_aplica";
 export type ClasificacionPrioridadCodigo = "baja" | "media" | "alta" | "critica" | "no_determinado";
+export type ClasificacionVitalidadCodigo = "0_exploracion" | "1_degeneracion" | "2_estancamiento" | "3_resignacion" | "muerto";
 export type TipoRedAereaCodigo = "electrica" | "telecomunicaciones" | "alumbrado_publico" | "otra" | "funcion_no_determinada";
 export type FormaAlcorqueCodigo = "rectangular" | "circular" | "irregular";
 export type TipoInspeccionRealizadaCodigo =

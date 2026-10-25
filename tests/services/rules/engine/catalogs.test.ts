@@ -234,6 +234,17 @@ describe("catálogo clasificacion_prioridad vs DICCIONARIO_CAMPOS (fila clasific
   });
 });
 
+describe("catálogo clasificacion_vitalidad vs DICCIONARIO_CAMPOS (fila clasificacion_vitalidad, D-169; AM-17)", () => {
+  it("las etiquetas vigentes coinciden con el dominio del Excel", () => {
+    const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
+    const fila = filas.find((f) => f[1] === "clasificacion_vitalidad");
+    expect(fila).toBeDefined();
+    const dominioExcel = fila![7].split("/").map((s) => s.trim());
+    const etiquetasCatalogo = entradasVigentesDe("clasificacion_vitalidad").map((c) => c.etiqueta);
+    expect(etiquetasCatalogo.sort()).toEqual(dominioExcel.sort());
+  });
+});
+
 describe("esCodigoVigente", () => {
   it("true para un código vigente conocido", () => {
     expect(esCodigoVigente("resultado_cavidad_interna", "si")).toBe(true);

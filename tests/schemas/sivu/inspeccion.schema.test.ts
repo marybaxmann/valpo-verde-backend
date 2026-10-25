@@ -51,6 +51,24 @@ describe("crearBorradorInspeccionSchema (#58)", () => {
     expect(malo.success).toBe(false);
   });
 
+  it("monitoreo/vitalidad: acepta un código vigente del catálogo (D-169; AM-17)", () => {
+    const resultado = crearBorradorInspeccionSchema.safeParse({
+      tipo_inspeccion_realizada: "monitoreo",
+      subtipo_inspeccion: "vitalidad",
+      variables: { clasificacion_vitalidad: "2_estancamiento" },
+    });
+    expect(resultado.success).toBe(true);
+  });
+
+  it("monitoreo/vitalidad: rechaza un valor fuera del dominio del Excel (D-169; AM-17)", () => {
+    const resultado = crearBorradorInspeccionSchema.safeParse({
+      tipo_inspeccion_realizada: "monitoreo",
+      subtipo_inspeccion: "vitalidad",
+      variables: { clasificacion_vitalidad: "muy_mal" },
+    });
+    expect(resultado.success).toBe(false);
+  });
+
   it("monitoreo exige subtipo_inspeccion (D-197)", () => {
     const resultado = crearBorradorInspeccionSchema.safeParse({
       tipo_inspeccion_realizada: "monitoreo",

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { camposPermitidosPorTipo, tipoSubtipoValido } from "./alcanceInspeccion";
+import { esCodigoVigente } from "../../services/rules/engine/catalogs";
 
 /**
  * Subconjunto de ARBOLES que el Inspector puede corregir desde una
@@ -121,6 +122,20 @@ function validarAlcanceVariables(
         message: `"${clave}" no está en el alcance de ${data.tipo_inspeccion_realizada}${
           data.subtipo_inspeccion ? "/" + data.subtipo_inspeccion : ""
         } (CC-040)`,
+      });
+    }
+  }
+
+  // Monitoreo/Vitalidad: el único campo de su alcance tiene catálogo
+  // propio (D-169; AM-17) — valor fuera del dominio se rechaza aquí,
+  // no se deja pasar como texto libre.
+  if (data.subtipo_inspeccion === "vitalidad") {
+    const valor = data.variables["clasificacion_vitalidad"];
+    if (valor !== undefined && (typeof valor !== "string" || !esCodigoVigente("clasificacion_vitalidad", valor))) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variables", "clasificacion_vitalidad"],
+        message: `clasificacion_vitalidad fuera del dominio del Excel (D-169): ${JSON.stringify(valor)}`,
       });
     }
   }
