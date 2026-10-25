@@ -89,8 +89,11 @@ BEGIN
     (v_project_id, v_no_inspector);
 
   v_tree_res := fn_create_tree_alta(
-    v_project_id, v_sector_id, 'Barrio Puerto', 'Frente a la plaza',
-    256000, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_municipal
+    p_project_id => v_project_id, p_sector_id => v_sector_id,
+    p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Frente a la plaza',
+    p_utm_este => 256000, p_utm_norte => 6341000,
+    p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => NULL,
+    p_fecha_registro => current_date, p_registrado_por => v_municipal
   );
   v_tree_id := (v_tree_res->>'id')::uuid;
 
@@ -103,8 +106,11 @@ BEGIN
     ), 32719), 4326))::geography
   ) RETURNING id INTO v_sector_id_2;
   v_tree_res := fn_create_tree_alta(
-    v_project_id_2, v_sector_id_2, 'Otro barrio', 'En el otro proyecto',
-    256050, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_municipal
+    p_project_id => v_project_id_2, p_sector_id => v_sector_id_2,
+    p_sector => 'Otro barrio', p_ubicacion_descriptiva => 'En el otro proyecto',
+    p_utm_este => 256050, p_utm_norte => 6341000,
+    p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => NULL,
+    p_fecha_registro => current_date, p_registrado_por => v_municipal
   );
   v_tree_id_2 := (v_tree_res->>'id')::uuid;
 

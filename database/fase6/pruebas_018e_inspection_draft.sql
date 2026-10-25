@@ -112,14 +112,20 @@ BEGIN
     VALUES (v_project_id, 'Sector de prueba', pg_temp.geom_sector()) RETURNING id INTO v_sector_id;
 
   v_tree_res := fn_create_tree_alta(
-    v_project_id, v_sector_id, 'Barrio Puerto', 'Frente a la plaza',
-    256000, 6341000, 'Robinia pseudoacacia', 'Falsa acacia', current_date, v_no_inspector
+    p_project_id => v_project_id, p_sector_id => v_sector_id,
+    p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Frente a la plaza',
+    p_utm_este => 256000, p_utm_norte => 6341000,
+    p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => 'Falsa acacia',
+    p_fecha_registro => current_date, p_registrado_por => v_no_inspector
   );
   v_tree_id := (v_tree_res->>'id')::uuid;
 
   v_tree_res := fn_create_tree_alta(
-    v_project_id, v_sector_id, 'Barrio Puerto', 'Otro punto del mismo sector',
-    256100, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_no_inspector
+    p_project_id => v_project_id, p_sector_id => v_sector_id,
+    p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Otro punto del mismo sector',
+    p_utm_este => 256100, p_utm_norte => 6341000,
+    p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => NULL,
+    p_fecha_registro => current_date, p_registrado_por => v_no_inspector
   );
   v_tree2_id := (v_tree_res->>'id')::uuid;
 
@@ -129,8 +135,11 @@ BEGIN
   INSERT INTO sectors (project_id, nombre_sector, geometria_sector)
     VALUES (v_project_id_2, 'Sector de prueba 2', pg_temp.geom_sector()) RETURNING id INTO v_sector_id_2;
   v_tree_res := fn_create_tree_alta(
-    v_project_id_2, v_sector_id_2, 'Otro barrio', 'En el otro proyecto',
-    256050, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_no_inspector
+    p_project_id => v_project_id_2, p_sector_id => v_sector_id_2,
+    p_sector => 'Otro barrio', p_ubicacion_descriptiva => 'En el otro proyecto',
+    p_utm_este => 256050, p_utm_norte => 6341000,
+    p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => NULL,
+    p_fecha_registro => current_date, p_registrado_por => v_no_inspector
   );
   v_tree3_id := (v_tree_res->>'id')::uuid;
 

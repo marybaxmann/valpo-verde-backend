@@ -74,8 +74,11 @@ BEGIN
   ) RETURNING id INTO v_sector_id;
 
   v_tree_res := fn_create_tree_alta(
-    v_project_id, v_sector_id, 'Barrio Puerto', 'Frente a la plaza',
-    256000, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_no_inspector
+    p_project_id => v_project_id, p_sector_id => v_sector_id,
+    p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Frente a la plaza',
+    p_utm_este => 256000, p_utm_norte => 6341000,
+    p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => NULL,
+    p_fecha_registro => current_date, p_registrado_por => v_no_inspector
   );
   v_tree_id := (v_tree_res->>'id')::uuid;
 

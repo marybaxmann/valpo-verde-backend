@@ -53,8 +53,11 @@ BEGIN
   -- tree_data_versions, inspection_id NULL).
   -- ------------------------------------------------------------------
   v_res := fn_create_tree_alta(
-    v_project_id, v_sector_id, 'Barrio Puerto', 'Frente a la plaza',
-    256000, 6341000, 'Robinia pseudoacacia', 'Falsa acacia', current_date, v_usuario
+    p_project_id => v_project_id, p_sector_id => v_sector_id,
+    p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Frente a la plaza',
+    p_utm_este => 256000, p_utm_norte => 6341000,
+    p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => 'Falsa acacia',
+    p_fecha_registro => current_date, p_registrado_por => v_usuario
   );
   v_tree_id := (v_res->>'id')::uuid;
 
@@ -80,8 +83,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_tree_alta(
-      v_project_id, v_sector_id, 'Barrio Puerto', 'Fuera del sector',
-      365000, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_usuario
+      p_project_id => v_project_id, p_sector_id => v_sector_id,
+      p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Fuera del sector',
+      p_utm_este => 365000, p_utm_norte => 6341000,
+      p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => NULL,
+      p_fecha_registro => current_date, p_registrado_por => v_usuario
     );
     RAISE EXCEPTION 'A2 FALLA: se aceptó un alta fuera del sector';
   EXCEPTION WHEN SQLSTATE 'SV046' THEN
@@ -102,8 +108,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_tree_alta(
-      v_project_id, v_sector_id, 'Barrio Puerto', 'Sin especie ni nombre',
-      256050, 6341000, NULL, NULL, current_date, v_usuario
+      p_project_id => v_project_id, p_sector_id => v_sector_id,
+      p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Sin especie ni nombre',
+      p_utm_este => 256050, p_utm_norte => 6341000,
+      p_especie_cientifica => NULL, p_nombre_comun => NULL,
+      p_fecha_registro => current_date, p_registrado_por => v_usuario
     );
     RAISE EXCEPTION 'FALLA: se aceptó un alta sin especie_cientifica ni nombre_comun';
   EXCEPTION WHEN SQLSTATE '23514' THEN
@@ -165,8 +174,11 @@ BEGIN
   -- especie_cientifica.
   -- ------------------------------------------------------------------
   v_res := fn_create_tree_alta(
-    v_project_id, v_sector_id, 'Barrio Puerto', 'Otro punto',
-    256100, 6341000, NULL, 'Falsa acacia', current_date, v_usuario
+    p_project_id => v_project_id, p_sector_id => v_sector_id,
+    p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Otro punto',
+    p_utm_este => 256100, p_utm_norte => 6341000,
+    p_especie_cientifica => NULL, p_nombre_comun => 'Falsa acacia',
+    p_fecha_registro => current_date, p_registrado_por => v_usuario
   );
 
   IF NOT EXISTS (
@@ -186,8 +198,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_tree_alta(
-      v_project_id, v_sector_id, 'Barrio Puerto', NULL,
-      256200, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_usuario
+      p_project_id => v_project_id, p_sector_id => v_sector_id,
+      p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => NULL,
+      p_utm_este => 256200, p_utm_norte => 6341000,
+      p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => NULL,
+      p_fecha_registro => current_date, p_registrado_por => v_usuario
     );
     RAISE EXCEPTION 'A5 FALLA: se aceptó un alta sin ubicacion_descriptiva';
   EXCEPTION WHEN SQLSTATE 'SV057' THEN
@@ -211,8 +226,11 @@ BEGIN
   -- venían presentes).
   -- ------------------------------------------------------------------
   v_res := fn_create_tree_alta(
-    v_project_id, v_sector_id, 'Barrio Puerto', 'Otro punto más',
-    256300, 6341000, 'Robinia pseudoacacia', NULL, current_date, v_usuario
+    p_project_id => v_project_id, p_sector_id => v_sector_id,
+    p_sector => 'Barrio Puerto', p_ubicacion_descriptiva => 'Otro punto más',
+    p_utm_este => 256300, p_utm_norte => 6341000,
+    p_especie_cientifica => 'Robinia pseudoacacia', p_nombre_comun => NULL,
+    p_fecha_registro => current_date, p_registrado_por => v_usuario
   );
 
   IF NOT EXISTS (
