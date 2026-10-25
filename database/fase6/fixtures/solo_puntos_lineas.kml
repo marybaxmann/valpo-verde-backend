@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+	<name>SIVU - solo puntos y lineas (fixture de pruebas)</name>
+	<description>Fixture minimo inventado para la 018b (K7): un archivo sin ninguna superficie, solo puntos y lineas. Reemplaza a taller4.kml (salida real de Radio Mobile, fuera del repositorio) para que la prueba no dependa de un archivo externo. Coordenadas inventadas, no corresponden a ningun punto real.</description>
+	<Placemark>
+		<name>Punto 1</name>
+		<Point>
+			<coordinates>-71.620000,-33.050000,0</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark>
+		<name>Punto 2</name>
+		<Point>
+			<coordinates>-71.610000,-33.040000,0</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark>
+		<name>Linea 1</name>
+		<LineString>
+			<coordinates>-71.620000,-33.050000,0 -71.610000,-33.040000,0</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>Linea 2</name>
+		<LineString>
+			<coordinates>-71.615000,-33.045000,0 -71.605000,-33.035000,0</coordinates>
+		</LineString>
+	</Placemark>
+</Document>
+</kml>
