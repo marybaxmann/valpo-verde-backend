@@ -92,7 +92,7 @@ BEGIN
     RAISE EXCEPTION 'El usuario % no tiene el rol Inspector (rol actual: %)', p_usuario, v_rol USING ERRCODE = 'SV059';
   END IF;
   IF NOT v_activo THEN
-    RAISE EXCEPTION 'El usuario % no está activo (D-195, D-244)', p_usuario USING ERRCODE = 'SV059';
+    RAISE EXCEPTION 'El usuario % no está activo', p_usuario USING ERRCODE = 'SV059';
   END IF;
 
   IF v_estado_ot = 'pendiente' AND p_nuevo_estado = 'programada' THEN

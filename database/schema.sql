@@ -1864,6 +1864,89 @@ CREATE TRIGGER trg_work_orders_completada
   WHEN (NEW.estado_ot = 'completada' AND OLD.estado_ot IS DISTINCT FROM NEW.estado_ot)
   EXECUTE FUNCTION fn_check_ot_completada();
 
+-- fn_transition_work_order_estado (migración 018g; #58; CC-050): Pendiente
+-- -> Programada -> En ejecución de una OT de Inspección, una a la vez, solo
+-- por el responsable_accion_id (Inspector activo). Al pasar a Programada,
+-- fecha_accion_programada es obligatoria y no puede ser anterior a
+-- fecha_creacion_ot (D-241). Mantenimiento y la transición a Completada no
+-- están implementadas todavía (#61 y el bloque de estados restantes de la
+-- OT, respectivamente). SQLSTATE SV059.
+CREATE FUNCTION fn_transition_work_order_estado(
+  p_work_order_id uuid,
+  p_nuevo_estado text,
+  p_fecha_accion_programada date,
+  p_usuario uuid
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_estado_ot text;
+  v_tipo_ot text;
+  v_responsable_accion_id uuid;
+  v_fecha_creacion_ot date;
+  v_rol text;
+  v_activo boolean;
+BEGIN
+  SELECT estado_ot, tipo_ot, responsable_accion_id, fecha_creacion_ot
+  INTO v_estado_ot, v_tipo_ot, v_responsable_accion_id, v_fecha_creacion_ot
+  FROM public.work_orders WHERE id = p_work_order_id;
+
+  IF v_estado_ot IS NULL THEN
+    RAISE EXCEPTION 'La orden de trabajo % no existe', p_work_order_id USING ERRCODE = 'SV059';
+  END IF;
+  IF v_tipo_ot <> 'inspeccion' THEN
+    RAISE EXCEPTION 'Esta función todavía no transiciona OT de Mantenimiento (CC-050: las hace el Encargado de mantención; se implementa en el #61)'
+      USING ERRCODE = 'SV059';
+  END IF;
+  IF v_responsable_accion_id IS NULL OR v_responsable_accion_id <> p_usuario THEN
+    RAISE EXCEPTION 'El usuario % no es el responsable asignado de la orden de trabajo % (responsable actual: %)',
+      p_usuario, p_work_order_id, v_responsable_accion_id
+      USING ERRCODE = 'SV059';
+  END IF;
+
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_usuario;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_usuario USING ERRCODE = 'SV059';
+  END IF;
+  IF v_rol <> 'inspector' THEN
+    RAISE EXCEPTION 'El usuario % no tiene el rol Inspector (rol actual: %)', p_usuario, v_rol USING ERRCODE = 'SV059';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_usuario USING ERRCODE = 'SV059';
+  END IF;
+
+  IF v_estado_ot = 'pendiente' AND p_nuevo_estado = 'programada' THEN
+    IF p_fecha_accion_programada IS NULL THEN
+      RAISE EXCEPTION 'fecha_accion_programada es obligatoria al pasar a Programada (D-241, CC-050)' USING ERRCODE = 'SV059';
+    END IF;
+    IF p_fecha_accion_programada < v_fecha_creacion_ot THEN
+      RAISE EXCEPTION 'fecha_accion_programada (%) no puede ser anterior a la fecha de creación de la orden de trabajo (%) (D-241)',
+        p_fecha_accion_programada, v_fecha_creacion_ot
+        USING ERRCODE = 'SV059';
+    END IF;
+    UPDATE public.work_orders
+      SET estado_ot = 'programada', fecha_accion_programada = p_fecha_accion_programada
+      WHERE id = p_work_order_id;
+  ELSIF v_estado_ot = 'programada' AND p_nuevo_estado = 'en_ejecucion' THEN
+    UPDATE public.work_orders SET estado_ot = 'en_ejecucion' WHERE id = p_work_order_id;
+  ELSE
+    RAISE EXCEPTION 'Transición % -> % no permitida (CC-050: solo Pendiente->Programada->En ejecución, una a la vez)',
+      v_estado_ot, p_nuevo_estado
+      USING ERRCODE = 'SV059';
+  END IF;
+
+  RETURN jsonb_build_object('work_order_id', p_work_order_id, 'estado_ot', p_nuevo_estado);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION fn_transition_work_order_estado(uuid, text, date, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION fn_transition_work_order_estado(uuid, text, date, uuid) TO service_role;
+
 -- ---------------------------------------------------------------------
 -- EVALUACIONES, AJUSTES Y EVALUACIÓN VIGENTE (migración 014; §3.9–§3.10 bis)
 -- ---------------------------------------------------------------------
