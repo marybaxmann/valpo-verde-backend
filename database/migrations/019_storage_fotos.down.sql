@@ -1,0 +1,20 @@
+-- =====================================================================
+-- Reversión de 019_storage_fotos.sql
+-- =====================================================================
+--
+-- No hay nada que esta migración pueda deshacer por SQL: lo único que
+-- crea es la fila del bucket en `storage.buckets`, y Supabase bloquea
+-- el `DELETE` directo sobre las tablas de Storage a propósito (trigger
+-- `storage.protect_delete()`, confirmado al intentarlo: "Direct
+-- deletion from storage tables is not allowed. Use the Storage API
+-- instead."). Esta protección es la misma para cualquier proyecto
+-- Supabase — no es algo a esquivar ni a deshabilitar.
+--
+-- Para borrar el bucket 'tree-photos' de verdad, hace falta uno de:
+--   - Dashboard de Supabase → Storage → 'tree-photos' → Delete bucket
+--     (exige vaciarlo de objetos primero, si tuviera alguno).
+--   - La Storage API / supabase-js: `supabase.storage.deleteBucket('tree-photos')`
+--     (después de `emptyBucket` si tuviera objetos).
+--
+-- Este archivo queda como no-op intencional (ningún DDL) — documenta
+-- el paso manual en vez de ejecutar un DELETE que siempre fallaría.
