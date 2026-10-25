@@ -1,5 +1,7 @@
 import { Router } from "express";
 import projectRoutes from "./project.routes";
+import workOrderRoutes from "./workOrder.routes";
+import inspectionRoutes from "./inspection.routes";
 
 /**
  * Montado en /api/sivu (src/routes/index.ts). Separado por completo de
@@ -9,5 +11,7 @@ import projectRoutes from "./project.routes";
 const router = Router();
 
 router.use("/projects", projectRoutes);
+router.use("/work-orders", workOrderRoutes);
+router.use("/inspections", inspectionRoutes);
 
 export default router;

@@ -14,6 +14,7 @@ import {
   removeMiembro,
 } from "../../controllers/sivu/projectMember.controller";
 import { altaMunicipalArbolController } from "../../controllers/sivu/tree.controller";
+import { crearOrdenTrabajoInspeccionController } from "../../controllers/sivu/workOrder.controller";
 
 const router = Router();
 
@@ -36,5 +37,8 @@ router.delete("/:id/members/:userId", authMiddleware, removeMiembro);
 // Alta municipal mínima del árbol (#57). Solo usuario_municipal; el
 // sector lo resuelve el servidor desde el proyecto (nunca del body).
 router.post("/:id/trees", authMiddleware, altaMunicipalArbolController);
+
+// Crear una OT de Inspección (#58; D-238, D-244, CC-036). Solo usuario_municipal.
+router.post("/:id/work-orders", authMiddleware, crearOrdenTrabajoInspeccionController);
 
 export default router;
