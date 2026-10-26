@@ -2710,3 +2710,41 @@ motivo)
 |---|---|---|---|
 | 2026-10-26 | EN REVISIÓN | marybaxmann | Decisión registrada; redacción pendiente de aprobación. |
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Aprobado. Lecturas públicas con funciones SECURITY DEFINER de solo lectura (PR-018 v4.0); vigencia del código, 90 días; 30 consultas por hora por IP; placas por el Usuario municipal; `qr_token` suficiente. PR-022 v2.0 y PR-018 v4.0 escritas en `docs/project-rules.md`; código de seguimiento en AM-15. |
+
+---
+
+### CC-063 — Una sola lista de alcance por tipo de inspección (Monitoreo Estructural)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-26 |
+| Origen | Hallazgo del bloque 8 (HANDOFF): `validarAlcance` del motor (`src/services/rules/engine/ensamblaje.ts`, Fase 5) tiene su propia lista de Monitoreo Estructural, distinta de la de `src/schemas/sivu/alcanceInspeccion.ts`, que usan el borrador (#58) y la completitud (CC-056). Decisión de la responsable. |
+| Tipo | 2 — metodológico (alcance de CC-040 a) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | REGLAS_GENERALES fila 28 («Preguardado y finalización»: «Monitoreo: solo los campos de su subtipo (Fitosanitario, Estructural o Vitalidad)»); CC-040 (a); D-38 (`direccion_inclinacion`, Condicional: «angulo_inclinacion > 15°»). |
+| Versión anterior | Dos listas de Monitoreo Estructural. La del motor son las entradas de R01, R02 y R03: no incluye `direccion_inclinacion` (D-38), `observaciones_radicular` (D-50), `crecimiento_de_respuesta` (D-66), `profundidad_grieta_cm` (D-70), `ancho_apertura_cm` (D-71), `observaciones_tronco` (D-75), `diametro_max_ramas_secas_cm` (D-78), `numero_ramas_quebradas` (D-80), `diametro_max_ramas_quebradas_cm` (D-81) ni `permanece_suspendida` (D-82), e incluye `defoliacion_estimada_pct` (D-83). La de `alcanceInspeccion.ts` es la inversa en esos 11 campos. En las evaluaciones completas el motor no restringía nada, y el borrador usa `CAMPOS_EVALUACION_COMPLETA`. Las demás listas (Instrumental, Fitosanitario, Vitalidad) ya coincidían. |
+| Versión nueva | **(1)** La lista válida es la de `alcanceInspeccion.ts` (decisión de la responsable). En Monitoreo Estructural incluye `direccion_inclinacion` —D-38 se activa con `angulo_inclinacion`, una entrada de R01— y las observaciones y los demás campos de raíces, tronco y ramas de D-33 a D-82, más `desequilibrio_copa` (D-86), sin los calculados por la plataforma. **(2)** `defoliacion_estimada_pct` (D-83) **no** está en el alcance de Monitoreo Estructural. No es una decisión nueva: es lo que ya dice CC-040 (a) («Estructural = D-33 a D-82 y D-86»; D-83 es del Fitosanitario). R03 la sigue usando, con el valor vigente del árbol. **(3)** El motor, el borrador y la completitud usan esa misma lista, definida en un solo lugar. |
+| Motivo | Con dos listas, el motor marcaba como fuera de alcance campos que el borrador acepta (y al revés), y el cierre de la inspección tenía que ignorar `camposFueraDeAlcance`. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-26. REGLAS_GENERALES fila 28; CC-040 (a); D-38. |
+| Archivos afectados | Esta ficha; `docs/roadmap.md` (AM-15). Implementación (cambio al motor de la Fase 5, aprobado por la responsable el 2026-10-26): `src/services/rules/engine/alcance.ts` (nuevo: las listas y `camposPermitidosPorTipo`), `src/schemas/sivu/alcanceInspeccion.ts` (las reexporta), `src/services/rules/engine/ensamblaje.ts` (`validarAlcance` usa esa lista) y `tests/services/rules/engine/ensamblaje.test.ts`. |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Ninguno obligatorio; conviene enumerar en REGLAS_GENERALES fila 28 los campos de cada subtipo de Monitoreo (AM-15). |
+| Impacto en BD | Ninguno. |
+| Impacto en backend | `validarAlcance` del motor con la misma lista que el borrador. **Cambio de comportamiento:** en las evaluaciones completas, el motor ahora marca como fuera de alcance los campos calculados por la plataforma (por ejemplo `SL_basal_pct`); antes no restringía nada. El borrador ya los rechazaba, así que no cambia lo que se puede guardar. |
+| Impacto en API | Ninguno: el borrador ya usaba esta lista. |
+| Impacto en frontend | Ninguno todavía (Fase 7). |
+| Pruebas necesarias | Monitoreo Estructural: `direccion_inclinacion` y las observaciones en alcance, `defoliacion_estimada_pct` fuera; para cada tipo y subtipo, el motor deja dentro exactamente la lista del borrador; en Evaluación inicial, un campo calculado queda fuera; Monitoreo sin subtipo: todo fuera. |
+| Dependencias | CC-040; CC-056. |
+| rule_version | 2.1 (sin cambio) |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-26 |
+| Fecha de implementación | 2026-10-26 (rama `wip/cc063-alcance`): `src/services/rules/engine/alcance.ts`, reexportación desde `alcanceInspeccion.ts` y `validarAlcance` con `camposPermitidosPorTipo`. |
+| Commits / PR asociados | `wip/cc063-alcance`, sin PR. |
+| Observaciones | El punto (2) lo confirmó la responsable (2026-10-26) como lo que ya dice CC-040 (a). Cambio de comportamiento del motor: ver «Impacto en backend». |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro: la lista de `alcanceInspeccion.ts` es la válida. Unificación del motor propuesta, sin aplicar. |
+| 2026-10-26 | IMPLEMENTADO | marybaxmann | Propuesta del motor aprobada y aplicada; D-83 fuera de Estructural confirmado según CC-040 (a). |
