@@ -100,16 +100,24 @@
   - (2) **Criterio único de «la última»:** `fecha_completada_ot` DESC, `fecha_inspeccion` DESC, `created_at` DESC (REGLAS_GENERALES fila 13).
   - **Fecha vigente:** la de la última inspección Finalizada de una OT Completada que la registró, definida una sola vez en `v_tree_fechas_vigentes` (020).
   - Sigue abierto solo el (3), para el #63: cómo mostrar el término del rango cuando la sugerida viene de la vigente (por ahora, un punto: inicio = fin).
-- **AM-15** (`docs/roadmap.md`) cita CC-054 y CC-055, pero con el texto anterior de CC-055 («la más cercana»); falta pasarle el texto final. **AM-18:** `v_upcoming_inspections` solo con inspecciones Finalizadas de OT Completadas, en el #63.
+- **AM-15** (`docs/roadmap.md`) cita CC-054 y CC-055, ya con el texto final de CC-055. **AM-18:** `v_upcoming_inspections` solo con inspecciones Finalizadas de OT Completadas, en el #63.
 - **Migración 020: escrita, NO aplicada.** Revisada caso por caso contra la lista a–f del HANDOFF anterior; están todos:
   - a) sin fila en `evaluations` → SV064 (prueba F13);
-  - b) `FOR UPDATE OF i, wo` y `FOR UPDATE` de la fila de `evaluations` (sin prueba automática: necesita dos sesiones concurrentes);
+  - b) `FOR UPDATE OF i, wo` y `FOR UPDATE` de la fila de `evaluations`. **Sin prueba automática** (necesita dos sesiones concurrentes): aceptado por la responsable el 2026-10-25, anotado en CC-054;
   - c) coherencia de los ajustes: ajustado nunca `no_determinado`/`no_aplica`; `valor_calculado` = `*_calculada`; `*_ajustada` = `valor_ajustado`; sin `*_ajustada` sin su ajuste; un ajuste por campo (F14, F15; F2 corregida);
   - d) D-202 posterior y D-203 igual o posterior a `fecha_inspeccion`; las cuatro fechas obligatorias (F16);
   - e) `ajuste_fecha_por`/`fecha_ajuste_fecha` solo si alguna fecha difiere de la sugerida (F1, F4, F18);
   - f) pruebas nuevas: Inspector inactivo (F10), rol distinto (F11), OT de Mantenimiento (F12), evaluación inexistente (F13), ajustado `no_determinado` (F14), ajustes incoherentes (F15), fecha anterior o igual a `fecha_inspeccion` (F16), especie con `species_id` ya puesto (F17), Monitoreo que adelanta (F19) y que no atrasa (F20); además reinspección atrasada (F21).
   - Además: vista `v_tree_fechas_vigentes` (pruebas V1–V6) y tope de Monitoreo sobre la sugerida en `fn_finalizar_inspeccion`.
 - **Migración 021 nueva, escrita, NO aplicada** (aparte de la 020, para revertirla por separado): lleva el criterio único de «la última» a `fn_refresh_tree_current` (que no tenía `fecha_inspeccion`) y a `v_tree_current_inputs` (que solo ordenaba por `fecha_completada_ot`). Pruebas O1–O3 en `pruebas_021_orden_ultima_inspeccion.sql`; regresión obligatoria con `pruebas_018d`, `pruebas_018f` y `pruebas_018i`.
+- **Decisiones de la responsable (2026-10-25) sobre las preguntas de la sesión anterior** — registradas en CC-055 (historial) y aplicadas en esta misma rama:
+  - `v_tree_current_inputs` se queda en la 021 con el orden único. Prueba nueva O5 (desempate del mismo día en esa vista, campo por campo); O1 y O2 ya la cubrían para un solo campo.
+  - Tope de Monitoreo en `fn_finalizar_inspeccion` **solo para la sugerida**; la fecha ajustada puede ser posterior a la vigente con `justificacion_ajuste_fecha`. Prueba nueva F22. (La función ya se comportaba así; no cambió código.)
+  - **Justificación de fecha sin cambio de fecha → SV064** con mensaje claro (D-204). Código nuevo en la 020; F18 reescrita (ahora espera el rechazo y que la inspección siga Preguardado).
+  - Aprobados: las cuatro fechas obligatorias; la respuesta devuelve el `species_id` que ya tenía la versión; fecha sugerida desde la vigente como un punto hasta el #63 (anotado en el issue #63); `v_tree_fechas_vigentes` entra a `schema.sql` al aplicar la 020, copiando lo aplicado.
+  - **Tercer criterio de «la última» = `inspections.created_at` en todas partes** (no el de `tree_data_versions`, que se borra y se vuelve a crear con CC-048). Cambiado en `fn_refresh_tree_current` (021); `v_tree_current_inputs` y `v_tree_fechas_vigentes` ya lo usaban. Prueba nueva O4.
+  - AM-15 actualizado con el texto final de CC-055.
+  - **Pruebas SQL F18, F22, O4 y O5 escritas pero no ejecutadas:** la 020 y la 021 no se han aplicado. Se corren con el ciclo de siempre cuando la responsable apruebe aplicar.
 - **Motor con CC-055** (`fechas-sugeridas.ts`: `calcularFechaProximaInspeccionMonitoreo`; `ensamblaje.ts`: entrada `fechaProximaInspeccionVigenteISO`, solo se usa en Monitoreo). Jest completo: **48 suites, 984/984**; `tsc` limpio.
 - **Sincronización de `schema.sql` pendiente:** faltan la 018h completa y la 018i completa (`species_name_history`, `fn_rename_species`, `fn_complete_species`, `fn_resolve_or_create_species`, `tree_data_versions.species_id`, `fn_refresh_tree_current` con `species_id` y `v_species_traits`). Se hace desde lo aplicado en pruebas (`pg_get_functiondef` y definiciones de tablas y vistas), en un commit aparte. Después hay que revisar que no falte nada de 018a a 019 e informar. **Bloqueado: falta completar la autorización OAuth de Supabase.** Cuando esté, lo primero es una consulta de solo lectura con el nombre y el id del proyecto, y esperar la confirmación de la responsable antes de leer nada más.
 - **`49a2cfd` empujado** junto con este relevo, por pedido explícito de la responsable.
