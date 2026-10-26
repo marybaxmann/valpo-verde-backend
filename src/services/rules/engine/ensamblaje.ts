@@ -108,95 +108,12 @@ import { evaluarR02, R02Input, R02Resultado } from "./r02-tronco";
 import { evaluarR03, R03Input, R03Resultado } from "./r03-copa-ramas";
 import { evaluarR04 } from "./r04-clasificacion-riesgo";
 import { calcularSuperficieAlcorqueM2, ResultadoCalculo } from "./variables-calculo";
+import { camposPermitidosPorTipo } from "./alcance";
 import { RULE_VERSION } from "./version";
 
 // =====================================================================
 // 1. Alcance por tipo de inspección (CC-040 a, b)
 // =====================================================================
-
-/** R01: las entradas de la cavidad basal (D-39 a D-47). */
-const CAMPOS_INSTRUMENTAL_R01 = [
-  "cavidad_pudricion_basal",
-  "cavidad_basal_externa",
-  "cavidad_basal_interna",
-  "D_diametro_basal_tronco_cm",
-  "d_diametro_cavidad_basal_cm",
-  "Cc_longitud_abertura_cavidad_cm",
-  "C_circunferencia_basal_cm",
-  "t_pared_residual_basal_cm",
-] as const;
-
-/** R02: las entradas de la cavidad del tronco (D-51 a D-59). */
-const CAMPOS_INSTRUMENTAL_R02 = [
-  "presenta_cavidad_pudricion_tronco",
-  "cavidad_externa_tronco",
-  "cavidad_interna_tronco",
-  "D_diametro_tronco_cm",
-  "d_diametro_cavidad_tronco_cm",
-  "Cc_longitud_abertura_tronco_cm",
-  "C_circunferencia_tronco_cm",
-  "t_pared_residual_tronco_cm",
-] as const;
-
-/** Evaluación instrumental: solo los campos de cavidad basal y de tronco. */
-const CAMPOS_INSTRUMENTAL = new Set<string>([...CAMPOS_INSTRUMENTAL_R01, ...CAMPOS_INSTRUMENTAL_R02]);
-
-/** Monitoreo, subtipo Fitosanitario (CC-040 decisión a). */
-const CAMPOS_FITOSANITARIO = new Set<string>([
-  "defoliacion_estimada_pct",
-  "clorosis_pct",
-  "necrosis_pct",
-  "muerte_regresiva_copa_pct",
-  "presenta_exudaciones",
-]);
-
-/** Todas las entradas de R01 (D-33 a D-47). */
-const CAMPOS_R01 = [
-  "levantamiento_del_plato_radicular",
-  "angulo_inclinacion",
-  "raices_expuestas",
-  "necrosis_radicular",
-  "raices_cortadas",
-  "cavidad_pudricion_basal",
-  "cavidad_basal_externa",
-  "cavidad_basal_interna",
-  "D_diametro_basal_tronco_cm",
-  "d_diametro_cavidad_basal_cm",
-  "Cc_longitud_abertura_cavidad_cm",
-  "C_circunferencia_basal_cm",
-  "t_pared_residual_basal_cm",
-] as const;
-
-/** Todas las entradas de R02 (D-51 a D-74). */
-const CAMPOS_R02 = [
-  "presenta_cavidad_pudricion_tronco",
-  "cavidad_externa_tronco",
-  "cavidad_interna_tronco",
-  "D_diametro_tronco_cm",
-  "d_diametro_cavidad_tronco_cm",
-  "Cc_longitud_abertura_tronco_cm",
-  "C_circunferencia_tronco_cm",
-  "t_pared_residual_tronco_cm",
-  "presenta_heridas_tronco",
-  "condicion_heridas_tronco",
-  "corteza_muerta_ausente",
-  "presenta_exudaciones",
-  "presenta_fisura_grieta_tronco",
-  "afectacion_fisura_grieta",
-  "direccion_grieta",
-  "troncos_codominantes",
-  "grieta_union_codominante",
-  "corteza_incluida",
-] as const;
-
-/** Todas las entradas de R03 (D-76 a D-86). */
-const CAMPOS_R03 = ["ramas_secas", "ramas_secas_pct_copa", "ramas_quebradas", "desequilibrio_copa", "defoliacion_estimada_pct"] as const;
-
-/** Monitoreo, subtipo Estructural (CC-040 decisión a): entradas de R01 + R02 + R03. */
-const CAMPOS_ESTRUCTURAL = new Set<string>([...CAMPOS_R01, ...CAMPOS_R02, ...CAMPOS_R03]);
-
-/** Monitoreo, subtipo Vitalidad (CC-040 decisión a). */
-const CAMPOS_VITALIDAD = new Set<string>(["clasificacion_vitalidad"]);
 
 export interface AlcanceResultado {
   /** Campos registrados en esta inspección que no pertenecen al alcance de su tipo/subtipo. */
@@ -218,11 +135,7 @@ export function validarAlcance(
   const valoresNoPermitidosEnAlcance: string[] = [];
   const camposRegistrados = Object.keys(variablesRegistradas);
 
-  let alcancePermitido: Set<string> | null = null; // null = sin restricción (alcance completo)
-
   if (tipoInspeccionRealizada === "evaluacion_instrumental") {
-    alcancePermitido = CAMPOS_INSTRUMENTAL;
-
     // CC-040 (b): en la Evaluación instrumental, las cavidades internas
     // solo admiten Sí o No — "Requiere evaluación instrumental" no es
     // un valor permitido en este alcance (sería la condición que la
@@ -237,25 +150,15 @@ export function validarAlcance(
         'cavidad_interna_tronco = "requiere_evaluacion_instrumental" no está permitido en Evaluación instrumental (CC-040 b)',
       );
     }
-  } else if (tipoInspeccionRealizada === "monitoreo") {
-    if (subtipoInspeccion === "fitosanitario") alcancePermitido = CAMPOS_FITOSANITARIO;
-    else if (subtipoInspeccion === "estructural") alcancePermitido = CAMPOS_ESTRUCTURAL;
-    else if (subtipoInspeccion === "vitalidad") alcancePermitido = CAMPOS_VITALIDAD;
-    else {
-      // subtipo ausente o no reconocido para Monitoreo: no se puede
-      // determinar el alcance — no se inventa un subtipo por defecto.
-      // Todo lo registrado queda señalado como fuera de un alcance que
-      // no se pudo confirmar.
-      alcancePermitido = new Set<string>();
-    }
   }
-  // evaluacion_inicial / reevaluacion / levantamiento: alcancePermitido
-  // queda null → alcance completo, sin restricción (CC-040 a).
 
-  if (alcancePermitido !== null) {
-    for (const campo of camposRegistrados) {
-      if (!alcancePermitido.has(campo)) camposFueraDeAlcance.push(campo);
-    }
+  // CC-063: la misma lista que el borrador y la completitud. Sin alcance
+  // (Monitoreo sin subtipo o con uno no reconocido) no se inventa un
+  // subtipo por defecto: todo lo registrado queda fuera de un alcance
+  // que no se pudo confirmar.
+  const alcancePermitido = new Set<string>(camposPermitidosPorTipo(tipoInspeccionRealizada, subtipoInspeccion) ?? []);
+  for (const campo of camposRegistrados) {
+    if (!alcancePermitido.has(campo)) camposFueraDeAlcance.push(campo);
   }
 
   return { camposFueraDeAlcance, valoresNoPermitidosEnAlcance };

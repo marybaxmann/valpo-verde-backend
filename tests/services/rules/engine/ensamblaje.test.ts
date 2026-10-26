@@ -1,4 +1,8 @@
 import {
+  CAMPOS_EVALUACION_COMPLETA,
+  camposPermitidosPorTipo,
+} from "../../../../src/services/rules/engine/alcance";
+import {
   AjusteVigente,
   ArgsResultadoEvaluacion,
   ensamblarResultadoEvaluacion,
@@ -250,6 +254,46 @@ describe("validarAlcance (CC-040 a, b)", () => {
   it("Monitoreo/Vitalidad: solo clasificacion_vitalidad está en alcance, y no hay problemas si es lo único registrado", () => {
     const r = validarAlcance("monitoreo", "vitalidad", { clasificacion_vitalidad: "1" });
     expect(r.camposFueraDeAlcance).toEqual([]);
+  });
+  it("Monitoreo/Estructural (CC-063): direccion_inclinacion y las observaciones están en alcance; defoliacion_estimada_pct no", () => {
+    const r = validarAlcance("monitoreo", "estructural", {
+      angulo_inclinacion: 20,
+      direccion_inclinacion: "N",
+      observaciones_radicular: "x",
+      observaciones_tronco: "x",
+      crecimiento_de_respuesta: false,
+      profundidad_grieta_cm: 3,
+      ancho_apertura_cm: 1,
+      diametro_max_ramas_secas_cm: 5,
+      numero_ramas_quebradas: 1,
+      diametro_max_ramas_quebradas_cm: 4,
+      permanece_suspendida: false,
+      defoliacion_estimada_pct: 10,
+    });
+    expect(r.camposFueraDeAlcance).toEqual(["defoliacion_estimada_pct"]);
+  });
+  it.each([
+    ["evaluacion_inicial", null],
+    ["reevaluacion", "seguimiento"],
+    ["levantamiento", null],
+    ["evaluacion_instrumental", "resistografia"],
+    ["monitoreo", "fitosanitario"],
+    ["monitoreo", "estructural"],
+    ["monitoreo", "vitalidad"],
+  ] as const)("%s/%s (CC-063): el motor usa exactamente la lista del borrador", (tipo, subtipo) => {
+    const permitidos = camposPermitidosPorTipo(tipo, subtipo)!;
+    const todos = [...CAMPOS_EVALUACION_COMPLETA, "SL_basal_pct", "superficie_alcorque_m2"];
+    const variables = Object.fromEntries(todos.map((c) => [c, null]));
+    const r = validarAlcance(tipo, subtipo, variables);
+    expect(new Set(todos.filter((c) => !r.camposFueraDeAlcance.includes(c)))).toEqual(new Set(permitidos));
+  });
+  it("Evaluación inicial (CC-063): un campo calculado por la plataforma queda fuera de alcance", () => {
+    const r = validarAlcance("evaluacion_inicial", null, { SL_basal_pct: 12, raices_expuestas: false });
+    expect(r.camposFueraDeAlcance).toEqual(["SL_basal_pct"]);
+  });
+  it("Monitoreo sin subtipo: todo lo registrado queda fuera de alcance (no se inventa un subtipo)", () => {
+    const r = validarAlcance("monitoreo", null, { clasificacion_vitalidad: "muerto" });
+    expect(r.camposFueraDeAlcance).toEqual(["clasificacion_vitalidad"]);
   });
 });
 
