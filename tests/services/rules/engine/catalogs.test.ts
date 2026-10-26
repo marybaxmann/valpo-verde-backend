@@ -283,3 +283,67 @@ describe("integridad del registro", () => {
     }
   });
 });
+
+describe("catálogos de OT vs DICCIONARIO_CAMPOS, ORDENES DE TRABAJO (CC-065)", () => {
+  const filaOt = (campo: string) => {
+    const fila = leerExportCsv("DICCIONARIO_CAMPOS.csv")
+      .slice(1)
+      .find((f) => f[0] === "ORDENES DE TRABAJO" && f[1] === campo);
+    expect(fila).toBeDefined();
+    return fila![7];
+  };
+  const etiquetas = (catalogo: string) => entradasVigentesDe(catalogo).map((c) => c.etiqueta);
+
+  it("tipo_ot = dominio de Tipo_ot (D-234), con los códigos del CHECK de la base", () => {
+    expect(etiquetas("tipo_ot").sort()).toEqual(filaOt("Tipo_ot").split("/").map((s) => s.trim()).sort());
+    expect(entradasVigentesDe("tipo_ot").map((c) => c.codigo).sort()).toEqual(["inspeccion", "mantenimiento"]);
+  });
+
+  it("estado_ot = dominio de estado_ot (D-239), con los códigos del CHECK de la base", () => {
+    expect(etiquetas("estado_ot").sort()).toEqual(filaOt("estado_ot").split("/").map((s) => s.trim()).sort());
+    expect(entradasVigentesDe("estado_ot").map((c) => c.codigo).sort()).toEqual(
+      ["cancelada", "completada", "en_ejecucion", "pendiente", "programada"]
+    );
+  });
+
+  it("accion_mantenimiento = parte «Mantenimiento» de Accion_solicitada (D-235)", () => {
+    const celda = filaOt("Accion_solicitada");
+    const parte = celda.slice(celda.indexOf("Mantenimiento:") + "Mantenimiento:".length);
+    const dominio = parte.split(";").map((s) => s.trim().replace(/\.$/, "")).filter(Boolean);
+    expect(etiquetas("accion_mantenimiento").sort()).toEqual(dominio.sort());
+  });
+
+  it("subtipo_mantenimiento = subtipos de cada acción de Mantenimiento en subtipo_accion (D-236)", () => {
+    const celda = filaOt("subtipo_accion");
+    const acciones = entradasVigentesDe("accion_mantenimiento");
+    const conSubtipos = acciones.filter((a) => celda.includes(`${a.etiqueta}:`));
+    expect(conSubtipos.map((a) => a.codigo).sort()).toEqual(
+      ["descompactacion", "manejo_fitosanitario", "poda", "riego", "tala_retiro"]
+    );
+    for (const accion of conSubtipos) {
+      const desde = celda.indexOf(`${accion.etiqueta}:`) + accion.etiqueta.length + 1;
+      const hasta = celda.indexOf(".", desde);
+      const dominio = celda.slice(desde, hasta).split(";").map((s) => s.trim());
+      const catalogo = entradasVigentesDe("subtipo_mantenimiento").filter((s) => s.padre === accion.codigo);
+      expect({ accion: accion.codigo, etiquetas: catalogo.map((s) => s.etiqueta).sort() }).toEqual({
+        accion: accion.codigo,
+        etiquetas: dominio.sort(),
+      });
+    }
+    // Ningún subtipo sin acción padre de Mantenimiento.
+    const padres = new Set(acciones.map((a) => a.codigo));
+    expect(entradasVigentesDe("subtipo_mantenimiento").every((s) => s.padre && padres.has(s.padre))).toBe(true);
+  });
+
+  it("los códigos que ya fija la base coinciden (tala, retiro_tocon, otra_intervencion)", () => {
+    expect(esCodigoVigente("subtipo_mantenimiento", "tala")).toBe(true);
+    expect(esCodigoVigente("subtipo_mantenimiento", "retiro_tocon")).toBe(true);
+    expect(esCodigoVigente("accion_mantenimiento", "otra_intervencion")).toBe(true);
+  });
+
+  it("ninguna etiqueta de OT queda vacía", () => {
+    for (const cat of ["tipo_ot", "estado_ot", "accion_mantenimiento", "subtipo_mantenimiento"]) {
+      expect(entradasVigentesDe(cat).every((c) => c.etiqueta.trim() !== "")).toBe(true);
+    }
+  });
+});

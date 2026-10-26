@@ -137,6 +137,49 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "subtipo_inspeccion", codigo: "estructural", etiqueta: "Estructural", padre: "monitoreo", estado: "vigente", cc: "PR-021" },
   { catalogo: "subtipo_inspeccion", codigo: "vitalidad", etiqueta: "Vitalidad", padre: "monitoreo", estado: "vigente", cc: "PR-021" },
 
+  // --- tipo_ot: D-234 (ORDENES DE TRABAJO.Tipo_ot). Códigos del CHECK de
+  //     work_orders.tipo_ot (CC-065). ---
+  { catalogo: "tipo_ot", codigo: "inspeccion", etiqueta: "Inspección", orden: 0, estado: "vigente", cc: "CC-065" },
+  { catalogo: "tipo_ot", codigo: "mantenimiento", etiqueta: "Mantenimiento", orden: 1, estado: "vigente", cc: "CC-065" },
+
+  // --- estado_ot: D-239. Códigos del CHECK de work_orders.estado_ot (CC-065). ---
+  { catalogo: "estado_ot", codigo: "pendiente", etiqueta: "Pendiente", orden: 0, estado: "vigente", cc: "CC-065" },
+  { catalogo: "estado_ot", codigo: "programada", etiqueta: "Programada", orden: 1, estado: "vigente", cc: "CC-065" },
+  { catalogo: "estado_ot", codigo: "en_ejecucion", etiqueta: "En ejecución", orden: 2, estado: "vigente", cc: "CC-065" },
+  { catalogo: "estado_ot", codigo: "completada", etiqueta: "Completada", orden: 3, estado: "vigente", cc: "CC-065" },
+  { catalogo: "estado_ot", codigo: "cancelada", etiqueta: "Cancelada", orden: 4, estado: "vigente", cc: "CC-065" },
+
+  // --- accion_mantenimiento: D-235, parte «Mantenimiento» de
+  //     Accion_solicitada (las de Inspección son tipo_inspeccion_realizada).
+  //     `otra_intervencion` es el código que ya fija la base
+  //     (chk_work_orders_observaciones, D-246; CC-065). ---
+  { catalogo: "accion_mantenimiento", codigo: "poda", etiqueta: "Poda", orden: 0, estado: "vigente", cc: "CC-065" },
+  { catalogo: "accion_mantenimiento", codigo: "riego", etiqueta: "Riego", orden: 1, estado: "vigente", cc: "CC-065" },
+  { catalogo: "accion_mantenimiento", codigo: "descompactacion", etiqueta: "Descompactación", orden: 2, estado: "vigente", cc: "CC-065" },
+  { catalogo: "accion_mantenimiento", codigo: "manejo_fitosanitario", etiqueta: "Manejo fitosanitario", orden: 3, estado: "vigente", cc: "CC-065" },
+  { catalogo: "accion_mantenimiento", codigo: "tala_retiro", etiqueta: "Tala_retiro", orden: 4, estado: "vigente", cc: "CC-065" },
+  { catalogo: "accion_mantenimiento", codigo: "reparacion_alcorque", etiqueta: "Reparación_alcorque", orden: 5, estado: "vigente", cc: "CC-065" },
+  { catalogo: "accion_mantenimiento", codigo: "soporte_tutorado", etiqueta: "Soporte_tutorado", orden: 6, estado: "vigente", cc: "CC-065" },
+  { catalogo: "accion_mantenimiento", codigo: "otra_intervencion", etiqueta: "Otra_Intervención", orden: 7, estado: "vigente", cc: "CC-065" },
+
+  // --- subtipo_mantenimiento: D-236, subtipos de cada acción de
+  //     Mantenimiento (`padre` = su accion_mantenimiento). `tala` y
+  //     `retiro_tocon` son los códigos que ya fija la base
+  //     (fn_fix_requiere_revision_inspector, v_tree_presence; CC-065). ---
+  { catalogo: "subtipo_mantenimiento", codigo: "sanitaria", etiqueta: "Sanitaria", padre: "poda", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "formacion", etiqueta: "Formación", padre: "poda", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "despeje", etiqueta: "Despeje", padre: "poda", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "reduccion", etiqueta: "Reducción", padre: "poda", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "programado", etiqueta: "Programado", padre: "riego", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "emergencia", etiqueta: "Emergencia", padre: "riego", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "manual", etiqueta: "Manual", padre: "descompactacion", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "mecanica", etiqueta: "Mecánica", padre: "descompactacion", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "preventivo", etiqueta: "Preventivo", padre: "manejo_fitosanitario", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "correctivo", etiqueta: "Correctivo", padre: "manejo_fitosanitario", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "retiro_residuos", etiqueta: "Retiro_residuos", padre: "manejo_fitosanitario", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "tala", etiqueta: "Tala", padre: "tala_retiro", estado: "vigente", cc: "CC-065" },
+  { catalogo: "subtipo_mantenimiento", codigo: "retiro_tocon", etiqueta: "Retiro_tocón", padre: "tala_retiro", estado: "vigente", cc: "CC-065" },
+
   // --- forma_alcorque: D-121 ---
   { catalogo: "forma_alcorque", codigo: "rectangular", etiqueta: "Rectangular", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "forma_alcorque", codigo: "circular", etiqueta: "Circular", orden: 1, estado: "vigente", cc: "PR-021" },
