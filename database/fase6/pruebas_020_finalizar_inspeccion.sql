@@ -53,13 +53,18 @@
 --     fecha sin valor — SV064.
 -- F17 (CC-053): especie con species_id ya puesto — no se crea ni se
 --     cambia nada en el catálogo; la respuesta informa ese species_id.
--- F18 (e): justificación sin cambio de fecha — sin ajuste_fecha_por.
+-- F18 (D-204): justificación sin cambio de fecha — SV064, la
+--     inspección sigue Preguardado (decisión de la responsable,
+--     2026-10-25, CC-055).
 -- F19 (CC-055): Monitoreo que adelanta la reinspección — aceptado.
 -- F20 (CC-055): Monitoreo que atrasaría la reinspección — SV064; igual
 --     a la vigente — aceptado.
 -- F21 (CC-055): reinspección atrasada — sugerida posterior al día
 --     siguiente a fecha_inspeccion: SV064; el día siguiente, con fecha
 --     final ajustada y justificada: aceptado.
+-- F22 (CC-055, D-204): Monitoreo con la sugerida igual a la vigente y la
+--     fecha final ajustada POSTERIOR a la vigente, con justificación —
+--     aceptado (el tope es solo para la sugerida).
 --
 -- v_tree_fechas_vigentes
 -- V1: árbol sin fecha vigente — sin fila.
@@ -716,20 +721,26 @@ BEGIN
   INSERT INTO test_log (msg) VALUES ('F17 OK');
 
   -- ------------------------------------------------------------------
-  -- F18 (e) — justificación sin que ninguna fecha cambie: sin ajuste_fecha_por.
+  -- F18 (D-204) — justificación sin que ninguna fecha cambie: SV064,
+  -- nada escrito (la inspección sigue Preguardado).
   -- ------------------------------------------------------------------
   v_inspection_id := pg_temp.preparar_inspeccion(p_inspector => v_inspector, p_municipal => v_municipal, p_especie => 'Robinia pseudoacacia F18');
 
-  v_res := fn_finalizar_inspeccion(
-    p_inspection_id => v_inspection_id, p_usuario => v_inspector,
-    p_resultado => v_resultado_base, p_ajustes => '[]'::jsonb,
-    p_fecha_proxima_inspeccion_sugerida => v_hoy + 730, p_fecha_proximo_monitoreo_sugerida => v_hoy + 365,
-    p_fecha_proxima_inspeccion => v_hoy + 730, p_fecha_proximo_monitoreo => v_hoy + 365,
-    p_justificacion_ajuste_fecha => 'Texto sin ajuste de fecha'
-  );
+  BEGIN
+    PERFORM fn_finalizar_inspeccion(
+      p_inspection_id => v_inspection_id, p_usuario => v_inspector,
+      p_resultado => v_resultado_base, p_ajustes => '[]'::jsonb,
+      p_fecha_proxima_inspeccion_sugerida => v_hoy + 730, p_fecha_proximo_monitoreo_sugerida => v_hoy + 365,
+      p_fecha_proxima_inspeccion => v_hoy + 730, p_fecha_proximo_monitoreo => v_hoy + 365,
+      p_justificacion_ajuste_fecha => 'Texto sin ajuste de fecha'
+    );
+    RAISE EXCEPTION 'F18 FALLA: se aceptó una justificación de fecha sin que cambiara ninguna fecha';
+  EXCEPTION WHEN SQLSTATE 'SV064' THEN
+    NULL;
+  END;
   SELECT * INTO v_insp FROM inspections WHERE id = v_inspection_id;
-  IF v_insp.ajuste_fecha_por IS NOT NULL OR v_insp.fecha_ajuste_fecha IS NOT NULL THEN
-    RAISE EXCEPTION 'F18 FALLA: se registró ajuste_fecha_por sin que cambiara ninguna fecha';
+  IF v_insp.estado_registro <> 'preguardado' OR v_insp.justificacion_ajuste_fecha IS NOT NULL OR v_insp.ajuste_fecha_por IS NOT NULL THEN
+    RAISE EXCEPTION 'F18 FALLA: la inspección cambió tras el rechazo: %', row_to_json(v_insp);
   END IF;
   INSERT INTO test_log (msg) VALUES ('F18 OK');
 
@@ -816,6 +827,36 @@ BEGIN
     RAISE EXCEPTION 'F21 FALLA: la reinspección atrasada no quedó como se esperaba: %', row_to_json(v_insp);
   END IF;
   INSERT INTO test_log (msg) VALUES ('F21 OK');
+
+  -- ------------------------------------------------------------------
+  -- F22 (CC-055, D-204) — Monitoreo con fecha final ajustada posterior a
+  -- la vigente, con justificación: aceptado. Vigente: hoy + 700; la
+  -- sugerida la respeta (= vigente) y el Inspector la lleva a hoy + 800.
+  -- ------------------------------------------------------------------
+  v_inspection_a := pg_temp.preparar_inspeccion(
+    p_inspector => v_inspector, p_municipal => v_municipal, p_especie => 'Robinia pseudoacacia F22', p_fecha_inspeccion => v_hoy - 30
+  );
+  SELECT tree_id INTO v_tree_id FROM inspections WHERE id = v_inspection_a;
+  PERFORM pg_temp.finalizar_simple(p_inspection_id => v_inspection_a, p_inspector => v_inspector, p_fpi => v_hoy + 700, p_fpm => v_hoy + 300);
+  PERFORM pg_temp.completar_ot(p_inspection_id => v_inspection_a, p_fecha => v_hoy - 20);
+
+  v_inspection_id := pg_temp.preparar_inspeccion(
+    p_inspector => v_inspector, p_municipal => v_municipal, p_especie => 'Robinia pseudoacacia F22',
+    p_tree_id => v_tree_id, p_tipo => 'monitoreo', p_subtipo => 'fitosanitario'
+  );
+  v_res := fn_finalizar_inspeccion(
+    p_inspection_id => v_inspection_id, p_usuario => v_inspector,
+    p_resultado => v_resultado_base, p_ajustes => '[]'::jsonb,
+    p_fecha_proxima_inspeccion_sugerida => v_hoy + 700, p_fecha_proximo_monitoreo_sugerida => v_hoy + 365,
+    p_fecha_proxima_inspeccion => v_hoy + 800, p_fecha_proximo_monitoreo => v_hoy + 365,
+    p_justificacion_ajuste_fecha => 'Reinspección coordinada con la poda programada del sector'
+  );
+  SELECT * INTO v_insp FROM inspections WHERE id = v_inspection_id;
+  IF v_insp.estado_registro <> 'finalizado' OR v_insp.fecha_proxima_inspeccion_sugerida <> v_hoy + 700
+     OR v_insp.fecha_proxima_inspeccion <> v_hoy + 800 OR v_insp.ajuste_fecha_por IS DISTINCT FROM v_inspector THEN
+    RAISE EXCEPTION 'F22 FALLA: no se aceptó la fecha ajustada posterior a la vigente con justificación: %', row_to_json(v_insp);
+  END IF;
+  INSERT INTO test_log (msg) VALUES ('F22 OK');
 
   -- ==================================================================
   -- v_tree_fechas_vigentes

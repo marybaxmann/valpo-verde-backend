@@ -50,8 +50,10 @@
 -- fila 12: los valores nuevos rigen solo al completar la OT). Una
 -- inspección Preguardada, Anulada o de una OT abierta no cuenta. «La
 -- última» (CC-055, REGLAS_GENERALES fila 13): `fecha_completada_ot`
--- DESC, luego `fecha_inspeccion` DESC, luego `created_at` DESC. Cada
--- fecha se toma de la inspección que la registró (por eso dos
+-- DESC, luego `fecha_inspeccion` DESC, luego `inspections.created_at`
+-- DESC (nunca el `created_at` de otra tabla: la fila de
+-- `tree_data_versions` se borra y se vuelve a crear cuando un guardado
+-- quita los campos del árbol, CC-048). Cada fecha se toma de la inspección que la registró (por eso dos
 -- DISTINCT ON, uno por fecha); el valor es el ajustado si existe, si no
 -- el sugerido, igual que `v_upcoming_inspections`.
 --
@@ -161,7 +163,10 @@ CREATE TYPE evaluations_resultado_input AS (
 -- D-203: `fecha_proximo_monitoreo` igual o posterior (CC-055). El CHECK
 -- físico `chk_inspections_justificacion_ajuste_fecha` (migración 014)
 -- ya rechaza una fecha distinta de la sugerida sin
--- `justificacion_ajuste_fecha` (D-204) — no se repite aquí.
+-- `justificacion_ajuste_fecha` (D-204) — no se repite aquí. Al revés,
+-- una justificación sin que ninguna fecha difiera de su sugerida se
+-- rechaza con SV064 (D-204 solo aplica cuando la fecha difiere;
+-- decisión de la responsable, 2026-10-25, CC-055).
 -- `ajuste_fecha_por`/`fecha_ajuste_fecha` se registran solo si alguna
 -- fecha difiere de su sugerida (punto e).
 --
@@ -170,7 +175,8 @@ CREATE TYPE evaluations_resultado_input AS (
 -- máximo la vigente, o el día siguiente a `fecha_inspeccion` si la
 -- vigente ya pasó. Defensa en profundidad del cálculo del motor (que
 -- elige el valor exacto); el Inspector igual puede ajustar la fecha
--- final con justificación (D-204).
+-- final con justificación (D-204), también a una fecha posterior a la
+-- vigente: el tope es solo para la sugerida (CC-055).
 
 CREATE FUNCTION fn_finalizar_inspeccion(
   p_inspection_id uuid,
@@ -284,7 +290,16 @@ BEGIN
       USING ERRCODE = 'SV064';
   END IF;
 
-  -- CC-055: un Monitoreo no atrasa la reinspección vigente.
+  -- D-204: justificación solo cuando alguna fecha difiere de su sugerida.
+  v_fecha_ajustada := p_fecha_proxima_inspeccion <> p_fecha_proxima_inspeccion_sugerida
+                   OR p_fecha_proximo_monitoreo <> p_fecha_proximo_monitoreo_sugerida;
+  IF p_justificacion_ajuste_fecha IS NOT NULL AND NOT v_fecha_ajustada THEN
+    RAISE EXCEPTION 'justificacion_ajuste_fecha solo se registra cuando alguna fecha difiere de su sugerida, y aquí las dos coinciden (D-204)'
+      USING ERRCODE = 'SV064';
+  END IF;
+
+  -- CC-055: la sugerida de un Monitoreo no atrasa la reinspección vigente
+  -- (la fecha final ajustada, con justificación, sí puede).
   IF v_tipo_inspeccion_realizada = 'monitoreo' THEN
     SELECT fv.fecha_proxima_inspeccion INTO v_fecha_vigente
     FROM public.v_tree_fechas_vigentes fv WHERE fv.tree_id = v_tree_id;
@@ -404,10 +419,8 @@ BEGIN
     );
   END LOOP;
 
-  -- (e) Quién y cuándo ajustó una fecha: solo si alguna difiere de su sugerida.
-  v_fecha_ajustada := p_fecha_proxima_inspeccion <> p_fecha_proxima_inspeccion_sugerida
-                   OR p_fecha_proximo_monitoreo <> p_fecha_proximo_monitoreo_sugerida;
-
+  -- (e) Quién y cuándo ajustó una fecha: solo si alguna difiere de su
+  -- sugerida (`v_fecha_ajustada`, calculado arriba).
   UPDATE public.inspections SET
     fecha_proxima_inspeccion_sugerida = p_fecha_proxima_inspeccion_sugerida,
     fecha_proximo_monitoreo_sugerida = p_fecha_proximo_monitoreo_sugerida,
