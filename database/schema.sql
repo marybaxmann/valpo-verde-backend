@@ -1,7 +1,22 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 17 — posterior a la migración 018e (Fase 6, issue #58;
+--   (revisión 18 — sincronizado con lo aplicado en
+--   `valpo-verde-conecta-pruebas` hasta la migración 019 (2026-10-25):
+--   018f (CC-052): fn_save_inspection_draft con 23 parámetros — en
+--   Levantamiento, el primer guardado sin tree_id crea el árbol nuevo
+--   (trees + versión de alta); 018g (CC-050):
+--   fn_transition_work_order_estado, Pendiente -> Programada -> En
+--   ejecución, SQLSTATE SV059; 018h (#58; D-238/D-244/CC-036):
+--   fn_create_work_order_inspeccion, SQLSTATE SV060; 018i (#73; CC-053):
+--   tree_data_versions.species_id, species_name_history,
+--   fn_rename_species/fn_complete_species/fn_resolve_or_create_species
+--   (SV061/SV062/SV063), fn_refresh_tree_current resuelve la especie
+--   desde el catálogo cuando hay species_id y v_species_traits une
+--   primero por species_id; 019 (CC-049): bucket `tree-photos`, en el
+--   esquema storage (solo nota al final). Funciones copiadas de los
+--   archivos de migración, verificados contra pg_proc (mismo código);
+--   antes revisión 17 — posterior a la migración 018e (Fase 6, issue #58;
 --   CC-048/CC-050): evaluations.variables_calculo/rule_version/motor_commit
 --   pasan a opcionales, con CHECK chk_evaluations_calculado_coherente
 --   (sin calculado_at, ninguna columna de resultado tiene valor; con él,
@@ -776,6 +791,193 @@ CREATE TRIGGER trg_species_updated_at
   BEFORE UPDATE ON species
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- species_name_history (migración 018i; #73; CC-053 punto 5): historial
+-- explícito de renombres de una especie del catálogo, solo inserción,
+-- escrito por fn_rename_species. RLS: solo SELECT para authenticated
+-- (misma regla que species), en la migración.
+CREATE TABLE species_name_history (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  species_id    UUID NOT NULL REFERENCES species(id) ON DELETE RESTRICT,
+  nombre_anterior TEXT NOT NULL,
+  nombre_nuevo    TEXT NOT NULL,
+  changed_by      UUID REFERENCES user_profiles(id),
+  changed_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_species_name_history_species ON species_name_history (species_id);
+
+-- fn_rename_species / fn_complete_species / fn_resolve_or_create_species
+-- (migración 018i; #73; CC-053). SECURITY DEFINER, solo service_role;
+-- las tres exigen un Inspector activo (REGLAS_GENERALES fila 18).
+--   fn_rename_species (SV061): corrige especie_cientifica y deja el
+--     nombre anterior en species_name_history; el nombre nuevo lo
+--     validan los CHECK/UNIQUE de species (23514/23505 — el 409 lo
+--     traduce el backend).
+--   fn_complete_species (SV062): sobrescribe genero/familia/
+--     origen_biogeografico/persistencia_follaje/tipo_hoja juntos (el
+--     backend combina con los valores actuales antes de llamarla).
+--   fn_resolve_or_create_species (SV063): busca por forma normalizada
+--     (D-13) y, si no existe, la incorpora con created_by = el
+--     Inspector. Pensada para la finalización de la inspección (#59).
+CREATE FUNCTION fn_rename_species(
+  p_species_id uuid,
+  p_nombre_nuevo text,
+  p_changed_by uuid
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_rol text;
+  v_activo boolean;
+  v_nombre_anterior text;
+BEGIN
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_changed_by;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_changed_by USING ERRCODE = 'SV061';
+  END IF;
+  IF v_rol <> 'inspector' THEN
+    RAISE EXCEPTION 'El usuario % no tiene el rol Inspector (rol actual: %; solo el Inspector corrige especies, REGLAS_GENERALES fila 18)', p_changed_by, v_rol
+      USING ERRCODE = 'SV061';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_changed_by USING ERRCODE = 'SV061';
+  END IF;
+
+  SELECT especie_cientifica INTO v_nombre_anterior FROM public.species WHERE id = p_species_id;
+  IF v_nombre_anterior IS NULL THEN
+    RAISE EXCEPTION 'La especie % no existe', p_species_id USING ERRCODE = 'SV061';
+  END IF;
+  IF v_nombre_anterior = p_nombre_nuevo THEN
+    RAISE EXCEPTION 'El nombre nuevo es igual al actual (%)', v_nombre_anterior USING ERRCODE = 'SV061';
+  END IF;
+
+  UPDATE public.species SET especie_cientifica = p_nombre_nuevo WHERE id = p_species_id;
+
+  INSERT INTO public.species_name_history (species_id, nombre_anterior, nombre_nuevo, changed_by)
+  VALUES (p_species_id, v_nombre_anterior, p_nombre_nuevo, p_changed_by);
+
+  RETURN jsonb_build_object('id', p_species_id, 'especie_cientifica', p_nombre_nuevo, 'nombre_anterior', v_nombre_anterior);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION fn_rename_species(uuid, text, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION fn_rename_species(uuid, text, uuid) TO service_role;
+
+CREATE FUNCTION fn_complete_species(
+  p_species_id uuid,
+  p_genero text,
+  p_familia text,
+  p_origen_biogeografico text,
+  p_persistencia_follaje text,
+  p_tipo_hoja text,
+  p_changed_by uuid
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_rol text;
+  v_activo boolean;
+  v_especie record;
+BEGIN
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_changed_by;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_changed_by USING ERRCODE = 'SV062';
+  END IF;
+  IF v_rol <> 'inspector' THEN
+    RAISE EXCEPTION 'El usuario % no tiene el rol Inspector (rol actual: %; solo el Inspector completa especies, REGLAS_GENERALES fila 18)', p_changed_by, v_rol
+      USING ERRCODE = 'SV062';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_changed_by USING ERRCODE = 'SV062';
+  END IF;
+
+  UPDATE public.species SET
+    genero = p_genero,
+    familia = p_familia,
+    origen_biogeografico = p_origen_biogeografico,
+    persistencia_follaje = p_persistencia_follaje,
+    tipo_hoja = p_tipo_hoja
+  WHERE id = p_species_id
+  RETURNING id, especie_cientifica, genero, familia, origen_biogeografico, persistencia_follaje, tipo_hoja
+  INTO v_especie;
+
+  IF v_especie.id IS NULL THEN
+    RAISE EXCEPTION 'La especie % no existe', p_species_id USING ERRCODE = 'SV062';
+  END IF;
+
+  RETURN jsonb_build_object(
+    'id', v_especie.id, 'especie_cientifica', v_especie.especie_cientifica,
+    'genero', v_especie.genero, 'familia', v_especie.familia,
+    'origen_biogeografico', v_especie.origen_biogeografico,
+    'persistencia_follaje', v_especie.persistencia_follaje, 'tipo_hoja', v_especie.tipo_hoja
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION fn_complete_species(uuid, text, text, text, text, text, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION fn_complete_species(uuid, text, text, text, text, text, uuid) TO service_role;
+
+CREATE FUNCTION fn_resolve_or_create_species(
+  p_especie_cientifica text,
+  p_created_by uuid
+) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_rol text;
+  v_activo boolean;
+  v_species_id uuid;
+BEGIN
+  IF p_especie_cientifica IS NULL OR btrim(p_especie_cientifica) = '' THEN
+    RAISE EXCEPTION 'especie_cientifica es obligatoria' USING ERRCODE = 'SV063';
+  END IF;
+
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_created_by;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_created_by USING ERRCODE = 'SV063';
+  END IF;
+  IF v_rol <> 'inspector' THEN
+    RAISE EXCEPTION 'El usuario % no tiene el rol Inspector (rol actual: %; solo el Inspector incorpora especies, REGLAS_GENERALES fila 18)', p_created_by, v_rol
+      USING ERRCODE = 'SV063';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_created_by USING ERRCODE = 'SV063';
+  END IF;
+
+  SELECT id INTO v_species_id FROM public.species
+  WHERE lower(regexp_replace(trim(especie_cientifica), '\s+', ' ', 'g'))
+      = lower(regexp_replace(trim(p_especie_cientifica), '\s+', ' ', 'g'));
+
+  IF v_species_id IS NOT NULL THEN
+    RETURN v_species_id;
+  END IF;
+
+  INSERT INTO public.species (especie_cientifica, created_by)
+  VALUES (btrim(p_especie_cientifica), p_created_by)
+  RETURNING id INTO v_species_id;
+
+  RETURN v_species_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION fn_resolve_or_create_species(text, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION fn_resolve_or_create_species(text, uuid) TO service_role;
+
 -- ---------------------------------------------------------------------
 -- CATÁLOGO DE ESPACIOS PÚBLICOS (plazas, parques)
 -- ---------------------------------------------------------------------
@@ -1261,6 +1463,7 @@ CREATE TABLE tree_data_versions (
   utm_norte                           NUMERIC(10,2),
   especie_cientifica                  TEXT,
   nombre_comun                        TEXT,
+  species_id                          UUID REFERENCES species(id),  -- migración 018i (CC-053): especie confirmada del catálogo; NULL = especie escrita sin confirmar
   multifustal                         BOOLEAN,
   numero_fustes                       INTEGER CHECK (numero_fustes IS NULL OR numero_fustes >= 2),
   dap_fustes_cm                       NUMERIC(6,2)[],
@@ -1476,22 +1679,33 @@ GRANT EXECUTE ON FUNCTION fn_create_tree_alta(uuid, uuid, text, text, numeric, n
 -- Solo si NINGUNA versión válida registró el campo se usa el valor del
 -- alta. Por eso es CASE WHEN EXISTS (...), no COALESCE: COALESCE seguiría
 -- buscando hacia atrás ante un NULL legítimo, perdiendo la actualización.
+--
+-- Migración 018i (CC-053 punto 5): especie_cientifica se resuelve desde
+-- species.especie_cientifica cuando la versión tiene species_id (así un
+-- renombre del catálogo se propaga con solo volver a correr esta
+-- función), o desde el texto de la versión cuando no; species_id se
+-- resuelve con el mismo criterio de vigencia que el resto de campos.
 CREATE FUNCTION fn_refresh_tree_current(p_tree_id UUID) RETURNS void
 LANGUAGE plpgsql
 SET search_path = public, pg_temp
 AS $$
 BEGIN
   WITH validas AS (
-    SELECT tdv.*, wo.fecha_completada_ot AS ot_fecha_completada
+    SELECT tdv.*, wo.fecha_completada_ot AS ot_fecha_completada,
+           COALESCE(s.especie_cientifica, tdv.especie_cientifica) AS especie_resuelta
     FROM tree_data_versions tdv
     JOIN inspections i ON i.id = tdv.inspection_id
     JOIN work_orders wo ON wo.id = i.work_order_id
+    LEFT JOIN species s ON s.id = tdv.species_id
     WHERE tdv.tree_id = p_tree_id
       AND i.estado_registro <> 'anulado'
       AND wo.estado_ot = 'completada'
   ),
   alta AS (
-    SELECT * FROM tree_data_versions WHERE tree_id = p_tree_id AND inspection_id IS NULL
+    SELECT tdv.*, COALESCE(s.especie_cientifica, tdv.especie_cientifica) AS especie_resuelta
+    FROM tree_data_versions tdv
+    LEFT JOIN species s ON s.id = tdv.species_id
+    WHERE tdv.tree_id = p_tree_id AND tdv.inspection_id IS NULL
   )
   UPDATE trees t SET
     sector = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'sector' = ANY(v.campos_registrados))
@@ -1507,8 +1721,11 @@ BEGIN
       THEN (SELECT v.utm_norte FROM validas v WHERE 'utm_norte' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
       ELSE (SELECT a.utm_norte FROM alta a) END,
     especie_cientifica = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados))
-      THEN (SELECT v.especie_cientifica FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
-      ELSE (SELECT a.especie_cientifica FROM alta a) END,
+      THEN (SELECT v.especie_resuelta FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.especie_resuelta FROM alta a) END,
+    species_id = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados))
+      THEN (SELECT v.species_id FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      ELSE (SELECT a.species_id FROM alta a) END,
     nombre_comun = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'nombre_comun' = ANY(v.campos_registrados))
       THEN (SELECT v.nombre_comun FROM validas v WHERE 'nombre_comun' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
       ELSE (SELECT a.nombre_comun FROM alta a) END,
@@ -1947,6 +2164,166 @@ $$;
 REVOKE ALL ON FUNCTION fn_transition_work_order_estado(uuid, text, date, uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION fn_transition_work_order_estado(uuid, text, date, uuid) TO service_role;
 
+-- fn_create_work_order_inspeccion (migración 018h; #58; D-238, D-244,
+-- CC-036): crea una OT de Inspección en una sola invocación. Valida que
+-- ot_creado_por sea usuario_municipal activo y miembro del proyecto;
+-- responsable_accion_id, Inspector activo y miembro del proyecto (D-244);
+-- el par accion_solicitada/subtipo_accion (D-196/D-197); tree_id
+-- obligatorio y del mismo proyecto, salvo Levantamiento (NULL, D-232);
+-- incident_id opcional y del mismo proyecto (CC-036, D-233); prioridad
+-- uno de los 4 valores de D-238; observaciones obligatoria para Otra/
+-- Otra_Intervención/Levantamiento (D-246). estado_ot nace en 'pendiente'.
+-- fecha_creacion_ot la pasa el backend (hora de Chile). SQLSTATE SV060.
+CREATE FUNCTION fn_create_work_order_inspeccion(
+  p_project_id uuid,
+  p_tree_id uuid,
+  p_incident_id uuid,
+  p_accion_solicitada text,
+  p_subtipo_accion text,
+  p_motivo text,
+  p_prioridad text,
+  p_observaciones text,
+  p_responsable_accion_id uuid,
+  p_creado_por uuid,
+  p_fecha_creacion_ot date
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_rol text;
+  v_activo boolean;
+  v_subtipo_valido boolean;
+  v_tree_project_id uuid;
+  v_incident_project_id uuid;
+  v_wo record;
+BEGIN
+  -- (a) creado_por: usuario_municipal, activo, miembro del proyecto.
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_creado_por;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_creado_por USING ERRCODE = 'SV060';
+  END IF;
+  IF v_rol <> 'usuario_municipal' THEN
+    RAISE EXCEPTION 'El usuario % no tiene el rol Usuario municipal (rol actual: %)', p_creado_por, v_rol USING ERRCODE = 'SV060';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_creado_por USING ERRCODE = 'SV060';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.project_members WHERE project_id = p_project_id AND user_id = p_creado_por) THEN
+    RAISE EXCEPTION 'El usuario % no es miembro del proyecto %', p_creado_por, p_project_id USING ERRCODE = 'SV060';
+  END IF;
+
+  -- (b) responsable_accion_id: inspector, activo, miembro del proyecto (D-244).
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_responsable_accion_id;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_responsable_accion_id USING ERRCODE = 'SV060';
+  END IF;
+  IF v_rol <> 'inspector' THEN
+    RAISE EXCEPTION 'El usuario % no tiene el rol Inspector (rol actual: %, D-244)', p_responsable_accion_id, v_rol USING ERRCODE = 'SV060';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_responsable_accion_id USING ERRCODE = 'SV060';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.project_members WHERE project_id = p_project_id AND user_id = p_responsable_accion_id) THEN
+    RAISE EXCEPTION 'El usuario % no es miembro del proyecto % (D-244)', p_responsable_accion_id, p_project_id USING ERRCODE = 'SV060';
+  END IF;
+
+  -- (c) accion_solicitada / subtipo_accion — mismos pares que fn_save_inspection_draft (D-196/D-197).
+  v_subtipo_valido := CASE p_accion_solicitada
+    WHEN 'evaluacion_inicial' THEN p_subtipo_accion IS NULL
+    WHEN 'levantamiento'      THEN p_subtipo_accion IS NULL
+    WHEN 'reevaluacion'       THEN p_subtipo_accion IS NULL OR p_subtipo_accion IN ('seguimiento', 'post_intervencion')
+    WHEN 'evaluacion_instrumental' THEN p_subtipo_accion IS NULL OR p_subtipo_accion IN ('tomografia_sonica', 'resistografia', 'otra_instrumental')
+    WHEN 'monitoreo'          THEN p_subtipo_accion IN ('fitosanitario', 'estructural', 'vitalidad')
+    ELSE false
+  END;
+  IF NOT v_subtipo_valido THEN
+    RAISE EXCEPTION 'subtipo_accion (%) no es válido para accion_solicitada (%)', p_subtipo_accion, p_accion_solicitada
+      USING ERRCODE = 'SV060';
+  END IF;
+
+  -- (d) tree_id — obligatorio y del mismo proyecto, salvo Levantamiento (NULL, D-232/AMD-19).
+  IF p_accion_solicitada = 'levantamiento' THEN
+    IF p_tree_id IS NOT NULL THEN
+      RAISE EXCEPTION 'En una OT de Levantamiento, tree_id debe quedar vacío (D-232; AMD-19)' USING ERRCODE = 'SV060';
+    END IF;
+  ELSE
+    IF p_tree_id IS NULL THEN
+      RAISE EXCEPTION 'tree_id es obligatorio salvo en una OT de Levantamiento' USING ERRCODE = 'SV060';
+    END IF;
+    SELECT project_id INTO v_tree_project_id FROM public.trees WHERE id = p_tree_id;
+    IF v_tree_project_id IS NULL THEN
+      RAISE EXCEPTION 'El árbol % no existe', p_tree_id USING ERRCODE = 'SV060';
+    END IF;
+    IF v_tree_project_id <> p_project_id THEN
+      RAISE EXCEPTION 'El árbol % no pertenece al proyecto de la orden de trabajo', p_tree_id USING ERRCODE = 'SV060';
+    END IF;
+  END IF;
+
+  -- (e) incident_id — opcional (CC-036, D-233); si viene, del mismo proyecto.
+  IF p_incident_id IS NOT NULL THEN
+    SELECT project_id INTO v_incident_project_id FROM public.incidents WHERE id = p_incident_id;
+    IF v_incident_project_id IS NULL THEN
+      RAISE EXCEPTION 'La incidencia % no existe', p_incident_id USING ERRCODE = 'SV060';
+    END IF;
+    IF v_incident_project_id <> p_project_id THEN
+      RAISE EXCEPTION 'La incidencia % no pertenece al proyecto de la orden de trabajo', p_incident_id USING ERRCODE = 'SV060';
+    END IF;
+  END IF;
+
+  -- (f) prioridad — dominio de D-238, nunca no_determinado.
+  IF p_prioridad NOT IN ('baja', 'media', 'alta', 'critica') THEN
+    RAISE EXCEPTION 'prioridad (%) no es un valor válido (baja/media/alta/critica, D-238)', p_prioridad USING ERRCODE = 'SV060';
+  END IF;
+
+  -- (g) observaciones — obligatoria para Otra/Otra_Intervención/Levantamiento (D-246).
+  IF p_accion_solicitada IN ('levantamiento', 'otra', 'otra_intervencion')
+     AND (p_observaciones IS NULL OR btrim(p_observaciones) = '') THEN
+    RAISE EXCEPTION 'observaciones es obligatoria para accion_solicitada = % (D-246)', p_accion_solicitada
+      USING ERRCODE = 'SV060';
+  END IF;
+
+  INSERT INTO public.work_orders (
+    project_id, tree_id, incident_id, tipo_ot, accion_solicitada, subtipo_accion,
+    motivo, prioridad, observaciones, fecha_creacion_ot, ot_creado_por, responsable_accion_id
+  ) VALUES (
+    p_project_id, p_tree_id, p_incident_id, 'inspeccion', p_accion_solicitada, p_subtipo_accion,
+    p_motivo, p_prioridad, p_observaciones, p_fecha_creacion_ot, p_creado_por, p_responsable_accion_id
+  )
+  RETURNING id, codigo_ot, estado_ot, fecha_creacion_ot, project_id, tree_id, incident_id,
+    accion_solicitada, subtipo_accion, prioridad, responsable_accion_id
+  INTO v_wo;
+
+  RETURN jsonb_build_object(
+    'id', v_wo.id,
+    'codigo_ot', v_wo.codigo_ot,
+    'estado_ot', v_wo.estado_ot,
+    'fecha_creacion_ot', v_wo.fecha_creacion_ot,
+    'project_id', v_wo.project_id,
+    'tree_id', v_wo.tree_id,
+    'incident_id', v_wo.incident_id,
+    'accion_solicitada', v_wo.accion_solicitada,
+    'subtipo_accion', v_wo.subtipo_accion,
+    'prioridad', v_wo.prioridad,
+    'responsable_accion_id', v_wo.responsable_accion_id
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION fn_create_work_order_inspeccion(
+  uuid, uuid, uuid, text, text, text, text, text, uuid, uuid, date
+) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION fn_create_work_order_inspeccion(
+  uuid, uuid, uuid, text, text, text, text, text, uuid, uuid, date
+) TO service_role;
+
 -- ---------------------------------------------------------------------
 -- EVALUACIONES, AJUSTES Y EVALUACIÓN VIGENTE (migración 014; §3.9–§3.10 bis)
 -- ---------------------------------------------------------------------
@@ -2051,6 +2428,13 @@ CREATE TRIGGER trg_evaluations_updated_at
 -- el árbol debe ser del mismo proyecto que la OT (D-193), exista ya o
 -- se cree en esta inspección. Si un guardado ya no trae campos de
 -- ARBOLES, se borra la fila de tree_data_versions de esa inspección.
+--
+-- Migración 018f (CC-052): en una OT de Levantamiento, el primer guardado
+-- con p_tree_id NULL crea el árbol nuevo (trees + su versión de alta en
+-- tree_data_versions, mismas validaciones que fn_create_tree_alta) con
+-- los 6 parámetros p_nuevo_arbol_*; a partir del segundo guardado
+-- tree_id es obligatorio (SV058). La respuesta incluye tree_id y
+-- arbol_nuevo. La firma de 17 parámetros de la 018e ya no existe.
 CREATE TYPE tree_data_versions_arbol_input AS (
   sector                             text,
   ubicacion_descriptiva              text,
@@ -2077,7 +2461,7 @@ CREATE TYPE tree_data_versions_arbol_input AS (
 CREATE FUNCTION fn_save_inspection_draft(
   p_inspection_id uuid,
   p_work_order_id uuid,
-  p_tree_id uuid,
+  p_tree_id uuid,                        -- NULL en Levantamiento, solo en el primer guardado (CC-052)
   p_inspector uuid,
   p_fecha_inspeccion date,
   p_fecha_registro date,
@@ -2091,7 +2475,13 @@ CREATE FUNCTION fn_save_inspection_draft(
   p_registrado_por uuid,
   p_variables jsonb,
   p_campos_arbol jsonb,
-  p_campos_registrados_arbol text[]
+  p_campos_registrados_arbol text[],
+  p_nuevo_arbol_sector text DEFAULT NULL,                   -- D-7, solo si p_tree_id es NULL
+  p_nuevo_arbol_ubicacion_descriptiva text DEFAULT NULL,    -- D-8
+  p_nuevo_arbol_utm_este numeric DEFAULT NULL,              -- D-9
+  p_nuevo_arbol_utm_norte numeric DEFAULT NULL,             -- D-10
+  p_nuevo_arbol_especie_cientifica text DEFAULT NULL,       -- D-13 (al menos uno de los dos)
+  p_nuevo_arbol_nombre_comun text DEFAULT NULL              -- D-14
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -2107,16 +2497,19 @@ DECLARE
   v_ot_tree_id uuid;
   v_wo_project_id uuid;
   v_tree_project_id uuid;
+  v_sector_id uuid;
+  v_campos_alta text[];
+  v_arbol_nuevo boolean := false;
   v_rol text;
   v_activo boolean;
   v_subtipo_valido boolean;
-  v_arbol tree_data_versions_arbol_input;
+  v_arbol public.tree_data_versions_arbol_input;
   v_evaluation_id uuid;
   v_tree_data_version_id uuid;
 BEGIN
   SELECT estado_ot, tipo_ot, accion_solicitada, responsable_accion_id, tree_id, project_id
   INTO v_estado_ot, v_tipo_ot, v_accion_solicitada, v_responsable_accion_id, v_ot_tree_id, v_wo_project_id
-  FROM work_orders WHERE id = p_work_order_id;
+  FROM public.work_orders WHERE id = p_work_order_id;
 
   IF v_estado_ot IS NULL THEN
     RAISE EXCEPTION 'La orden de trabajo % no existe', p_work_order_id USING ERRCODE = 'SV058';
@@ -2137,7 +2530,7 @@ BEGIN
   END IF;
 
   SELECT r.nombre, up.activo INTO v_rol, v_activo
-  FROM user_profiles up JOIN roles r ON r.id = up.role_id
+  FROM public.user_profiles up JOIN public.roles r ON r.id = up.role_id
   WHERE up.id = p_registrado_por;
 
   IF v_rol IS NULL THEN
@@ -2170,16 +2563,83 @@ BEGIN
       USING ERRCODE = 'SV058';
   END IF;
 
+  -- ---------------------------------------------------------------
+  -- Árbol nuevo durante un Levantamiento (CC-052): es un alta. Solo
+  -- en el primer guardado (p_inspection_id NULL); a partir del
+  -- segundo, el llamador ya recibió tree_id en la respuesta y debe
+  -- enviarlo — si no, es un error del llamador, no un segundo árbol.
+  -- ---------------------------------------------------------------
+  IF p_tree_id IS NULL THEN
+    IF v_accion_solicitada <> 'levantamiento' THEN
+      RAISE EXCEPTION 'Solo una orden de trabajo de Levantamiento puede registrar un árbol nuevo (CC-052)'
+        USING ERRCODE = 'SV058';
+    END IF;
+    IF v_inspection_id IS NOT NULL THEN
+      RAISE EXCEPTION 'tree_id es obligatorio a partir del segundo guardado (ya se creó el árbol en el primero, CC-052)'
+        USING ERRCODE = 'SV058';
+    END IF;
+
+    IF p_nuevo_arbol_sector IS NULL OR btrim(p_nuevo_arbol_sector) = '' THEN
+      RAISE EXCEPTION 'sector es obligatorio para el alta del árbol nuevo (D-7)' USING ERRCODE = 'SV057';
+    END IF;
+    IF p_nuevo_arbol_ubicacion_descriptiva IS NULL OR btrim(p_nuevo_arbol_ubicacion_descriptiva) = '' THEN
+      RAISE EXCEPTION 'ubicacion_descriptiva es obligatoria para el alta del árbol nuevo (D-8)' USING ERRCODE = 'SV057';
+    END IF;
+    IF p_nuevo_arbol_utm_este IS NULL THEN
+      RAISE EXCEPTION 'utm_este es obligatorio para el alta del árbol nuevo (D-9)' USING ERRCODE = 'SV057';
+    END IF;
+    IF p_nuevo_arbol_utm_norte IS NULL THEN
+      RAISE EXCEPTION 'utm_norte es obligatorio para el alta del árbol nuevo (D-10)' USING ERRCODE = 'SV057';
+    END IF;
+    IF p_nuevo_arbol_especie_cientifica IS NULL AND p_nuevo_arbol_nombre_comun IS NULL THEN
+      RAISE EXCEPTION 'especie_cientifica o nombre_comun es obligatorio para el alta del árbol nuevo (D-13/D-14)'
+        USING ERRCODE = 'SV057';
+    END IF;
+
+    SELECT id INTO v_sector_id FROM public.sectors WHERE project_id = v_wo_project_id;
+    IF v_sector_id IS NULL THEN
+      RAISE EXCEPTION 'El proyecto % no tiene un sector delimitado', v_wo_project_id USING ERRCODE = 'SV057';
+    END IF;
+
+    INSERT INTO public.trees (
+      project_id, sector_id, sector, ubicacion_descriptiva,
+      utm_este, utm_norte, especie_cientifica, nombre_comun,
+      fecha_registro, registrado_por
+    ) VALUES (
+      v_wo_project_id, v_sector_id, p_nuevo_arbol_sector, p_nuevo_arbol_ubicacion_descriptiva,
+      p_nuevo_arbol_utm_este, p_nuevo_arbol_utm_norte, p_nuevo_arbol_especie_cientifica, p_nuevo_arbol_nombre_comun,
+      p_fecha_registro, p_registrado_por
+    )
+    RETURNING id INTO p_tree_id;
+
+    v_campos_alta := ARRAY['sector', 'ubicacion_descriptiva', 'utm_este', 'utm_norte'];
+    IF p_nuevo_arbol_especie_cientifica IS NOT NULL THEN
+      v_campos_alta := array_append(v_campos_alta, 'especie_cientifica');
+    END IF;
+    IF p_nuevo_arbol_nombre_comun IS NOT NULL THEN
+      v_campos_alta := array_append(v_campos_alta, 'nombre_comun');
+    END IF;
+
+    INSERT INTO public.tree_data_versions (
+      tree_id, inspection_id, campos_registrados,
+      sector, ubicacion_descriptiva, utm_este, utm_norte,
+      especie_cientifica, nombre_comun, created_by
+    ) VALUES (
+      p_tree_id, NULL, v_campos_alta,
+      p_nuevo_arbol_sector, p_nuevo_arbol_ubicacion_descriptiva, p_nuevo_arbol_utm_este, p_nuevo_arbol_utm_norte,
+      p_nuevo_arbol_especie_cientifica, p_nuevo_arbol_nombre_comun, p_registrado_por
+    );
+
+    v_arbol_nuevo := true;
+  END IF;
+
   IF v_ot_tree_id IS NOT NULL THEN
     IF v_ot_tree_id <> p_tree_id THEN
       RAISE EXCEPTION 'El árbol de la inspección (%) no coincide con el árbol de la orden de trabajo (%)', p_tree_id, v_ot_tree_id
         USING ERRCODE = 'SV058';
     END IF;
   ELSE
-    -- Levantamiento (D-2; REGLAS_GENERALES fila 17): el árbol, exista
-    -- ya o se cree en esta inspección, debe ser del mismo proyecto que
-    -- la OT (D-193) — nunca de otro proyecto.
-    SELECT project_id INTO v_tree_project_id FROM trees WHERE id = p_tree_id;
+    SELECT project_id INTO v_tree_project_id FROM public.trees WHERE id = p_tree_id;
     IF v_tree_project_id IS NULL THEN
       RAISE EXCEPTION 'El árbol % no existe', p_tree_id USING ERRCODE = 'SV058';
     END IF;
@@ -2190,7 +2650,7 @@ BEGIN
   END IF;
 
   IF v_inspection_id IS NULL THEN
-    INSERT INTO inspections (
+    INSERT INTO public.inspections (
       work_order_id, tree_id, inspector, fecha_inspeccion, fecha_registro,
       rule_version, tipo_inspeccion_realizada, subtipo_inspeccion,
       metodo_instrumental, resultado_general, requiere_mantenimiento,
@@ -2204,7 +2664,7 @@ BEGIN
     RETURNING id INTO v_inspection_id;
   ELSE
     SELECT estado_registro INTO v_estado_registro
-    FROM inspections WHERE id = v_inspection_id;
+    FROM public.inspections WHERE id = v_inspection_id;
 
     IF v_estado_registro IS NULL THEN
       RAISE EXCEPTION 'La inspección % no existe' , v_inspection_id USING ERRCODE = 'SV058';
@@ -2214,7 +2674,7 @@ BEGIN
         USING ERRCODE = 'SV058';
     END IF;
 
-    UPDATE inspections SET
+    UPDATE public.inspections SET
       tipo_inspeccion_realizada = p_tipo_inspeccion_realizada,
       subtipo_inspeccion = p_subtipo_inspeccion,
       metodo_instrumental = p_metodo_instrumental,
@@ -2224,7 +2684,7 @@ BEGIN
     WHERE id = v_inspection_id;
   END IF;
 
-  INSERT INTO evaluations (inspection_id, tree_id, variables)
+  INSERT INTO public.evaluations (inspection_id, tree_id, variables)
   VALUES (v_inspection_id, p_tree_id, p_variables)
   ON CONFLICT (inspection_id) DO UPDATE SET
     variables = EXCLUDED.variables,
@@ -2232,9 +2692,9 @@ BEGIN
   RETURNING id INTO v_evaluation_id;
 
   IF p_campos_registrados_arbol IS NOT NULL AND array_length(p_campos_registrados_arbol, 1) > 0 THEN
-    v_arbol := jsonb_populate_record(null::tree_data_versions_arbol_input, p_campos_arbol);
+    v_arbol := jsonb_populate_record(null::public.tree_data_versions_arbol_input, p_campos_arbol);
 
-    INSERT INTO tree_data_versions (
+    INSERT INTO public.tree_data_versions (
       tree_id, inspection_id, campos_registrados,
       sector, ubicacion_descriptiva, utm_este, utm_norte,
       especie_cientifica, nombre_comun, multifustal, numero_fustes,
@@ -2267,23 +2727,27 @@ BEGIN
       clase_edad = EXCLUDED.clase_edad, rango_edad_estimada_anios = EXCLUDED.rango_edad_estimada_anios
     RETURNING id INTO v_tree_data_version_id;
   ELSE
-    DELETE FROM tree_data_versions WHERE inspection_id = v_inspection_id;
+    DELETE FROM public.tree_data_versions WHERE inspection_id = v_inspection_id;
   END IF;
 
   RETURN jsonb_build_object(
     'inspection_id', v_inspection_id,
     'evaluation_id', v_evaluation_id,
     'tree_data_version_id', v_tree_data_version_id,
+    'tree_id', p_tree_id,
+    'arbol_nuevo', v_arbol_nuevo,
     'estado_registro', 'preguardado'
   );
 END;
 $$;
 
 REVOKE ALL ON FUNCTION fn_save_inspection_draft(
-  uuid, uuid, uuid, uuid, date, date, text, text, text, text, text, boolean, text, uuid, jsonb, jsonb, text[]
+  uuid, uuid, uuid, uuid, date, date, text, text, text, text, text, boolean, text, uuid, jsonb, jsonb, text[],
+  text, text, numeric, numeric, text, text
 ) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION fn_save_inspection_draft(
-  uuid, uuid, uuid, uuid, date, date, text, text, text, text, text, boolean, text, uuid, jsonb, jsonb, text[]
+  uuid, uuid, uuid, uuid, date, date, text, text, text, text, text, boolean, text, uuid, jsonb, jsonb, text[],
+  text, text, numeric, numeric, text, text
 ) TO service_role;
 
 -- Historial de ajustes del Inspector (§3.10). Solo mientras la
@@ -2837,9 +3301,10 @@ SELECT DISTINCT ON (tree_id) *
 FROM tree_assessments
 ORDER BY tree_id, created_at DESC;
 
--- Árbol + rasgos del catálogo por especie_cientifica normalizada
--- (D-257 a D-262; CC-039). "no_determinado" si no hay especie en el
--- catálogo.
+-- Árbol + rasgos del catálogo (D-257 a D-262; CC-039). Migración 018i
+-- (CC-053): une primero por trees.species_id (inmune a un renombre); la
+-- especie_cientifica normalizada queda de respaldo solo para árboles sin
+-- species_id. "no_determinado" si no hay especie en el catálogo.
 CREATE VIEW v_species_traits WITH (security_invoker = true) AS
 SELECT
   t.id AS tree_id,
@@ -2850,8 +3315,12 @@ SELECT
   s.familia
 FROM trees t
 LEFT JOIN species s
-  ON lower(regexp_replace(trim(t.especie_cientifica), '\s+', ' ', 'g'))
-   = lower(regexp_replace(trim(s.especie_cientifica), '\s+', ' ', 'g'));
+  ON s.id = COALESCE(
+    t.species_id,
+    (SELECT s2.id FROM species s2
+     WHERE lower(regexp_replace(trim(s2.especie_cientifica), '\s+', ' ', 'g'))
+         = lower(regexp_replace(trim(t.especie_cientifica), '\s+', ' ', 'g'))
+     LIMIT 1)
 
 -- Por proyecto: próxima inspección y monitoreo de cada árbol, con la
 -- fecha ajustada si existe (D-202, D-203; CC-037). El rango
@@ -3006,7 +3475,10 @@ CREATE TRIGGER trg_projects_self_closed
 --     migración. spatial_ref_sys (PostGIS) conserva privilegios de
 --     escritura para los roles de la API: la tabla pertenece a
 --     supabase_admin (issue #9).
---   - Storage (fotos): sin bucket ni políticas todavía — AM-14 (roadmap).
+--   - Storage (fotos): bucket privado `tree-photos` (migración 019;
+--     CC-049): 10 MB, image/jpeg e image/png; sin policies en
+--     storage.objects — todo acceso pasa por el backend con
+--     service_role. Vive en el esquema storage, fuera de este archivo.
 --   - M04 (clasificación global de infraestructura) y M05 (prioridad):
 --     sin implementar; tree_infrastructure_assessments guarda datos crudos.
 --   - Inmutabilidad de inspections.estado='completada': enforzada en
