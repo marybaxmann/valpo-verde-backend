@@ -2821,9 +2821,9 @@ motivo)
 | rule_version | sin cambio |
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-26 |
-| Fecha de implementación | 2026-10-26: migraciones 023 y 024 aplicadas en `valpo-verde-conecta-pruebas` con el ciclo completo (I1–I2 y M1–M6 en dos rondas). Catálogos y endpoints pendientes, en `wip/b3-b4` después de la aprobación. |
+| Fecha de implementación | 2026-10-26: migraciones 023 y 024 aplicadas en `valpo-verde-conecta-pruebas` con el ciclo completo (I1–I2 y M1–M6 en dos rondas). Catálogos, B3 y B4 implementados en `wip/b3-b4` (2026-10-26), con `pruebas_ot_listados.sql` (L1–L5) en la base real. |
 | Commits / PR asociados | `wip/cc065-ot-listados`, sin PR. |
-| Observaciones | La función de la 024 devuelve también a los miembros inactivos, porque una OT histórica puede tener como responsable a alguien desactivado y su nombre tiene que seguir apareciendo; quien llama, en cambio, tiene que estar activo. Va en una migración aparte de la 023 para que cada una se revierta por separado. |
+| Observaciones | La función de la 024 devuelve también a los miembros inactivos, porque una OT histórica puede tener como responsable a alguien desactivado y su nombre tiene que seguir apareciendo; quien llama, en cambio, tiene que estar activo. Va en una migración aparte de la 023 para que cada una se revierta por separado. **Diferencia con el punto 4, pendiente de decisión:** el orden implementado es `fecha_accion_programada` (vacías al final) y `codigo_ot`, sin la prioridad: ordenar por prioridad (Crítica, Alta, Media, Baja) necesita una expresión en la base, porque PostgREST no ordena por un CASE y el texto ordenado alfabéticamente no sigue la escala; con paginación, el orden tiene que salir de la base. Si el responsable de una OT dejó de ser miembro del proyecto, `fn_miembros_proyecto` no lo devuelve y `responsable.nombre` sale `null`. |
 
 **Historial de estados**
 
@@ -2831,3 +2831,4 @@ motivo)
 |---|---|---|---|
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro con las decisiones (1) a (8). |
 | 2026-10-26 | IMPLEMENTADO (pruebas, 023 y 024) | marybaxmann | 023 v`20261026215239`/down v`20261026220529`/v`20261026220642`; 024 v`20261026215322`/down v`20261026220559`/v`20261026220644`. md5 contra el archivo en LF: 023 `9eba874f…`, 024 `0623177c…`. I1–I2 2/2 y M1–M6 6/6 en dos rondas. Asesor de seguridad: los 23 avisos anteriores y uno nuevo, «Signed-In Users Can Execute SECURITY DEFINER Function» sobre `fn_miembros_proyecto`, **aceptado por decisión de la responsable (2026-10-26)**: es consecuencia de dar `EXECUTE` a `authenticated` (punto 6 de la versión nueva; tercera decisión de la responsable del 2026-10-26). La reversión de la 024 falló una vez con «Invalid or expired requestState» y se reintentó con `apply_migration` (nunca con `execute_sql`); el intento fallido no dejó entrada en el historial de migraciones. Por eso se revirtió primero la 023 y después la 024; son independientes. schema.sql revisión 22. |
+| 2026-10-26 | IMPLEMENTADO (backend, `wip/b3-b4`) | marybaxmann | Catálogos `tipo_ot`, `estado_ot`, `accion_mantenimiento` y `subtipo_mantenimiento`; B3 y B4 con el JWT del usuario y `responsable` desde `fn_miembros_proyecto`; Jest y `pruebas_ot_listados.sql` (L1–L5). Orden sin prioridad, pendiente de decisión. |
