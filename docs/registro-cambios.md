@@ -2793,3 +2793,40 @@ motivo)
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Puntos (k) a (o): «Mis OT» de todos los proyectos con filtro por proyecto; Dashboard y ficha del proyecto en solo lectura; OT terminadas como historial con filtro por estado; rutas `/inspector` y `/mantencion`. |
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Punto (p): campos de la hoja MANTENIMIENTO (D-216 a D-230) que deben pedir el registro de ejecución y la revisión del #61, y transiciones del Encargado (CC-050). |
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Punto (p): `ejecutado_por`, `revisado_por` y `fecha_revision` desde el usuario autenticado y la fecha de la acción; validación de `fecha_revision` ≥ `fecha_ejecucion` en el #61 (D-227). |
+
+---
+
+### CC-065 — Listados de OT (B3 y B4): visibilidad por tipo, nombre del responsable y catálogos de OT
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-26 |
+| Origen | Plan de B3 (OT del proyecto) y B4 (Mis OT), CC-061 y CC-064. Al planificarlos aparecieron cuatro puntos sin regla: las OT de Mantenimiento en B3, un conflicto entre CC-061 y CC-064, el nombre del responsable (la RLS de `user_profiles` solo deja leer el perfil propio) y los catálogos de OT que faltaban en `catalogs.ts`. Decisiones de la responsable. |
+| Tipo | 3 — permisos de consulta y API (+4, lectura con función de la base; +catálogos, PR-021) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | CC-061 (B3, B4); CC-064 (puntos a, b, k, n); PR-018 v5.0 (lecturas); PR-021 (catálogos); ORDENES DE TRABAJO: D-234 `Tipo_ot`, D-235 `Accion_solicitada`, D-236 `subtipo_accion`, D-238 `Prioridad`, D-239 `estado_ot`. |
+| Versión anterior | CC-061: B3 entrega al Inspector solo sus OT de Inspección y rechaza al Encargado en las de Inspección; lo de Mantenimiento quedó para el #61. CC-064 (a, observación b): el Inspector y el Encargado consultan el módulo Mantención en solo lectura. No había forma de mostrar el nombre del responsable con el JWT del usuario (RLS de `user_profiles`, migración 005: solo el propio o el Administrador). `catalogs.ts` no tenía `estado_ot`, `tipo_ot` ni las acciones y subtipos de Mantenimiento. |
+| Versión nueva | **(1) Rutas:** B3 = `GET /api/sivu/projects/:id/work-orders`; B4 = `GET /api/sivu/work-orders/mine`. Las dos leen con el JWT del usuario (PR-018 v5.0) y autorizan con `assertProjectAccess`/`assertProjectRole`. **(2) B3, por tipo de OT:** con `tipo_ot = mantenimiento`, **todos los miembros del proyecto** ven **todas** las OT de Mantenimiento, en solo lectura (CC-064 a y b), con `acciones: []`; el Usuario municipal y el Administrador las ven igual, filtrables por `tipo_ot`. Con `tipo_ot = inspeccion` se aplica CC-061 tal cual: el Usuario municipal y el Administrador, todas; el Inspector, solo las suyas como responsable actual; el Encargado de mantención, ninguna (403). **(3) B4:** las OT donde el usuario es el responsable actual, de todos los proyectos donde es miembro (CC-064 k); filtro opcional por proyecto. **(4) Filtros, orden y paginación:** `estado` (por defecto Pendiente, Programada y En ejecución; con el filtro, también Completada y Cancelada, CC-064 n), `tipo_ot` y, en B4, `project_id`; orden por `fecha_accion_programada` (las vacías al final), prioridad y `codigo_ot`; `limit` (50 por defecto, máximo 200) y `offset`, con el total. **(5) Respuesta por OT:** código, tipo, acción y subtipo, prioridad y estado, cada uno con `codigo` y `etiqueta`; `fecha_accion_programada`, `fecha_creacion_ot`, `fecha_completada_ot`; proyecto (`id`, `nombre_proyecto`); árbol (`id`, `tree_code`, `nombre_comun`, `especie_cientifica`, `ubicacion_descriptiva` y la ubicación de `trees.ubicacion`) o `null` en una OT de Levantamiento; `requiere_revision_inspector`; **`responsable: { id, nombre }`**; y `acciones`, que calcula el backend solo con lo ya implementado (el Inspector responsable: programar, iniciar y trabajar la inspección; el Usuario municipal y el Administrador, `[]` hasta que existan completar, cancelar y reasignar). **(6) Nombre del responsable — función de la base:** una función `SECURITY DEFINER` de solo lectura, con `search_path` fijo, que recibe un `project_id` y devuelve **solo** `id`, `nombre` y `rol` de los miembros de ese proyecto. Verifica dentro de la base, con `auth.uid()`, que quien llama sea miembro activo de ese proyecto o Administrador; si no, no devuelve nada. `EXECUTE` para `authenticated`, para que se llame con el JWT del usuario. Nunca devuelve el correo ni otros datos del perfil. Excepción registrada en PR-018 v6.0. **(7) Catálogos (PR-021):** `estado_ot` (D-239) y `tipo_ot` (D-234), con los códigos del CHECK de la base; las acciones de Mantenimiento (D-235: Poda, Riego, Descompactación, Manejo fitosanitario, Tala_retiro, Reparación_alcorque, Soporte_tutorado, Otra_Intervención) y sus subtipos (D-236), con códigos que coinciden con los que ya fija la base (`tala`, `retiro_tocon`, `otra_intervencion`). Cada catálogo con su prueba contra el Excel; ninguna etiqueta queda en `null`. **(8) Índice** `(responsable_accion_id, estado_ot)` en `work_orders` (migración 023). |
+| Motivo | Sin estas reglas, B3 contradecía la consulta de Mantención de CC-064, el responsable solo podía mostrarse como un id, y las OT de Mantenimiento no tenían etiquetas. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-26. CC-061; CC-064; PR-018 v5.0; PR-021; D-234 a D-239. |
+| Archivos afectados | Esta ficha; `docs/project-rules.md` (PR-018 v6.0). Migraciones: `database/migrations/023_indice_responsable_ot.sql` y `024_miembros_proyecto.sql` (con `.down.sql` y sus pruebas en `database/fase6/`). Después (rama `wip/b3-b4`): `src/services/rules/engine/catalogs.ts` y su prueba; repositorio, servicio, controlador, rutas y esquemas de B3 y B4; `database/fase6/pruebas_ot_listados.sql`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno: los catálogos toman sus etiquetas de D-234 a D-239. |
+| Impacto en BD | Índice nuevo en `work_orders` (023). Función de solo lectura de miembros del proyecto (024). |
+| Impacto en backend | B3 y B4; catálogos de OT; nombre del responsable desde la función de la base. |
+| Impacto en API | Los dos endpoints de la versión nueva. |
+| Impacto en frontend | «Mis OT» (CC-064) y los listados de OT de Mantención e Inspección. |
+| Pruebas necesarias | Jest: las de CC-061 (Inspector solo las suyas; tras una reasignación deja de verla; sin membresía nada; Usuario municipal todas las del proyecto; Administrador todas, sin acciones; Encargado 403 en las de Inspección), Mantenimiento visible para todos los miembros, filtros, orden y paginación; los dos repositorios con el cliente con la sesión del usuario; los catálogos contra el Excel. Base real: 023 y 024 con el ciclo completo; la función: un miembro ve los nombres y roles, un no miembro nada, nunca aparece el correo; `pruebas_ot_listados.sql` (RLS de los listados). |
+| Dependencias | CC-050, CC-061, CC-064; PR-018 v5.0; PR-021. |
+| rule_version | sin cambio |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-26 |
+| Fecha de implementación | Pendiente: migraciones 023 y 024 primero; catálogos y endpoints en `wip/b3-b4` después de la aprobación. |
+| Commits / PR asociados | `wip/cc065-ot-listados`, sin PR. |
+| Observaciones | La función de la 024 devuelve también a los miembros inactivos, porque una OT histórica puede tener como responsable a alguien desactivado y su nombre tiene que seguir apareciendo; quien llama, en cambio, tiene que estar activo. Va en una migración aparte de la 023 para que cada una se revierta por separado. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro con las decisiones (1) a (8). |

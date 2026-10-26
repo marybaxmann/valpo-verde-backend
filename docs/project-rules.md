@@ -2183,9 +2183,11 @@ Afecta:
 - seguridad
 - RLS
 
-## PR-018 — Autenticación (v5.0)
-Estado: vigente
+## PR-018 — Autenticación (v5.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 5.0
+Reemplazada por: PR-018 v6.0
+Motivo del reemplazo: agrega la lectura del nombre de los miembros de un proyecto con una función de la base (CC-065).
 Reemplaza: PR-018 v4.0
 Origen: CC-033, CC-062, CC-064
 Motivo: varias lecturas de `/api/sivu` usaban la credencial de servicio, y en ellas la RLS no actuaba como segunda capa (CC-064).
@@ -2202,6 +2204,47 @@ La autorización tiene dos capas: backend (`authorization.service.ts`) y RLS en 
 - **Excepción, lecturas internas que preparan una escritura (CC-064):** pueden usar la credencial de servicio — por ejemplo, las que solo sirven para autorizar, las de guardar el borrador o subir fotos —, porque no devuelven datos crudos y la función `SECURITY DEFINER` de la escritura vuelve a verificar.
 - **Calcular y finalizar una inspección (CC-064, decisión h):** lo que entra en la respuesta y en la huella — el borrador, la versión del árbol de la inspección, el árbol vigente, `v_tree_current_inputs`, `v_tree_fechas_vigentes` y las fotos — se lee con el JWT del usuario. La función de finalizar se invoca con la credencial de servicio.
 - **Enlaces temporales de las fotos (CC-064, decisión i; CC-049):** se generan con la credencial de servicio, porque el espacio de fotos es privado y solo lo usa el backend, siempre después de verificar el acceso al proyecto. Las filas de `photos` se leen con el JWT del usuario.
+- **Perfil propio (CC-064, decisión j):** `GET /api/auth/me` y la lectura del perfil en el control de acceso usan la credencial de servicio: solo devuelven el perfil propio y se necesitan antes de cualquier otra lectura.
+- **Escrituras:** solo por el backend. Después de su autorización funcional y de las validaciones, el backend escribe con la credencial de servicio. Las RLS no permiten escrituras directas a los roles de sesión (`authenticated`, `anon`) en las tablas de datos.
+- **Autor:** el backend registra explícitamente quién crea o modifica cada fila con el usuario autenticado; no depende de valores por defecto de la sesión.
+- **Formulario ciudadano (PR-022):** endpoint público del backend, sin sesión, que escribe con la credencial de servicio después de validar y limitar las solicitudes.
+- **Lecturas públicas (PR-022 v2.0, CC-062):** excepción a la regla de lecturas, junto con la de arriba. La ficha pública del árbol y el seguimiento de un reporte se leen, desde endpoints públicos del backend con límite de solicitudes, con funciones `SECURITY DEFINER` de solo lectura, con `search_path` fijo y `EXECUTE` solo para `service_role`, que devuelven únicamente la proyección permitida. `anon` no tiene privilegios sobre tablas, vistas ni funciones.
+
+`SUPABASE_SERVICE_ROLE_KEY` (credencial de servicio) solo existe en las variables de entorno del servidor del backend. Nunca llega al frontend y nunca queda en el repositorio: no aparece en el código, en `.env.example`, en registros ni en respuestas de la API.
+
+Contrato del frontend (repositorio separado, `valpo-verde-frontend`):
+- obtiene su sesión/JWT mediante Supabase Auth directamente;
+- envía `Authorization: Bearer <JWT>` al backend en cada request;
+- NUNCA usa ni contiene la credencial de servicio; puede usar la `anon`/publishable key para su propia sesión de Supabase Auth;
+- no escribe directamente en Supabase: toda escritura pasa por la API;
+- el backend determina `req.user` y los permisos; el frontend no decide seguridad, solo adapta la UI según el rol confirmado (p. ej. vía `GET /api/auth/me`).
+
+Afecta:
+- frontend
+- backend
+- seguridad
+- RLS
+
+## PR-018 — Autenticación (v6.0)
+Estado: vigente
+Versión: 6.0
+Reemplaza: PR-018 v5.0
+Origen: CC-033, CC-062, CC-064, CC-065
+Motivo: la RLS de `user_profiles` solo deja leer el perfil propio, y los listados de OT necesitan el nombre del responsable (CC-065).
+
+Login mediante Supabase Auth desde frontend.
+
+No implementar `POST /api/auth/login` en Express.
+
+Backend valida JWT recibido.
+
+La autorización tiene dos capas: backend (`authorization.service.ts`) y RLS en Supabase/Postgres.
+
+- **Lecturas:** las consultas que devuelven datos al usuario se leen con el JWT del usuario (`createUserScopedClient`), para que las RLS filtren por proyecto y rol como segunda capa. Aplica a los endpoints de lectura actuales y futuros, incluidos los de `/api/sivu` (listados, fichas, fotos, listados de OT).
+- **Excepción, lecturas internas que preparan una escritura (CC-064):** pueden usar la credencial de servicio — por ejemplo, las que solo sirven para autorizar, las de guardar el borrador o subir fotos —, porque no devuelven datos crudos y la función `SECURITY DEFINER` de la escritura vuelve a verificar.
+- **Calcular y finalizar una inspección (CC-064, decisión h):** lo que entra en la respuesta y en la huella — el borrador, la versión del árbol de la inspección, el árbol vigente, `v_tree_current_inputs`, `v_tree_fechas_vigentes` y las fotos — se lee con el JWT del usuario. La función de finalizar se invoca con la credencial de servicio.
+- **Enlaces temporales de las fotos (CC-064, decisión i; CC-049):** se generan con la credencial de servicio, porque el espacio de fotos es privado y solo lo usa el backend, siempre después de verificar el acceso al proyecto. Las filas de `photos` se leen con el JWT del usuario.
+- **Miembros de un proyecto (CC-065):** el nombre y el rol de los miembros de un proyecto se leen, con el JWT del usuario, mediante una función `SECURITY DEFINER` de solo lectura, con `search_path` fijo y `EXECUTE` para `authenticated`. Recibe un `project_id` y devuelve solo `id`, `nombre` y `rol` de sus miembros; verifica dentro de la base, con `auth.uid()`, que quien llama sea miembro activo de ese proyecto o Administrador, y si no lo es no devuelve nada. Nunca devuelve el correo ni otros datos del perfil.
 - **Perfil propio (CC-064, decisión j):** `GET /api/auth/me` y la lectura del perfil en el control de acceso usan la credencial de servicio: solo devuelven el perfil propio y se necesitan antes de cualquier otra lectura.
 - **Escrituras:** solo por el backend. Después de su autorización funcional y de las validaciones, el backend escribe con la credencial de servicio. Las RLS no permiten escrituras directas a los roles de sesión (`authenticated`, `anon`) en las tablas de datos.
 - **Autor:** el backend registra explícitamente quién crea o modifica cada fila con el usuario autenticado; no depende de valores por defecto de la sesión.
@@ -2449,7 +2492,7 @@ Ingreso:
 - `id_arbol` y `ubicacion` se obtienen del árbol del QR. `origen_reporte` = Comunidad.
 - El reportante ingresa nombre (máximo 100 caracteres), RUT, tipo de incidencia, descripción y al menos una fotografía (PR-010 v3.0).
 - El RUT se valida en estructura y dígito verificador.
-- El endpoint público limita la cantidad de solicitudes y valida las fotografías. Escribe por el backend con la credencial de servicio (PR-018 v5.0).
+- El endpoint público limita la cantidad de solicitudes y valida las fotografías. Escribe por el backend con la credencial de servicio (PR-018 v6.0).
 - Las fotografías ciudadanas siguen CC-049: se guardan sin metadatos, se conservan si el reporte se valida y se eliminan si se descarta.
 - Al reportar, la persona recibe un código de seguimiento (ver «Valpo Verde Conecta»).
 
@@ -2473,7 +2516,7 @@ Valpo Verde Conecta (CC-062):
 - Ficha pública del árbol (por `qr_token`): muestra `especie_cientifica`, `nombre_comun` y `ubicacion_descriptiva`. No muestra el nivel de riesgo ni ningún otro resultado técnico, ni el `tree_code`, las coordenadas, el proyecto, inspecciones, fotos o incidencias.
 - «Sobre esta especie»: solo los campos de CATALOGO_ESPECIES (`especie_cientifica`, `genero`, `familia`, `origen_biogeografico`, `persistencia_follaje`, `tipo_hoja`), con sus reglas de presentación del Excel. Un texto editorial nuevo requiere otro CC.
 - Código de seguimiento: se entrega una sola vez al reportar y permite consultar solo el estado del reporte (`estado_incidencia`), sin datos personales. Es aleatorio, de al menos 128 bits, generado con un generador criptográfico; la base guarda solo su huella. Se consulta por el cuerpo de la solicitud, nunca en la URL, con un límite de 30 consultas por hora por IP; un código inexistente, vencido o mal formado recibe la misma respuesta. Sigue funcionando 90 días después de que el reporte queda Resuelto o Descartado; después se borra su huella.
-- La ficha y el seguimiento se leen con funciones de solo lectura (PR-018 v5.0).
+- La ficha y el seguimiento se leen con funciones de solo lectura (PR-018 v6.0).
 
 Afecta:
 - frontend
