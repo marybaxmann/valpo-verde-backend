@@ -14,7 +14,7 @@ import {
   removeMiembro,
 } from "../../controllers/sivu/projectMember.controller";
 import { altaMunicipalArbolController } from "../../controllers/sivu/tree.controller";
-import { crearOrdenTrabajoInspeccionController } from "../../controllers/sivu/workOrder.controller";
+import { crearOrdenTrabajoInspeccionController, listarOtsProyectoController } from "../../controllers/sivu/workOrder.controller";
 import {
   buscarEspeciesController,
   completarEspecieController,
@@ -45,6 +45,8 @@ router.post("/:id/trees", authMiddleware, altaMunicipalArbolController);
 
 // Crear una OT de Inspección (#58; D-238, D-244, CC-036). Solo usuario_municipal.
 router.post("/:id/work-orders", authMiddleware, crearOrdenTrabajoInspeccionController);
+// OT del proyecto (B3; CC-061, CC-065): visibilidad por rol y tipo de OT.
+router.get("/:id/work-orders", authMiddleware, listarOtsProyectoController);
 
 // Catálogo de especies incorporado por el Inspector (#73; CC-053).
 // Búsqueda: cualquier rol con acceso al proyecto. Completar/corregir:

@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../../config/supabase";
+import { createUserScopedClient, supabaseAdmin } from "../../config/supabase";
 
 /**
  * SQLSTATE propio de `fn_create_work_order_inspeccion` (018h): rol,
@@ -194,4 +194,141 @@ export async function transicionarEstadoOt(
   }
 
   return data as unknown as TransicionarEstadoOtResultado;
+}
+
+// ---------------------------------------------------------------------
+// Listados de OT (B3, B4; CC-065). Todo se lee con el JWT del usuario
+// (PR-018 v6.0): la RLS de la 017 limita las filas a los proyectos donde
+// es miembro, como segunda capa de la autorización del service.
+// ---------------------------------------------------------------------
+
+export interface OtListadoRow {
+  id: string;
+  codigo_ot: string | null;
+  project_id: string;
+  tree_id: string | null;
+  tipo_ot: string;
+  accion_solicitada: string;
+  subtipo_accion: string | null;
+  prioridad: string | null;
+  estado_ot: string;
+  fecha_creacion_ot: string;
+  fecha_accion_programada: string | null;
+  fecha_completada_ot: string | null;
+  responsable_accion_id: string | null;
+  requiere_revision_inspector: boolean | null;
+}
+
+const OT_LISTADO_COLUMNS =
+  "id, codigo_ot, project_id, tree_id, tipo_ot, accion_solicitada, subtipo_accion, prioridad, estado_ot, fecha_creacion_ot, fecha_accion_programada, fecha_completada_ot, responsable_accion_id, requiere_revision_inspector";
+
+export interface FiltrosListadoOt {
+  projectId?: string;
+  /** Solo las OT de este responsable (B4). */
+  responsableId?: string;
+  tipoOt?: "inspeccion" | "mantenimiento";
+  /**
+   * B3, Inspector sin `tipo_ot` (CC-065 punto 2): todas las de
+   * Mantenimiento más las de Inspección donde es el responsable actual.
+   */
+  mantenimientoOInspeccionDe?: string;
+  estados: readonly string[];
+  limit: number;
+  offset: number;
+}
+
+/**
+ * Orden: `fecha_accion_programada` ascendente (las vacías al final) y
+ * después `codigo_ot`. Devuelve también el total, para la paginación.
+ */
+export async function listarOrdenesTrabajo(
+  accessToken: string,
+  filtros: FiltrosListadoOt
+): Promise<{ filas: OtListadoRow[]; total: number }> {
+  let query = createUserScopedClient(accessToken)
+    .from("work_orders")
+    .select(OT_LISTADO_COLUMNS, { count: "exact" })
+    .in("estado_ot", [...filtros.estados]);
+
+  if (filtros.projectId) query = query.eq("project_id", filtros.projectId);
+  if (filtros.responsableId) query = query.eq("responsable_accion_id", filtros.responsableId);
+  if (filtros.tipoOt) query = query.eq("tipo_ot", filtros.tipoOt);
+  if (filtros.mantenimientoOInspeccionDe) {
+    query = query.or(
+      `tipo_ot.eq.mantenimiento,and(tipo_ot.eq.inspeccion,responsable_accion_id.eq.${filtros.mantenimientoOInspeccionDe})`
+    );
+  }
+
+  const { data, error, count } = await query
+    .order("fecha_accion_programada", { ascending: true, nullsFirst: false })
+    .order("codigo_ot", { ascending: true })
+    .range(filtros.offset, filtros.offset + filtros.limit - 1);
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return { filas: (data ?? []) as unknown as OtListadoRow[], total: count ?? 0 };
+}
+
+export interface ArbolDeOtRow {
+  id: string;
+  tree_code: string;
+  nombre_comun: string | null;
+  especie_cientifica: string | null;
+  ubicacion_descriptiva: string | null;
+  /** `ubicacion::geometry`: PostgREST lo devuelve como GeoJSON (Point). */
+  ubicacion: { type: "Point"; coordinates: [number, number] } | null;
+}
+
+/** Árboles de un listado de OT, con su ubicación (`trees.ubicacion`) para el minimapa. */
+export async function obtenerArbolesDeOts(accessToken: string, treeIds: readonly string[]): Promise<ArbolDeOtRow[]> {
+  if (treeIds.length === 0) return [];
+  const { data, error } = await createUserScopedClient(accessToken)
+    .from("trees")
+    .select("id, tree_code, nombre_comun, especie_cientifica, ubicacion_descriptiva, ubicacion::geometry")
+    .in("id", [...treeIds]);
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return (data ?? []) as unknown as ArbolDeOtRow[];
+}
+
+export async function obtenerProyectosDeOts(
+  accessToken: string,
+  projectIds: readonly string[]
+): Promise<Array<{ id: string; nombre_proyecto: string }>> {
+  if (projectIds.length === 0) return [];
+  const { data, error } = await createUserScopedClient(accessToken)
+    .from("projects")
+    .select("id, nombre_proyecto")
+    .in("id", [...projectIds]);
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return (data ?? []) as Array<{ id: string; nombre_proyecto: string }>;
+}
+
+/**
+ * `fn_miembros_proyecto` (024; CC-065 punto 6): id, nombre y rol de los
+ * miembros del proyecto, solo si quien llama (por su JWT) es miembro
+ * activo o Administrador.
+ */
+export async function obtenerMiembrosDeProyecto(
+  accessToken: string,
+  projectId: string
+): Promise<Array<{ id: string; nombre: string | null; rol: string }>> {
+  const { data, error } = await createUserScopedClient(accessToken).rpc("fn_miembros_proyecto", {
+    p_project_id: projectId,
+  });
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return (data ?? []) as Array<{ id: string; nombre: string | null; rol: string }>;
 }
