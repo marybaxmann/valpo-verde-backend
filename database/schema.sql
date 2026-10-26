@@ -1,7 +1,11 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 21 — migración 022 (2026-10-26; CC-056 decisión r):
+--   (revisión 22 — migraciones 023 y 024 (2026-10-26; CC-065): índice
+--   idx_work_orders_responsable y función fn_miembros_proyecto, copiados
+--   de lo aplicado en `valpo-verde-conecta-pruebas` (los GRANT/REVOKE
+--   quedan solo en la migración);
+--   antes revisión 21 — migración 022 (2026-10-26; CC-056 decisión r):
 --   chk_species_especie_cientifica_valida rechaza también «Género spp.»
 --   y compara sin espacios en los extremos, copiado de lo aplicado en
 --   `valpo-verde-conecta-pruebas`;
@@ -1938,6 +1942,8 @@ CREATE TABLE work_orders (
 CREATE INDEX idx_work_orders_project ON work_orders (project_id);
 CREATE INDEX idx_work_orders_tree ON work_orders (tree_id);
 CREATE INDEX idx_work_orders_estado ON work_orders (estado_ot);
+-- «Mis OT» (B4): OT del responsable actual por estado (migración 023; CC-065).
+CREATE INDEX idx_work_orders_responsable ON work_orders (responsable_accion_id, estado_ot);
 
 CREATE TRIGGER trg_work_orders_updated_at
   BEFORE UPDATE ON work_orders
@@ -3735,6 +3741,28 @@ SET search_path = public, pg_temp
 AS $$
   SELECT public.get_user_role() = ANY(p_roles)
      AND public.is_project_member(p_project_id);
+$$;
+
+-- Nombre y rol de los miembros de un proyecto, para quien es miembro
+-- activo de ese proyecto o Administrador; si no, ninguna fila. Solo id,
+-- nombre y rol: nunca el correo (migración 024; CC-065; PR-018 v6.0).
+CREATE FUNCTION public.fn_miembros_proyecto(p_project_id uuid)
+RETURNS TABLE (id uuid, nombre text, rol text)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT up.id, up.nombre, r.nombre AS rol
+  FROM public.project_members pm
+  JOIN public.user_profiles up ON up.id = pm.user_id
+  JOIN public.roles r ON r.id = up.role_id
+  WHERE pm.project_id = p_project_id
+    AND (
+      public.is_admin()
+      OR public.has_project_role(p_project_id, ARRAY['usuario_municipal', 'inspector', 'encargado_mantencion'])
+    )
+  ORDER BY up.nombre, up.id;
 $$;
 
 -- Resuelve el project_id de una fila (OLD o NEW, como jsonb) según cómo

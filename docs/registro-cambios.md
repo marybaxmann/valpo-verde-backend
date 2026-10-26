@@ -2821,7 +2821,7 @@ motivo)
 | rule_version | sin cambio |
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-26 |
-| Fecha de implementación | Pendiente: migraciones 023 y 024 primero; catálogos y endpoints en `wip/b3-b4` después de la aprobación. |
+| Fecha de implementación | 2026-10-26: migraciones 023 y 024 aplicadas en `valpo-verde-conecta-pruebas` con el ciclo completo (I1–I2 y M1–M6 en dos rondas). Catálogos y endpoints pendientes, en `wip/b3-b4` después de la aprobación. |
 | Commits / PR asociados | `wip/cc065-ot-listados`, sin PR. |
 | Observaciones | La función de la 024 devuelve también a los miembros inactivos, porque una OT histórica puede tener como responsable a alguien desactivado y su nombre tiene que seguir apareciendo; quien llama, en cambio, tiene que estar activo. Va en una migración aparte de la 023 para que cada una se revierta por separado. |
 
@@ -2830,3 +2830,4 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro con las decisiones (1) a (8). |
+| 2026-10-26 | IMPLEMENTADO (pruebas, 023 y 024) | marybaxmann | 023 v`20261026215239`/down v`20261026220529`/v`20261026220642`; 024 v`20261026215322`/down v`20261026220559`/v`20261026220644`. md5 contra el archivo en LF: 023 `9eba874f…`, 024 `0623177c…`. I1–I2 2/2 y M1–M6 6/6 en dos rondas. Asesor: un aviso nuevo esperado (`fn_miembros_proyecto` ejecutable por `authenticated`, decisión 6). schema.sql revisión 22. |
