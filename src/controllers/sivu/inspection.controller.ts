@@ -7,6 +7,8 @@ import {
 } from "../../schemas/sivu/inspeccion.schema";
 import { workOrderIdParamSchema } from "../../schemas/sivu/workOrder.schema";
 import { crearBorradorInspeccion, guardarBorradorInspeccion } from "../../services/sivu/inspection.service";
+import { calcularInspeccionSchema, finalizarInspeccionSchema } from "../../schemas/sivu/finalizacion.schema";
+import { calcularInspeccion, finalizarInspeccion } from "../../services/sivu/finalizacion.service";
 
 /** POST /api/sivu/work-orders/:workOrderId/inspections — primer guardado (#58) */
 export async function crearBorradorInspeccionController(
@@ -60,6 +62,50 @@ export async function guardarBorradorInspeccionController(
       parsedBody.data,
       req.accessToken!
     );
+    res.status(200).json({ data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** POST /api/sivu/inspections/:inspectionId/calcular — no escribe nada (#59/#72; CC-054) */
+export async function calcularInspeccionController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const parsedParams = inspectionIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      throw new AppError(parsedParams.error.issues[0]?.message ?? "Parámetros inválidos", 400);
+    }
+
+    const parsedBody = calcularInspeccionSchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      throw new AppError(parsedBody.error.issues[0]?.message ?? "Datos inválidos", 400);
+    }
+
+    const data = await calcularInspeccion(req.user!, parsedParams.data.inspectionId, parsedBody.data, req.accessToken!);
+    res.status(200).json({ data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/sivu/inspections/:inspectionId/finalizar (#59/#72; CC-054).
+ * 200 también cuando falta algo: `finalizada: false` y la inspección
+ * sigue en Preguardado (no es un error, CC-054).
+ */
+export async function finalizarInspeccionController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const parsedParams = inspectionIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      throw new AppError(parsedParams.error.issues[0]?.message ?? "Parámetros inválidos", 400);
+    }
+
+    const parsedBody = finalizarInspeccionSchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      throw new AppError(parsedBody.error.issues[0]?.message ?? "Datos inválidos", 400);
+    }
+
+    const data = await finalizarInspeccion(req.user!, parsedParams.data.inspectionId, parsedBody.data, req.accessToken!);
     res.status(200).json({ data });
   } catch (err) {
     next(err);
