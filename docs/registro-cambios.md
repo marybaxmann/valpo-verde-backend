@@ -2497,3 +2497,210 @@ motivo)
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisiones (m) a (o): catálogos D-132 y D-150, cálculo de `dap_cm` multifustal al guardar el borrador con rechazo 400 de las inconsistencias, listas en los campos de selección múltiple. |
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisiones (p) y (q): catálogo `tipo_red_subterranea` y validación del dominio de `clasificacion_vitalidad` en las evaluaciones completas. |
 | 2026-10-26 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión (r): «spp.» como «sp.» en D-13, comparación sin espacios en los extremos. |
+
+---
+
+### CC-057 — Maqueta «SIVU Lab» como referencia visual principal del frontend (PR-016 v7.0)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-26 |
+| Origen | Fase 7 del frontend: borrador D1 (`valpo-verde-frontend`, rama `feature/fase7-maqueta-lab`, `docs/propuestas-cc/D1-maqueta-lab-referencia-principal.md`). Elección de la autora del 2026-10-18 (README de `prototypes/sivu-maqueta-lab/`), opción A confirmada el 2026-10-26. |
+| Tipo | 5 — documental (gobernanza de referencias; sin cambio de lógica ni de datos) |
+| Estado | EN REVISIÓN — decisión de la responsable (2026-10-26); redacción pendiente de su aprobación |
+| Regla / campo afectado | PR-016 v6.0 (CC-025), «Referencia visual principal». |
+| Versión anterior | PR-016 v6.0: la referencia visual principal es el prototipo «SIVU Territorio» (`valpo-verde-frontend`, rama `prototype/sivu-territorio-v1`, carpeta `prototypes/sivu-territorio-lab/`, línea base `c852104`). |
+| Versión nueva | PR-016 v7.0 (junto con CC-058). **(1)** Referencia visual principal: maqueta «SIVU Lab» — repositorio `valpo-verde-frontend`, rama `prototype/sivu-maqueta-lab`, carpeta `prototypes/sivu-maqueta-lab/`, línea base `6817fb2`. Define composición, navegación, tipografía, color, densidad, estados visuales y el diseño de la pantalla de acceso. Sigue en el nivel 6 de la jerarquía (solo UX/UI); la aprobación es de la dirección visual, no de cada componente. **(2)** «SIVU Territorio» (`c852104`) pasa a antecedente visual, como `03_CityDashboardsButton.jpg` en CC-025. **(3)** Lo que Lab propone y no está aprobado queda fuera hasta tener su propio CC: el módulo Valpo Verde Conecta y la vista ciudadana; el nombre «Riesgo Arbóreo» y el módulo Inspección separado; «¿Olvidaste tu contraseña?» y el acceso a Conecta en el login; la reorganización de la navegación. **(4)** Los catálogos, estados, acciones por rol y textos de Lab corresponden a la base maestra del 2026-10-17 y a CC-022: nunca prevalecen sobre la API ni sobre la base vigente (por ejemplo, «Vencida» no es un estado de OT; «Coordenadas WGS84» no es lo vigente; el Usuario municipal no registra evaluaciones, PR-003 v8.0). **(5)** Los datos ficticios de Lab (`mock.ts`, `lab.ts`, `conecta.ts`) nunca pasan al código productivo. La imagen aérea Esri/Maxar sigue como en v6.0: no se versiona y el mapa productivo es ArcGIS. **(6)** La reutilización de su código la define CC-058. El resto de PR-016 v6.0 se mantiene (jerarquía, reglas de las referencias complementarias, reglas de integración 1 a 4, roles y cartografía). |
+| Motivo | Alinear la referencia registrada con la elección de la autora, sin ampliar su alcance: solo lo visual. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-26. Condición del README de Lab («después de sincronizar la base de datos maestra») cumplida: paquete 2.0.0 (2026-10-20, AM-08) y 2.1.0 (2026-10-21, AM-13) publicados después de la maqueta (2026-10-17/18). |
+| Archivos afectados | Esta ficha. Al aprobarse: `docs/project-rules.md` (PR-016 v7.0, que reemplaza a v6.0), `CLAUDE.md` del backend (párrafo de la referencia visual principal). Frontend: `CLAUDE.md` (tabla «Referencias de producto»), `docs/frontend-architecture.md`. El prototipo y su rama no se modifican. |
+| Impacto en diagramas · Excel · BD · backend · API | Ninguno. |
+| Impacto en frontend | Ninguno en código con este CC: la integración se rige por PR-016 v7.0. |
+| Pruebas necesarias | No aplica (documental). |
+| Dependencias | CC-021, CC-023, CC-025; CC-058 (regla 5); CC-059 y CC-060 (navegación y nombres); CC-061 y CC-062 (módulos que Lab propone). |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | — (redacción pendiente de aprobación) |
+| Fecha de aprobación | Pendiente |
+| Fecha de implementación | — |
+| Commits / PR asociados | `wip/cc057-frontend`, sin PR. |
+| Observaciones | **Diferencia con lo vigente, sin resolver:** el apartado «Roles» de PR-016 v6.0 sigue diciendo que el cuarto rol es «Mantenimiento» y que la definición de roles «sigue en conciliación en CC-015». Eso quedó superado por CC-026 y CC-032 (Administrador, Usuario municipal, Inspector y Encargado de mantención; identificadores `admin`, `usuario_municipal`, `inspector`, `encargado_mantencion`). La decisión dice «se mantiene todo lo demás de v6.0», así que este CC no cambia ese apartado; conviene actualizarlo en la misma v7.0 — **pendiente de decisión de la responsable**. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-26 | EN REVISIÓN | marybaxmann | Decisión registrada (opción A del borrador D1); redacción pendiente de aprobación. |
+
+---
+
+### CC-058 — Reutilización del código de presentación de la maqueta (PR-016 v7.0, regla de integración 5)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-26 |
+| Origen | Fase 7 del frontend: borrador D2 (`docs/propuestas-cc/D2-reutilizacion-codigo-maqueta.md`), opción B, elegida por la autora el 2026-10-26. Depende de CC-057. |
+| Tipo | 5 — documental (gobernanza de referencias) |
+| Estado | EN REVISIÓN — decisión de la responsable (2026-10-26); redacción pendiente de su aprobación |
+| Regla / campo afectado | PR-016 v6.0, «Reglas de integración del prototipo», regla 5. |
+| Versión anterior | Regla 5: «El código del prototipo no se importa desde la aplicación productiva: se reescribe dentro de su arquitectura.» (CC-025: «sin copiar su código»). |
+| Versión nueva | PR-016 v7.0, regla 5: «La aplicación productiva no importa código desde `prototypes/`. Del prototipo de referencia pueden copiarse, adaptados a la arquitectura productiva, solo elementos de presentación sin datos: valores de diseño (colores, tipografía, espaciado, radios, sombras), recursos gráficos propios de la autora (logo y fotografía), hojas de estilo de presentación e íconos SVG. Los componentes con lógica o datos se reescriben. Los datos de ejemplo, los catálogos, las acciones por rol y los módulos no aprobados nunca se copian. Cada commit que incorpore material copiado lo indica en su mensaje.» Exclusiones explícitas del borrador: `mock.ts`, `lab.ts`, `conecta.ts`, `conecta.css`, `Conecta.tsx`, `Citizen.tsx`, `nav.ts` y la imagen aérea. |
+| Motivo | Evitar reescribir a ojo lo que ya está resuelto visualmente, sin arrastrar datos ficticios, catálogos del 2026-10-17, permisos de CC-022 ni funciones no aprobadas. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-26. |
+| Archivos afectados | Esta ficha. Al aprobarse: `docs/project-rules.md` (PR-016 v7.0, regla 5). Frontend: `CLAUDE.md`. |
+| Impacto en diagramas · Excel · BD · backend · API | Ninguno. |
+| Impacto en frontend | Copias permitidas solo dentro de `src/styles/` y `src/components/` productivos, adaptadas; ningún `import` desde `prototypes/`. |
+| Pruebas necesarias | Revisión de cada commit que copie material: mensaje con lo copiado; búsqueda en el código productivo de `import` desde `prototypes/` y de los archivos excluidos (debe dar cero). Antes de versionar la fotografía de la autora, verificar que no tenga metadatos EXIF (indicación del borrador). |
+| Dependencias | CC-025, CC-057. |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | — (redacción pendiente de aprobación) |
+| Fecha de aprobación | Pendiente |
+| Fecha de implementación | — |
+| Commits / PR asociados | `wip/cc057-frontend`, sin PR. |
+| Observaciones | Sin contradicciones con el Excel ni con otro CC vigente. Fuentes Geist / Geist Mono (Google Fonts, licencia OFL): compatibles con un repositorio público (PR-016, «Cartografía», último punto, aplicado por analogía a recursos de terceros). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-26 | EN REVISIÓN | marybaxmann | Decisión registrada (opción B del borrador D2); redacción pendiente de aprobación. |
+
+---
+
+### CC-059 — Navegación agrupada del proyecto (Análisis, Operación, Territorio)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-26 |
+| Origen | Fase 7 del frontend: borradores D3 (`docs/propuestas-cc/D3-navegacion-agrupada.md`) y D4 (`D4-roles-en-navegacion.md`). PR-016 v6.0, regla de integración 2: los módulos «pueden reorganizarse visualmente o cambiar su nombre visible solo con aprobación previa de la autora». |
+| Tipo | 5 — UX / navegación (sin cambio de rutas, datos ni permisos) |
+| Estado | EN REVISIÓN — decisión de la responsable (2026-10-26); redacción pendiente de su aprobación |
+| Regla / campo afectado | Navegación del frontend dentro de un proyecto (PR-016, regla de integración 2). |
+| Versión anterior | Menú lateral plano dentro de un proyecto: Dashboard, Inventario, Inspección y Riesgo, Infraestructura, Mantención, Incidencias, Índices. Fuera de un proyecto: «Mis proyectos». |
+| Versión nueva | **(1)** El nombre del proyecto actual va junto al logo, con su menú: ficha del proyecto, miembros (solo Administrador) y cambiar proyecto. **(2)** A continuación, tres grupos, en este orden: **Análisis** — Dashboard (pantalla de entrada del proyecto) e Indicadores biométricos; **Operación** — Mantención e Incidencias; **Territorio** — Inventario, Riesgo Arbóreo e Infraestructura. Los nombres nuevos los fija CC-060. **(3)** Las rutas actuales no cambian (`/projects/:id/dashboard`, `/indices`, `/mantencion`, `/incidencias`, `/mapa`, `/inspeccion`, `/infraestructura`, `/projects/:id`, `/projects`). **(4)** Los módulos **Inspección** (CC-061) y **Valpo Verde Conecta** (CC-062) van en el grupo Operación, pero **no aparecen en la navegación** —ni como botón inactivo— hasta que su CC esté aprobado y sus endpoints existan. **(5)** Del borrador D4 (opción A, elegida por la autora): la navegación muestra a cada rol solo los módulos y acciones que le permiten las reglas vigentes, y la seguridad la sigue decidiendo el backend; las acciones de la maqueta (`nav.ts`, `ACTIONS`) no se usan; mientras `inspector` y `encargado_mantencion` no tengan interfaz, reciben un mensaje que nombra su rol y explica que su interfaz está pendiente, nunca un shell prestado de otro rol. |
+| Motivo | Ordenar los módulos por su uso sin cambiar rutas ni permisos, y no mostrar módulos que todavía no tienen regla ni API. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-26 (orden de los grupos; proyecto junto al logo; Inspección y Conecta ocultos hasta su CC y sus endpoints). |
+| Archivos afectados | Esta ficha. Frontend: `src/layouts/RoleLayout.tsx`, `src/components/Sidebar.tsx`, `src/components/Topbar.tsx`, `src/App.tsx` (`RootRoute`, mensaje por rol). |
+| Impacto en diagramas · Excel · BD · backend · API | Ninguno. |
+| Impacto en frontend | Navegación nueva en el Paso 2 de la Fase 7, para `admin` y `usuario_municipal`. |
+| Pruebas necesarias | Con cada rol: las rutas actuales siguen funcionando; Inspección y Conecta no aparecen; el Usuario municipal no ve acciones de evaluación (PR-003 v8.0); `inspector` y `encargado_mantencion` reciben el mensaje de su rol. |
+| Dependencias | PR-016 v7.0 (CC-057, CC-058); CC-060; CC-061; CC-062; PR-003 v8.0; PR-004 v7.0. |
+| rule_version | sin cambio (fuera del paquete metodológico) |
+| Aprobado por | — (redacción pendiente de aprobación) |
+| Fecha de aprobación | Pendiente |
+| Fecha de implementación | — |
+| Commits / PR asociados | `wip/cc057-frontend`, sin PR. |
+| Observaciones | **(a)** El punto 5 viene del borrador D4, que la decisión de hoy menciona «si aplica»: lo incluí porque el borrador lo da por elegido por la autora — **confirmar**. **(b)** Contradicción abierta que este CC no resuelve (señalada en D4): el frontend actual (demo) deja al Usuario municipal registrar evaluaciones de riesgo e infraestructura y editar datos técnicos del árbol, contra PR-003 v8.0; quitarlo choca con la regla de la Fase 7 «conservar funciones y permisos actuales». Necesita una decisión aparte. **(c)** En el borrador D3 «Proyecto» era un cuarto grupo al final; la decisión lo mueve junto al logo (este CC sigue la decisión). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-26 | EN REVISIÓN | marybaxmann | Decisión registrada; redacción pendiente de aprobación. |
+
+---
+
+### CC-060 — Nombres visibles: «Riesgo Arbóreo» e «Indicadores biométricos»
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-26 |
+| Origen | Fase 7 del frontend: borrador D3, punto 2 y 3. PR-016 v6.0, regla de integración 2. |
+| Tipo | 5 — UX (solo etiqueta visible) |
+| Estado | EN REVISIÓN — decisión de la responsable (2026-10-26); redacción pendiente de su aprobación |
+| Regla / campo afectado | Nombres visibles de dos módulos del frontend. |
+| Versión anterior | «Inspección y Riesgo» (ruta `/projects/:id/inspeccion`) e «Índices» (ruta `/projects/:id/indices`). |
+| Versión nueva | **(1)** «Inspección y Riesgo» → **«Riesgo Arbóreo»**: consulta territorial de los resultados de riesgo; la ruta no cambia. El trabajo del Inspector sobre sus OT va en el módulo Inspección (CC-061). **(2)** «Índices» → **«Indicadores biométricos»**; la ruta no cambia. El módulo muestra los mismos agregados descriptivos del inventario de hoy (`GET /api/projects/:id/indices`): conteos de árboles, composición por especie y estadísticas de la medición actual (DAP y altura; el endpoint devuelve además diámetro de copa y clase de edad). **(3)** «Indicadores biométricos» **no tiene relación** con los indicadores del motor de riesgo: las reglas IN-* de REGLAS_INDICADORES ni `evaluations.indicadores`. **(4)** **No adopta la hoja INDICES**: CC-016 sigue en DETECTADO e INDICES no es implementable ni normativa vigente hasta cerrarlo. |
+| Motivo | Nombres que describen mejor cada módulo, sin cambiar datos, rutas ni permisos. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-26. |
+| Archivos afectados | Esta ficha. Frontend: títulos en `ModulePage.tsx`, `IndicesPage.tsx`, `Sidebar.tsx`. Backend: ningún cambio de código; los textos de la documentación del backend que nombren los módulos se actualizan al tocarlos. |
+| Impacto en diagramas · Excel · BD · backend · API | Ninguno. |
+| Impacto en frontend | Cambio de etiquetas. La página de Indicadores biométricos no muestra ni nombra indicadores IN-* ni de la hoja INDICES. |
+| Pruebas necesarias | Las rutas `/inspeccion` e `/indices` siguen funcionando; los títulos muestran los nombres nuevos; el contenido de Indicadores biométricos es el mismo de hoy. |
+| Dependencias | CC-016 (DETECTADO, sin cambio); CC-059. |
+| rule_version | sin cambio |
+| Aprobado por | — (redacción pendiente de aprobación) |
+| Fecha de aprobación | Pendiente |
+| Fecha de implementación | — |
+| Commits / PR asociados | `wip/cc057-frontend`, sin PR. |
+| Observaciones | **(a)** `GET /api/projects/:id/indices` es un endpoint de la demo (modelo anterior: `tree_measurements`, `species.nombre_cientifico`), no de la Fase 6 (`pendientes-backend.md`, B10). Además, ese servicio todavía no agrega el DAP de árboles multifustales («sin fórmula de DAP equivalente aprobada»), y CC-056 (decisión k) ya aprobó esa fórmula (D-18) para el modelo nuevo. No lo resuelve este CC: lo resuelve B10 al llevar Índices al modelo nuevo. **(b)** La sesión de frontend pidió confirmar que «Indicadores biométricos» no se confunda con REGLAS_INDICADORES: el punto 3 lo deja escrito; si la responsable prefiere otro nombre para evitarlo, se cambia aquí. **(c)** La ruta `/projects/:id/inspeccion` queda para Riesgo Arbóreo: el módulo Inspección (CC-061) necesitará otra ruta. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-26 | EN REVISIÓN | marybaxmann | Decisión registrada; redacción pendiente de aprobación. |
+
+---
+
+### CC-061 — Módulo Inspección: qué ve cada rol y endpoints para listar OT (B3, B4)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-26 |
+| Origen | Fase 7 del frontend: borrador D3 (punto 4), D4 y `pendientes-backend.md` (B3 y B4). La maqueta Lab propone un módulo de Inspección separado (CC-057, punto 3). |
+| Tipo | 3 — permisos y API (+5, navegación) |
+| Estado | EN REVISIÓN — decisión de la responsable (2026-10-26); redacción pendiente de su aprobación |
+| Regla / campo afectado | Visibilidad de las OT de Inspección (`work_orders` con `tipo_ot = 'inspeccion'`) por rol; endpoints nuevos de lectura; PR-003 v8.0, PR-004 v7.0, PR-019 v1.2, PR-020 v1.1; CC-050. |
+| Versión anterior | No existe un módulo para trabajar las OT de Inspección. La API crea OT (`POST /api/sivu/projects/:id/work-orders`, 018h), transiciona Pendiente→Programada→En ejecución (`PATCH /api/sivu/work-orders/:id/estado`, 018g), guarda el borrador, sube fotos y (en revisión, `wip/cc056-completitud`) calcula y finaliza, pero **no lista OT**. PR-019/PR-020 dicen qué registra cada rol, no qué ve. |
+| Versión nueva | **Módulo Inspección** (grupo Operación, CC-059), para trabajar las OT de Inspección. Riesgo Arbóreo (CC-060) sigue como consulta territorial de los resultados. **Por rol:** **(1) Inspector:** solo las OT de Inspección de las que es el **responsable actual** (`responsable_accion_id`, CC-050: si lo reasignan, deja de verla), para trabajarlas — borrador, fotos, calcular y finalizar (#58, #59, #72). **(2) Usuario municipal:** todas las OT de Inspección del proyecto, con sus acciones de CC-050 (crear; completar, cancelar y cambiar de responsable), **sin registrar inspecciones** (PR-003 v8.0). Completar, cancelar y reasignar **todavía no están implementados** (CC-050, issue por asignar): hasta entonces el módulo no los ofrece. **(3) Administrador:** solo consulta (PR-004 v7.0), con su acceso transversal (PR-005 v3.0). **(4) Encargado de mantención:** no ve el módulo. **Endpoints nuevos (solo lectura):** **B3 — listar las OT del proyecto** y **B4 — listar las OT asignadas al usuario autenticado**. Cada uno filtra según el rol y el proyecto con `assertProjectRole`/`assertProjectAccess` (`authorization.service.ts`): B3 entrega al Inspector solo las suyas, al Usuario municipal y al Administrador todas las del proyecto, y rechaza al Encargado de mantención para las de Inspección; B4 entrega solo OT de proyectos donde el usuario tiene acceso. Datos por OT (de B3 en `pendientes-backend.md`): estado (CC-050), tipo, acción solicitada, responsable, `fecha_accion_programada` y árbol. El formato concreto se define al implementarlos, después de la capa TS de #59 + #72. |
+| Motivo | El Inspector no tiene dónde ver ni trabajar sus OT, y el Usuario municipal no tiene cómo listar las del proyecto: sin listado, los endpoints ya hechos no se pueden usar desde la interfaz. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-26. PR-003 v8.0, PR-004 v7.0, PR-005 v3.0, PR-019 v1.2; CC-050. |
+| Archivos afectados | Esta ficha; `docs/roadmap.md` (B3 y B4, después de la capa TS de #59 + #72). Al implementarse: `src/repositories/sivu/workOrder.repository.ts`, `src/services/sivu/workOrder.service.ts`, controlador, rutas y esquemas Zod; frontend: módulo Inspección (ruta nueva por definir). |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno: no cambia ningún campo ni regla del Excel. |
+| Impacto en BD | Ninguno previsto: lectura de `work_orders` con los filtros de arriba; si hace falta un índice por `responsable_accion_id`, se propone con su migración. |
+| Impacto en backend | Dos endpoints de lectura con autorización por rol y proyecto. |
+| Impacto en API | B3 y B4 (rutas por definir al implementarlos). |
+| Impacto en frontend | Módulo Inspección, visible solo cuando este CC esté aprobado y B3/B4 existan (CC-059, punto 4). |
+| Pruebas necesarias | Inspector: ve solo las OT donde es el responsable actual; tras una reasignación ya no ve la anterior; no ve OT de un proyecto donde no es miembro. Usuario municipal: ve todas las del proyecto, solo con membresía. Administrador: ve todas, sin acciones. Encargado de mantención: 403 en las de Inspección. B4 no entrega OT de proyectos sin acceso. |
+| Dependencias | CC-050; CC-059; #58, #59, #72; PR-003 v8.0, PR-004 v7.0, PR-005 v3.0, PR-019 v1.2, PR-020 v1.1. |
+| rule_version | sin cambio |
+| Aprobado por | — (redacción pendiente de aprobación) |
+| Fecha de aprobación | Pendiente |
+| Fecha de implementación | — |
+| Commits / PR asociados | `wip/cc057-frontend`, sin PR. |
+| Observaciones | **(a)** `pendientes-backend.md` pide B3 también para Mantención y el Dashboard, y B4 también para el Encargado de mantención: lo que ve cada rol en las OT de **Mantenimiento** no lo define este CC (queda para #61, CC-050). **(b)** PR-019 v1.2 y PR-020 v1.1 no dicen qué ve cada rol fuera de sus OT (señalado en D4); este CC lo define solo para el módulo Inspección. Si la responsable quiere dejarlo también en PR-019, sería una v1.3. **(c)** PR-003 v8.0 dice que el Usuario municipal «actualiza el estado» de las OT (CC-022); CC-050 ya precisó que Pendiente→Programada→En ejecución las hace el responsable. Sin conflicto nuevo. **(d)** La ruta `/projects/:id/inspeccion` es de Riesgo Arbóreo (CC-060): el módulo Inspección necesita otra. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-26 | EN REVISIÓN | marybaxmann | Decisión registrada; redacción pendiente de aprobación. |
+
+---
+
+### CC-062 — Valpo Verde Conecta dentro de CC-036: formulario por QR, placas, ficha pública y código de seguimiento (PR-022 v2.0)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-26 |
+| Origen | Fase 7 del frontend: borrador D3 (punto 5) y `mensaje-backend-D3.md`. La maqueta Lab propone una vista ciudadana **con cuenta**, reporte, seguimiento, placas QR y ficha pública con contenido editorial; CC-036 / PR-022 v1.0 dice **formulario público sin cuenta**. |
+| Tipo | 3 — modelo de datos y permisos (+4, datos personales y endpoint público) |
+| Estado | EN REVISIÓN — decisión de la responsable (2026-10-26); redacción pendiente de su aprobación |
+| Regla / campo afectado | PR-022 v1.0 (CC-036); CC-049 (fotos ciudadanas); CC-033 / PR-018 v3.0 (endpoint público); `trees.qr_token` (018a); INCIDENCIA (D-177 `origen_reporte`, D-178 `nombre_reportante`, D-179 `rut_reportante`, D-183 `evidencia_fotografica`, D-184 `estado_incidencia`, D-187 `resultado_revision`); CATALOGO_ESPECIES (D-257 a D-262). |
+| Versión anterior | PR-022 v1.0: formulario público sin cuenta, por el QR del árbol; nombre, RUT, tipo, descripción y al menos una foto; límite de solicitudes; nombre y RUT solo para el Usuario municipal y eliminados al registrar Validada o Descartada; ningún dato de contacto. No define ficha pública, placas ni seguimiento. |
+| Versión nueva | PR-022 v2.0. **(1) Sin cuentas ciudadanas:** Conecta se ajusta a CC-036; no se crea un rol ni una cuenta ciudadana. **(2) Incluye:** el formulario público por QR (PR-022 v1.0, sin cambios); las placas QR, identificadas por `trees.qr_token` (aleatorio, nunca el `tree_code` correlativo); la ficha pública del árbol; y un **código de seguimiento** que se entrega a la persona al reportar. **(3) Ficha pública:** muestra `especie_cientifica` (D-13), `nombre_comun` (D-14) y `ubicacion_descriptiva` (D-8). **No muestra el nivel de riesgo** ni ningún otro resultado técnico. **«Sobre esta especie»** se arma solo con los campos de CATALOGO_ESPECIES: `especie_cientifica` (D-257), `genero` (D-258), `familia` (D-259), `origen_biogeografico` (D-260), `persistencia_follaje` (D-261) y `tipo_hoja` (D-262), con sus reglas de presentación: si el árbol no tiene especie vigente, el origen se informa como «Origen no determinado» (D-260) y persistencia y tipo de hoja no muestran valor (D-261, D-262). Un texto editorial nuevo requiere otro CC. **(4) Código de seguimiento:** muestra **solo el estado del reporte** (`estado_incidencia`, D-184: Ingresada, En revisión, Derivada, Resuelta o Descartada), sin datos personales ni de la revisión interna. Requisitos: imposible de adivinar (aleatorio, generado con un generador criptográfico, **al menos 128 bits**); **límite de consultas**; **ningún dato personal en la URL**. **Propuesta de consulta: por body** (`POST` con el código en el cuerpo), no por ruta: una URL queda en el historial del navegador, en registros de servidores intermedios y en el encabezado Referer, y el código es la única credencial del reporte. **(5) Nombre y RUT:** sin cambios respecto de CC-036 (visibles solo para el Usuario municipal miembro del proyecto; eliminados al registrar Validada o Descartada; con Requiere antecedentes, hasta la resolución final). **(6) Fotos ciudadanas:** sin cambios respecto de CC-049 (sin metadatos; se conservan si el reporte se valida y se eliminan si se descarta). **(7)** Se implementa con el **#62**. |
+| Diseño de seguridad (sin detalles explotables; el repositorio es público) | **Ficha pública:** hoy el rol `anon` no tiene ningún privilegio de lectura sobre tablas ni vistas (migración 017, CC-033) y no existe un endpoint público de lectura. La ficha se sirve desde un endpoint público del backend que recibe el `qr_token`, valida su formato, y entrega **solo** los campos del punto 3 — nunca el `tree_code`, coordenadas, el proyecto, inspecciones, fotos, incidencias ni ninguna clasificación —; `anon` sigue sin privilegios directos. **Código de seguimiento:** la base guarda solo una huella del código (no el código), así que una copia de la base no permite consultar reportes; el código se muestra una sola vez al reportar y no se escribe en registros. La respuesta a un código inexistente es la misma que a uno mal formado, para que la consulta no sirva para comprobar códigos; con el límite de consultas por IP y los ≥128 bits, la enumeración no es practicable. El código no se relaciona con el `qr_token` ni con el árbol en la respuesta. |
+| Motivo | Ofrecer participación ciudadana (placas, ficha y seguimiento) sin crear cuentas ni ampliar el tratamiento de datos personales de CC-036. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-26. CC-036 / PR-022 v1.0; CC-049; CC-033; D-8, D-13, D-14, D-177 a D-187, D-257 a D-262 (filas leídas del .xlsx). |
+| Archivos afectados | Esta ficha. Al aprobarse: `docs/project-rules.md` (PR-022 v2.0; PR-018 si cambia el punto de lecturas públicas, ver observación b). Al implementarse (#62): migración (código de seguimiento en `incidents`), endpoints públicos (ficha, seguimiento), formulario ciudadano, límites de tasa; frontend: vistas públicas de Conecta. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | **Sí:** el código de seguimiento no existe en DICCIONARIO_CAMPOS (hoja INCIDENCIA). Hay que agregarlo en la próxima versión del paquete (AM-15): campo de Sistema, no visible para el reportante salvo al reportar. La ficha pública y «Sobre esta especie» usan campos ya vigentes. |
+| Impacto en BD | Columna nueva en `incidents` para la huella del código de seguimiento (con su migración, mostrada antes de aplicar); sin privilegios nuevos para `anon`. |
+| Impacto en backend | Endpoints públicos de ficha y de seguimiento, cada uno con su límite de solicitudes (el del formulario ya es 10/hora/IP, CC-049). |
+| Impacto en API | Endpoint público de la ficha por `qr_token`; endpoint público de seguimiento por body; el formulario devuelve el código una sola vez. |
+| Impacto en frontend | Vistas públicas de Conecta (ficha, formulario y seguimiento), sin login; módulo Conecta interno visible solo con este CC aprobado y sus endpoints (CC-059, punto 4). |
+| Pruebas necesarias | La ficha no entrega `tree_code`, coordenadas, riesgo ni datos técnicos; un `qr_token` inexistente o mal formado responde igual; el código de seguimiento tiene ≥128 bits y la base no guarda el código en claro; un código inexistente y uno mal formado reciben la misma respuesta; se aplica el límite de consultas; la respuesta de seguimiento solo trae `estado_incidencia`; nombre, RUT y fotos siguen CC-036 y CC-049; `anon` sigue sin privilegios de lectura (verificación sobre la 017). |
+| Dependencias | CC-033, CC-036, CC-049; PR-018 v3.0, PR-022 v1.0; #62; CC-059. |
+| rule_version | sin cambio (operativo; el campo nuevo entra al Excel por AM-15) |
+| Aprobado por | — (redacción pendiente de aprobación) |
+| Fecha de aprobación | Pendiente |
+| Fecha de implementación | — |
+| Commits / PR asociados | `wip/cc057-frontend`, sin PR. |
+| Observaciones | **Puntos que necesitan decisión, sin resolver:** **(a)** «El formulario público por QR (como hoy)»: hoy está **definido** (CC-036, PR-022 v1.0) pero **no implementado** — no existe el endpoint de creación de incidencias (#62, CC-049) ni una página pública en el frontend. **(b)** **Lecturas públicas vs. CC-033 / PR-018 v3.0:** las reglas vigentes dicen que el backend lee con el JWT del usuario y las RLS filtran, y solo contemplan un endpoint público **de escritura** (el formulario). La ficha y el seguimiento son lecturas sin sesión, así que el backend tendría que leer con la credencial de servicio una proyección mínima, o la base exponer una función de solo lectura con esa proyección. Cualquiera de las dos es una excepción nueva a esa regla: hay que elegirla y registrarla (PR-018 v4.0). **(c)** Cuánto tiempo sigue funcionando el código de seguimiento después de que el reporte se resuelve: no está decidido. **(d)** El valor del límite de consultas de seguimiento: no está decidido (el formulario usa 10/hora/IP). **(e)** Quién genera e imprime las placas QR y desde qué endpoint: no está definido. **(f)** `trees.qr_token` es un UUID aleatorio (122 bits): el requisito de ≥128 bits es del código de seguimiento, no del QR. La ficha pública solo entrega datos ya públicos del árbol, así que no se propone cambiarlo; si la responsable quiere el mismo umbral para el QR, requiere migración. **Sin contradicción con el Excel** en lo vigente; el código de seguimiento es un campo nuevo (ver «Impacto en Excel»). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-26 | EN REVISIÓN | marybaxmann | Decisión registrada; redacción pendiente de aprobación. |

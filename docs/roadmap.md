@@ -114,6 +114,17 @@ creado.
 - `services/rules/` — motor de reglas metodológico, no creado todavía.
   Depende de que las secciones metodológicas correspondientes estén
   `vigente` (ver más abajo).
+- **Fase 6 — cierre de la inspección y listados de OT (orden acordado):**
+  - Capa TS de #59 + #72 (`POST /api/sivu/inspections/:id/calcular` y
+    `.../finalizar`, CC-054/CC-055/CC-056) — implementada en
+    `wip/cc056-completitud`, **en revisión de la responsable**.
+  - **B3 — listar las OT del proyecto** (CC-061, EN REVISIÓN): solo
+    lectura; filtra por rol y proyecto con `assertProjectRole`/
+    `assertProjectAccess` (Inspector: solo las suyas; Usuario municipal y
+    Administrador: todas las del proyecto; Encargado de mantención: no,
+    en las de Inspección). Pendiente.
+  - **B4 — listar las OT asignadas al usuario** (CC-061, EN REVISIÓN):
+    solo OT de proyectos con acceso. Pendiente.
 
 ## Frontend productivo (próximo bloque, no iniciado)
 
