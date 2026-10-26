@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../../config/supabase";
+import { createUserScopedClient, supabaseAdmin } from "../../config/supabase";
 
 /** Bucket privado creado por la migración 019 (CC-049; issue #74). */
 export const BUCKET_FOTOS = "tree-photos";
@@ -105,8 +105,8 @@ export async function crearFotoRegistro(input: CrearFotoInput): Promise<PhotoRow
   return data as unknown as PhotoRow;
 }
 
-export async function listarFotosPorInspeccion(inspectionId: string): Promise<PhotoRow[]> {
-  const { data, error } = await supabaseAdmin
+export async function listarFotosPorInspeccion(accessToken: string, inspectionId: string): Promise<PhotoRow[]> {
+  const { data, error } = await createUserScopedClient(accessToken)
     .from("photos")
     .select(PHOTO_COLUMNS)
     .eq("inspection_id", inspectionId)

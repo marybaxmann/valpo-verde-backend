@@ -133,7 +133,7 @@ export async function calcularInspeccion(
   accessToken: string
 ): Promise<CalculoRespuesta> {
   const { inspeccion } = await autorizarCierre(user, inspectionId, accessToken);
-  const calculo = await calcular(inspeccion, body.ajustes);
+  const calculo = await calcular(inspeccion, body.ajustes, accessToken);
   return calculo.respuesta;
 }
 
@@ -145,7 +145,7 @@ export async function finalizarInspeccion(
   accessToken: string
 ): Promise<FinalizacionRespuesta> {
   const { inspeccion } = await autorizarCierre(user, inspectionId, accessToken);
-  const { respuesta, resultado, completa } = await calcular(inspeccion, body.ajustes);
+  const { respuesta, resultado, completa } = await calcular(inspeccion, body.ajustes, accessToken);
 
   if (body.huella !== respuesta.huella) {
     throw new AppError(
@@ -242,7 +242,17 @@ async function autorizarCierre(
   return { inspeccion, ot };
 }
 
-async function calcular(inspeccion: InspeccionRow, ajustesBody: AjustesBody | undefined): Promise<Calculo> {
+/**
+ * Todo lo que entra en la respuesta y en la huella se lee con el JWT del
+ * usuario (PR-018 v5.0, CC-064 decisión h): la RLS actúa como segunda
+ * capa. La inspección y la OT que lee `autorizarCierre` solo sirven para
+ * autorizar y siguen con la credencial de servicio.
+ */
+async function calcular(
+  inspeccion: InspeccionRow,
+  ajustesBody: AjustesBody | undefined,
+  accessToken: string
+): Promise<Calculo> {
   const tipo = inspeccion.tipo_inspeccion_realizada;
   const subtipo = inspeccion.subtipo_inspeccion;
   if (tipo === null || !tipoSubtipoValido(tipo, subtipo)) {
@@ -250,12 +260,12 @@ async function calcular(inspeccion: InspeccionRow, ajustesBody: AjustesBody | un
   }
 
   const [variablesRegistradas, versionArbol, arbolVigente, variablesVigentes, fechaVigente, fotos] = await Promise.all([
-    obtenerVariablesBorrador(inspeccion.id),
-    obtenerVersionArbolDeInspeccion(inspeccion.id),
-    obtenerArbolVigente(inspeccion.tree_id),
-    obtenerEntradasVigentes(inspeccion.tree_id),
-    obtenerFechaProximaInspeccionVigente(inspeccion.tree_id),
-    listarFotosPorInspeccion(inspeccion.id),
+    obtenerVariablesBorrador(accessToken, inspeccion.id),
+    obtenerVersionArbolDeInspeccion(accessToken, inspeccion.id),
+    obtenerArbolVigente(accessToken, inspeccion.tree_id),
+    obtenerEntradasVigentes(accessToken, inspeccion.tree_id),
+    obtenerFechaProximaInspeccionVigente(accessToken, inspeccion.tree_id),
+    listarFotosPorInspeccion(accessToken, inspeccion.id),
   ]);
   if (variablesRegistradas === null) {
     throw new AppError("La inspección no tiene borrador de evaluación: guárdelo antes de calcular", 422);
