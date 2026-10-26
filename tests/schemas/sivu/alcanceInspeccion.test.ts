@@ -82,13 +82,16 @@ describe("camposPermitidosPorTipo (CC-040)", () => {
 /**
  * Compara CAMPOS_EVALUACION_COMPLETA contra DICCIONARIO_CAMPOS (mismo
  * criterio que `scripts/metodologia/campos_evaluacion_completa.py`:
- * Hoja = REGISTRO_EVALUACION, "¿Quién lo ingresa?" = "Inspector" exacto)
+ * Hoja = REGISTRO_EVALUACION, "¿Quién lo ingresa?" = "Inspector" exacto,
+ * más las adiciones manuales del script)
  * para que el código y el Excel no se desincronicen (CC-040 punto 1).
  * Lee el CSV ya exportado (docs/excel/export/), mismo mecanismo que
  * catalogs.test.ts — nunca el .xlsx desde Jest.
  */
 describe("CAMPOS_EVALUACION_COMPLETA vs DICCIONARIO_CAMPOS (CC-040 punto 1)", () => {
   const EXCLUSIONES_MANUALES = new Set(["justificacion_ajuste_clasificacion"]);
+  // D-125 "Irregular → ingreso manual" (CC-056).
+  const ADICIONES_MANUALES = { superficie_alcorque_m2_manual: ["superficie_alcorque_m2", "Irregular → ingreso manual"] };
 
   it("coincide exactamente con los campos de REGISTRO_EVALUACION que ingresa el Inspector (sin exclusiones manuales)", () => {
     const filas = leerExportCsv("DICCIONARIO_CAMPOS.csv").slice(1);
@@ -97,6 +100,11 @@ describe("CAMPOS_EVALUACION_COMPLETA vs DICCIONARIO_CAMPOS (CC-040 punto 1)", ()
       fila[3]?.trim() === "Inspector" &&
       !EXCLUSIONES_MANUALES.has(fila[1]);
     const camposExcel = filas.filter(campoEnExcel).map((f) => f[1]);
+    for (const [agregado, [base, texto]] of Object.entries(ADICIONES_MANUALES)) {
+      const filaBase = filas.find((f) => f[0] === "REGISTRO_EVALUACION" && f[1] === base);
+      expect(filaBase?.[9]).toContain(texto);
+      camposExcel.push(agregado);
+    }
 
     expect(new Set(CAMPOS_EVALUACION_COMPLETA)).toEqual(new Set(camposExcel));
     // Ningún duplicado ni en el código ni en el Excel (si lo hubiera, el

@@ -136,7 +136,10 @@ export const CAMPOS_MONITOREO_VITALIDAD = ["clasificacion_vitalidad"] as const;
  * calculadas con ajuste del Inspector, clasificacion_riesgo/
  * infraestructura/prioridad), más una exclusión manual documentada en
  * el script: `justificacion_ajuste_clasificacion` (D-173, parte del
- * ajuste posterior al cálculo, #59/#72 — no del guardado Preguardado).
+ * ajuste posterior al cálculo, #59/#72 — no del guardado Preguardado),
+ * y una adición manual: `superficie_alcorque_m2_manual` (D-125,
+ * "Irregular → ingreso manual"; CC-056 — sin ella un alcorque Irregular
+ * nunca tenía superficie).
  * `tests/schemas/sivu/alcanceInspeccion.test.ts` compara esta lista
  * contra el Excel para que no se desincronicen.
  */
@@ -168,6 +171,7 @@ export const CAMPOS_EVALUACION_COMPLETA = [
   "superficie_afectada_calzada_m2", "afecta_circulacion_vehicular", "distancia_arbol_calzada_m",
   "existe_superficie_permeable",
   "existe_alcorque", "forma_alcorque", "largo_alcorque_m", "ancho_alcorque_m", "diametro_alcorque_m",
+  "superficie_alcorque_m2_manual",
   "dano_interferencia_alcorque", "indicios_compactacion_superficial", "suelo_sellado_impermeabilizado",
   "obstaculos_crecimiento_radicular", "condicion_radicular_entorno",
   "contacto_interferencia_infraestructura_vertical", "tipo_infraestructura_vertical",
@@ -182,6 +186,18 @@ export const CAMPOS_EVALUACION_COMPLETA = [
   "consecuencia_raices_cuello", "consecuencia_tronco", "consecuencia_copa_ramas",
   "clasificacion_vitalidad",
 ] as const;
+
+/**
+ * Campos de REGISTRO_EVALUACION de selección múltiple → catálogo de sus
+ * códigos (CC-056 decisión o). D-132 y D-143: "Permitir selección
+ * múltiple"; D-139: selección múltiple (`TipoRedAereaCodigo[]` en M04).
+ * Son los únicos campos del borrador que aceptan una lista.
+ */
+export const CATALOGO_SELECCION_MULTIPLE: Readonly<Record<string, string>> = {
+  tipo_infraestructura_vertical: "tipo_infraestructura_vertical",
+  tipo_red_aerea: "tipo_red_aerea",
+  tipo_red_subterranea: "tipo_red_subterranea",
+};
 
 /**
  * Alcance de REGISTRO_EVALUACION por tipo/subtipo (CC-040). Ya no

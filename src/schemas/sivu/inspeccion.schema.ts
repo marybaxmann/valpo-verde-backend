@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { camposPermitidosPorTipo, tipoSubtipoValido } from "./alcanceInspeccion";
+import { CATALOGO_SELECCION_MULTIPLE, camposPermitidosPorTipo, tipoSubtipoValido } from "./alcanceInspeccion";
 import { esCodigoVigente } from "../../services/rules/engine/catalogs";
 
 /**
@@ -14,7 +14,7 @@ import { esCodigoVigente } from "../../services/rules/engine/catalogs";
  * `clase_edad`/`rango_edad_estimada_anios`: mismos dominios que el
  * CHECK físico de `trees`/`tree_data_versions` (D-25, D-26; CC-039).
  */
-export const camposArbolSchema = z
+export const camposArbolBaseSchema = z
   .object({
     sector: z.string().trim().min(1).nullable(),
     ubicacion_descriptiva: z.string().trim().min(1).nullable(),
@@ -46,18 +46,21 @@ export const camposArbolSchema = z
   .partial()
   .strict();
 
+export const camposArbolSchema = camposArbolBaseSchema;
+
 export type CamposArbolBody = z.infer<typeof camposArbolSchema>;
 
 /**
  * `variables` (REGISTRO_EVALUACION): el valor de cada campo no se
  * tipa aquí uno por uno todavía (fuera de alcance de este pase, ver
  * `alcanceInspeccion.ts`) — se acepta cualquier valor primitivo o
- * `null` por clave. Lo que SÍ se exige, siempre, es que la CLAVE esté
- * dentro del alcance de `tipo`/`subtipo` cuando ese alcance ya está
- * definido (Evaluación instrumental, Monitoreo) — `superRefine` del
- * esquema contenedor.
+ * `null` por clave, y una lista de textos solo en los campos de
+ * selección múltiple (CC-056 decisión o; se valida en
+ * `validarAlcanceVariables`). Lo que SÍ se exige, siempre, es que la
+ * CLAVE esté dentro del alcance de `tipo`/`subtipo` — `superRefine`
+ * del esquema contenedor.
  */
-const valorVariable = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+const valorVariable = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.string())]);
 const variablesSchema = z.record(z.string(), valorVariable);
 
 const camposComunesInspeccion = {
@@ -126,12 +129,47 @@ function validarAlcanceVariables(
     }
   }
 
-  // Monitoreo/Vitalidad: el único campo de su alcance tiene catálogo
-  // propio (D-169; AM-17) — valor fuera del dominio se rechaza aquí,
-  // no se deja pasar como texto libre.
-  if (data.subtipo_inspeccion === "vitalidad") {
+  // Campos de selección múltiple (D-132, D-139, D-143; CC-056 decisión
+  // o): lista no vacía de códigos vigentes de su catálogo, sin
+  // repetidos, o null. Ningún otro campo acepta una lista.
+  for (const [clave, valor] of Object.entries(data.variables)) {
+    const catalogo = CATALOGO_SELECCION_MULTIPLE[clave];
+    if (catalogo === undefined) {
+      if (Array.isArray(valor)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["variables", clave],
+          message: `"${clave}" no es de selección múltiple; no acepta una lista`,
+        });
+      }
+      continue;
+    }
+    if (valor === null) continue;
+    const valida =
+      Array.isArray(valor) &&
+      valor.length > 0 &&
+      new Set(valor).size === valor.length &&
+      valor.every((codigo) => esCodigoVigente(catalogo, codigo));
+    if (!valida) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variables", clave],
+        message: `"${clave}" debe ser una lista no vacía, sin repetidos, de códigos vigentes de ${catalogo}: ${JSON.stringify(valor)}`,
+      });
+    }
+  }
+
+  // clasificacion_vitalidad tiene catálogo propio (D-169; AM-17) — un
+  // valor fuera del dominio se rechaza aquí, no se deja pasar como
+  // texto libre. Está en el alcance de Monitoreo Vitalidad y de las
+  // evaluaciones completas (CC-056 decisión g).
+  {
     const valor = data.variables["clasificacion_vitalidad"];
-    if (valor !== undefined && (typeof valor !== "string" || !esCodigoVigente("clasificacion_vitalidad", valor))) {
+    if (
+      valor !== undefined &&
+      valor !== null &&
+      (typeof valor !== "string" || !esCodigoVigente("clasificacion_vitalidad", valor))
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["variables", "clasificacion_vitalidad"],

@@ -11,6 +11,33 @@ describe("crearBorradorInspeccionSchema (#58)", () => {
     expect(resultado.success).toBe(true);
   });
 
+  it.each(["evaluacion_inicial", "reevaluacion", "levantamiento"])(
+    "%s: acepta superficie_alcorque_m2_manual con alcorque Irregular (D-125; CC-056)",
+    (tipo) => {
+      const resultado = crearBorradorInspeccionSchema.safeParse({
+        tipo_inspeccion_realizada: tipo,
+        variables: { existe_alcorque: true, forma_alcorque: "irregular", superficie_alcorque_m2_manual: 1.8 },
+      });
+      expect(resultado.success).toBe(true);
+    }
+  );
+
+  it("evaluación instrumental: rechaza superficie_alcorque_m2_manual (fuera de su alcance, CC-040)", () => {
+    const resultado = crearBorradorInspeccionSchema.safeParse({
+      tipo_inspeccion_realizada: "evaluacion_instrumental",
+      variables: { superficie_alcorque_m2_manual: 1.8 },
+    });
+    expect(resultado.success).toBe(false);
+  });
+
+  it("evaluación inicial: sigue rechazando superficie_alcorque_m2 (la calcula el Sistema, D-125)", () => {
+    const resultado = crearBorradorInspeccionSchema.safeParse({
+      tipo_inspeccion_realizada: "evaluacion_inicial",
+      variables: { superficie_alcorque_m2: 1.8 },
+    });
+    expect(resultado.success).toBe(false);
+  });
+
   it("evaluación instrumental: rechaza una clave fuera de su alcance (CC-040)", () => {
     const resultado = crearBorradorInspeccionSchema.safeParse({
       tipo_inspeccion_realizada: "evaluacion_instrumental",
@@ -120,5 +147,40 @@ describe("guardarBorradorInspeccionSchema (#58) — sin tree_id", () => {
       tree_id: TREE_ID,
     });
     expect(resultado.success).toBe(false);
+  });
+});
+
+describe("variables — selección múltiple (D-132, D-139, D-143; CC-056 decisión o)", () => {
+  const completa = (variables: Record<string, unknown>) =>
+    crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "evaluacion_inicial", variables });
+
+  it("acepta listas de códigos vigentes en los tres campos", () => {
+    expect(
+      completa({
+        tipo_infraestructura_vertical: ["poste", "otro"],
+        tipo_red_aerea: ["electrica", "telecomunicaciones"],
+        tipo_red_subterranea: ["agua_potable"],
+      }).success
+    ).toBe(true);
+  });
+
+  it("acepta null en un campo de selección múltiple", () => {
+    expect(completa({ tipo_red_aerea: null }).success).toBe(true);
+  });
+
+  it("rechaza un valor simple, una lista vacía, repetidos o un código que no existe", () => {
+    expect(completa({ tipo_red_aerea: "electrica" }).success).toBe(false);
+    expect(completa({ tipo_red_aerea: [] }).success).toBe(false);
+    expect(completa({ tipo_red_aerea: ["electrica", "electrica"] }).success).toBe(false);
+    expect(completa({ tipo_red_subterranea: ["agua"] }).success).toBe(false);
+  });
+
+  it("rechaza una lista en un campo que no es de selección múltiple", () => {
+    expect(completa({ raices_expuestas: ["si"] }).success).toBe(false);
+  });
+
+  it("clasificacion_vitalidad: valida el dominio también en la evaluación completa (CC-056 decisión g)", () => {
+    expect(completa({ clasificacion_vitalidad: "2_estancamiento" }).success).toBe(true);
+    expect(completa({ clasificacion_vitalidad: "regular" }).success).toBe(false);
   });
 });

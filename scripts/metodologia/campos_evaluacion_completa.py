@@ -26,6 +26,13 @@ igual no son datos crudos del borrador:
     calculado" (D-173) — es parte del AJUSTE posterior al cálculo, no del
     guardado Preguardado antes de que exista ningún valor calculado.
 
+Agrega, a mano (ADICIONES_MANUALES abajo), los campos que la metodología
+exige ingresar pero que no tienen fila propia con quien_ingresa = Inspector:
+  - superficie_alcorque_m2_manual: D-125 superficie_alcorque_m2 es
+    "Calculado / Condicional" (quien_ingresa = Sistema), pero su fórmula
+    dice "Irregular → ingreso manual" — con forma_alcorque = Irregular el
+    Inspector la ingresa (CC-056; corrige el alcance del borrador, #58).
+
 No modifica el Excel. La salida, en orden de fila, es la lista que debe
 coincidir con `CAMPOS_EVALUACION_COMPLETA` en
 `src/schemas/sivu/alcanceInspeccion.ts` — ver el test que compara ambas.
@@ -41,6 +48,11 @@ EXCLUSIONES_MANUALES = {
     ),
 }
 
+ADICIONES_MANUALES = {
+    # campo agregado -> (campo de la fila que lo respalda, texto que tiene que seguir en su fórmula)
+    "superficie_alcorque_m2_manual": ("superficie_alcorque_m2", "Irregular → ingreso manual"),
+}
+
 src = sys.argv[1]
 wb = openpyxl.load_workbook(src, data_only=True, read_only=True)
 ws = wb["DICCIONARIO_CAMPOS"]
@@ -52,12 +64,17 @@ for fila, row in enumerate(ws.iter_rows(values_only=True), start=1):
     hoja, campo, _origen, quien_ingresa = row[0], row[1], row[2], row[3]
     if hoja != "REGISTRO_EVALUACION" or campo is None:
         continue
+    for agregado, (base, texto) in ADICIONES_MANUALES.items():
+        if campo == base:
+            if texto not in str(row[9] or ""):
+                sys.exit(f"D-{fila} {campo}: la fórmula ya no dice {texto!r}; revisar la adición de {agregado}")
+            campos.append((fila, agregado))
     if (quien_ingresa or "").strip() != "Inspector":
         continue
     if campo in EXCLUSIONES_MANUALES:
         continue
     campos.append((fila, campo))
 
-print(f"-- {len(campos)} campos (REGISTRO_EVALUACION, quien_ingresa = Inspector, sin exclusiones manuales) --")
+print(f"-- {len(campos)} campos (REGISTRO_EVALUACION, quien_ingresa = Inspector, sin exclusiones manuales, con adiciones manuales) --")
 for fila, campo in campos:
     print(f"D-{fila}  {campo}")

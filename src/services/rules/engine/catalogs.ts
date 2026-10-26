@@ -149,6 +149,35 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "tipo_red_aerea", codigo: "otra", etiqueta: "Otra", orden: 3, estado: "vigente", cc: "PR-021" },
   { catalogo: "tipo_red_aerea", codigo: "funcion_no_determinada", etiqueta: "Función no determinada", orden: 4, estado: "vigente", cc: "PR-021" },
 
+  // --- tipo_infraestructura_vertical: D-132, selección múltiple. Lo usa
+  //     la condición de otro_tipo_infraestructura_vertical (D-133,
+  //     "= Otro") en la tabla de completitud (CC-056). ---
+  { catalogo: "tipo_infraestructura_vertical", codigo: "poste", etiqueta: "Poste", orden: 0, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_infraestructura_vertical", codigo: "luminaria", etiqueta: "Luminaria", orden: 1, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_infraestructura_vertical", codigo: "senaletica", etiqueta: "Señalética", orden: 2, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_infraestructura_vertical", codigo: "semaforo", etiqueta: "Semáforo", orden: 3, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_infraestructura_vertical", codigo: "muro_o_cierre", etiqueta: "Muro o cierre", orden: 4, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_infraestructura_vertical", codigo: "edificacion", etiqueta: "Edificación", orden: 5, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_infraestructura_vertical", codigo: "otro", etiqueta: "Otro", orden: 6, estado: "vigente", cc: "CC-056" },
+
+  // --- tipo_red_subterranea: D-143, selección múltiple (CC-056 decisión
+  //     o). Mismos códigos que tipo_red_aerea donde coinciden. ---
+  { catalogo: "tipo_red_subterranea", codigo: "electrica", etiqueta: "Eléctrica", orden: 0, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_red_subterranea", codigo: "telecomunicaciones", etiqueta: "Telecomunicaciones", orden: 1, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_red_subterranea", codigo: "agua_potable", etiqueta: "Agua potable", orden: 2, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_red_subterranea", codigo: "alcantarillado", etiqueta: "Alcantarillado", orden: 3, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_red_subterranea", codigo: "aguas_lluvias", etiqueta: "Aguas lluvias", orden: 4, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_red_subterranea", codigo: "gas", etiqueta: "Gas", orden: 5, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_red_subterranea", codigo: "otra", etiqueta: "Otra", orden: 6, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_red_subterranea", codigo: "funcion_no_determinada", etiqueta: "Función no determinada", orden: 7, estado: "vigente", cc: "CC-056" },
+
+  // --- tipo_tutorado: D-150. Lo usa la condición de observaciones_tutorado
+  //     (D-153, "tipo_tutorado = Otro") en la tabla de completitud (CC-056). ---
+  { catalogo: "tipo_tutorado", codigo: "simple", etiqueta: "Simple", orden: 0, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_tutorado", codigo: "doble", etiqueta: "Doble", orden: 1, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_tutorado", codigo: "multiple", etiqueta: "Múltiple", orden: 2, estado: "vigente", cc: "CC-056" },
+  { catalogo: "tipo_tutorado", codigo: "otro", etiqueta: "Otro", orden: 3, estado: "vigente", cc: "CC-056" },
+
   // --- clasificacion_prioridad: D-172 (salida de M05) ---
   { catalogo: "clasificacion_prioridad", codigo: "baja", etiqueta: "Baja", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_prioridad", codigo: "media", etiqueta: "Media", orden: 1, estado: "vigente", cc: "PR-021" },
