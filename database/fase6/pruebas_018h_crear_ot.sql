@@ -69,11 +69,11 @@ DECLARE
   v_incident_id_2 uuid;
   v_res jsonb;
 BEGIN
-  v_municipal := pg_temp.crear_usuario_prueba('municipal-018h@sivu.example.test', 'usuario_municipal', 'Usuario municipal de prueba (018h)');
-  v_municipal_no_miembro := pg_temp.crear_usuario_prueba('municipal-no-miembro-018h@sivu.example.test', 'usuario_municipal', 'Usuario municipal sin membresía (018h)');
-  v_inspector := pg_temp.crear_usuario_prueba('inspector-018h@sivu.example.test', 'inspector', 'Inspector de prueba (018h)');
-  v_inspector_no_miembro := pg_temp.crear_usuario_prueba('inspector-no-miembro-018h@sivu.example.test', 'inspector', 'Inspector sin membresía (018h)');
-  v_no_inspector := pg_temp.crear_usuario_prueba('no-inspector-018h@sivu.example.test', 'usuario_municipal', 'Usuario sin rol Inspector (018h)');
+  v_municipal := pg_temp.crear_usuario_prueba(p_email => 'municipal-018h@sivu.example.test', p_rol => 'usuario_municipal', p_nombre => 'Usuario municipal de prueba (018h)');
+  v_municipal_no_miembro := pg_temp.crear_usuario_prueba(p_email => 'municipal-no-miembro-018h@sivu.example.test', p_rol => 'usuario_municipal', p_nombre => 'Usuario municipal sin membresía (018h)');
+  v_inspector := pg_temp.crear_usuario_prueba(p_email => 'inspector-018h@sivu.example.test', p_rol => 'inspector', p_nombre => 'Inspector de prueba (018h)');
+  v_inspector_no_miembro := pg_temp.crear_usuario_prueba(p_email => 'inspector-no-miembro-018h@sivu.example.test', p_rol => 'inspector', p_nombre => 'Inspector sin membresía (018h)');
+  v_no_inspector := pg_temp.crear_usuario_prueba(p_email => 'no-inspector-018h@sivu.example.test', p_rol => 'usuario_municipal', p_nombre => 'Usuario sin rol Inspector (018h)');
 
   INSERT INTO projects (nombre_proyecto) VALUES ('018h prueba') RETURNING id INTO v_project_id;
   INSERT INTO sectors (project_id, nombre_sector, geometria_sector) VALUES (
@@ -123,8 +123,11 @@ BEGIN
   -- H1 — creación válida: se acepta, estado_ot = pendiente.
   -- ------------------------------------------------------------------
   v_res := fn_create_work_order_inspeccion(
-    v_project_id, v_tree_id, NULL, 'evaluacion_inicial', NULL, 'Motivo de prueba', 'media', NULL,
-    v_inspector, v_municipal, current_date
+    p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => NULL,
+    p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+    p_motivo => 'Motivo de prueba', p_prioridad => 'media', p_observaciones => NULL,
+    p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+    p_fecha_creacion_ot => current_date
   );
   IF (v_res->>'estado_ot') <> 'pendiente' THEN
     RAISE EXCEPTION 'H1 FALLA: estado_ot = %', v_res->>'estado_ot';
@@ -139,8 +142,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id, NULL, 'evaluacion_inicial', NULL, NULL, 'media', NULL,
-      v_inspector, v_inspector, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => NULL,
+      p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector, p_creado_por => v_inspector,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H2 FALLA: se aceptó un creado_por sin rol usuario_municipal';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -153,8 +159,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id, NULL, 'evaluacion_inicial', NULL, NULL, 'media', NULL,
-      v_inspector, v_municipal_no_miembro, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => NULL,
+      p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector, p_creado_por => v_municipal_no_miembro,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H3 FALLA: se aceptó un creado_por sin membresía';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -167,8 +176,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id, NULL, 'evaluacion_inicial', NULL, NULL, 'media', NULL,
-      v_no_inspector, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => NULL,
+      p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_no_inspector, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H4 FALLA: se aceptó un responsable sin rol Inspector';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -181,8 +193,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id, NULL, 'evaluacion_inicial', NULL, NULL, 'media', NULL,
-      v_inspector_no_miembro, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => NULL,
+      p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector_no_miembro, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H5 FALLA: se aceptó un responsable sin membresía';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -195,8 +210,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id, NULL, 'monitoreo', 'tomografia_sonica', NULL, 'media', NULL,
-      v_inspector, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => NULL,
+      p_accion_solicitada => 'monitoreo', p_subtipo_accion => 'tomografia_sonica',
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H6 FALLA: se aceptó un subtipo que no pertenece al tipo';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -209,8 +227,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, NULL, NULL, 'evaluacion_inicial', NULL, NULL, 'media', NULL,
-      v_inspector, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => NULL, p_incident_id => NULL,
+      p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H7 FALLA: se aceptó tree_id NULL fuera de Levantamiento';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -223,8 +244,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id_2, NULL, 'evaluacion_inicial', NULL, NULL, 'media', NULL,
-      v_inspector, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id_2, p_incident_id => NULL,
+      p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H8 FALLA: se aceptó un árbol de otro proyecto';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -237,8 +261,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id, NULL, 'levantamiento', NULL, NULL, 'media', 'Área de prueba',
-      v_inspector, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => NULL,
+      p_accion_solicitada => 'levantamiento', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => 'Área de prueba',
+      p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H9 FALLA: se aceptó un Levantamiento con tree_id';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -251,8 +278,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, NULL, NULL, 'levantamiento', NULL, NULL, 'media', NULL,
-      v_inspector, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => NULL, p_incident_id => NULL,
+      p_accion_solicitada => 'levantamiento', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H10 FALLA: se aceptó un Levantamiento sin observaciones';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -265,8 +295,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id, v_incident_id_2, 'evaluacion_inicial', NULL, NULL, 'media', NULL,
-      v_inspector, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => v_incident_id_2,
+      p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'media', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H11 FALLA: se aceptó una incidencia de otro proyecto';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -279,8 +312,11 @@ BEGIN
   -- ------------------------------------------------------------------
   BEGIN
     PERFORM fn_create_work_order_inspeccion(
-      v_project_id, v_tree_id, NULL, 'evaluacion_inicial', NULL, NULL, 'urgente', NULL,
-      v_inspector, v_municipal, current_date
+      p_project_id => v_project_id, p_tree_id => v_tree_id, p_incident_id => NULL,
+      p_accion_solicitada => 'evaluacion_inicial', p_subtipo_accion => NULL,
+      p_motivo => NULL, p_prioridad => 'urgente', p_observaciones => NULL,
+      p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+      p_fecha_creacion_ot => current_date
     );
     RAISE EXCEPTION 'H12 FALLA: se aceptó una prioridad inválida';
   EXCEPTION WHEN SQLSTATE 'SV060' THEN
@@ -293,8 +329,11 @@ BEGIN
   -- con incident_id del mismo proyecto.
   -- ------------------------------------------------------------------
   v_res := fn_create_work_order_inspeccion(
-    v_project_id, NULL, v_incident_id, 'levantamiento', NULL, NULL, 'alta', 'Área de prueba de Levantamiento',
-    v_inspector, v_municipal, current_date
+    p_project_id => v_project_id, p_tree_id => NULL, p_incident_id => v_incident_id,
+    p_accion_solicitada => 'levantamiento', p_subtipo_accion => NULL,
+    p_motivo => NULL, p_prioridad => 'alta', p_observaciones => 'Área de prueba de Levantamiento',
+    p_responsable_accion_id => v_inspector, p_creado_por => v_municipal,
+    p_fecha_creacion_ot => current_date
   );
   IF (v_res->>'tree_id') IS NOT NULL THEN
     RAISE EXCEPTION 'H13 FALLA: tree_id debería ser NULL en Levantamiento: %', v_res->>'tree_id';
