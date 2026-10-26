@@ -328,7 +328,7 @@ BEGIN
     IF v_campo = ANY(v_campos_ajustados) THEN
       RAISE EXCEPTION 'Más de un ajuste para %', v_campo USING ERRCODE = 'SV064';
     END IF;
-    v_campos_ajustados := v_campos_ajustados || v_campo;
+    v_campos_ajustados := array_append(v_campos_ajustados, v_campo);
 
     IF (v_ajuste->>'valor_ajustado') IS NULL OR (v_ajuste->>'valor_ajustado') IN ('no_determinado', 'no_aplica') THEN
       RAISE EXCEPTION 'El valor ajustado de % no puede ser %: un ajuste resuelve siempre a una categoría determinada (CC-044)',
