@@ -24,6 +24,15 @@
 -- O2: mismo día y misma fecha_inspeccion — gana created_at más reciente.
 -- O3: fecha_completada_ot manda sobre fecha_inspeccion — gana la OT
 --     completada más tarde aunque su inspección sea más antigua.
+-- O4 (CC-048, decisión de la responsable 2026-10-25): el tercer criterio
+--     es inspections.created_at, no el de tree_data_versions. A se creó
+--     antes que B (mismo día, misma fecha_inspeccion), pero su fila de
+--     tree_data_versions se volvió a crear después (un guardado quitó y
+--     volvió a poner los campos del árbol) — gana B igual.
+-- O5 (pedida por la responsable): desempate del mismo día en
+--     v_tree_current_inputs, campo por campo — la inspección que gana el
+--     desempate aporta sus campos; un campo que solo registró la otra
+--     sigue saliendo de la otra.
 
 BEGIN;
 
@@ -79,12 +88,16 @@ $$;
 
 -- Inspección Finalizada de una OT Completada que registra altura_total_m
 -- (tree_data_versions) y raices_expuestas (evaluations.variables).
--- p_created_at fija el created_at de la inspección y de su
--- tree_data_versions.
+-- p_created_at fija el created_at de la inspección y, salvo que se pase
+-- p_tdv_created_at, también el de su tree_data_versions. p_variables
+-- reemplaza las variables de evaluations (por defecto solo
+-- raices_expuestas).
 CREATE FUNCTION pg_temp.inspeccion_completada(
   p_tree_id uuid, p_inspector uuid, p_municipal uuid,
   p_fecha_inspeccion date, p_fecha_completada date, p_created_at timestamptz,
-  p_altura numeric, p_raices_expuestas boolean
+  p_altura numeric, p_raices_expuestas boolean,
+  p_tdv_created_at timestamptz DEFAULT NULL,
+  p_variables jsonb DEFAULT NULL
 ) RETURNS uuid LANGUAGE plpgsql AS $$
 DECLARE
   v_wo_id uuid;
@@ -107,10 +120,10 @@ BEGIN
   ) RETURNING id INTO v_inspection_id;
 
   INSERT INTO evaluations (inspection_id, tree_id, variables)
-  VALUES (v_inspection_id, p_tree_id, jsonb_build_object('raices_expuestas', p_raices_expuestas));
+  VALUES (v_inspection_id, p_tree_id, COALESCE(p_variables, jsonb_build_object('raices_expuestas', p_raices_expuestas)));
 
   INSERT INTO tree_data_versions (tree_id, inspection_id, campos_registrados, altura_total_m, created_by, created_at)
-  VALUES (p_tree_id, v_inspection_id, ARRAY['altura_total_m'], p_altura, p_inspector, p_created_at);
+  VALUES (p_tree_id, v_inspection_id, ARRAY['altura_total_m'], p_altura, p_inspector, COALESCE(p_tdv_created_at, p_created_at));
 
   UPDATE work_orders SET estado_ot = 'completada', fecha_completada_ot = p_fecha_completada WHERE id = v_wo_id;
 
@@ -222,6 +235,66 @@ BEGIN
     RAISE EXCEPTION 'O3 FALLA (v_tree_current_inputs): %', v_inputs.origen_por_campo;
   END IF;
   INSERT INTO test_log (msg) VALUES ('O3 OK');
+
+  -- ------------------------------------------------------------------
+  -- O4 — mismo día y misma fecha_inspeccion. B se creó después que A
+  -- (inspections.created_at), pero la tree_data_versions de A se volvió
+  -- a crear más tarde todavía (CC-048). Con tree_data_versions.created_at
+  -- ganaba A; con inspections.created_at gana B.
+  -- ------------------------------------------------------------------
+  v_tree_id := pg_temp.crear_arbol(p_municipal => v_municipal);
+  v_a := pg_temp.inspeccion_completada(
+    p_tree_id => v_tree_id, p_inspector => v_inspector, p_municipal => v_municipal,
+    p_fecha_inspeccion => v_hoy - 4, p_fecha_completada => v_hoy - 2, p_created_at => now() - interval '2 hours',
+    p_altura => 10, p_raices_expuestas => false, p_tdv_created_at => now()
+  );
+  v_b := pg_temp.inspeccion_completada(
+    p_tree_id => v_tree_id, p_inspector => v_inspector, p_municipal => v_municipal,
+    p_fecha_inspeccion => v_hoy - 4, p_fecha_completada => v_hoy - 2, p_created_at => now() - interval '1 hour',
+    p_altura => 12, p_raices_expuestas => true
+  );
+
+  PERFORM fn_refresh_tree_current(v_tree_id);
+  SELECT altura_total_m, vigente_desde_inspection_id INTO v_tree FROM trees WHERE id = v_tree_id;
+  IF v_tree.altura_total_m IS DISTINCT FROM 12 OR v_tree.vigente_desde_inspection_id IS DISTINCT FROM v_b THEN
+    RAISE EXCEPTION 'O4 FALLA (fn_refresh_tree_current): altura % / vigente_desde % (esperado 12 / %)',
+      v_tree.altura_total_m, v_tree.vigente_desde_inspection_id, v_b;
+  END IF;
+  SELECT entradas_vigentes, origen_por_campo INTO v_inputs FROM v_tree_current_inputs WHERE tree_id = v_tree_id;
+  IF (v_inputs.origen_por_campo->>'raices_expuestas')::uuid IS DISTINCT FROM v_b THEN
+    RAISE EXCEPTION 'O4 FALLA (v_tree_current_inputs): %', v_inputs.origen_por_campo;
+  END IF;
+  INSERT INTO test_log (msg) VALUES ('O4 OK');
+
+  -- ------------------------------------------------------------------
+  -- O5 — v_tree_current_inputs, desempate del mismo día campo por campo.
+  -- Mismo día de completada; B tiene fecha_inspeccion más reciente pero
+  -- se creó antes. A registra raices_expuestas y raices_cortadas; B solo
+  -- raices_expuestas. Esperado: raices_expuestas de B (gana el
+  -- desempate), raices_cortadas de A (B no la registró).
+  -- ------------------------------------------------------------------
+  v_tree_id := pg_temp.crear_arbol(p_municipal => v_municipal);
+  v_b := pg_temp.inspeccion_completada(
+    p_tree_id => v_tree_id, p_inspector => v_inspector, p_municipal => v_municipal,
+    p_fecha_inspeccion => v_hoy - 4, p_fecha_completada => v_hoy - 2, p_created_at => now() - interval '1 hour',
+    p_altura => 12, p_raices_expuestas => true
+  );
+  v_a := pg_temp.inspeccion_completada(
+    p_tree_id => v_tree_id, p_inspector => v_inspector, p_municipal => v_municipal,
+    p_fecha_inspeccion => v_hoy - 6, p_fecha_completada => v_hoy - 2, p_created_at => now(),
+    p_altura => 10, p_raices_expuestas => false,
+    p_variables => '{"raices_expuestas": false, "raices_cortadas": true}'::jsonb
+  );
+
+  SELECT entradas_vigentes, origen_por_campo INTO v_inputs FROM v_tree_current_inputs WHERE tree_id = v_tree_id;
+  IF (v_inputs.entradas_vigentes->>'raices_expuestas') IS DISTINCT FROM 'true'
+     OR (v_inputs.origen_por_campo->>'raices_expuestas')::uuid IS DISTINCT FROM v_b
+     OR (v_inputs.entradas_vigentes->>'raices_cortadas') IS DISTINCT FROM 'true'
+     OR (v_inputs.origen_por_campo->>'raices_cortadas')::uuid IS DISTINCT FROM v_a THEN
+    RAISE EXCEPTION 'O5 FALLA (v_tree_current_inputs): % / % (esperado raices_expuestas de %, raices_cortadas de %)',
+      v_inputs.entradas_vigentes, v_inputs.origen_por_campo, v_b, v_a;
+  END IF;
+  INSERT INTO test_log (msg) VALUES ('O5 OK');
 END $$;
 
 SELECT id, msg FROM test_log ORDER BY id;
