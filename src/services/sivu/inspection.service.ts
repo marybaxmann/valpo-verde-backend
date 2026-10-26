@@ -3,8 +3,10 @@ import { AppError } from "../../utils/AppError";
 import { hoyEnChile } from "../../utils/fechaChile";
 import { assertProjectRole } from "../authorization.service";
 import { RULE_VERSION } from "../rules/engine/version";
+import { calcularDapEquivalenteCm } from "../rules/engine/variables-calculo";
 import {
   BorradorInspeccionResultado,
+  CamposArbol,
   SQLSTATE_ALTA_ARBOL,
   SQLSTATE_BORRADOR_INSPECCION,
   guardarBorradorInspeccion as guardarBorradorInspeccionRepo,
@@ -61,8 +63,7 @@ export async function crearBorradorInspeccion(
       observaciones: body.observaciones ?? null,
       registradoPor: user.id,
       variables: body.variables,
-      camposArbol: body.campos_arbol ?? {},
-      camposRegistradosArbol: Object.keys(body.campos_arbol ?? {}),
+      ...camposArbolConDap(body.campos_arbol ?? {}),
     });
   } catch (err: unknown) {
     throw traducirErrorBorrador(err);
@@ -110,12 +111,54 @@ export async function guardarBorradorInspeccion(
       observaciones: body.observaciones ?? null,
       registradoPor: user.id,
       variables: body.variables,
-      camposArbol: body.campos_arbol ?? {},
-      camposRegistradosArbol: Object.keys(body.campos_arbol ?? {}),
+      ...camposArbolConDap(body.campos_arbol ?? {}),
     });
   } catch (err: unknown) {
     throw traducirErrorBorrador(err);
   }
+}
+
+/**
+ * DAP de un árbol multifustal (D-18; CC-056 decisión n): con
+ * `multifustal` = Sí, `numero_fustes` y `dap_fustes_cm`, el backend
+ * calcula `dap_cm` y lo registra en el `tree_data_versions` de esta
+ * inspección (así queda vigente al completar la OT, como cualquier
+ * campo registrado). El Zod ya rechazó las combinaciones inválidas;
+ * con fustes o diámetros todavía sin registrar no se calcula nada y
+ * la completitud los informa como faltantes.
+ *
+ * Se calcula desde los diámetros redondeados a 2 decimales y se
+ * redondea el resultado igual, como los guarda `NUMERIC(6,2)`: el valor
+ * que se usa después (tutorado, motor) es el mismo que queda en la base.
+ */
+function camposArbolConDap(camposArbol: CamposArbol): { camposArbol: CamposArbol; camposRegistradosArbol: string[] } {
+  const camposRegistradosArbol = Object.keys(camposArbol);
+  if (
+    camposArbol.multifustal !== true ||
+    camposArbol.numero_fustes === undefined ||
+    camposArbol.numero_fustes === null ||
+    camposArbol.dap_fustes_cm === undefined ||
+    camposArbol.dap_fustes_cm === null
+  ) {
+    return { camposArbol, camposRegistradosArbol };
+  }
+  const resultado = calcularDapEquivalenteCm({
+    numero_fustes: camposArbol.numero_fustes,
+    dap_fustes_cm: camposArbol.dap_fustes_cm.map(redondearA2),
+  });
+  if (resultado.valor === null) {
+    throw new AppError(`No se pudo calcular dap_cm: ${resultado.motivo}`, 400);
+  }
+  return {
+    camposArbol: { ...camposArbol, dap_cm: redondearA2(resultado.valor) },
+    camposRegistradosArbol: camposRegistradosArbol.includes("dap_cm")
+      ? camposRegistradosArbol
+      : [...camposRegistradosArbol, "dap_cm"],
+  };
+}
+
+function redondearA2(valor: number): number {
+  return Math.round(valor * 100) / 100;
 }
 
 /**

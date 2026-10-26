@@ -6,6 +6,7 @@ import {
   calcularRRadioTroncoCm,
   calcularTRTronco,
   calcularSuperficieAlcorqueM2,
+  calcularDapEquivalenteCm,
 } from "../../../../src/services/rules/engine/variables-calculo";
 import { FormaAlcorqueCodigo } from "../../../../src/services/rules/engine/catalogs";
 
@@ -237,5 +238,41 @@ describe("calcularSuperficieAlcorqueM2 — fórmula D-125", () => {
   it("irregular: superficie_alcorque_m2_manual ≤ 0 → no calculable", () => {
     const r = calcularSuperficieAlcorqueM2({ ...baseAlcorque(), forma_alcorque: "irregular", superficie_alcorque_m2_manual: 0 });
     expect(r.valor).toBeNull();
+  });
+});
+
+describe("calcularDapEquivalenteCm — fórmula D-18 (multifustal; CC-056)", () => {
+  it("2 fustes: √(d₁² + d₂²)", () => {
+    expect(calcularDapEquivalenteCm({ numero_fustes: 2, dap_fustes_cm: [30, 40] }).valor).toBeCloseTo(50, 10);
+  });
+
+  it("5 fustes: todavía √Σd²", () => {
+    expect(calcularDapEquivalenteCm({ numero_fustes: 5, dap_fustes_cm: [10, 10, 10, 10, 10] }).valor).toBeCloseTo(
+      Math.sqrt(500),
+      10
+    );
+  });
+
+  it("6 fustes: √(d̄² × n), distinto de √Σd²", () => {
+    const valor = calcularDapEquivalenteCm({ numero_fustes: 6, dap_fustes_cm: [10, 12, 14, 16, 18, 20] }).valor;
+    expect(valor).toBeCloseTo(Math.sqrt(15 * 15 * 6), 10); // 36,74
+    expect(valor).not.toBeCloseTo(Math.sqrt(1420), 1); // 37,68 con √Σd²
+  });
+
+  it("resultado menor a 10 cm con fustes delgados", () => {
+    expect(calcularDapEquivalenteCm({ numero_fustes: 2, dap_fustes_cm: [5, 6] }).valor).toBeCloseTo(Math.sqrt(61), 10);
+  });
+
+  it("no calculable si la cantidad de diámetros no coincide con numero_fustes (D-17)", () => {
+    const r = calcularDapEquivalenteCm({ numero_fustes: 3, dap_fustes_cm: [10, 12] });
+    expect(r.valor).toBeNull();
+    expect(r.motivo).toMatch(/no coincide con numero_fustes/);
+  });
+
+  it("no calculable con numero_fustes < 2, sin datos o con un diámetro ≤ 0", () => {
+    expect(calcularDapEquivalenteCm({ numero_fustes: 1, dap_fustes_cm: [10] }).valor).toBeNull();
+    expect(calcularDapEquivalenteCm({ numero_fustes: null, dap_fustes_cm: [10, 12] }).valor).toBeNull();
+    expect(calcularDapEquivalenteCm({ numero_fustes: 2, dap_fustes_cm: null }).valor).toBeNull();
+    expect(calcularDapEquivalenteCm({ numero_fustes: 2, dap_fustes_cm: [10, 0] }).valor).toBeNull();
   });
 });

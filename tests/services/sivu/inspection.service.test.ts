@@ -193,3 +193,60 @@ describe("guardarBorradorInspeccion (#58; guardados siguientes)", () => {
     );
   });
 });
+
+describe("DAP multifustal al guardar el borrador (D-18; CC-056 decisión n)", () => {
+  function otConArbol() {
+    mockObtenerOt.mockResolvedValueOnce({
+      id: WORK_ORDER_ID,
+      project_id: PROJECT_ID,
+      tipo_ot: "inspeccion",
+      tree_id: TREE_ID,
+      accion_solicitada: "evaluacion_inicial",
+    });
+    mockGuardarBorrador.mockResolvedValueOnce({
+      inspection_id: "insp-1",
+      evaluation_id: "ev-1",
+      tree_data_version_id: "tdv-1",
+      estado_registro: "preguardado",
+    });
+  }
+
+  async function guardarConArbol(campos_arbol: CrearBorradorInspeccionBody["campos_arbol"]) {
+    otConArbol();
+    await crearBorradorInspeccion(
+      usuario("inspector"),
+      WORK_ORDER_ID,
+      { tipo_inspeccion_realizada: "evaluacion_inicial", variables: {}, campos_arbol },
+      TOKEN
+    );
+    return mockGuardarBorrador.mock.calls[0][0];
+  }
+
+  it.each([
+    [2, [30, 40], 50],
+    [5, [10, 10, 10, 10, 10], 22.36],
+    [6, [10, 12, 14, 16, 18, 20], 36.74],
+    [2, [5, 6], 7.81],
+  ])("%i fustes %j → dap_cm %d, registrado en esta inspección", async (numero_fustes, dap_fustes_cm, esperado) => {
+    const input = await guardarConArbol({ multifustal: true, numero_fustes, dap_fustes_cm });
+    expect(input.camposArbol.dap_cm).toBe(esperado);
+    expect(input.camposRegistradosArbol).toEqual(["multifustal", "numero_fustes", "dap_fustes_cm", "dap_cm"]);
+  });
+
+  it("calcula desde los diámetros redondeados a 2 decimales, como los guarda NUMERIC(6,2)", async () => {
+    const input = await guardarConArbol({ multifustal: true, numero_fustes: 2, dap_fustes_cm: [3.004, 3.996] });
+    expect(input.camposArbol.dap_cm).toBe(Math.round(Math.sqrt(3 * 3 + 4 * 4) * 100) / 100);
+  });
+
+  it("multifustal = Sí sin diámetros todavía: no calcula ni registra dap_cm", async () => {
+    const input = await guardarConArbol({ multifustal: true, numero_fustes: 3 });
+    expect(input.camposArbol.dap_cm).toBeUndefined();
+    expect(input.camposRegistradosArbol).toEqual(["multifustal", "numero_fustes"]);
+  });
+
+  it("multifustal = No: deja el dap_cm ingresado a mano tal cual", async () => {
+    const input = await guardarConArbol({ multifustal: false, dap_cm: 8.5 });
+    expect(input.camposArbol.dap_cm).toBe(8.5);
+    expect(input.camposRegistradosArbol).toEqual(["multifustal", "dap_cm"]);
+  });
+});

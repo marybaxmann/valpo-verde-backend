@@ -150,6 +150,46 @@ describe("guardarBorradorInspeccionSchema (#58) — sin tree_id", () => {
   });
 });
 
+describe("campos_arbol — DAP (D-16 a D-18; CC-056 decisión n)", () => {
+  const conArbol = (campos_arbol: Record<string, unknown>) =>
+    crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "evaluacion_inicial", variables: {}, campos_arbol });
+
+  it("acepta multifustal = Sí con número de fustes y diámetros coincidentes, sin dap_cm", () => {
+    expect(conArbol({ multifustal: true, numero_fustes: 3, dap_fustes_cm: [10, 12, 14] }).success).toBe(true);
+  });
+
+  it("acepta multifustal = Sí con fustes todavía sin diámetros (borrador a medias)", () => {
+    expect(conArbol({ multifustal: true, numero_fustes: 3 }).success).toBe(true);
+  });
+
+  it("acepta multifustal = No con dap_cm a mano", () => {
+    expect(conArbol({ multifustal: false, dap_cm: 25 }).success).toBe(true);
+  });
+
+  it("rechaza que el número de fustes no coincida con la cantidad de diámetros (D-17)", () => {
+    const r = conArbol({ multifustal: true, numero_fustes: 3, dap_fustes_cm: [10, 12] });
+    expect(r.success).toBe(false);
+    expect(JSON.stringify(r.error?.issues)).toMatch(/debe coincidir con numero_fustes/);
+  });
+
+  it("rechaza diámetros sin numero_fustes (D-17)", () => {
+    expect(conArbol({ multifustal: true, dap_fustes_cm: [10, 12] }).success).toBe(false);
+  });
+
+  it("rechaza numero_fustes < 2 (D-16)", () => {
+    expect(conArbol({ multifustal: true, numero_fustes: 1, dap_fustes_cm: [10] }).success).toBe(false);
+  });
+
+  it("rechaza dap_cm enviado con multifustal = Sí (D-18: lo calcula la plataforma)", () => {
+    expect(conArbol({ multifustal: true, numero_fustes: 2, dap_fustes_cm: [10, 12], dap_cm: 15 }).success).toBe(false);
+  });
+
+  it("rechaza fustes sin multifustal = Sí en el mismo guardado", () => {
+    expect(conArbol({ numero_fustes: 2, dap_fustes_cm: [10, 12] }).success).toBe(false);
+    expect(conArbol({ multifustal: false, numero_fustes: 2, dap_fustes_cm: [10, 12] }).success).toBe(false);
+  });
+});
+
 describe("variables — selección múltiple (D-132, D-139, D-143; CC-056 decisión o)", () => {
   const completa = (variables: Record<string, unknown>) =>
     crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "evaluacion_inicial", variables });

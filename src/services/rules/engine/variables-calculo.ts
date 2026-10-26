@@ -216,3 +216,43 @@ export function calcularSuperficieAlcorqueM2(m: {
   if (manual <= 0) return { valor: null, motivo: "superficie_alcorque_m2_manual debe ser > 0 m² (D-125)" };
   return { valor: manual };
 }
+
+// ---------------------------------------------------------------------
+// DAP equivalente de un árbol multifustal
+// ---------------------------------------------------------------------
+
+/**
+ * dap_cm de un árbol multifustal (D-18): con 2 ≤ n ≤ 5 fustes,
+ * √(d₁² + … + dₙ²); con n > 5, √(d̄² × n), con d̄ el promedio de los
+ * diámetros. n = numero_fustes (D-16, entero ≥ 2); dₙ = cada valor de
+ * dap_fustes_cm (D-17, > 0, tantos como numero_fustes). Con
+ * multifustal = No, dap_cm se ingresa a mano y no pasa por aquí.
+ */
+export function calcularDapEquivalenteCm(m: {
+  numero_fustes: number | null;
+  dap_fustes_cm: number[] | null;
+}): ResultadoCalculo {
+  const n = m.numero_fustes;
+  if (n === null) return { valor: null, motivo: "numero_fustes sin valor (D-16)" };
+  if (!Number.isInteger(n) || n < 2) return { valor: null, motivo: `numero_fustes debe ser un entero ≥ 2 (D-16): ${n}` };
+  if (m.dap_fustes_cm === null) return { valor: null, motivo: "dap_fustes_cm sin valor (D-17)" };
+  if (m.dap_fustes_cm.length !== n) {
+    return {
+      valor: null,
+      motivo: `La cantidad de diámetros (${m.dap_fustes_cm.length}) no coincide con numero_fustes (${n}) (D-17)`,
+    };
+  }
+  for (const d of m.dap_fustes_cm) {
+    if (!Number.isFinite(d) || d <= 0) return { valor: null, motivo: `cada valor de dap_fustes_cm debe ser > 0 (D-17): ${d}` };
+  }
+
+  let valor: number;
+  if (n <= 5) {
+    valor = Math.sqrt(m.dap_fustes_cm.reduce((suma, d) => suma + d * d, 0));
+  } else {
+    const promedio = m.dap_fustes_cm.reduce((suma, d) => suma + d, 0) / n;
+    valor = Math.sqrt(promedio * promedio * n);
+  }
+  if (!Number.isFinite(valor) || valor <= 0) return { valor: null, motivo: `resultado inválido (${valor})` };
+  return { valor };
+}

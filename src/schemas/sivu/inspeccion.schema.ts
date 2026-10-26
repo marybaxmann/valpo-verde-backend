@@ -13,6 +13,11 @@ import { esCodigoVigente } from "../../services/rules/engine/catalogs";
  *
  * `clase_edad`/`rango_edad_estimada_anios`: mismos dominios que el
  * CHECK físico de `trees`/`tree_data_versions` (D-25, D-26; CC-039).
+ *
+ * DAP (D-16 a D-18; CC-056 decisión n): con `multifustal` = Sí, el
+ * backend calcula `dap_cm` desde `numero_fustes` y `dap_fustes_cm` al
+ * guardar (`inspection.service.ts`); el Inspector no lo envía. Se
+ * rechaza (400) lo que contradice esa regla — ver `validarDap`.
  */
 export const camposArbolBaseSchema = z
   .object({
@@ -23,7 +28,7 @@ export const camposArbolBaseSchema = z
     especie_cientifica: z.string().trim().min(1).nullable(),
     nombre_comun: z.string().trim().min(1).nullable(),
     multifustal: z.boolean().nullable(),
-    numero_fustes: z.number().int().positive().nullable(),
+    numero_fustes: z.number().int().min(2, "numero_fustes debe ser un entero ≥ 2 (D-16)").nullable(),
     dap_fustes_cm: z.array(z.number().positive()).nullable(),
     dap_cm: z.number().positive().nullable(),
     altura_total_m: z.number().positive().nullable(),
@@ -46,7 +51,37 @@ export const camposArbolBaseSchema = z
   .partial()
   .strict();
 
-export const camposArbolSchema = camposArbolBaseSchema;
+function validarDap(data: z.infer<typeof camposArbolBaseSchema>, ctx: z.RefinementCtx): void {
+  const conFustes =
+    (data.numero_fustes !== undefined && data.numero_fustes !== null) ||
+    (data.dap_fustes_cm !== undefined && data.dap_fustes_cm !== null);
+  if (data.multifustal !== true && conFustes) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["multifustal"],
+      message: "numero_fustes y dap_fustes_cm solo se registran con multifustal = Sí en el mismo guardado (D-16, D-17)",
+    });
+  }
+  if (data.multifustal === true && data.dap_cm !== undefined && data.dap_cm !== null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["dap_cm"],
+      message: "Con multifustal = Sí, dap_cm lo calcula la plataforma desde dap_fustes_cm; no se ingresa (D-18)",
+    });
+  }
+  if (data.dap_fustes_cm !== undefined && data.dap_fustes_cm !== null) {
+    const n = data.numero_fustes ?? null;
+    if (n === null || data.dap_fustes_cm.length !== n) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dap_fustes_cm"],
+        message: `La cantidad de diámetros registrados (${data.dap_fustes_cm.length}) debe coincidir con numero_fustes (${n ?? "sin valor"}) (D-17)`,
+      });
+    }
+  }
+}
+
+export const camposArbolSchema = camposArbolBaseSchema.superRefine(validarDap);
 
 export type CamposArbolBody = z.infer<typeof camposArbolSchema>;
 
