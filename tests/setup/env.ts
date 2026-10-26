@@ -19,6 +19,8 @@ process.env.SUPABASE_SERVICE_ROLE_KEY =
 process.env.SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY ?? "test-anon-key";
 process.env.CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:5173";
+// Dummy: no es el commit de ningún despliegue real (CC-056 decisión d).
+process.env.MOTOR_COMMIT = process.env.MOTOR_COMMIT ?? "test-motor-commit";
 process.env.PORT = process.env.PORT ?? "3000";
 
 export {};

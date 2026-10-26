@@ -12,6 +12,9 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().url({ message: "SUPABASE_URL debe ser una URL válida" }),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY es obligatoria"),
   SUPABASE_ANON_KEY: z.string().min(1, "SUPABASE_ANON_KEY es obligatoria"),
+  // Commit del motor de reglas desplegado: se guarda en cada evaluación
+  // finalizada (evaluations.motor_commit; CC-054/CC-056 decisión d).
+  MOTOR_COMMIT: z.string().trim().min(1, "MOTOR_COMMIT es obligatoria"),
 });
 
 const parsed = envSchema.safeParse(process.env);
