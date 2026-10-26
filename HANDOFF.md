@@ -162,15 +162,23 @@ Pruebas F1–F9 (`pg_temp.preparar_inspeccion` como fixture reutilizable): F1 co
 
 ### Instrucción directa para quien siga
 
-(Reemplaza la instrucción anterior, que mandaba aplicar la 020: la responsable decidió **no** aplicarla hasta hacerle los cambios a–f.)
+(Reemplaza la anterior. La responsable **aprobó el contenido de `wip/cc055-020-021`** el 2026-10-25, revisado contra el repo y el Excel. Se trabaja en esa rama; no hacer merge a `feature/fase6-backend-api` sin su aprobación.)
 
-1. Lee este archivo completo, `docs/registro-cambios.md` (CC-040, CC-044, CC-045, CC-048, CC-053, **CC-054, CC-055**) y `docs/architecture-decisions.md` (ADR-017) antes de tocar nada.
-2. Orden pendiente:
-   1. Completar la autorización de Supabase, confirmar con la responsable que el proyecto es `gmlbmyreoxgoqrolhyxo` = `valpo-verde-conecta-pruebas` y sincronizar `schema.sql` con la 018h y la 018i desde lo aplicado (commit aparte; informar si falta algo más de 018a a 019).
-   2. ~~Cambios a–f a la 020 y `v_tree_fechas_vigentes`~~ hechos (punto 0); la 021 también. Pendiente: la revisión de la responsable sobre la rama `wip/cc055-020-021`.
-   3. Mostrar el diff completo de la 020, la 021 y sus pruebas cuando la responsable lo pida.
-3. **No aplicar, comitear ni empujar nada sin aprobación expresa de la responsable.** Si su mensaje siguiente dice otra cosa, ese mensaje manda, no este documento.
-4. Después de aplicar la 020 (cuando se apruebe): capa backend TS (`POST /calcular`, `POST /finalizar`), con el chequeo de «borrador cambiado», la decisión de no llamar a `fn_finalizar_inspeccion` si falta algo y la fecha vigente de CC-055 pasada al motor.
+1. Lee este archivo completo, `docs/registro-cambios.md` (CC-040, CC-044, CC-045, CC-048, CC-053, **CC-054, CC-055**), `docs/roadmap.md` (AM-15, AM-18, AM-19) y `docs/architecture-decisions.md` (ADR-017) antes de tocar nada.
+2. Orden, deteniéndose donde se indica:
+   1. **Supabase:** el MCP `supabase` está configurado (scope local) para esta carpeta con `project_ref=gmlbmyreoxgoqrolhyxo&read_only=true`. Cuando la responsable autentique con `/mcp`, hacer **solo** la consulta de nombre e id del proyecto. **Detenerse** hasta que confirme que es `gmlbmyreoxgoqrolhyxo` = `valpo-verde-conecta-pruebas`.
+   2. **Sincronizar `schema.sql` (solo lectura en la base):** llevar la 018h y la 018i completas desde lo aplicado (`pg_get_functiondef` y definiciones de tablas, columnas y vistas): `fn_create_work_order_inspeccion`, `species_name_history`, `fn_rename_species`, `fn_complete_species`, `fn_resolve_or_create_species`, `tree_data_versions.species_id`, la versión 018i de `fn_refresh_tree_current` y `v_species_traits`. Revisar que no falte nada de 018a a 019 y que los archivos de esas migraciones coincidan con lo aplicado. Commit aparte en `wip/cc055-020-021` y push. **Detenerse** y mostrar el diff y la lista de diferencias.
+   3. **Aplicar, solo con aprobación expresa de la responsable** (en ese momento autoriza quitar `read_only=true`), una migración a la vez:
+      - **020:** confirmar el `project_ref`; `apply_migration`; `pruebas_020` completo; revertir con el `.down.sql` usando `apply_migration`; verificar que el esquema volvió al estado anterior; reaplicar; `pruebas_020` otra vez; `list_migrations` sin diferencias; asesor de seguridad sin avisos nuevos; cero usuarios de prueba remanentes. Agregar `v_tree_fechas_vigentes` y `fn_finalizar_inspeccion` a `schema.sql`, copiadas de lo aplicado. **Detenerse** y mostrar resultados.
+      - **021 (solo cuando apruebe la 020):** el mismo ciclo con `pruebas_021`, más la regresión de `fn_refresh_tree_current` (`pruebas_018d`, `pruebas_018f`, `pruebas_018i`) y de nuevo `pruebas_020` (la vista y la función se cruzan). Actualizar `schema.sql` desde lo aplicado. **Detenerse** y mostrar resultados.
+3. Reglas durante todo esto:
+   - Nunca `execute_sql` para aplicar ni revertir una migración.
+   - Si `apply_migration` falla con `Invalid or expired requestState`, reintentar.
+   - Llamadas a funciones SQL siempre con parámetros por nombre.
+   - El archivo de cada migración tiene que coincidir exactamente con lo aplicado.
+   - No tocar la base real (`ytcxswbulsmboucardxa`).
+   - Nada de apply, merge ni cambios en la base sin aprobación expresa. Si el mensaje siguiente de la responsable dice otra cosa, ese mensaje manda, no este documento.
+4. Después de aplicar la 020 y la 021 (cuando se apruebe): capa backend TS (`POST /calcular`, `POST /finalizar`), con el chequeo de «borrador cambiado», la decisión de no llamar a `fn_finalizar_inspeccion` si falta algo y la fecha vigente de CC-055 pasada al motor.
 
 ---
 
