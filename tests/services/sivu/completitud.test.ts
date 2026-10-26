@@ -1,4 +1,4 @@
-import { EntradaCompletitud, evaluarCompletitud } from "../../../src/services/sivu/completitud";
+import { EntradaCompletitud, especieValidaD13, evaluarCompletitud } from "../../../src/services/sivu/completitud";
 import { calcularDapEquivalenteCm } from "../../../src/services/rules/engine/variables-calculo";
 import { REGLAS_COMPLETITUD } from "../../../src/schemas/sivu/completitudInspeccion";
 
@@ -286,5 +286,28 @@ describe("inspecciones parciales (CC-040; CC-056 punto 2)", () => {
 
   it("tipo/subtipo sin alcance: error interno, no un faltante", () => {
     expect(() => parcial("monitoreo", null, {})).toThrow(/sin alcance/);
+  });
+});
+
+describe("especieValidaD13 (D-13; CC-056 decisión r)", () => {
+  it.each(["Acacia sp.", "Acacia sp", "Acacia sp. ", "  Acacia sp.", "Acacia spp.", "Acacia spp", "Acacia SPP. ", "No determinado", " no determinado "])(
+    "rechaza «%s»",
+    (especie) => {
+      expect(especieValidaD13(especie)).toBe(false);
+    }
+  );
+
+  it.each(["Quillaja saponaria", "Acacia caven", " Schinus molle "])("acepta «%s»", (especie) => {
+    expect(especieValidaD13(especie)).toBe(true);
+  });
+
+  it("acepta un epíteto que termina en «sp» dentro de otra palabra (caso sintético: no conozco una especie real así)", () => {
+    expect(especieValidaD13("Genero crispp")).toBe(true);
+    expect(especieValidaD13("Genero cuspidatasp")).toBe(true);
+  });
+
+  it("en la evaluación completa, «Acacia sp. » con espacio final no permite finalizar", () => {
+    const arbolVigente = { ...evaluacionCompleta().arbolVigente, especie_cientifica: "Acacia sp. " };
+    expect(faltantesDe(evaluacionCompleta({ arbolVigente }))).toEqual(["especie_cientifica"]);
   });
 });

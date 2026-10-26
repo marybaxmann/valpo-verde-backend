@@ -172,7 +172,14 @@ function tieneValor(v: unknown): boolean {
   return true;
 }
 
-/** Mismo criterio que `chk_species_especie_cientifica_valida` (D-13). */
-function especieValidaD13(especie: string): boolean {
-  return !/\ssp\.?$/i.test(especie) && especie.trim().toLowerCase() !== "no determinado";
+/**
+ * D-13: sin identificación solo a nivel de género («Género sp.», y
+ * también «Género spp.», decisión de la responsable del 2026-10-26,
+ * CC-056 r) ni «No determinado». Se compara sin los espacios del
+ * principio y del final. `chk_species_especie_cientifica_valida` todavía
+ * no reconoce «spp.» (migración aparte, pendiente).
+ */
+export function especieValidaD13(especie: string): boolean {
+  const nombre = especie.trim();
+  return !/\sspp?\.?$/i.test(nombre) && nombre.toLowerCase() !== "no determinado";
 }
