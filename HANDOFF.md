@@ -90,27 +90,27 @@
 
 ### 0. Estado exacto al cortar (2026-10-25, sesión siguiente) — manda sobre los puntos 1 a 4 de abajo
 
-**Trabajo subido para continuar desde otro equipo.**
+**Todo lo de este punto está en la rama `wip/cc055-020-021`** (creada desde `feature/fase6-backend-api`, que no se tocó). **Nada aplicado en Supabase, nada fusionado.**
 
-- **CC-054 registrado** (`docs/registro-cambios.md`): finalizar en dos pasos (calcular / finalizar). Incluye el riesgo aceptado de que otra OT del mismo árbol se complete entre la lectura y la escritura, aprobado por la responsable el 2026-10-25. El bloqueo `FOR UPDATE` «se bloqueará en la migración 020 (punto b)»: todavía no está implementado.
-- **CC-055 registrado** (opción D de la responsable): fechas por tipo de inspección.
-  - Evaluación inicial, Reevaluación, Levantamiento e Instrumental: renuevan ambas fechas.
-  - Monitoreo: renueva `fecha_proximo_monitoreo`. Para `fecha_proxima_inspeccion_sugerida` usa la más cercana entre la vigente y la calculada (adelanta, nunca atrasa).
-  - Validaciones de D-202 y D-203 en la función.
-- **AM-15 actualizado** (`docs/roadmap.md`) con D-209 (CC-054) y con D-202, D-203 y REGLAS_GENERALES fila 25 (CC-055). **AM-18 nuevo:** `v_upcoming_inspections` debe considerar solo inspecciones Finalizadas de OT Completadas (error de implementación, REGLAS_GENERALES fila 12). Se corrige en el #63.
-- **Puntos abiertos de CC-055, en «Observaciones», esperando la decisión de la responsable:**
-  1. Reinspección atrasada: la fecha vigente ya pasó, así que «la más cercana» es anterior a `fecha_inspeccion` y chocaría con la validación de D-202.
-  2. Desempate de «última»: propuesta `fecha_completada_ot` (fila 13), luego `fecha_inspeccion` y `created_at`.
-  3. Vista nueva `v_tree_fechas_vigentes` (definición única de la fecha vigente por árbol), propuesta para ir dentro de la 020. `v_upcoming_inspections` queda intacta hasta el #63.
-- **Migración 020: escrita, NO aplicada.** Le faltan los cambios a–f que pidió la responsable:
-  - a) rechazar con SV064 si no hay fila en `evaluations`;
-  - b) `FOR UPDATE` sobre la inspección y la OT;
-  - c) coherencia de los ajustes: valor ajustado nunca `no_determinado`/`no_aplica`; `valor_calculado` igual a la `*_calculada` de `p_resultado`; `*_ajustada` igual a `p_ajustes`;
-  - d) D-202 posterior y D-203 igual o posterior a `fecha_inspeccion`;
-  - e) `ajuste_fecha_por`/`fecha_ajuste_fecha` solo si alguna fecha difiere de la sugerida;
-  - f) pruebas nuevas: Inspector inactivo, rol distinto, OT de Mantenimiento, evaluación inexistente, ajustado `no_determinado`, ajustes incoherentes, fecha anterior a `fecha_inspeccion`, especie con `species_id` ya puesto, Monitoreo que adelanta y Monitoreo que no atrasa la reinspección. La F2 actual es incoherente con c) y hay que corregirla.
-
-  También le falta la vista nueva (si se aprueba). No se escribe código hasta que la responsable decida los puntos abiertos 1 y 2 y apruebe la vista.
+- **CC-054 registrado** (`docs/registro-cambios.md`): finalizar en dos pasos (calcular / finalizar). Incluye el riesgo aceptado de que otra OT del mismo árbol se complete entre la lectura y la escritura, aprobado por la responsable el 2026-10-25. El bloqueo `FOR UPDATE` de la inspección y su OT (punto b) ya está escrito en la 020.
+- **CC-055: puntos abiertos 1 y 2 decididos por la responsable (2026-10-25)**, pasados a «Versión nueva»:
+  - Evaluación inicial, Reevaluación, Levantamiento e Instrumental: renuevan ambas fechas, como antes.
+  - Monitoreo: renueva `fecha_proximo_monitoreo`. `fecha_proxima_inspeccion_sugerida` = la menor entre la vigente y la calculada, nunca antes del día siguiente a `fecha_inspeccion` (adelanta, nunca atrasa).
+  - (1) **Reinspección atrasada:** si la vigente es anterior o igual a `fecha_inspeccion`, la sugerida es el día siguiente, con motivo propio.
+  - (2) **Criterio único de «la última»:** `fecha_completada_ot` DESC, `fecha_inspeccion` DESC, `created_at` DESC (REGLAS_GENERALES fila 13).
+  - **Fecha vigente:** la de la última inspección Finalizada de una OT Completada que la registró, definida una sola vez en `v_tree_fechas_vigentes` (020).
+  - Sigue abierto solo el (3), para el #63: cómo mostrar el término del rango cuando la sugerida viene de la vigente (por ahora, un punto: inicio = fin).
+- **AM-15** (`docs/roadmap.md`) cita CC-054 y CC-055, pero con el texto anterior de CC-055 («la más cercana»); falta pasarle el texto final. **AM-18:** `v_upcoming_inspections` solo con inspecciones Finalizadas de OT Completadas, en el #63.
+- **Migración 020: escrita, NO aplicada.** Revisada caso por caso contra la lista a–f del HANDOFF anterior; están todos:
+  - a) sin fila en `evaluations` → SV064 (prueba F13);
+  - b) `FOR UPDATE OF i, wo` y `FOR UPDATE` de la fila de `evaluations` (sin prueba automática: necesita dos sesiones concurrentes);
+  - c) coherencia de los ajustes: ajustado nunca `no_determinado`/`no_aplica`; `valor_calculado` = `*_calculada`; `*_ajustada` = `valor_ajustado`; sin `*_ajustada` sin su ajuste; un ajuste por campo (F14, F15; F2 corregida);
+  - d) D-202 posterior y D-203 igual o posterior a `fecha_inspeccion`; las cuatro fechas obligatorias (F16);
+  - e) `ajuste_fecha_por`/`fecha_ajuste_fecha` solo si alguna fecha difiere de la sugerida (F1, F4, F18);
+  - f) pruebas nuevas: Inspector inactivo (F10), rol distinto (F11), OT de Mantenimiento (F12), evaluación inexistente (F13), ajustado `no_determinado` (F14), ajustes incoherentes (F15), fecha anterior o igual a `fecha_inspeccion` (F16), especie con `species_id` ya puesto (F17), Monitoreo que adelanta (F19) y que no atrasa (F20); además reinspección atrasada (F21).
+  - Además: vista `v_tree_fechas_vigentes` (pruebas V1–V6) y tope de Monitoreo sobre la sugerida en `fn_finalizar_inspeccion`.
+- **Migración 021 nueva, escrita, NO aplicada** (aparte de la 020, para revertirla por separado): lleva el criterio único de «la última» a `fn_refresh_tree_current` (que no tenía `fecha_inspeccion`) y a `v_tree_current_inputs` (que solo ordenaba por `fecha_completada_ot`). Pruebas O1–O3 en `pruebas_021_orden_ultima_inspeccion.sql`; regresión obligatoria con `pruebas_018d`, `pruebas_018f` y `pruebas_018i`.
+- **Motor con CC-055** (`fechas-sugeridas.ts`: `calcularFechaProximaInspeccionMonitoreo`; `ensamblaje.ts`: entrada `fechaProximaInspeccionVigenteISO`, solo se usa en Monitoreo). Jest completo: **48 suites, 984/984**; `tsc` limpio.
 - **Sincronización de `schema.sql` pendiente:** faltan la 018h completa y la 018i completa (`species_name_history`, `fn_rename_species`, `fn_complete_species`, `fn_resolve_or_create_species`, `tree_data_versions.species_id`, `fn_refresh_tree_current` con `species_id` y `v_species_traits`). Se hace desde lo aplicado en pruebas (`pg_get_functiondef` y definiciones de tablas y vistas), en un commit aparte. Después hay que revisar que no falte nada de 018a a 019 e informar. **Bloqueado: falta completar la autorización OAuth de Supabase.** Cuando esté, lo primero es una consulta de solo lectura con el nombre y el id del proyecto, y esperar la confirmación de la responsable antes de leer nada más.
 - **`49a2cfd` empujado** junto con este relevo, por pedido explícito de la responsable.
 
@@ -158,8 +158,8 @@ Pruebas F1–F9 (`pg_temp.preparar_inspeccion` como fixture reutilizable): F1 co
 1. Lee este archivo completo, `docs/registro-cambios.md` (CC-040, CC-044, CC-045, CC-048, CC-053, **CC-054, CC-055**) y `docs/architecture-decisions.md` (ADR-017) antes de tocar nada.
 2. Orden pendiente:
    1. Completar la autorización de Supabase, confirmar con la responsable que el proyecto es `gmlbmyreoxgoqrolhyxo` = `valpo-verde-conecta-pruebas` y sincronizar `schema.sql` con la 018h y la 018i desde lo aplicado (commit aparte; informar si falta algo más de 018a a 019).
-   2. Con las decisiones de la responsable sobre los puntos abiertos de CC-055: cambios a–f a la 020 y `v_tree_fechas_vigentes` si se aprueba.
-   3. Mostrar el diff completo de la 020 y de `pruebas_020` (con la F2 corregida y los dos casos de Monitoreo).
+   2. ~~Cambios a–f a la 020 y `v_tree_fechas_vigentes`~~ hechos (punto 0); la 021 también. Pendiente: la revisión de la responsable sobre la rama `wip/cc055-020-021`.
+   3. Mostrar el diff completo de la 020, la 021 y sus pruebas cuando la responsable lo pida.
 3. **No aplicar, comitear ni empujar nada sin aprobación expresa de la responsable.** Si su mensaje siguiente dice otra cosa, ese mensaje manda, no este documento.
 4. Después de aplicar la 020 (cuando se apruebe): capa backend TS (`POST /calcular`, `POST /finalizar`), con el chequeo de «borrador cambiado», la decisión de no llamar a `fn_finalizar_inspeccion` si falta algo y la fecha vigente de CC-055 pasada al motor.
 
