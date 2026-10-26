@@ -178,6 +178,18 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
     expect(mockGuardarBorrador).not.toHaveBeenCalled();
   });
 
+  it("lee con el JWT del usuario todo lo que entra en la respuesta y en la huella (PR-018 v5.0, CC-064 decisión h)", async () => {
+    preparar();
+    await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+
+    expect(mockVariables).toHaveBeenCalledWith(TOKEN, INSPECTION_ID);
+    expect(mockVersionArbol).toHaveBeenCalledWith(TOKEN, INSPECTION_ID);
+    expect(mockArbolVigente).toHaveBeenCalledWith(TOKEN, TREE_ID);
+    expect(mockEntradasVigentes).toHaveBeenCalledWith(TOKEN, TREE_ID);
+    expect(mockFechaVigente).toHaveBeenCalledWith(TOKEN, TREE_ID);
+    expect(mockFotos).toHaveBeenCalledWith(TOKEN, INSPECTION_ID);
+  });
+
   it("informa los campos faltantes sin escribir nada", async () => {
     const variables = variablesCompletas();
     delete variables.zona_objetivo;
@@ -315,6 +327,10 @@ describe("POST /finalizar (#59/#72; CC-054, CC-055, CC-056)", () => {
     );
 
     expect(mockFinalizarRpc).toHaveBeenCalledTimes(1);
+    // /finalizar repite las lecturas con el JWT del usuario (CC-064 decisión h).
+    expect(mockVariables).toHaveBeenLastCalledWith(TOKEN, INSPECTION_ID);
+    expect(mockEntradasVigentes).toHaveBeenLastCalledWith(TOKEN, TREE_ID);
+    expect(mockFotos).toHaveBeenLastCalledWith(TOKEN, INSPECTION_ID);
     const input = mockFinalizarRpc.mock.calls[0][0];
     expect(input).toMatchObject({
       inspectionId: INSPECTION_ID,

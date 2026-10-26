@@ -335,6 +335,8 @@ describe("listarFotosInspeccion (cualquier rol con acceso al proyecto)", () => {
 
     const resultado = await listarFotosInspeccion(usuario("municipal-1", "usuario_municipal"), INSPECTION_ID, TOKEN);
 
+    // PR-018 v5.0 (CC-064 decisión i): filas con el JWT del usuario, enlace con service_role.
+    expect(mockListarFotos).toHaveBeenCalledWith(TOKEN, INSPECTION_ID);
     expect(mockGenerarUrl).toHaveBeenCalledWith("p/t/inspeccion/foto-1.jpg");
     expect(resultado).toEqual([
       { id: "foto-1", vista: "arbol_completo", url: "https://signed.example/foto-1", created_at: "2026-10-25T00:00:00Z", uploaded_by: INSPECTOR_ID },

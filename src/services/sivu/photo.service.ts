@@ -188,7 +188,9 @@ export async function listarFotosInspeccion(
 
   await assertProjectAccess(user, ot.project_id, accessToken);
 
-  const fotos = await listarFotosPorInspeccion(inspectionId);
+  // Filas de `photos` con el JWT del usuario (PR-018 v5.0, CC-064 decisión i);
+  // el enlace firmado sigue con service_role, después de assertProjectAccess (CC-049).
+  const fotos = await listarFotosPorInspeccion(accessToken, inspectionId);
 
   return Promise.all(
     fotos.map(async (foto) => ({

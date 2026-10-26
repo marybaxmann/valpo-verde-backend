@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../../config/supabase";
+import { createUserScopedClient, supabaseAdmin } from "../../config/supabase";
 
 /** SQLSTATE propio de `fn_save_inspection_draft` (018e/018f/#58). */
 export const SQLSTATE_BORRADOR_INSPECCION = "SV058";
@@ -140,6 +140,9 @@ export async function obtenerInspeccionPorId(inspectionId: string): Promise<Insp
 // ---------------------------------------------------------------------
 // Cierre de la inspección (#59/#72; CC-054, CC-055, CC-056): lecturas
 // para /calcular y /finalizar, y la única escritura de /finalizar.
+// Lo que entra en la respuesta y en la huella se lee con el JWT del
+// usuario, para que la RLS actúe como segunda capa (PR-018 v5.0,
+// CC-064 decisión h); la función de finalizar sigue con service_role.
 // ---------------------------------------------------------------------
 
 /** Campos de ARBOLES que guardan `trees` y `tree_data_versions` (los 20 de `CamposArbol`). */
@@ -147,8 +150,11 @@ const COLUMNAS_ARBOL =
   "sector, ubicacion_descriptiva, utm_este, utm_norte, especie_cientifica, nombre_comun, multifustal, numero_fustes, dap_fustes_cm, dap_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, copa_no_presenta, altura_primera_rama_m, altura_primera_rama_no_presenta, altura_base_copa_viva_m, altura_base_copa_viva_no_presenta, clase_edad, rango_edad_estimada_anios";
 
 /** `evaluations.variables` del borrador de esta inspección; null si todavía no tiene evaluación. */
-export async function obtenerVariablesBorrador(inspectionId: string): Promise<Record<string, unknown> | null> {
-  const { data, error } = await supabaseAdmin
+export async function obtenerVariablesBorrador(
+  accessToken: string,
+  inspectionId: string
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await createUserScopedClient(accessToken)
     .from("evaluations")
     .select("variables")
     .eq("inspection_id", inspectionId)
@@ -167,8 +173,11 @@ export interface VersionArbolInspeccion {
 }
 
 /** Fila de `tree_data_versions` de esta inspección (lo que registró del árbol); null si no registró nada. */
-export async function obtenerVersionArbolDeInspeccion(inspectionId: string): Promise<VersionArbolInspeccion | null> {
-  const { data, error } = await supabaseAdmin
+export async function obtenerVersionArbolDeInspeccion(
+  accessToken: string,
+  inspectionId: string
+): Promise<VersionArbolInspeccion | null> {
+  const { data, error } = await createUserScopedClient(accessToken)
     .from("tree_data_versions")
     .select(`campos_registrados, ${COLUMNAS_ARBOL}`)
     .eq("inspection_id", inspectionId)
@@ -184,8 +193,12 @@ export async function obtenerVersionArbolDeInspeccion(inspectionId: string): Pro
 }
 
 /** Valores vigentes del árbol (`trees`); null si el árbol no existe. */
-export async function obtenerArbolVigente(treeId: string): Promise<Record<string, unknown> | null> {
-  const { data, error } = await supabaseAdmin.from("trees").select(COLUMNAS_ARBOL).eq("id", treeId).maybeSingle();
+export async function obtenerArbolVigente(accessToken: string, treeId: string): Promise<Record<string, unknown> | null> {
+  const { data, error } = await createUserScopedClient(accessToken)
+    .from("trees")
+    .select(COLUMNAS_ARBOL)
+    .eq("id", treeId)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message, { cause: error.code });
@@ -199,8 +212,8 @@ export async function obtenerArbolVigente(treeId: string): Promise<Record<string
  * variable de REGISTRO_EVALUACION registrado por una OT Completada
  * (021). Árbol sin inspecciones vigentes: objeto vacío.
  */
-export async function obtenerEntradasVigentes(treeId: string): Promise<Record<string, unknown>> {
-  const { data, error } = await supabaseAdmin
+export async function obtenerEntradasVigentes(accessToken: string, treeId: string): Promise<Record<string, unknown>> {
+  const { data, error } = await createUserScopedClient(accessToken)
     .from("v_tree_current_inputs")
     .select("entradas_vigentes")
     .eq("tree_id", treeId)
@@ -214,8 +227,8 @@ export async function obtenerEntradasVigentes(treeId: string): Promise<Record<st
 }
 
 /** `v_tree_fechas_vigentes.fecha_proxima_inspeccion` (020; CC-055); null si el árbol no tiene. */
-export async function obtenerFechaProximaInspeccionVigente(treeId: string): Promise<string | null> {
-  const { data, error } = await supabaseAdmin
+export async function obtenerFechaProximaInspeccionVigente(accessToken: string, treeId: string): Promise<string | null> {
+  const { data, error } = await createUserScopedClient(accessToken)
     .from("v_tree_fechas_vigentes")
     .select("fecha_proxima_inspeccion")
     .eq("tree_id", treeId)
