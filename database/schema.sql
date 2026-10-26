@@ -1,7 +1,11 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 20 — migración 021 (2026-10-25; CC-055): criterio único
+--   (revisión 21 — migración 022 (2026-10-26; CC-056 decisión r):
+--   chk_species_especie_cientifica_valida rechaza también «Género spp.»
+--   y compara sin espacios en los extremos, copiado de lo aplicado en
+--   `valpo-verde-conecta-pruebas`;
+--   antes revisión 20 — migración 021 (2026-10-25; CC-055): criterio único
 --   de «la última» inspección (fecha_completada_ot, fecha_inspeccion,
 --   inspections.created_at) en fn_refresh_tree_current y
 --   v_tree_current_inputs, copiados de lo aplicado en
@@ -789,9 +793,14 @@ CREATE TABLE species (
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-  -- No admite "Género sp." ni "No determinado" (D-257).
+  -- No admite "Género sp.", "Género spp." ni "No determinado" (D-13,
+  -- D-257); compara sin los espacios del principio y del final
+  -- (migración 022; CC-056 decisión r).
   CONSTRAINT chk_species_especie_cientifica_valida
-    CHECK (especie_cientifica !~* '\ssp\.?$' AND lower(trim(especie_cientifica)) <> 'no determinado')
+    CHECK (
+      btrim(especie_cientifica) !~* '\sspp?\.?$'
+      AND lower(btrim(especie_cientifica)) <> 'no determinado'
+    )
 );
 
 -- UNIQUE sobre la forma normalizada (minúsculas, espacios simples).
