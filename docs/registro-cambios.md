@@ -2377,3 +2377,78 @@ motivo)
 | 2026-10-25 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial, puntos 1 a 5. Diseño técnico del punto 5 propuesto por la sesión, pendiente de aprobación antes de implementar. |
 | 2026-10-25 | APROBADO METODOLÓGICAMENTE | marybaxmann | Aprobada la dirección del diseño del punto 5 (`species_id` en `trees`/`tree_data_versions`, resolución vigente desde el catálogo, `species_name_history`, `v_species_traits` por `species_id` primero). Se implementa en el #73, después del #58, con la migración mostrada antes de aplicar y las 3 pruebas exigidas (renombrar propaga incluso tras completar una OT; nombre anterior en el historial; especie sin confirmar conserva su texto). |
 | 2026-10-25 | IMPLEMENTADO (BD + backend) | marybaxmann | Corrección antes de aplicar: `trees.species_id` ya existía (migración 001) — la 018i solo agrega `tree_data_versions.species_id`, no toca `trees`. Migración 018i aplicada y probada (E1–E10, más E9 colisión→409 y E10 vínculo solo tras completar OT, agregados a pedido). Regresión completa (A/L/B/G/V) corrida dos veces (antes y después de revertir/reaplicar), sin diferencias. Capa backend (búsqueda/completar/corregir) implementada y probada (Jest 28/28, tsc limpio). Todas las llamadas SQL a funciones con varios parámetros del mismo tipo convertidas a notación con nombre (12 archivos de prueba revisados; solo la 018i nueva tenía una inversión real, corregida). |
+
+---
+
+### CC-054 — Finalizar una inspección en dos pasos (calcular y finalizar)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-25 |
+| Origen | Planificación del #59 (finalizar una inspección) y #72 (integración del motor de reglas). Al diseñar la finalización se detectó que el Excel asigna `estado_registro` automáticamente al guardar, pero el Inspector necesita ver los valores calculados antes de ajustar clasificaciones o fechas. Decisión de la responsable. |
+| Tipo | 2 — metodológico (cómo y cuándo se asigna `estado_registro = Finalizado`) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | D-209 (INSPECCION.`estado_registro`, columnas «Cómo se obtiene» y «Condición de activación»); D-173 (`justificacion_ajuste_clasificacion`); D-204 (`justificacion_ajuste_fecha`); CC-044. |
+| Versión anterior | D-209, «Cómo se obtiene»: "Asignación automática según la completitud de los datos obligatorios aplicables de la inspección." «Condición de activación»: "Al guardar la inspección." Leído literalmente, una inspección completa pasaría a Finalizado en el mismo guardado en que se completa el último dato obligatorio. |
+| Versión nueva | La finalización ocurre en **dos pasos explícitos del Inspector**. **(1) Calcular:** con el borrador guardado, la plataforma calcula las clasificaciones y las fechas sugeridas con los valores vigentes del árbol y los registrados en la inspección, y las muestra al Inspector, junto con los campos que falten para finalizar. Este paso no escribe nada. **(2) Finalizar:** el Inspector confirma, con los ajustes de clasificación que quiera registrar (D-173, CC-044) y las fechas ajustadas que correspondan (D-204). La plataforma vuelve a verificar la completitud (alcance por tipo de inspección, REGLAS_GENERALES fila 28/CC-040; D-13; las cuatro vistas de D-27), recalcula y guarda el resultado; recién ahí la inspección pasa a Finalizado. **Una inspección completa sigue en Preguardado hasta que el Inspector finaliza de forma explícita.** La regla de completitud de D-209 no cambia — sigue siendo la condición para poder finalizar; lo que cambia es el momento: ya no se aplica al guardar, sino al finalizar. Si al finalizar falta algún dato, la inspección sigue en Preguardado y se informan los campos que faltan (el catálogo de especies tampoco se modifica, CC-053). Si el borrador cambió entre el cálculo y la finalización, la finalización se rechaza y se pide volver a calcular. |
+| Riesgo aceptado | Entre la lectura de los valores vigentes del árbol (paso de finalizar) y la escritura del resultado, otra OT del mismo árbol podría completarse y cambiar esos valores vigentes. **Aceptado por la responsable (2026-10-25)** por el bajo volumen esperado y porque, al completar la OT (#60), la evaluación vigente se recalcula de todas formas con los valores vigentes del momento. No se bloquea con una transacción explícita. Esta aprobación es de esta fecha: el HANDOFF anterior lo daba por decidido sin que la responsable lo hubiera confirmado. Es distinto del bloqueo de filas de la propia inspección y su OT dentro de la función de finalización (dos finalizaciones simultáneas, o una finalización junto con un cambio de responsable), que se bloqueará en la migración 020 (punto b). |
+| Motivo | El Inspector necesita ver los valores calculados antes de decidir si ajusta una clasificación (D-173, CC-044) o una fecha (D-204). Si la inspección se finalizara sola al guardar el último dato, una inspección Finalizada ya no se puede modificar (REGLAS_GENERALES fila 26): el Inspector tendría que anularla para poder ajustar. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-25. D-209; D-173; D-204; REGLAS_GENERALES filas 2, 26 y 28; CC-040; CC-044; CC-053. |
+| Archivos afectados | Esta ficha; `docs/roadmap.md` (AM-15). Implementación: `database/migrations/020_finalizar_inspeccion.sql` y `.down.sql`; `database/fase6/pruebas_020_finalizar_inspeccion.sql`; capa backend de `POST /api/sivu/inspections/:id/calcular` y `POST /api/sivu/inspections/:id/finalizar` (pendiente). |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: D-209, «Cómo se obtiene» y «Condición de activación» — la asignación de Finalizado ocurre cuando el Inspector finaliza de forma explícita, no al guardar; en la próxima versión del paquete (AM-15). |
+| Impacto en BD | Migración 020 (`fn_finalizar_inspeccion`, SQLSTATE `SV064`) — escrita, sin aplicar. |
+| Impacto en backend | Pendiente: `/calcular` (no escribe) y `/finalizar` (verifica completitud y borrador sin cambios, luego una sola llamada a `fn_finalizar_inspeccion`). |
+| Impacto en API | Pendiente: los dos endpoints de arriba. |
+| Impacto en frontend | Ninguno todavía (Fase 7): pantalla de resultados calculados, ajustes y confirmación. |
+| Pruebas necesarias | SQL (`pruebas_020_finalizar_inspeccion.sql`): persistencia, ajustes, fechas, especie, rechazos de rol/estado. Jest (pendiente): calcular no escribe nada; finalizar con algo faltante deja Preguardado sin tocar el catálogo; borrador cambiado entre calcular y finalizar se rechaza. |
+| Dependencias | CC-040; CC-044; CC-045 (b); CC-053; #60 (completar la OT recalcula la vigente). |
+| rule_version | 2.1 (sin cambio de versión del paquete todavía; sincronización pendiente, AM-15). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-25 |
+| Fecha de implementación | Pendiente |
+| Commits / PR asociados | `feature/fase6-backend-api`, sin PR todavía. |
+| Observaciones | — |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-25 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial: dos pasos aprobados; riesgo de la OT concurrente del mismo árbol aceptado expresamente en esta fecha. |
+
+---
+
+### CC-055 — Fechas de próxima inspección y próximo monitoreo según el tipo de inspección
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-25 |
+| Origen | Diseño de la migración 020 (#59, punto d): D-202 y D-203 son Obligatorias para toda inspección, y REGLAS_GENERALES fila 28 hace que toda inspección parcial calcule `nivel_riesgo` con los valores vigentes. Aplicado literalmente, cada Monitoreo sugeriría una próxima inspección técnica contada desde su propia fecha y, como `v_upcoming_inspections` toma las fechas de la inspección Finalizada más reciente, la reinspección completa de un árbol con monitoreos periódicos se postergaría indefinidamente (p. ej. Bajo: monitoreo cada 12 meses, cada uno sugiere reinspección a 24 meses desde su fecha). Decisión de la responsable (opción D). |
+| Tipo | 2 — metodológico |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | D-202 (`fecha_proxima_inspeccion`), D-203 (`fecha_proximo_monitoreo`), D-204 (`justificacion_ajuste_fecha`); REGLAS_GENERALES fila 25 («Reinspección y monitoreo»); `v_upcoming_inspections` (migración 016). |
+| Versión anterior | D-202 y D-203: Obligatorias, «Fecha sugerida por la plataforma según nivel_riesgo», sin distinguir el tipo de inspección; ambas se renuevan en toda inspección. |
+| Versión nueva | **Evaluación inicial, Reevaluación, Levantamiento y Evaluación instrumental:** ambas fechas obligatorias y renovadas, sugeridas según el `nivel_riesgo` nuevo (D-200, incluido su ajuste), como hasta ahora. **Monitoreo (Fitosanitario, Estructural y Vitalidad):** `fecha_proximo_monitoreo` obligatoria y renovada según el `nivel_riesgo` nuevo. Para `fecha_proxima_inspeccion_sugerida`, la plataforma sugiere **la más cercana** entre la fecha de próxima inspección vigente del árbol (la de la última inspección Finalizada de una OT Completada que la registró) y la calculada con el `nivel_riesgo` nuevo: **un Monitoreo puede adelantar la reinspección, nunca atrasarla.** Si el árbol no tiene una fecha de próxima inspección vigente, se usa la calculada. **Ajuste del Inspector:** puede ajustar cualquiera de las dos fechas registrando `justificacion_ajuste_fecha` (D-204), sin cambios. **Validaciones (en `fn_finalizar_inspeccion`, migración 020):** `fecha_proxima_inspeccion` posterior a `fecha_inspeccion` (D-202); `fecha_proximo_monitoreo` igual o posterior a `fecha_inspeccion` (D-203). |
+| Motivo | Sin esta regla, un Monitoreo (que registra solo los campos de su subtipo) reiniciaría el plazo de la inspección técnica completa, y la reinspección de un árbol monitoreado periódicamente no llegaría nunca. A la vez, un Monitoreo que detecta un empeoramiento debe poder adelantarla. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann), 2026-10-25. D-200, D-202, D-203, D-204; REGLAS_GENERALES filas 13, 25 y 28; CC-040; CC-045 (b). |
+| Archivos afectados | Esta ficha; `docs/roadmap.md` (AM-15, AM-18). Implementación (pendiente de aprobar): `src/services/rules/engine/fechas-sugeridas.ts` y `ensamblaje.ts` (entrada nueva: fecha de próxima inspección vigente); lectura de esa fecha en la capa backend de `/calcular` y `/finalizar`; validaciones de D-202/D-203 en `database/migrations/020_finalizar_inspeccion.sql`; `v_upcoming_inspections` (#63). |
+| Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
+| Impacto en Excel metodológico | Pendiente: D-202 y D-203 («Cómo se obtiene», «Fórmula / regla de cálculo») y REGLAS_GENERALES fila 25 — en la próxima versión del paquete (AM-15). |
+| Impacto en BD | Pendiente: validaciones de D-202/D-203 en la 020; definición única de la «fecha vigente» por árbol; `v_upcoming_inspections` toma cada fecha de la inspección que la registró (#63). |
+| Impacto en backend | Pendiente: el motor recibe la fecha de próxima inspección vigente y, en Monitoreo, sugiere la más cercana. |
+| Impacto en API | Ninguno adicional (`/calcular` ya devuelve las fechas sugeridas). |
+| Impacto en frontend | Ninguno todavía (Fase 7): indicar cuando la fecha sugerida de reinspección viene de la vigente y no del riesgo nuevo. |
+| Pruebas necesarias | Motor (Jest): Monitoreo con riesgo nuevo que adelanta la reinspección; Monitoreo que no la atrasa; árbol sin fecha vigente. SQL (`pruebas_020`): fecha anterior a `fecha_inspeccion` rechazada; finalizar un Monitoreo. |
+| Dependencias | CC-040; CC-045 (b); CC-054; #63 (recordatorios). |
+| rule_version | 2.1 (sin cambio de versión del paquete todavía; sincronización pendiente, AM-15). |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-25 |
+| Fecha de implementación | Pendiente |
+| Commits / PR asociados | `feature/fase6-backend-api`, sin PR todavía. |
+| Observaciones | Puntos abiertos detectados al registrar, pendientes de decisión de la responsable (no decididos aquí): (1) si la fecha de próxima inspección vigente ya pasó (reinspección atrasada), «la más cercana» queda anterior a `fecha_inspeccion` y la validación de D-202 rechazaría la finalización; (2) criterio de «última» inspección para la fecha vigente — `fecha_completada_ot` (REGLAS_GENERALES fila 13) o `fecha_inspeccion` (lo que usa hoy `v_upcoming_inspections`); (3) cómo se muestra el término del rango (REGLAS_GENERALES fila 25) cuando la fecha sugerida viene de la vigente y no del riesgo nuevo — se resuelve en el #63. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-25 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial (opción D). |
