@@ -7,7 +7,12 @@ import {
   resolverValorEfectivo,
   validarAlcance,
 } from "../../../../src/services/rules/engine/ensamblaje";
-import { ClasificacionRiesgoCodigo } from "../../../../src/services/rules/engine/catalogs";
+import { ClasificacionRiesgoCodigo, TipoInspeccionRealizadaCodigo } from "../../../../src/services/rules/engine/catalogs";
+import {
+  calcularFechaProximaInspeccion,
+  MOTIVO_CONSERVA_VIGENTE,
+  MOTIVO_REINSPECCION_ATRASADA,
+} from "../../../../src/services/rules/engine/fechas-sugeridas";
 
 /** Árbol sano: los tres componentes de riesgo en Bajo, infraestructura en Bajo. */
 function arbolSano(): NucleoEntradas {
@@ -414,4 +419,64 @@ describe("ensamblarResultadoVigente", () => {
       expect(r.requiere_revision_ajuste).toBe(true);
     });
   });
+});
+
+describe("CC-055 — fecha_proxima_inspeccion sugerida según el tipo de inspección", () => {
+  // Árbol sano: riesgo Bajo → D-202 calcula 2028-10-22 y D-203 2027-10-22 desde 2026-10-22.
+  function argsMonitoreo(fechaVigente: string | null | undefined): ArgsResultadoEvaluacion {
+    return {
+      ...argsEvaluacionSana(),
+      tipoInspeccionRealizada: "monitoreo",
+      subtipoInspeccion: "fitosanitario",
+      fechaProximaInspeccionVigenteISO: fechaVigente,
+    };
+  }
+
+  it("Monitoreo que adelanta la reinspección: el riesgo nuevo (Alto, ajustado) da una fecha anterior a la vigente → la calculada", () => {
+    const args = argsMonitoreo("2027-06-01");
+    args.ajustes = { riesgo: { valorAjustado: "alto", valorCalculadoEnElAjuste: "bajo", adjustmentId: "adj-m1" } };
+    const r = ensamblarResultadoEvaluacion(args);
+    expect(r.inspeccion.nivelRiesgo).toBe("alto");
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.fechaInicio).toBe("2026-11-22"); // 1 mes, antes que 2027-06-01
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.motivo).toBeUndefined();
+  });
+
+  it("Monitoreo que no atrasa la reinspección: la vigente es anterior a la calculada → se conserva la vigente", () => {
+    const r = ensamblarResultadoEvaluacion(argsMonitoreo("2027-03-15"));
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.fechaInicio).toBe("2027-03-15"); // no 2028-10-22
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.motivo).toBe(MOTIVO_CONSERVA_VIGENTE);
+    // D-203 se renueva igual en Monitoreo.
+    expect(r.inspeccion.fechaProximoMonitoreoSugerida.fechaInicio).toBe("2027-10-22");
+  });
+
+  it("Monitoreo con reinspección atrasada: la vigente ya pasó → el día siguiente a fecha_inspeccion", () => {
+    const r = ensamblarResultadoEvaluacion(argsMonitoreo("2026-10-01"));
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.fechaInicio).toBe("2026-10-23");
+    expect(r.inspeccion.fechaProximaInspeccionSugerida.motivo).toBe(MOTIVO_REINSPECCION_ATRASADA);
+  });
+
+  it("Monitoreo de un árbol sin fecha vigente (null o sin informar) → la calculada con el riesgo nuevo", () => {
+    for (const vigente of [null, undefined]) {
+      const r = ensamblarResultadoEvaluacion(argsMonitoreo(vigente));
+      expect(r.inspeccion.fechaProximaInspeccionSugerida).toEqual(calcularFechaProximaInspeccion("bajo", "2026-10-22"));
+    }
+  });
+
+  const TIPOS_QUE_RENUEVAN: TipoInspeccionRealizadaCodigo[] = [
+    "evaluacion_inicial",
+    "reevaluacion",
+    "levantamiento",
+    "evaluacion_instrumental",
+  ];
+  it.each(TIPOS_QUE_RENUEVAN)(
+    "%s: resultado idéntico al de hoy aunque se informe una fecha vigente (anterior, posterior o atrasada)",
+    (tipo) => {
+      const base: ArgsResultadoEvaluacion = { ...argsEvaluacionSana(), tipoInspeccionRealizada: tipo };
+      const sinVigente = ensamblarResultadoEvaluacion(base);
+      expect(sinVigente.inspeccion.fechaProximaInspeccionSugerida).toEqual(calcularFechaProximaInspeccion("bajo", "2026-10-22"));
+      for (const vigente of ["2027-03-15", "2030-01-01", "2026-10-01"]) {
+        expect(ensamblarResultadoEvaluacion({ ...base, fechaProximaInspeccionVigenteISO: vigente })).toEqual(sinVigente);
+      }
+    },
+  );
 });

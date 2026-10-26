@@ -41,6 +41,10 @@
  * recorta al último día del mes de destino cuando ese mes es más
  * corto (31 ene + 1 mes → 28 feb, no 2/3 mar). Sumar semanas es
  * siempre exacto (7 × N días); no hay nada que recortar.
+ *
+ * CC-055 (2026-10-25): en un Monitoreo, D-202 no se renueva desde cero
+ * — ver `calcularFechaProximaInspeccionMonitoreo`. D-203 se renueva
+ * igual en todos los tipos.
  */
 
 import { ClasificacionRiesgoCodigo, esCodigoVigente } from "./catalogs";
@@ -141,6 +145,64 @@ export function calcularFechaProximaInspeccion(
       // CC-045 (b): criterio de precaución, mismos rangos que Extremo.
       return { fechaInicio: sumarSemanas(f, 1), fechaFin: sumarSemanas(f, 4), noDeterminable: false, motivo: MOTIVO_PRECAUCION_ND };
   }
+}
+
+/** Suma `dias` días de calendario a `fechaISO` (mismo criterio UTC que sumarSemanas). */
+function sumarDias(fechaISO: string, dias: number): string {
+  const [y, m, d] = fechaISO.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + dias)).toISOString().slice(0, 10);
+}
+
+export const MOTIVO_CONSERVA_VIGENTE = "se conserva la fecha vigente (CC-055)";
+export const MOTIVO_REINSPECCION_ATRASADA = "reinspección atrasada: se sugiere de inmediato (CC-055)";
+
+/**
+ * D-202 en un Monitoreo (CC-055, 2026-10-25). Un Monitoreo puede
+ * adelantar la reinspección técnica, nunca atrasarla: la sugerida es la
+ * menor entre la fecha de próxima inspección vigente del árbol y la
+ * calculada con el `nivel_riesgo` nuevo, pero nunca anterior al día
+ * siguiente a `fecha_inspeccion` (D-202 exige una fecha posterior).
+ *
+ * - Sin fecha vigente (`fechaVigenteISO = null`): la calculada, tal cual.
+ * - Vigente anterior a la calculada y posterior a `fecha_inspeccion`: la
+ *   vigente, con motivo «se conserva la fecha vigente (CC-055)».
+ * - Vigente anterior o igual a `fecha_inspeccion` (reinspección
+ *   atrasada): el día siguiente a `fecha_inspeccion`, con motivo
+ *   «reinspección atrasada: se sugiere de inmediato (CC-055)».
+ * - Vigente igual o posterior a la calculada: la calculada, tal cual
+ *   (incluido su rango y, si corresponde, el motivo de CC-045 b).
+ *
+ * La comparación es contra `fechaInicio` de la calculada (el primer día
+ * del rango sugerido). Cuando la sugerida viene de la vigente es un
+ * punto (`fechaFin = fechaInicio`): cómo se muestra el término del rango
+ * en ese caso queda para el #63. La vigente la lee la Fase 6 de
+ * `v_tree_fechas_vigentes` (migración 020) — este módulo no la busca.
+ */
+export function calcularFechaProximaInspeccionMonitoreo(
+  nivelRiesgo: ClasificacionRiesgoCodigo | null,
+  fechaInspeccionISO: string | null,
+  fechaVigenteISO: string | null,
+): FechaSugeridaResultado {
+  const calculada = calcularFechaProximaInspeccion(nivelRiesgo, fechaInspeccionISO);
+  if (calculada.noDeterminable || fechaVigenteISO === null) return calculada;
+  if (!esFechaValida(fechaVigenteISO)) {
+    return {
+      fechaInicio: null,
+      fechaFin: null,
+      noDeterminable: true,
+      motivo: `fecha de próxima inspección vigente no es una fecha de calendario válida (AAAA-MM-DD): "${fechaVigenteISO}"`,
+    };
+  }
+  // calculada.noDeterminable = false garantiza fechaInspeccionISO válida y fechaInicio con valor.
+  const f = fechaInspeccionISO as string;
+  if (fechaVigenteISO <= f) {
+    const fecha = sumarDias(f, 1);
+    return { fechaInicio: fecha, fechaFin: fecha, noDeterminable: false, motivo: MOTIVO_REINSPECCION_ATRASADA };
+  }
+  if (fechaVigenteISO < (calculada.fechaInicio as string)) {
+    return { fechaInicio: fechaVigenteISO, fechaFin: fechaVigenteISO, noDeterminable: false, motivo: MOTIVO_CONSERVA_VIGENTE };
+  }
+  return calculada;
 }
 
 /** D-203: fecha_proximo_monitoreo. */

@@ -62,6 +62,12 @@
  *     riesgo (CC-044), las fechas usan el valor ajustado (ya ocurre
  *     así: `nivel_riesgo` siempre es el riesgo efectivo).
  *
+ * CC-055 (2026-10-25): en un Monitoreo, `fecha_proxima_inspeccion`
+ * sugerida es la menor entre la vigente del árbol
+ * (`fechaProximaInspeccionVigenteISO`, que entrega la Fase 6) y la
+ * calculada, nunca anterior al día siguiente a `fecha_inspeccion`. Los
+ * demás tipos no cambian.
+ *
  * Discrepancia encontrada contra el plan aprobado (reportada, no
  * resuelta en silencio): la migración 014 NO tiene columnas
  * `fecha_proxima_inspeccion`/`fecha_proximo_monitoreo` en `evaluations`
@@ -87,7 +93,12 @@ import {
   TipoInspeccionRealizadaCodigo,
   ZonaObjetivoCodigo,
 } from "./catalogs";
-import { calcularFechaProximaInspeccion, calcularFechaProximoMonitoreo, FechaSugeridaResultado } from "./fechas-sugeridas";
+import {
+  calcularFechaProximaInspeccion,
+  calcularFechaProximaInspeccionMonitoreo,
+  calcularFechaProximoMonitoreo,
+  FechaSugeridaResultado,
+} from "./fechas-sugeridas";
 import { calcularCumplimientoDistanciaSeguridad, evaluarM04, M04Input, M04Resultado } from "./m04-infraestructura";
 import { evaluarM01 } from "./m01-probabilidad-impacto";
 import { evaluarClasificacionComponente } from "./m02-m03-clasificacion-componente";
@@ -621,6 +632,12 @@ export interface ArgsResultadoEvaluacion {
   subtipoInspeccion?: SubtipoInspeccionCodigo | null;
   ajustes?: AjustesEntrada;
   fechaInspeccionISO: string | null;
+  /**
+   * CC-055: fecha de próxima inspección vigente del árbol
+   * (`v_tree_fechas_vigentes.fecha_proxima_inspeccion`), o null si no
+   * tiene. Solo se usa en Monitoreo; en los demás tipos se ignora.
+   */
+  fechaProximaInspeccionVigenteISO?: string | null;
   motorCommit: string;
 }
 
@@ -683,7 +700,16 @@ export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): Res
   const nucleo = calcularNucleo(args.variablesCalculo);
   const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes);
 
-  const fechaProximaInspeccionSugerida = calcularFechaProximaInspeccion(resolucion.riesgoEfectivo, args.fechaInspeccionISO);
+  // CC-055: Monitoreo puede adelantar la reinspección, nunca atrasarla;
+  // los demás tipos la renuevan desde el riesgo nuevo, como antes.
+  const fechaProximaInspeccionSugerida =
+    args.tipoInspeccionRealizada === "monitoreo"
+      ? calcularFechaProximaInspeccionMonitoreo(
+          resolucion.riesgoEfectivo,
+          args.fechaInspeccionISO,
+          args.fechaProximaInspeccionVigenteISO ?? null,
+        )
+      : calcularFechaProximaInspeccion(resolucion.riesgoEfectivo, args.fechaInspeccionISO);
   const fechaProximoMonitoreoSugerida = calcularFechaProximoMonitoreo(resolucion.riesgoEfectivo, args.fechaInspeccionISO);
 
   return {
