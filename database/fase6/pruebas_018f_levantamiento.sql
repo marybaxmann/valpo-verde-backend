@@ -78,8 +78,8 @@ DECLARE
   v_tree record;
   v_alta record;
 BEGIN
-  v_inspector := pg_temp.crear_usuario_prueba('inspector-018f@sivu.example.test', 'inspector', 'Inspector de prueba (018f)');
-  v_no_inspector := pg_temp.crear_usuario_prueba('municipal-018f@sivu.example.test', 'usuario_municipal', 'Usuario municipal de prueba (018f)');
+  v_inspector := pg_temp.crear_usuario_prueba(p_email => 'inspector-018f@sivu.example.test', p_rol => 'inspector', p_nombre => 'Inspector de prueba (018f)');
+  v_no_inspector := pg_temp.crear_usuario_prueba(p_email => 'municipal-018f@sivu.example.test', p_rol => 'usuario_municipal', p_nombre => 'Usuario municipal de prueba (018f)');
 
   INSERT INTO projects (nombre_proyecto) VALUES ('018f prueba') RETURNING id INTO v_project_id;
   INSERT INTO sectors (project_id, nombre_sector, geometria_sector) VALUES (

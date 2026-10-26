@@ -1,7 +1,12 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 19 — migración 020 (2026-10-25; #59/#72; CC-054,
+--   (revisión 20 — migración 021 (2026-10-25; CC-055): criterio único
+--   de «la última» inspección (fecha_completada_ot, fecha_inspeccion,
+--   inspections.created_at) en fn_refresh_tree_current y
+--   v_tree_current_inputs, copiados de lo aplicado en
+--   `valpo-verde-conecta-pruebas`;
+--   antes revisión 19 — migración 020 (2026-10-25; #59/#72; CC-054,
 --   CC-055): vista v_tree_fechas_vigentes, tipo
 --   evaluations_resultado_input y fn_finalizar_inspeccion (SQLSTATE
 --   SV064), copiados de lo aplicado en `valpo-verde-conecta-pruebas`
@@ -1691,13 +1696,19 @@ GRANT EXECUTE ON FUNCTION fn_create_tree_alta(uuid, uuid, text, text, numeric, n
 -- renombre del catálogo se propaga con solo volver a correr esta
 -- función), o desde el texto de la versión cuando no; species_id se
 -- resuelve con el mismo criterio de vigencia que el resto de campos.
+--
+-- Migración 021 (CC-055; REGLAS_GENERALES fila 13): «la más reciente» es
+-- fecha_completada_ot DESC, luego fecha_inspeccion DESC, luego
+-- inspections.created_at DESC (antes: fecha_completada_ot y
+-- tree_data_versions.created_at).
 CREATE FUNCTION fn_refresh_tree_current(p_tree_id UUID) RETURNS void
 LANGUAGE plpgsql
 SET search_path = public, pg_temp
 AS $$
 BEGIN
   WITH validas AS (
-    SELECT tdv.*, wo.fecha_completada_ot AS ot_fecha_completada,
+    SELECT tdv.*, wo.fecha_completada_ot AS ot_fecha_completada, i.fecha_inspeccion AS insp_fecha_inspeccion,
+           i.created_at AS insp_created_at,
            COALESCE(s.especie_cientifica, tdv.especie_cientifica) AS especie_resuelta
     FROM tree_data_versions tdv
     JOIN inspections i ON i.id = tdv.inspection_id
@@ -1715,69 +1726,69 @@ BEGIN
   )
   UPDATE trees t SET
     sector = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'sector' = ANY(v.campos_registrados))
-      THEN (SELECT v.sector FROM validas v WHERE 'sector' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.sector FROM validas v WHERE 'sector' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.sector FROM alta a) END,
     ubicacion_descriptiva = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'ubicacion_descriptiva' = ANY(v.campos_registrados))
-      THEN (SELECT v.ubicacion_descriptiva FROM validas v WHERE 'ubicacion_descriptiva' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.ubicacion_descriptiva FROM validas v WHERE 'ubicacion_descriptiva' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.ubicacion_descriptiva FROM alta a) END,
     utm_este = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'utm_este' = ANY(v.campos_registrados))
-      THEN (SELECT v.utm_este FROM validas v WHERE 'utm_este' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.utm_este FROM validas v WHERE 'utm_este' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.utm_este FROM alta a) END,
     utm_norte = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'utm_norte' = ANY(v.campos_registrados))
-      THEN (SELECT v.utm_norte FROM validas v WHERE 'utm_norte' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.utm_norte FROM validas v WHERE 'utm_norte' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.utm_norte FROM alta a) END,
     especie_cientifica = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados))
-      THEN (SELECT v.especie_resuelta FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.especie_resuelta FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.especie_resuelta FROM alta a) END,
     species_id = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados))
-      THEN (SELECT v.species_id FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.species_id FROM validas v WHERE 'especie_cientifica' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.species_id FROM alta a) END,
     nombre_comun = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'nombre_comun' = ANY(v.campos_registrados))
-      THEN (SELECT v.nombre_comun FROM validas v WHERE 'nombre_comun' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.nombre_comun FROM validas v WHERE 'nombre_comun' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.nombre_comun FROM alta a) END,
     multifustal = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'multifustal' = ANY(v.campos_registrados))
-      THEN (SELECT v.multifustal FROM validas v WHERE 'multifustal' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.multifustal FROM validas v WHERE 'multifustal' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.multifustal FROM alta a) END,
     numero_fustes = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'numero_fustes' = ANY(v.campos_registrados))
-      THEN (SELECT v.numero_fustes FROM validas v WHERE 'numero_fustes' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.numero_fustes FROM validas v WHERE 'numero_fustes' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.numero_fustes FROM alta a) END,
     dap_fustes_cm = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'dap_fustes_cm' = ANY(v.campos_registrados))
-      THEN (SELECT v.dap_fustes_cm FROM validas v WHERE 'dap_fustes_cm' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.dap_fustes_cm FROM validas v WHERE 'dap_fustes_cm' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.dap_fustes_cm FROM alta a) END,
     dap_cm = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'dap_cm' = ANY(v.campos_registrados))
-      THEN (SELECT v.dap_cm FROM validas v WHERE 'dap_cm' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.dap_cm FROM validas v WHERE 'dap_cm' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.dap_cm FROM alta a) END,
     altura_total_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_total_m' = ANY(v.campos_registrados))
-      THEN (SELECT v.altura_total_m FROM validas v WHERE 'altura_total_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.altura_total_m FROM validas v WHERE 'altura_total_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.altura_total_m FROM alta a) END,
     diametro_copa_ns_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'diametro_copa_ns_m' = ANY(v.campos_registrados))
-      THEN (SELECT v.diametro_copa_ns_m FROM validas v WHERE 'diametro_copa_ns_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.diametro_copa_ns_m FROM validas v WHERE 'diametro_copa_ns_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.diametro_copa_ns_m FROM alta a) END,
     diametro_copa_eo_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'diametro_copa_eo_m' = ANY(v.campos_registrados))
-      THEN (SELECT v.diametro_copa_eo_m FROM validas v WHERE 'diametro_copa_eo_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.diametro_copa_eo_m FROM validas v WHERE 'diametro_copa_eo_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.diametro_copa_eo_m FROM alta a) END,
     copa_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'copa_no_presenta' = ANY(v.campos_registrados))
-      THEN (SELECT v.copa_no_presenta FROM validas v WHERE 'copa_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.copa_no_presenta FROM validas v WHERE 'copa_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.copa_no_presenta FROM alta a) END,
     altura_primera_rama_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_primera_rama_m' = ANY(v.campos_registrados))
-      THEN (SELECT v.altura_primera_rama_m FROM validas v WHERE 'altura_primera_rama_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.altura_primera_rama_m FROM validas v WHERE 'altura_primera_rama_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.altura_primera_rama_m FROM alta a) END,
     altura_primera_rama_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_primera_rama_no_presenta' = ANY(v.campos_registrados))
-      THEN (SELECT v.altura_primera_rama_no_presenta FROM validas v WHERE 'altura_primera_rama_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.altura_primera_rama_no_presenta FROM validas v WHERE 'altura_primera_rama_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.altura_primera_rama_no_presenta FROM alta a) END,
     altura_base_copa_viva_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados))
-      THEN (SELECT v.altura_base_copa_viva_m FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.altura_base_copa_viva_m FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.altura_base_copa_viva_m FROM alta a) END,
     altura_base_copa_viva_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados))
-      THEN (SELECT v.altura_base_copa_viva_no_presenta FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.altura_base_copa_viva_no_presenta FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.altura_base_copa_viva_no_presenta FROM alta a) END,
     clase_edad = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados))
-      THEN (SELECT v.clase_edad FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.clase_edad FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.clase_edad FROM alta a) END,
     rango_edad_estimada_anios = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados))
-      THEN (SELECT v.rango_edad_estimada_anios FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+      THEN (SELECT v.rango_edad_estimada_anios FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.rango_edad_estimada_anios FROM alta a) END,
-    vigente_desde_inspection_id = (SELECT v.inspection_id FROM validas v ORDER BY v.ot_fecha_completada DESC, v.created_at DESC LIMIT 1)
+    vigente_desde_inspection_id = (SELECT v.inspection_id FROM validas v ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
   WHERE t.id = p_tree_id;
 END;
 $$;
@@ -3577,13 +3588,17 @@ LEFT JOIN evaluations e ON e.inspection_id = i.id;
 -- Entradas vigentes de REGISTRO_EVALUACION, compuestas campo por campo
 -- desde evaluations.variables (CC-040; RG "Historial y vigencia").
 -- entradas_vigentes: el valor más reciente de cada clave;
--- origen_por_campo: la inspección que lo aportó.
+-- origen_por_campo: la inspección que lo aportó. «La más reciente»
+-- (migración 021; CC-055): fecha_completada_ot DESC, fecha_inspeccion
+-- DESC, inspections.created_at DESC.
 CREATE VIEW v_tree_current_inputs WITH (security_invoker = true) AS
 WITH validas AS (
   SELECT
     e.tree_id,
     e.inspection_id,
     wo.fecha_completada_ot,
+    i.fecha_inspeccion,
+    i.created_at,
     kv.key,
     kv.value
   FROM evaluations e
@@ -3596,7 +3611,7 @@ WITH validas AS (
 ranked AS (
   SELECT
     tree_id, key, value, inspection_id,
-    ROW_NUMBER() OVER (PARTITION BY tree_id, key ORDER BY fecha_completada_ot DESC) AS rn
+    ROW_NUMBER() OVER (PARTITION BY tree_id, key ORDER BY fecha_completada_ot DESC, fecha_inspeccion DESC, created_at DESC) AS rn
   FROM validas
 )
 SELECT
