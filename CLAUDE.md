@@ -26,7 +26,7 @@ Ninguna decisión es permanente.
 
 ### Producto, funcional y UX
 
-Jerarquía única de fuentes (PR-016 v6.0; CC-021, CC-023, CC-025). Ante contradicción manda el nivel superior:
+Jerarquía única de fuentes (PR-016 v7.0; CC-021, CC-023, CC-025, CC-057). Ante contradicción manda el nivel superior:
 
 1. metodología y fuentes vigentes (PR-002);
 2. decisiones controladas (ADR, PR, CC);
@@ -36,7 +36,7 @@ Jerarquía única de fuentes (PR-016 v6.0; CC-021, CC-023, CC-025). Ante contrad
 6. referencias visuales aprobadas — solo UX/UI.
 
 - `marybaxmann/Valpo-Verde-Conecta` y el Figma original (`valpo-verde-frontend/docs/referencias/figma-original/`) = referencias históricas de intención funcional; no restablecen decisiones posteriormente modificadas.
-- Referencia visual principal aprobada (PR-016 v6.0, CC-025): prototipo SIVU Territorio — `valpo-verde-frontend`, rama `prototype/sivu-territorio-v1` (`c852104`), `prototypes/sivu-territorio-lab/`. Solo dirección visual; no es implementación funcional. `03_CityDashboardsButton.jpg` queda como antecedente complementario.
+- Referencia visual principal aprobada (PR-016 v7.0, CC-057): maqueta SIVU Lab — `valpo-verde-frontend`, rama `prototype/sivu-maqueta-lab` (`6817fb2`), `prototypes/sivu-maqueta-lab/`. Solo dirección visual; no es implementación funcional. De ella solo se copia presentación sin datos (CC-058). SIVU Territorio (`c852104`) y `03_CityDashboardsButton.jpg` quedan como antecedentes.
 - `valpo-verde-frontend` = nombre previsto para el frontend productivo futuro. No asumir que hoy son el mismo repositorio.
 - El prototipo no define metodología ni estructura definitiva de base de datos.
 

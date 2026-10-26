@@ -1916,9 +1916,11 @@ Afecta:
 - UX
 - documentación
 
-## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v6.0)
-Estado: vigente
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v6.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 6.0
+Reemplazada por: PR-016 v7.0
+Motivo del reemplazo: la maqueta «SIVU Lab» reemplaza a «SIVU Territorio» como referencia visual principal, se permite copiar solo presentación sin datos y se actualizan los roles (CC-057, CC-058).
 Reemplaza: PR-016 v5.0
 Origen: CC-025
 
@@ -1972,6 +1974,75 @@ Roles:
 
 Cartografía:
 - La imagen aérea del prototipo (Esri/Maxar) es material de terceros. No se versiona en repositorios públicos y su único uso es la revisión local.
+- El frontend productivo usa la cartografía de la arquitectura SIG vigente (ADR-015, CC-019): ArcGIS solo para representar, con la atribución que exige el proveedor, y sin imágenes fijas descargadas.
+- Cualquier imagen o capa nueva debe tener una licencia compatible con un repositorio público, o quedar fuera de él, documentada.
+
+Los diagramas de decisión metodológicos no son referencias de UI: pertenecen al paquete metodológico (PR-002).
+
+Afecta:
+- frontend
+- UX
+- documentación
+
+## PR-016 — Jerarquía de fuentes de producto y referencias visuales (v7.0)
+Estado: vigente
+Versión: 7.0
+Reemplaza: PR-016 v6.0
+Origen: CC-057, CC-058
+
+Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
+
+1. Metodología y fuentes vigentes — paquete metodológico (PR-002).
+2. Decisiones controladas — ADR, PR y CC.
+3. Backend y API vigentes.
+4. Documentación vigente del proyecto.
+5. Figma y prototipo histórico (`marybaxmann/Valpo-Verde-Conecta`) — solo intención funcional (PR-001 v3.0).
+6. Referencias visuales aprobadas — solo UX/UI.
+
+Las referencias de los niveles 5 y 6 nunca definen lógica, metodología, reglas de negocio, estructura de datos ni permisos, y no pueden prevalecer sobre una decisión posterior. El Excel maestro "Base de Datos Valpo Verde" (paquete metodológico, PR-002) conserva su autoridad sobre los campos y las reglas que documenta: ningún elemento de una referencia visual lo sustituye.
+
+Referencia visual principal (CC-057): maqueta "SIVU Lab" — repositorio `valpo-verde-frontend`, rama `prototype/sivu-maqueta-lab`, carpeta `prototypes/sivu-maqueta-lab/`. Línea base aprobada: commit `6817fb2`.
+- Define la dirección visual: composición, navegación, tipografía, color, densidad, estados visuales y el diseño de la pantalla de acceso.
+- La aprobación corresponde a la dirección visual, no a cada componente, contenido o interacción particular.
+- No es una implementación funcional terminada.
+- Sus ajustes visuales posteriores pueden continuar dentro del proceso de diseño, validados con la autora, sin considerarse cambios funcionales aprobados.
+- Lo que propone y no está aprobado queda fuera hasta tener su propio CC: el módulo Valpo Verde Conecta y la vista ciudadana (CC-062), el nombre "Riesgo Arbóreo" y el módulo Inspección separado (CC-060, CC-061), "¿Olvidaste tu contraseña?" y el acceso a Conecta en el login, y la reorganización de la navegación (CC-059).
+- Sus catálogos, estados, acciones por rol y textos corresponden a la base maestra del 2026-10-17 y a CC-022: nunca prevalecen sobre la API ni sobre la base vigente (por ejemplo, "Vencida" no es un estado de OT; "Coordenadas WGS84" no es lo vigente; el Usuario municipal no registra evaluaciones, PR-003 v8.0).
+- Sus datos ficticios (`mock.ts`, `lab.ts`, `conecta.ts`) nunca pasan al código productivo.
+
+Antecedentes visuales: el prototipo "SIVU Territorio" (rama `prototype/sivu-territorio-v1`, carpeta `prototypes/sivu-territorio-lab/`, commit `c852104`; referencia principal en PR-016 v6.0) y `valpo-verde-frontend/docs/referencias/visuales/03_CityDashboardsButton.jpg` (composición mapa–paneles, densidad informativa).
+
+Referencias visuales complementarias (inspiración UX/UI, CC-023), sin cambio. Son material de terceros: se conservan fuera del repositorio público y se describen aquí por lo que aportan.
+- Vista de árbol de Groundzy (escritorio y móvil): ficha lateral del ejemplar con pestañas, mediciones con íconos, pines legibles sobre mapa satelital, barra de herramientas sobre el mapa. Se reincorpora como idea concreta, según lo previsto en PR-016 v4.0.
+- Tablero agrícola en tablet (mapa satelital con parcelas): tarjeta de resumen flotante sobre el mapa con barras de estado.
+- Farm Management System: gráficos de dona con porcentajes y tarjetas de indicadores tintadas por categoría.
+- Wisetown (tablero de áreas verdes): barras horizontales ordenadas y gráficos de evolución.
+
+Reglas de uso de las referencias complementarias:
+- Se adaptan a la arquitectura, los módulos y los datos de SIVU; no se copian su identidad, marca, nombres ni composición literal (por ejemplo, el botón verde lima y la barra en píldora de Groundzy).
+- La paleta oficial de riesgo (Bajo `#DCE8A9`, Moderado `#F9B52B`, Alto `#F04A32`, Extremo `#C7252B`) no se modifica y se usa solo para el riesgo. Los colores de módulo evitan esos tonos.
+- No se incorporan elementos que impliquen funciones o resultados que SIVU no calcula (por ejemplo, recomendaciones automáticas tipo "AI insight").
+- Los gráficos se usan solo cuando aportan a la lectura del módulo y siempre con datos reales.
+- Antes de rediseñar la interfaz se valida una maqueta visual con la autora.
+
+Reglas de integración del prototipo:
+1. La adaptación es progresiva, módulo por módulo. Cada módulo se integra por separado sobre `main`, con revisión y validación de la autora.
+2. El rediseño UX/UI no modifica por sí mismo módulos, campos, rutas, funcionalidades, permisos ni reglas de negocio.
+   - Se conservan todos los módulos existentes y sus capacidades.
+   - Pueden reorganizarse visualmente o cambiar su nombre visible solo con aprobación previa de la autora.
+   - Las decisiones funcionales pendientes (por ejemplo CC-015, CC-020 o DA-01 a DA-04) evolucionan solo mediante su propio procedimiento de control de cambios.
+3. Si el prototipo muestra un campo, dato, acción o texto que no coincide con lo vigente (por ejemplo, "Coordenadas WGS84"), manda lo vigente. La diferencia se registra como pendiente y no se implementa.
+4. Esta referencia no autoriza a incorporar al frontend productivo datos ficticios, campos no validados ni reglas metodológicas provisionales. Los datos de ejemplo del prototipo (`mock.ts`, `lab.ts`, `conecta.ts`) nunca pasan al código productivo; los gráficos y los indicadores se construyen solo con datos de la API.
+5. La aplicación productiva no importa código desde `prototypes/`. Del prototipo de referencia pueden copiarse, adaptados a la arquitectura productiva, solo elementos de presentación sin datos: valores de diseño (colores, tipografía, espaciado, radios, sombras), recursos gráficos propios de la autora (logo y fotografía), hojas de estilo de presentación e íconos SVG. Los componentes con lógica o datos se reescriben. Los datos de ejemplo, los catálogos, las acciones por rol y los módulos no aprobados nunca se copian (en la maqueta Lab: `mock.ts`, `lab.ts`, `conecta.ts`, `conecta.css`, `Conecta.tsx`, `Citizen.tsx`, `nav.ts` y la imagen aérea). Cada commit que incorpore material copiado lo indica en su mensaje (CC-058).
+
+Roles:
+- SIVU tiene cuatro roles: Administrador, Usuario municipal, Inspector y Encargado de mantención (CC-026; identificadores `admin`, `usuario_municipal`, `inspector` y `encargado_mantencion`, CC-032). Cada usuario tiene un solo rol global (AMD-31). Sus permisos están en PR-003, PR-004, PR-019 y PR-020.
+- La maqueta representa solo dos roles (Administrador y Usuario municipal, CC-022), y sus acciones por rol no se usan: la interfaz muestra a cada rol solo los módulos y acciones que le permiten las reglas vigentes (CC-059).
+- La interfaz integrada se adapta al rol que confirma el backend; la seguridad la decide el backend.
+- El selector "Ver como" es un recurso de revisión del prototipo, no una función.
+
+Cartografía:
+- La imagen aérea de la maqueta (Esri/Maxar) es material de terceros. No se versiona en repositorios públicos y su único uso es la revisión local.
 - El frontend productivo usa la cartografía de la arquitectura SIG vigente (ADR-015, CC-019): ArcGIS solo para representar, con la atribución que exige el proveedor, y sin imágenes fijas descargadas.
 - Cualquier imagen o capa nueva debe tener una licencia compatible con un repositorio público, o quedar fuera de él, documentada.
 
@@ -2037,9 +2108,11 @@ Afecta:
 - backend
 - seguridad
 
-## PR-018 — Autenticación (v3.0)
-Estado: vigente
+## PR-018 — Autenticación (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
+Reemplazada por: PR-018 v4.0
+Motivo del reemplazo: agrega las lecturas públicas sin sesión de Valpo Verde Conecta (ficha pública y seguimiento) mediante funciones de solo lectura (CC-062).
 Reemplaza: PR-018 v2.0
 Origen: CC-033
 Motivo: las escrituras pasan solo por el backend (DA-01), que escribe con la credencial de servicio después de autorizar (ADR-014 v2.0).
@@ -2056,6 +2129,42 @@ La autorización tiene dos capas: backend (`authorization.service.ts`) y RLS en 
 - **Escrituras:** solo por el backend. Después de su autorización funcional y de las validaciones, el backend escribe con la credencial de servicio. Las RLS no permiten escrituras directas a los roles de sesión (`authenticated`, `anon`) en las tablas de datos.
 - **Autor:** el backend registra explícitamente quién crea o modifica cada fila con el usuario autenticado; no depende de valores por defecto de la sesión.
 - **Formulario ciudadano (PR-022):** endpoint público del backend, sin sesión, que escribe con la credencial de servicio después de validar y limitar las solicitudes.
+
+`SUPABASE_SERVICE_ROLE_KEY` (credencial de servicio) solo existe en las variables de entorno del servidor del backend. Nunca llega al frontend y nunca queda en el repositorio: no aparece en el código, en `.env.example`, en registros ni en respuestas de la API.
+
+Contrato del frontend (repositorio separado, `valpo-verde-frontend`):
+- obtiene su sesión/JWT mediante Supabase Auth directamente;
+- envía `Authorization: Bearer <JWT>` al backend en cada request;
+- NUNCA usa ni contiene la credencial de servicio; puede usar la `anon`/publishable key para su propia sesión de Supabase Auth;
+- no escribe directamente en Supabase: toda escritura pasa por la API;
+- el backend determina `req.user` y los permisos; el frontend no decide seguridad, solo adapta la UI según el rol confirmado (p. ej. vía `GET /api/auth/me`).
+
+Afecta:
+- frontend
+- backend
+- seguridad
+- RLS
+
+## PR-018 — Autenticación (v4.0)
+Estado: vigente
+Versión: 4.0
+Reemplaza: PR-018 v3.0
+Origen: CC-033, CC-062
+Motivo: la ficha pública y el seguimiento de Valpo Verde Conecta son lecturas sin sesión; se leen con funciones de solo lectura que devuelven solo la proyección permitida (CC-062).
+
+Login mediante Supabase Auth desde frontend.
+
+No implementar `POST /api/auth/login` en Express.
+
+Backend valida JWT recibido.
+
+La autorización tiene dos capas: backend (`authorization.service.ts`) y RLS en Supabase/Postgres.
+
+- **Lecturas:** el backend consulta Supabase con el JWT del usuario (`createUserScopedClient`) y las RLS filtran por proyecto y rol.
+- **Escrituras:** solo por el backend. Después de su autorización funcional y de las validaciones, el backend escribe con la credencial de servicio. Las RLS no permiten escrituras directas a los roles de sesión (`authenticated`, `anon`) en las tablas de datos.
+- **Autor:** el backend registra explícitamente quién crea o modifica cada fila con el usuario autenticado; no depende de valores por defecto de la sesión.
+- **Formulario ciudadano (PR-022):** endpoint público del backend, sin sesión, que escribe con la credencial de servicio después de validar y limitar las solicitudes.
+- **Lecturas públicas (PR-022 v2.0, CC-062):** única excepción a la regla de lecturas. La ficha pública del árbol y el seguimiento de un reporte se leen, desde endpoints públicos del backend con límite de solicitudes, con funciones `SECURITY DEFINER` de solo lectura, con `search_path` fijo y `EXECUTE` solo para `service_role`, que devuelven únicamente la proyección permitida. `anon` no tiene privilegios sobre tablas, vistas ni funciones.
 
 `SUPABASE_SERVICE_ROLE_KEY` (credencial de servicio) solo existe en las variables de entorno del servidor del backend. Nunca llega al frontend y nunca queda en el repositorio: no aparece en el código, en `.env.example`, en registros ni en respuestas de la API.
 
@@ -2251,9 +2360,11 @@ Afecta:
 - frontend
 - tests
 
-## PR-022 — Incidencias ciudadanas y datos del reportante (v1.0)
-Estado: vigente
+## PR-022 — Incidencias ciudadanas y datos del reportante (v1.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 1.0
+Reemplazada por: PR-022 v2.0
+Motivo del reemplazo: agrega Valpo Verde Conecta sin cuentas ciudadanas: placas QR, ficha pública y código de seguimiento (CC-062).
 Origen: CC-036
 Motivo: definir el canal de reporte ciudadano, la protección de los datos del reportante y el tratamiento de "Requiere antecedentes" (Fases 1 y 2, 2026-10-20).
 
@@ -2277,6 +2388,50 @@ Requiere antecedentes:
 - No significa pedirle información al reportante: el Inspector confirma en terreno el estado del árbol.
 - El Usuario municipal crea una OT de Inspección del árbol vinculada a la incidencia mediante `id_incidencia`; elige la `Accion_solicitada` entre las de Inspección (no se fija). Con el resultado de esa inspección registra Validada o Descartada.
 - Si la incidencia validada requiere mantenimiento, la OT de Mantenimiento también se vincula con `id_incidencia`.
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+- RLS
+## PR-022 — Incidencias ciudadanas y datos del reportante (v2.0)
+Estado: vigente
+Versión: 2.0
+Reemplaza: PR-022 v1.0
+Origen: CC-036, CC-062
+Motivo: participación ciudadana (Valpo Verde Conecta) sin cuentas ciudadanas ni datos personales nuevos: placas QR, ficha pública y código de seguimiento (CC-062), sobre el canal de reporte y la protección de los datos del reportante de PR-022 v1.0 (CC-036).
+
+Ingreso:
+- Toda incidencia entra por el código QR de un árbol (AMD-34), mediante un formulario público, sin cuenta ciudadana.
+- `id_arbol` y `ubicacion` se obtienen del árbol del QR. `origen_reporte` = Comunidad.
+- El reportante ingresa nombre (máximo 100 caracteres), RUT, tipo de incidencia, descripción y al menos una fotografía (PR-010 v3.0).
+- El RUT se valida en estructura y dígito verificador.
+- El endpoint público limita la cantidad de solicitudes y valida las fotografías. Escribe por el backend con la credencial de servicio (PR-018 v4.0).
+- Las fotografías ciudadanas siguen CC-049: se guardan sin metadatos, se conservan si el reporte se valida y se eliminan si se descarta.
+- Al reportar, la persona recibe un código de seguimiento (ver «Valpo Verde Conecta»).
+
+Visibilidad del nombre y del RUT:
+- Solo los ve el Usuario municipal miembro del proyecto del árbol.
+- No los ven el Administrador, el Inspector ni el Encargado de mantención. La API no los entrega en sus respuestas a esos roles, ni aparecen en exportaciones ni registros.
+
+Conservación del nombre y del RUT:
+- Se conservan hasta que la incidencia se aprueba o se rechaza (`resultado_revision` = Validada o Descartada), y en ese momento se eliminan los dos.
+- Con `resultado_revision` = Requiere antecedentes se conservan hasta la resolución final (Validada o Descartada).
+- No se registra ningún dato de contacto del reportante.
+
+Requiere antecedentes:
+- No significa pedirle información al reportante: el Inspector confirma en terreno el estado del árbol.
+- El Usuario municipal crea una OT de Inspección del árbol vinculada a la incidencia mediante `id_incidencia`; elige la `Accion_solicitada` entre las de Inspección (no se fija). Con el resultado de esa inspección registra Validada o Descartada.
+- Si la incidencia validada requiere mantenimiento, la OT de Mantenimiento también se vincula con `id_incidencia`.
+
+Valpo Verde Conecta (CC-062):
+- No existen cuentas ni un rol ciudadano.
+- Placas QR: cada árbol se identifica en su placa por `qr_token` (aleatorio; nunca el `tree_code`, que es correlativo). Un UUID aleatorio basta porque no es secreto: está impreso en la placa. Las placas las genera el Usuario municipal desde el proyecto, en un archivo imprimible.
+- Ficha pública del árbol (por `qr_token`): muestra `especie_cientifica`, `nombre_comun` y `ubicacion_descriptiva`. No muestra el nivel de riesgo ni ningún otro resultado técnico, ni el `tree_code`, las coordenadas, el proyecto, inspecciones, fotos o incidencias.
+- «Sobre esta especie»: solo los campos de CATALOGO_ESPECIES (`especie_cientifica`, `genero`, `familia`, `origen_biogeografico`, `persistencia_follaje`, `tipo_hoja`), con sus reglas de presentación del Excel. Un texto editorial nuevo requiere otro CC.
+- Código de seguimiento: se entrega una sola vez al reportar y permite consultar solo el estado del reporte (`estado_incidencia`), sin datos personales. Es aleatorio, de al menos 128 bits, generado con un generador criptográfico; la base guarda solo su huella. Se consulta por el cuerpo de la solicitud, nunca en la URL, con un límite de 30 consultas por hora por IP; un código inexistente, vencido o mal formado recibe la misma respuesta. Sigue funcionando 90 días después de que el reporte queda Resuelto o Descartado; después se borra su huella.
+- La ficha y el seguimiento se leen con funciones de solo lectura (PR-018 v4.0).
 
 Afecta:
 - frontend
