@@ -4,6 +4,8 @@ import { supabaseAdmin } from "../../config/supabase";
 export const SQLSTATE_BORRADOR_INSPECCION = "SV058";
 /** SQLSTATE propio del alta (reutilizado por 018f para el árbol nuevo en Levantamiento). */
 export const SQLSTATE_ALTA_ARBOL = "SV057";
+/** SQLSTATE propio de `fn_finalizar_inspeccion` (020; #59/#72). */
+export const SQLSTATE_FINALIZAR_INSPECCION = "SV064";
 
 export interface CamposArbol {
   sector?: string | null;
@@ -133,4 +135,147 @@ export async function obtenerInspeccionPorId(inspectionId: string): Promise<Insp
   }
 
   return (data as InspeccionRow | null) ?? null;
+}
+
+// ---------------------------------------------------------------------
+// Cierre de la inspección (#59/#72; CC-054, CC-055, CC-056): lecturas
+// para /calcular y /finalizar, y la única escritura de /finalizar.
+// ---------------------------------------------------------------------
+
+/** Campos de ARBOLES que guardan `trees` y `tree_data_versions` (los 20 de `CamposArbol`). */
+const COLUMNAS_ARBOL =
+  "sector, ubicacion_descriptiva, utm_este, utm_norte, especie_cientifica, nombre_comun, multifustal, numero_fustes, dap_fustes_cm, dap_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, copa_no_presenta, altura_primera_rama_m, altura_primera_rama_no_presenta, altura_base_copa_viva_m, altura_base_copa_viva_no_presenta, clase_edad, rango_edad_estimada_anios";
+
+/** `evaluations.variables` del borrador de esta inspección; null si todavía no tiene evaluación. */
+export async function obtenerVariablesBorrador(inspectionId: string): Promise<Record<string, unknown> | null> {
+  const { data, error } = await supabaseAdmin
+    .from("evaluations")
+    .select("variables")
+    .eq("inspection_id", inspectionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return (data?.variables as Record<string, unknown> | undefined) ?? null;
+}
+
+export interface VersionArbolInspeccion {
+  campos: Record<string, unknown>;
+  camposRegistrados: string[];
+}
+
+/** Fila de `tree_data_versions` de esta inspección (lo que registró del árbol); null si no registró nada. */
+export async function obtenerVersionArbolDeInspeccion(inspectionId: string): Promise<VersionArbolInspeccion | null> {
+  const { data, error } = await supabaseAdmin
+    .from("tree_data_versions")
+    .select(`campos_registrados, ${COLUMNAS_ARBOL}`)
+    .eq("inspection_id", inspectionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+  if (!data) return null;
+
+  const { campos_registrados, ...campos } = data as Record<string, unknown> & { campos_registrados: string[] | null };
+  return { campos, camposRegistrados: campos_registrados ?? [] };
+}
+
+/** Valores vigentes del árbol (`trees`); null si el árbol no existe. */
+export async function obtenerArbolVigente(treeId: string): Promise<Record<string, unknown> | null> {
+  const { data, error } = await supabaseAdmin.from("trees").select(COLUMNAS_ARBOL).eq("id", treeId).maybeSingle();
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return (data as Record<string, unknown> | null) ?? null;
+}
+
+/**
+ * `v_tree_current_inputs.entradas_vigentes`: el último valor de cada
+ * variable de REGISTRO_EVALUACION registrado por una OT Completada
+ * (021). Árbol sin inspecciones vigentes: objeto vacío.
+ */
+export async function obtenerEntradasVigentes(treeId: string): Promise<Record<string, unknown>> {
+  const { data, error } = await supabaseAdmin
+    .from("v_tree_current_inputs")
+    .select("entradas_vigentes")
+    .eq("tree_id", treeId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return (data?.entradas_vigentes as Record<string, unknown> | undefined) ?? {};
+}
+
+/** `v_tree_fechas_vigentes.fecha_proxima_inspeccion` (020; CC-055); null si el árbol no tiene. */
+export async function obtenerFechaProximaInspeccionVigente(treeId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from("v_tree_fechas_vigentes")
+    .select("fecha_proxima_inspeccion")
+    .eq("tree_id", treeId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return (data?.fecha_proxima_inspeccion as string | null | undefined) ?? null;
+}
+
+export interface AjusteFinalizacion {
+  campo: "clasificacion_riesgo" | "clasificacion_infraestructura" | "clasificacion_prioridad";
+  valor_calculado: string;
+  valor_ajustado: string;
+  justificacion_ajuste_clasificacion: string;
+}
+
+export interface FinalizarInspeccionInput {
+  inspectionId: string;
+  usuario: string;
+  /** Forma de `evaluations_resultado_input` (020). */
+  resultado: Record<string, unknown>;
+  ajustes: AjusteFinalizacion[];
+  fechaProximaInspeccionSugerida: string;
+  fechaProximoMonitoreoSugerida: string;
+  fechaProximaInspeccion: string;
+  fechaProximoMonitoreo: string;
+  justificacionAjusteFecha: string | null;
+}
+
+export interface FinalizarInspeccionResultado {
+  inspection_id: string;
+  evaluation_id: string;
+  estado_registro: "finalizado";
+  species_id: string | null;
+}
+
+/**
+ * Invoca `fn_finalizar_inspeccion` (020) con `service_role`, UNA sola
+ * vez, cuando el service ya verificó que todo está completo (CC-054).
+ * Parámetros siempre por nombre.
+ */
+export async function finalizarInspeccion(input: FinalizarInspeccionInput): Promise<FinalizarInspeccionResultado> {
+  const { data, error } = await supabaseAdmin.rpc("fn_finalizar_inspeccion", {
+    p_inspection_id: input.inspectionId,
+    p_usuario: input.usuario,
+    p_resultado: input.resultado,
+    p_ajustes: input.ajustes,
+    p_fecha_proxima_inspeccion_sugerida: input.fechaProximaInspeccionSugerida,
+    p_fecha_proximo_monitoreo_sugerida: input.fechaProximoMonitoreoSugerida,
+    p_fecha_proxima_inspeccion: input.fechaProximaInspeccion,
+    p_fecha_proximo_monitoreo: input.fechaProximoMonitoreo,
+    p_justificacion_ajuste_fecha: input.justificacionAjusteFecha,
+  });
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+
+  return data as unknown as FinalizarInspeccionResultado;
 }
