@@ -125,7 +125,8 @@ creado.
     Administrador: todas las del proyecto; Encargado de mantención: no,
     en las de Inspección). Pendiente.
   - **B4 — listar las OT asignadas al usuario** (CC-061, aprobado):
-    solo OT de proyectos con acceso. Pendiente.
+    solo OT de proyectos con acceso, de todos sus proyectos, con filtros
+    opcionales por proyecto y por estado (CC-064, puntos k y n). Pendiente.
 
 ## Frontend productivo (próximo bloque, no iniciado)
 
