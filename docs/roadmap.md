@@ -118,6 +118,7 @@ creado.
   - Capa TS de #59 + #72 (`POST /api/sivu/inspections/:id/calcular` y
     `.../finalizar`, CC-054/CC-055/CC-056) — implementada en
     `wip/cc056-completitud`, **en revisión de la responsable**.
+  - **Lecturas de `/api/sivu` con el JWT del usuario** (PR-018 v5.0, CC-064), antes de B3 y B4: `GET /api/sivu/inspections/:inspectionId/photos` lee las filas de `photos` con la credencial de servicio y debe leerlas con el JWT del usuario. Pendiente de decisión: `POST .../calcular` (CC-064, observación h). Pendiente.
   - **B3 — listar las OT del proyecto** (CC-061, aprobado): solo
     lectura; filtra por rol y proyecto con `assertProjectRole`/
     `assertProjectAccess` (Inspector: solo las suyas; Usuario municipal y
