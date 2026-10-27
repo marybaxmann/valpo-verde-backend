@@ -86,3 +86,11 @@ describe("GET /api/sivu/projects/:id/diagnosticos (B18 mínimo)", () => {
     expect((await get(`/api/sivu/projects/${P}/diagnosticos?tree_id=x`)).status).toBe(400);
   });
 });
+
+describe("caché de la API", () => {
+  it("responde con Cache-Control: no-store y sin ETag", async () => {
+    const res = await get("/api/sivu/catalogs");
+    expect(res.headers["cache-control"]).toBe("no-store");
+    expect(res.headers.etag).toBeUndefined();
+  });
+});

@@ -6,6 +6,14 @@ import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
+// Las respuestas de la API son datos que cambian (OT, diagnósticos): sin ETag
+// ni caché del navegador, para que nunca se muestre un estado viejo (304).
+app.set("etag", false);
+app.use((_req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
 // CORS_ORIGIN admite varios orígenes separados por coma (local + despliegue).
 app.use(cors({ origin: env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean), credentials: true }));
 // Límite explícito, no el default de express (100kb): un sector por
