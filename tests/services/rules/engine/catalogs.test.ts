@@ -195,8 +195,11 @@ describe("catálogo subtipo_inspeccion vs DICCIONARIO_CAMPOS (fila subtipo_inspe
     const fila = filas.find((f) => f[0] === "INSPECCION" && f[1] === "subtipo_inspeccion");
     expect(fila).toBeDefined();
     const celda = fila![7];
+    // Única diferencia aceptada con el Excel (decisión de la responsable, 2026-10-27):
+    // la etiqueta se muestra sin guion bajo. Se elimina cuando el Excel se corrija.
+    const textoExcel: Record<string, string> = { post_intervencion: "Post_intervención" };
     for (const entrada of entradasVigentesDe("subtipo_inspeccion")) {
-      expect(celda).toContain(entrada.etiqueta);
+      expect(celda).toContain(textoExcel[entrada.codigo] ?? entrada.etiqueta);
     }
   });
 });

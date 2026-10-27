@@ -129,7 +129,7 @@ export const CATALOGO: readonly CatalogEntry[] = [
   //     tipo_inspeccion_realizada — un campo, dominio irregular, no
   //     separado por "/" como los demás (ver catalogs.test.ts). ---
   { catalogo: "subtipo_inspeccion", codigo: "seguimiento", etiqueta: "Seguimiento", padre: "reevaluacion", estado: "vigente", cc: "PR-021" },
-  { catalogo: "subtipo_inspeccion", codigo: "post_intervencion", etiqueta: "Post intervención", padre: "reevaluacion", estado: "vigente", cc: "PR-021" }, // Excel D-197 y LISTAS: "Post_intervención"; etiqueta sin guion bajo por decisión de la responsable (2026-10-27),
+  { catalogo: "subtipo_inspeccion", codigo: "post_intervencion", etiqueta: "Post intervención", padre: "reevaluacion", estado: "vigente", cc: "PR-021" }, // Excel D-197 y LISTAS: "Post_intervención"; sin guion bajo por decisión de la responsable (2026-10-27)
   { catalogo: "subtipo_inspeccion", codigo: "tomografia_sonica", etiqueta: "Tomografía_sónica", padre: "evaluacion_instrumental", estado: "vigente", cc: "PR-021" },
   { catalogo: "subtipo_inspeccion", codigo: "resistografia", etiqueta: "Resistografía", padre: "evaluacion_instrumental", estado: "vigente", cc: "PR-021" },
   { catalogo: "subtipo_inspeccion", codigo: "otra_instrumental", etiqueta: "Otra", padre: "evaluacion_instrumental", estado: "vigente", cc: "PR-021" },
