@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../../utils/AppError";
 import { proyectoIdParamSchema } from "../../schemas/sivu/proyectos.schema";
-import { catalogosVigentes, listarDiagnosticos, listarMiembrosAsignables } from "../../services/sivu/diagnostico.service";
+import { catalogosVigentes, listarDiagnosticos, listarMiembrosAsignables, resumenProyecto } from "../../services/sivu/diagnostico.service";
 
 const diagnosticosQuerySchema = z.object({ tree_id: z.string().uuid().optional() }).strict();
 const asignablesQuerySchema = z
@@ -21,6 +21,17 @@ export async function listarDiagnosticosController(req: Request, res: Response, 
     const { id } = parsear(proyectoIdParamSchema, req.params, "Parámetros inválidos");
     const { tree_id } = parsear(diagnosticosQuerySchema, req.query, "Query inválida");
     const data = await listarDiagnosticos(req.user!, id, req.accessToken!, tree_id);
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /api/sivu/projects/:id/resumen (B7). */
+export async function resumenProyectoController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { id } = parsear(proyectoIdParamSchema, req.params, "Parámetros inválidos");
+    const data = await resumenProyecto(req.user!, id, req.accessToken!);
     res.json({ data });
   } catch (err) {
     next(err);

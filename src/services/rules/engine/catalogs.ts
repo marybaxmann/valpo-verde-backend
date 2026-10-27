@@ -298,6 +298,19 @@ export const CATALOGO: readonly CatalogEntry[] = [
   // --- condicion_tutorado: D-151. Dominio literal de la columna H; códigos snake_case de la etiqueta. Expuesto por B16. ---
   { catalogo: "condicion_tutorado", codigo: "adecuado", etiqueta: "Adecuado", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "condicion_tutorado", codigo: "deteriorado", etiqueta: "Deteriorado", orden: 1, estado: "vigente", cc: "PR-021" },
+
+  // --- vista_foto: D-27 ("árbol completo, base, tronco y copa"); códigos de photos.vista (CC-049 punto 9). ---
+  { catalogo: "vista_foto", codigo: "arbol_completo", etiqueta: "Árbol completo", orden: 0, estado: "vigente", cc: "CC-049" },
+  { catalogo: "vista_foto", codigo: "base", etiqueta: "Base", orden: 1, estado: "vigente", cc: "CC-049" },
+  { catalogo: "vista_foto", codigo: "tronco", etiqueta: "Tronco", orden: 2, estado: "vigente", cc: "CC-049" },
+  { catalogo: "vista_foto", codigo: "copa", etiqueta: "Copa", orden: 3, estado: "vigente", cc: "CC-049" },
+
+  // --- estado_ciclo_vida: PROVISIONAL (demo 2026-10-27, decisión de la responsable). La base usa
+  //     activo/retirado/tocon; el Excel define estado_presencia (D-28) Presente/Talado/Retirado.
+  //     Contradicción pendiente de resolver; mientras tanto, etiquetas de D-28. ---
+  { catalogo: "estado_ciclo_vida", codigo: "activo", etiqueta: "Presente", orden: 0, estado: "vigente", cc: "pendiente" },
+  { catalogo: "estado_ciclo_vida", codigo: "tocon", etiqueta: "Talado", orden: 1, estado: "vigente", cc: "pendiente" },
+  { catalogo: "estado_ciclo_vida", codigo: "retirado", etiqueta: "Retirado", orden: 2, estado: "vigente", cc: "pendiente" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {

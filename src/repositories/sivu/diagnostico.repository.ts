@@ -51,6 +51,54 @@ const ARBOL_INSPECCIONES_COLUMNS =
 const EVALUACION_COLUMNS =
   "inspection_id, probabilidad_falla_raices_cuello, probabilidad_falla_tronco, probabilidad_falla_copa_ramas, probabilidad_impacto, clasificacion_raices_cuello, clasificacion_tronco, clasificacion_copa_ramas, clasificacion_riesgo_calculada, clasificacion_riesgo_ajustada, puntaje_infraestructura, pct_infraestructura, clasificacion_infraestructura_calculada, clasificacion_infraestructura_ajustada, clasificacion_prioridad_calculada, clasificacion_prioridad_ajustada, indicadores, rule_version";
 
+const PAGINA = 1000;
+
+/** Lee todas las filas en páginas: PostgREST corta cada respuesta en 1000 filas. */
+async function paginar<T>(
+  consulta: (desde: number, hasta: number) => PromiseLike<{ data: unknown; error: { message: string; code: string } | null }>
+): Promise<T[]> {
+  const filas: T[] = [];
+  for (let desde = 0; ; desde += PAGINA) {
+    const { data, error } = await consulta(desde, desde + PAGINA - 1);
+    if (error) throw new Error(error.message, { cause: error.code });
+    const pagina = (data ?? []) as T[];
+    filas.push(...pagina);
+    if (pagina.length < PAGINA) return filas;
+  }
+}
+
+export interface ArbolResumenRow {
+  id: string;
+  estado_ciclo_vida: string;
+  ubicacion: unknown;
+  especie_cientifica: string | null;
+  nombre_comun: string | null;
+}
+
+/** Árboles del proyecto para el resumen (B7), con el JWT del usuario. */
+export async function listarArbolesResumen(accessToken: string, projectId: string): Promise<ArbolResumenRow[]> {
+  return paginar<ArbolResumenRow>((desde, hasta) =>
+    createUserScopedClient(accessToken)
+      .from("trees")
+      .select("id, estado_ciclo_vida, ubicacion, especie_cientifica, nombre_comun")
+      .eq("project_id", projectId)
+      .order("id", { ascending: true })
+      .range(desde, hasta)
+  );
+}
+
+/** Estado de cada OT del proyecto (B7), con el JWT del usuario. */
+export async function listarEstadosOt(accessToken: string, projectId: string): Promise<Array<{ estado_ot: string }>> {
+  return paginar<{ estado_ot: string }>((desde, hasta) =>
+    createUserScopedClient(accessToken)
+      .from("work_orders")
+      .select("estado_ot")
+      .eq("project_id", projectId)
+      .order("id", { ascending: true })
+      .range(desde, hasta)
+  );
+}
+
 type ArbolConInspecciones = {
   id: string; tree_code: string; project_id: string; especie_cientifica: string | null; nombre_comun: string | null;
   inspections: Array<Omit<InspeccionFinalizadaRow, "trees">> | null;
@@ -62,17 +110,19 @@ export async function listarInspeccionesFinalizadas(
   projectId: string,
   treeId?: string
 ): Promise<InspeccionFinalizadaRow[]> {
-  let query = createUserScopedClient(accessToken)
-    .from("trees")
-    .select(ARBOL_INSPECCIONES_COLUMNS)
-    .eq("project_id", projectId)
-    .eq("inspections.estado_registro", "finalizado");
-  if (treeId) query = query.eq("id", treeId);
-
-  const { data, error } = await query;
-  if (error) throw new Error(error.message, { cause: error.code });
+  const arboles = await paginar<ArbolConInspecciones>((desde, hasta) => {
+    let query = createUserScopedClient(accessToken)
+      .from("trees")
+      .select(ARBOL_INSPECCIONES_COLUMNS)
+      .eq("project_id", projectId)
+      .eq("inspections.estado_registro", "finalizado")
+      .order("id", { ascending: true })
+      .range(desde, hasta);
+    if (treeId) query = query.eq("id", treeId);
+    return query;
+  });
   const filas: InspeccionFinalizadaRow[] = [];
-  for (const a of (data ?? []) as unknown as ArbolConInspecciones[]) {
+  for (const a of arboles) {
     for (const i of a.inspections ?? []) {
       filas.push({
         ...i,

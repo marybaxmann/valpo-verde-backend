@@ -94,3 +94,36 @@ describe("caché de la API", () => {
     expect(res.headers.etag).toBeUndefined();
   });
 });
+
+describe("GET /api/sivu/projects/:id/resumen (B7)", () => {
+  it("cuenta árboles, georreferencia, diagnóstico, especies y OT con etiquetas", async () => {
+    const { listarArbolesResumen, listarEstadosOt } = jest.requireMock("../../src/repositories/sivu/diagnostico.repository");
+    (listarArbolesResumen as jest.Mock).mockResolvedValue([
+      { id: "t1", estado_ciclo_vida: "activo", ubicacion: { type: "Point" }, especie_cientifica: "Schinus molle", nombre_comun: "Pimiento" },
+      { id: "t2", estado_ciclo_vida: "activo", ubicacion: null, especie_cientifica: "Schinus molle", nombre_comun: "Pimiento" },
+      { id: "t3", estado_ciclo_vida: "tocon", ubicacion: { type: "Point" }, especie_cientifica: null, nombre_comun: null },
+    ]);
+    (listarEstadosOt as jest.Mock).mockResolvedValue([{ estado_ot: "pendiente" }, { estado_ot: "en_ejecucion" }, { estado_ot: "pendiente" }]);
+    ins.mockResolvedValue([{
+      id: "i1", tree_id: "t1", codigo_inspeccion: "INS-1", work_order_id: "w", tipo_inspeccion_realizada: "evaluacion_inicial",
+      subtipo_inspeccion: null, fecha_inspeccion: "2026-10-27", finalizada_at: "2026-10-27T12:00:00Z", requiere_mantenimiento: false,
+      fecha_proxima_inspeccion: null, fecha_proximo_monitoreo: null, trees: { tree_code: "A-1", project_id: P, especie_cientifica: null, nombre_comun: null },
+    }]);
+    evs.mockResolvedValue([{ inspection_id: "i1", clasificacion_riesgo_calculada: "alto", clasificacion_riesgo_ajustada: null }]);
+    const res = await get(`/api/sivu/projects/${P}/resumen`);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      arboles_total: 3, georreferenciados: 2, sin_georreferenciar: 1, con_diagnostico: 1, sin_evaluacion: 2,
+      especies_distintas: 1,
+      especies_top: [{ especie_cientifica: "Schinus molle", nombre_comun: "Pimiento", total: 2 }],
+      por_riesgo: [{ codigo: "alto", etiqueta: "Alto", total: 1 }],
+      por_ciclo_vida: [{ codigo: "activo", etiqueta: "Presente", total: 2 }, { codigo: "tocon", etiqueta: "Talado", total: 1 }],
+      ot_por_estado: [{ codigo: "pendiente", etiqueta: "Pendiente", total: 2 }, { codigo: "en_ejecucion", etiqueta: "En ejecución", total: 1 }],
+    });
+  });
+  it("catálogos incluyen vista_foto y estado_ciclo_vida", async () => {
+    const res = await get("/api/sivu/catalogs");
+    expect(res.body.data.vista_foto.map((c: any) => c.etiqueta)).toEqual(["Árbol completo", "Base", "Tronco", "Copa"]);
+    expect(res.body.data.estado_ciclo_vida.map((c: any) => c.codigo)).toEqual(["activo", "tocon", "retirado"]);
+  });
+});

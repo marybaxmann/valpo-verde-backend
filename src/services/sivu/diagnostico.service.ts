@@ -4,6 +4,8 @@ import { CATALOGO } from "../rules/engine/catalogs";
 import {
   EvaluacionResultadoRow,
   InspeccionFinalizadaRow,
+  listarArbolesResumen,
+  listarEstadosOt,
   listarEvaluacionesDeInspecciones,
   listarInspeccionesFinalizadas,
 } from "../../repositories/sivu/diagnostico.repository";
@@ -84,6 +86,48 @@ export async function listarDiagnosticos(user: AuthenticatedUser, projectId: str
   return ultimas
     .map(ins => diagnostico(ins, porInspeccion.get(ins.id)))
     .sort((a, b) => (a.tree_code ?? "").localeCompare(b.tree_code ?? ""));
+}
+
+function contarPor(valores: Array<string | null>, catalogo: string) {
+  const conteo = new Map<string | null, number>();
+  for (const v of valores) conteo.set(v, (conteo.get(v) ?? 0) + 1);
+  const orden = (c: string | null) => CATALOGO.find(e => e.catalogo === catalogo && e.codigo === c)?.orden ?? 999;
+  return [...conteo.entries()]
+    .map(([codigo, total]) => ({ codigo, etiqueta: codigo === null ? null : conEtiqueta(catalogo, codigo)!.etiqueta, total }))
+    .sort((a, b) => orden(a.codigo) - orden(b.codigo));
+}
+
+/**
+ * B7: resumen del proyecto para el Dashboard. El riesgo cuenta el
+ * diagnóstico finalizado (B18), no uno vigente.
+ */
+export async function resumenProyecto(user: AuthenticatedUser, projectId: string, token: string) {
+  await assertProjectAccess(user, projectId, token);
+  const [arboles, estadosOt, diagnosticos] = await Promise.all([
+    listarArbolesResumen(token, projectId),
+    listarEstadosOt(token, projectId),
+    listarDiagnosticos(user, projectId, token),
+  ]);
+  const georreferenciados = arboles.filter(a => a.ubicacion !== null).length;
+  const especies = new Map<string, { especie_cientifica: string; nombre_comun: string | null; total: number }>();
+  for (const a of arboles) {
+    if (!a.especie_cientifica) continue;
+    const e = especies.get(a.especie_cientifica) ?? { especie_cientifica: a.especie_cientifica, nombre_comun: a.nombre_comun, total: 0 };
+    e.total += 1;
+    especies.set(a.especie_cientifica, e);
+  }
+  return {
+    arboles_total: arboles.length,
+    por_ciclo_vida: contarPor(arboles.map(a => a.estado_ciclo_vida), "estado_ciclo_vida"),
+    georreferenciados,
+    sin_georreferenciar: arboles.length - georreferenciados,
+    con_diagnostico: diagnosticos.length,
+    sin_evaluacion: arboles.length - diagnosticos.length,
+    por_riesgo: contarPor(diagnosticos.map(d => d.resultado?.clasificacion_riesgo?.codigo ?? null), "clasificacion_riesgo"),
+    especies_distintas: especies.size,
+    especies_top: [...especies.values()].sort((a, b) => b.total - a.total || a.especie_cientifica.localeCompare(b.especie_cientifica)).slice(0, 10),
+    ot_por_estado: contarPor(estadosOt.map(o => o.estado_ot), "estado_ot"),
+  };
 }
 
 /** B14: miembros asignables del proyecto (fn_miembros_proyecto, 024), filtrables por rol. */

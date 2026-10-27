@@ -23,7 +23,7 @@ import {
 } from "../../controllers/sivu/species.controller";
 
 import { inspectionFormSchemaController } from "../../controllers/sivu/inspectionFormSchema.controller";
-import { listarDiagnosticosController, listarMiembrosAsignablesController } from "../../controllers/sivu/diagnostico.controller";
+import { listarDiagnosticosController, listarMiembrosAsignablesController, resumenProyectoController } from "../../controllers/sivu/diagnostico.controller";
 
 const router = Router();
 
@@ -58,6 +58,8 @@ router.get("/:id/work-orders", authMiddleware, listarOtsProyectoController);
 router.get("/:id/assignable-members", authMiddleware, listarMiembrosAsignablesController);
 // Diagnóstico finalizado por árbol (B18 mínimo): nunca se presenta como vigente.
 router.get("/:id/diagnosticos", authMiddleware, listarDiagnosticosController);
+// Resumen del proyecto para el Dashboard (B7).
+router.get("/:id/resumen", authMiddleware, resumenProyectoController);
 
 // Catálogo de especies incorporado por el Inspector (#73; CC-053).
 // Búsqueda: cualquier rol con acceso al proyecto. Completar/corregir:
