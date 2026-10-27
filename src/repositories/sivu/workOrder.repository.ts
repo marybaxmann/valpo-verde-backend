@@ -142,12 +142,15 @@ interface EvaluacionVigenteRow {
  * real; el riesgo de este enfoque es, como máximo, no encontrar una
  * propuesta (el usuario la ingresa a mano) — nunca proponer un valor
  * equivocado.
+ *
+ * evaluations tiene dos FK hacia inspections (inspection_id y la compuesta
+ * con tree_id): sin el nombre de la relación, PostgREST responde PGRST201.
  */
 export async function obtenerPrioridadVigenteDelArbol(treeId: string): Promise<string | null> {
   const { data, error } = await supabaseAdmin
     .from("evaluations")
     .select(
-      "clasificacion_prioridad_ajustada, clasificacion_prioridad_calculada, created_at, inspections!inner(estado_registro, work_orders!inner(estado_ot, fecha_completada_ot))"
+      "clasificacion_prioridad_ajustada, clasificacion_prioridad_calculada, created_at, inspections!evaluations_inspection_tree_fkey!inner(estado_registro, work_orders!inner(estado_ot, fecha_completada_ot))"
     )
     .eq("tree_id", treeId);
 
