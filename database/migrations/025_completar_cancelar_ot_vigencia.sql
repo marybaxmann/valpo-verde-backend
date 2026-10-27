@@ -150,7 +150,7 @@ BEGIN
       ELSE (SELECT a.altura_primera_rama_no_presenta FROM alta a) END,
     altura_base_copa_viva_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados))
       THEN (SELECT v.altura_base_copa_viva_m FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
-      ELSE (SELECT a.altura_base_copa_viva_no_presenta FROM alta a) END,
+      ELSE (SELECT a.altura_base_copa_viva_m FROM alta a) END,
     altura_base_copa_viva_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados))
       THEN (SELECT v.altura_base_copa_viva_no_presenta FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.altura_base_copa_viva_no_presenta FROM alta a) END,
