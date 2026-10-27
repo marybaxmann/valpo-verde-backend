@@ -1,45 +1,63 @@
 -- =====================================================================
 -- Reversión de 025_completar_cancelar_ot_vigencia.sql
 -- =====================================================================
+-- Deshace, en orden inverso:
+--   6. DROP fn_reassign_work_order
+--   5. DROP fn_cancel_work_order
+--   4. DROP fn_complete_work_order_inspeccion
+--   3. Restaura v_tree_current_inputs y fn_refresh_tree_current
+--      a la versión exacta de la migración 021 (<> 'anulado').
+--   2. Restaura fn_check_ot_completada a la versión previa (solo D-239,
+--      sin la exigencia CC-050 de al menos una inspección finalizada).
+--   1. DROP constraint y columnas de cancelación en work_orders.
 
 DROP FUNCTION IF EXISTS public.fn_reassign_work_order(UUID, UUID, UUID);
 DROP FUNCTION IF EXISTS public.fn_cancel_work_order(UUID, TEXT, UUID);
 DROP FUNCTION IF EXISTS public.fn_complete_work_order_inspeccion(UUID, UUID, DATE);
 
--- Restaura v_tree_current_inputs de la migración 021 (<> 'anulado')
-CREATE OR REPLACE VIEW public.v_tree_current_inputs
-WITH (security_invoker = true)
-AS
-WITH ranked AS (
+-- ---------------------------------------------------------------------
+-- Restaura v_tree_current_inputs — cuerpo exacto de la migración 021
+-- (columnas de salida: tree_id, entradas_vigentes, origen_por_campo)
+-- ---------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW public.v_tree_current_inputs WITH (security_invoker = true) AS
+WITH validas AS (
   SELECT
-    i.tree_id,
+    e.tree_id,
+    e.inspection_id,
+    wo.fecha_completada_ot,
+    i.fecha_inspeccion,
+    i.created_at,
     kv.key,
-    kv.value,
-    i.id AS inspection_id,
-    ROW_NUMBER() OVER (
-      PARTITION BY i.tree_id, kv.key
-      ORDER BY wo.fecha_completada_ot DESC, i.fecha_inspeccion DESC, i.created_at DESC
-    ) AS rnk
+    kv.value
   FROM evaluations e
   JOIN inspections i ON i.id = e.inspection_id
   JOIN work_orders wo ON wo.id = i.work_order_id
   CROSS JOIN LATERAL jsonb_each(e.variables) AS kv(key, value)
   WHERE i.estado_registro <> 'anulado'
     AND wo.estado_ot = 'completada'
+),
+ranked AS (
+  SELECT
+    tree_id, key, value, inspection_id,
+    ROW_NUMBER() OVER (PARTITION BY tree_id, key ORDER BY fecha_completada_ot DESC, fecha_inspeccion DESC, created_at DESC) AS rn
+  FROM validas
 )
 SELECT
   tree_id,
-  jsonb_object_agg(key, value) AS variables
+  jsonb_object_agg(key, value) AS entradas_vigentes,
+  jsonb_object_agg(key, to_jsonb(inspection_id)) AS origen_por_campo
 FROM ranked
-WHERE rnk = 1
+WHERE rn = 1
 GROUP BY tree_id;
 
-GRANT SELECT ON public.v_tree_current_inputs TO authenticated;
+-- ---------------------------------------------------------------------
+-- Restaura fn_refresh_tree_current — cuerpo exacto de la migración 021
+-- (filtro: i.estado_registro <> 'anulado'; 21 columnas + vigente_desde)
+-- ---------------------------------------------------------------------
 
--- Restaura fn_refresh_tree_current de la migración 021 (<> 'anulado')
 CREATE OR REPLACE FUNCTION public.fn_refresh_tree_current(p_tree_id UUID) RETURNS void
 LANGUAGE plpgsql
-SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 BEGIN
@@ -95,47 +113,50 @@ BEGIN
     dap_cm = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'dap_cm' = ANY(v.campos_registrados))
       THEN (SELECT v.dap_cm FROM validas v WHERE 'dap_cm' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.dap_cm FROM alta a) END,
-    altura_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_m' = ANY(v.campos_registrados))
-      THEN (SELECT v.altura_m FROM validas v WHERE 'altura_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
-      ELSE (SELECT a.altura_m FROM alta a) END,
-    diametro_copa_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'diametro_copa_m' = ANY(v.campos_registrados))
-      THEN (SELECT v.diametro_copa_m FROM validas v WHERE 'diametro_copa_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
-      ELSE (SELECT a.diametro_copa_m FROM alta a) END,
+    altura_total_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_total_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_total_m FROM validas v WHERE 'altura_total_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_total_m FROM alta a) END,
+    diametro_copa_ns_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'diametro_copa_ns_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.diametro_copa_ns_m FROM validas v WHERE 'diametro_copa_ns_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.diametro_copa_ns_m FROM alta a) END,
+    diametro_copa_eo_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'diametro_copa_eo_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.diametro_copa_eo_m FROM validas v WHERE 'diametro_copa_eo_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.diametro_copa_eo_m FROM alta a) END,
+    copa_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'copa_no_presenta' = ANY(v.campos_registrados))
+      THEN (SELECT v.copa_no_presenta FROM validas v WHERE 'copa_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.copa_no_presenta FROM alta a) END,
     altura_primera_rama_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_primera_rama_m' = ANY(v.campos_registrados))
       THEN (SELECT v.altura_primera_rama_m FROM validas v WHERE 'altura_primera_rama_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.altura_primera_rama_m FROM alta a) END,
-    forma_copa = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'forma_copa' = ANY(v.campos_registrados))
-      THEN (SELECT v.forma_copa FROM validas v WHERE 'forma_copa' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
-      ELSE (SELECT a.forma_copa FROM alta a) END,
-    densidad_follaje = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'densidad_follaje' = ANY(v.campos_registrados))
-      THEN (SELECT v.densidad_follaje FROM validas v WHERE 'densidad_follaje' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
-      ELSE (SELECT a.densidad_follaje FROM alta a) END,
+    altura_primera_rama_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_primera_rama_no_presenta' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_primera_rama_no_presenta FROM validas v WHERE 'altura_primera_rama_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_primera_rama_no_presenta FROM alta a) END,
+    altura_base_copa_viva_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_base_copa_viva_m FROM validas v WHERE 'altura_base_copa_viva_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_base_copa_viva_m FROM alta a) END,
+    altura_base_copa_viva_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_base_copa_viva_no_presenta FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_base_copa_viva_no_presenta FROM alta a) END,
     clase_edad = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados))
       THEN (SELECT v.clase_edad FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.clase_edad FROM alta a) END,
-    fase_desarrollo = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'fase_desarrollo' = ANY(v.campos_registrados))
-      THEN (SELECT v.fase_desarrollo FROM validas v WHERE 'fase_desarrollo' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
-      ELSE (SELECT a.fase_desarrollo FROM alta a) END,
-    estado_fitosanitario = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'estado_fitosanitario' = ANY(v.campos_registrados))
-      THEN (SELECT v.estado_fitosanitario FROM validas v WHERE 'estado_fitosanitario' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
-      ELSE (SELECT a.estado_fitosanitario FROM alta a) END,
-    sector_id = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'sector_id' = ANY(v.campos_registrados))
-      THEN (SELECT v.sector_id FROM validas v WHERE 'sector_id' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
-      ELSE (SELECT a.sector_id FROM alta a) END,
+    rango_edad_estimada_anios = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados))
+      THEN (SELECT v.rango_edad_estimada_anios FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.rango_edad_estimada_anios FROM alta a) END,
     vigente_desde_inspection_id = (
       SELECT v.inspection_id FROM validas v
       ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC
       LIMIT 1
-    ),
-    updated_at = now()
+    )
   WHERE t.id = p_tree_id;
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.fn_refresh_tree_current(UUID) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.fn_refresh_tree_current(UUID) TO service_role;
+-- ---------------------------------------------------------------------
+-- Restaura fn_check_ot_completada — versión previa a la 025
+-- (solo D-239: inspecciones en preguardado; sin exigencia CC-050)
+-- ---------------------------------------------------------------------
 
--- Restaura fn_check_ot_completada de la versión previa
 CREATE OR REPLACE FUNCTION public.fn_check_ot_completada() RETURNS TRIGGER
 LANGUAGE plpgsql
 SET search_path = public, pg_temp
@@ -150,7 +171,10 @@ BEGIN
 END;
 $$;
 
--- Restaura work_orders
+-- ---------------------------------------------------------------------
+-- Elimina columnas y constraint de cancelación de work_orders
+-- ---------------------------------------------------------------------
+
 ALTER TABLE public.work_orders
   DROP CONSTRAINT IF EXISTS chk_work_orders_cancelada;
 
