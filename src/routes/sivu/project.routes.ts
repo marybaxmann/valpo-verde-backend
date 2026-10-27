@@ -14,6 +14,7 @@ import {
   removeMiembro,
 } from "../../controllers/sivu/projectMember.controller";
 import { altaMunicipalArbolController } from "../../controllers/sivu/tree.controller";
+import { listarInventarioController } from "../../controllers/sivu/inventory.controller";
 import { crearOrdenTrabajoInspeccionController, listarOtsProyectoController } from "../../controllers/sivu/workOrder.controller";
 import {
   buscarEspeciesController,
@@ -42,7 +43,9 @@ router.delete("/:id/members/:userId", authMiddleware, removeMiembro);
 // Alta municipal mínima del árbol (#57). Solo usuario_municipal; el
 // sector lo resuelve el servidor desde el proyecto (nunca del body).
 router.post("/:id/trees", authMiddleware, altaMunicipalArbolController);
-
+// Inventario arboreo (B1; CC-064): todos los miembros activos, solo lectura.
+// RLS de la 017 actua como segunda capa (PR-018 v6.0).
+router.get("/:id/trees", authMiddleware, listarInventarioController);
 // Crear una OT de Inspección (#58; D-238, D-244, CC-036). Solo usuario_municipal.
 router.post("/:id/work-orders", authMiddleware, crearOrdenTrabajoInspeccionController);
 // OT del proyecto (B3; CC-061, CC-065): visibilidad por rol y tipo de OT.
