@@ -60,7 +60,7 @@ export interface OtListada {
     ubicacion: { lng: number; lat: number } | null;
   } | null;
   requiere_revision_inspector: boolean | null;
-  responsable: { id: string; nombre: string | null } | null;
+  responsable: { id: string; nombre: string | null; fuera_del_proyecto?: true } | null;
   acciones: string[];
 }
 
@@ -154,20 +154,28 @@ async function armarListado(user: AuthenticatedUser, filtros: FiltrosListadoOt, 
 
   const arbolPorId = new Map(arboles.map((a) => [a.id, a]));
   const proyectoPorId = new Map(proyectos.map((p) => [p.id, p]));
-  const nombrePorProyecto = new Map(
-    miembrosPorProyecto.map(([id, miembros]) => [id, new Map(miembros.map((m) => [m.id, m.nombre]))])
+  const miembrosPorProyectoMap = new Map(
+    miembrosPorProyecto.map(([id, miembros]) => [id, new Map(miembros.map((m) => [m.id, m]))])
   );
 
   return {
-    data: filas.map((fila) =>
-      aOtListada(user, fila, {
+    data: filas.map((fila) => {
+      const responsableId = fila.responsable_accion_id;
+      const miembro = responsableId
+        ? miembrosPorProyectoMap.get(fila.project_id)?.get(responsableId)
+        : undefined;
+      const responsable = responsableId
+        ? miembro
+          ? { id: responsableId, nombre: miembro.nombre }
+          : { id: responsableId, nombre: null, fuera_del_proyecto: true as const }
+        : null;
+
+      return aOtListada(user, fila, {
         arbol: fila.tree_id ? arbolPorId.get(fila.tree_id) ?? null : null,
         nombreProyecto: proyectoPorId.get(fila.project_id)?.nombre_proyecto ?? null,
-        nombreResponsable: fila.responsable_accion_id
-          ? nombrePorProyecto.get(fila.project_id)?.get(fila.responsable_accion_id) ?? null
-          : null,
-      })
-    ),
+        responsable,
+      });
+    }),
     total,
     limit: filtros.limit,
     offset: filtros.offset,
@@ -177,7 +185,11 @@ async function armarListado(user: AuthenticatedUser, filtros: FiltrosListadoOt, 
 function aOtListada(
   user: AuthenticatedUser,
   fila: OtListadoRow,
-  extra: { arbol: ArbolDeOtRow | null; nombreProyecto: string | null; nombreResponsable: string | null }
+  extra: {
+    arbol: ArbolDeOtRow | null;
+    nombreProyecto: string | null;
+    responsable: { id: string; nombre: string | null; fuera_del_proyecto?: true } | null;
+  }
 ): OtListada {
   const esInspeccion = fila.tipo_ot === "inspeccion";
   const catalogoAccion = esInspeccion ? "tipo_inspeccion_realizada" : "accion_mantenimiento";
@@ -207,7 +219,7 @@ function aOtListada(
         }
       : null,
     requiere_revision_inspector: fila.requiere_revision_inspector,
-    responsable: fila.responsable_accion_id ? { id: fila.responsable_accion_id, nombre: extra.nombreResponsable } : null,
+    responsable: extra.responsable,
     acciones: accionesDisponibles(user, fila),
   };
 }

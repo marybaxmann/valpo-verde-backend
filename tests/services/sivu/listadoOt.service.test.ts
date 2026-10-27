@@ -242,6 +242,20 @@ describe("respuesta de cada OT (CC-065 punto 5)", () => {
     });
   });
 
+  it("responsable que ya no es miembro del proyecto: id preservado, nombre null y fuera_del_proyecto: true (CC-065)", async () => {
+    mockMiembros.mockResolvedValue([
+      { id: INSPECTOR.id, nombre: "Inspector Uno", rol: "inspector" },
+      { id: ENCARGADO.id, nombre: "Encargado Uno", rol: "encargado_mantencion" },
+    ]);
+    const r = await listarOtsDeProyecto(MUNICIPAL, P1, QUERY, TOKEN);
+    const ot2 = r.data.find((o) => o.codigo_ot === "OT-I-000002")!;
+    expect(ot2.responsable).toEqual({
+      id: INSPECTOR_2.id,
+      nombre: null,
+      fuera_del_proyecto: true,
+    });
+  });
+
   it("OT de Mantenimiento: acción y subtipo con las etiquetas del Excel (D-235, D-236)", async () => {
     const r = await listarMisOts(ENCARGADO, QUERY, TOKEN);
     expect(r.data.map((o) => [o.accion, o.subtipo])).toEqual([
