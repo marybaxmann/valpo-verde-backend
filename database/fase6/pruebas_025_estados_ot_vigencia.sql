@@ -61,7 +61,7 @@ $$;
 CREATE FUNCTION pg_temp.assert(p_cond boolean, p_msg text) RETURNS void
 LANGUAGE plpgsql AS $$
 BEGIN
-  IF NOT p_cond THEN
+  IF p_cond IS DISTINCT FROM TRUE THEN
     RAISE EXCEPTION 'FALLA: %', p_msg;
   END IF;
 END;
