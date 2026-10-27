@@ -6,7 +6,8 @@ import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
-app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+// CORS_ORIGIN admite varios orígenes separados por coma (local + despliegue).
+app.use(cors({ origin: env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean), credentials: true }));
 // Límite explícito, no el default de express (100kb): un sector por
 // KML/KMZ en base64 (archivo de hasta 5 MB, ver geometriaSector.service.ts)
 // pesa más que eso en JSON. 8mb deja margen para el overhead de base64

@@ -2,6 +2,9 @@
   "name": "valpo-verde-backend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "description": "API REST — Gestión del Arbolado Urbano de Valparaíso",
   "main": "dist/server.js",
   "scripts": {
