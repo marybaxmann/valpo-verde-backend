@@ -232,6 +232,16 @@ BEGIN
   -- -------------------------------------------------------------------
   -- C3: Completar OT con inspección finalizada -> ÉXITO y vigencia real
   -- -------------------------------------------------------------------
+  -- Fotografías obligatorias para evaluacion_inicial (D-27 / PR-010 v4.0;
+  -- guardián SQL añadido en migración 026). Las cuatro vistas son necesarias
+  -- para que fn_finalizar_inspeccion no rechace con SV064.
+  INSERT INTO public.photos (id, tree_id, storage_path, vista, inspection_id, maintenance_record_id, incident_id, uploaded_by)
+  VALUES
+    (gen_random_uuid(), v_tree_id, 'tree-photos/025/c3/arbol_completo.jpg', 'arbol_completo', v_insp_id, NULL, NULL, v_inspector),
+    (gen_random_uuid(), v_tree_id, 'tree-photos/025/c3/base.jpg',           'base',           v_insp_id, NULL, NULL, v_inspector),
+    (gen_random_uuid(), v_tree_id, 'tree-photos/025/c3/tronco.jpg',         'tronco',         v_insp_id, NULL, NULL, v_inspector),
+    (gen_random_uuid(), v_tree_id, 'tree-photos/025/c3/copa.jpg',           'copa',           v_insp_id, NULL, NULL, v_inspector);
+
   PERFORM public.fn_finalizar_inspeccion(
     p_inspection_id                     => v_insp_id,
     p_usuario                           => v_inspector,
