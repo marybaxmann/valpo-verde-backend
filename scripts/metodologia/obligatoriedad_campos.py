@@ -415,7 +415,7 @@ def entrada(r):
 def generar_ts(exigidos, no_exigidos, filas):
     lineas = [
         "// GENERADO por scripts/metodologia/obligatoriedad_campos.py desde DICCIONARIO_CAMPOS",
-        "// (columnas D, I y K de ARBOLES y REGISTRO_EVALUACION) y las traducciones aprobadas",
+        "// (columnas D, G, H, I y K de ARBOLES y REGISTRO_EVALUACION) y las traducciones aprobadas",
         "// en CC-056. No editar a mano: corregir el script o el Excel y volver a generar.",
         "// tests/schemas/sivu/completitudInspeccion.test.ts compara esta tabla contra el Excel.",
         "",

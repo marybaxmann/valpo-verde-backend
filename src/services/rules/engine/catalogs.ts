@@ -243,6 +243,61 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_vitalidad", codigo: "2_estancamiento", etiqueta: "2 Estancamiento", orden: 2, estado: "vigente", cc: "AM-17" },
   { catalogo: "clasificacion_vitalidad", codigo: "3_resignacion", etiqueta: "3 Resignación", orden: 3, estado: "vigente", cc: "AM-17" },
   { catalogo: "clasificacion_vitalidad", codigo: "muerto", etiqueta: "Muerto", orden: 4, estado: "vigente", cc: "AM-17" },
+
+  // --- clase_edad: D-25. Dominio literal de la columna H; códigos de camposArbolBaseSchema (inspeccion.schema.ts). Expuesto por B16. ---
+  { catalogo: "clase_edad", codigo: "joven", etiqueta: "Joven", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clase_edad", codigo: "semimaduro", etiqueta: "Semimaduro", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clase_edad", codigo: "tempranamente_maduro", etiqueta: "Tempranamente maduro", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clase_edad", codigo: "maduro", etiqueta: "Maduro", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "clase_edad", codigo: "sobremaduro", etiqueta: "Sobremaduro", orden: 4, estado: "vigente", cc: "PR-021" },
+
+  // --- rango_edad_estimada_anios: D-26. Dominio literal de la columna H; códigos de camposArbolBaseSchema (inspeccion.schema.ts). Expuesto por B16. ---
+  { catalogo: "rango_edad_estimada_anios", codigo: "0_5", etiqueta: "0–5", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "6_10", etiqueta: "6–10", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "11_15", etiqueta: "11–15", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "16_20", etiqueta: "16–20", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "21_25", etiqueta: "21–25", orden: 4, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "26_30", etiqueta: "26–30", orden: 5, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "31_35", etiqueta: "31–35", orden: 6, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "36_40", etiqueta: "36–40", orden: 7, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "41_45", etiqueta: "41–45", orden: 8, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "46_50", etiqueta: "46–50", orden: 9, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "51_55", etiqueta: "51–55", orden: 10, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "56_60", etiqueta: "56–60", orden: 11, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "61_65", etiqueta: "61–65", orden: 12, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "66_70", etiqueta: "66–70", orden: 13, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "71_75", etiqueta: "71–75", orden: 14, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "76_80", etiqueta: "76–80", orden: 15, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "81_85", etiqueta: "81–85", orden: 16, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "86_90", etiqueta: "86–90", orden: 17, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "91_95", etiqueta: "91–95", orden: 18, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "96_100", etiqueta: "96–100", orden: 19, estado: "vigente", cc: "PR-021" },
+  { catalogo: "rango_edad_estimada_anios", codigo: "mas_de_100", etiqueta: "Más de 100 años", orden: 20, estado: "vigente", cc: "PR-021" },
+
+  // --- materialidad_vereda: D-93. Dominio literal de la columna H; códigos snake_case de la etiqueta. Expuesto por B16. ---
+  { catalogo: "materialidad_vereda", codigo: "baldosa", etiqueta: "Baldosa", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_vereda", codigo: "adoquin", etiqueta: "Adoquín", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_vereda", codigo: "hormigon", etiqueta: "Hormigón", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_vereda", codigo: "asfalto", etiqueta: "Asfalto", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_vereda", codigo: "otro", etiqueta: "Otro", orden: 4, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_vereda", codigo: "no_determinado", etiqueta: "No determinado", orden: 5, estado: "vigente", cc: "PR-021" },
+
+  // --- materialidad_calzada: D-109. Dominio literal de la columna H; códigos snake_case de la etiqueta. Expuesto por B16. ---
+  { catalogo: "materialidad_calzada", codigo: "asfalto", etiqueta: "Asfalto", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_calzada", codigo: "hormigon", etiqueta: "Hormigón", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_calzada", codigo: "adoquin", etiqueta: "Adoquín", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_calzada", codigo: "otro", etiqueta: "Otro", orden: 3, estado: "vigente", cc: "PR-021" },
+  { catalogo: "materialidad_calzada", codigo: "no_determinado", etiqueta: "No determinado", orden: 4, estado: "vigente", cc: "PR-021" },
+
+  // --- condicion_radicular_entorno: D-130. Dominio literal de la columna H; códigos snake_case de la etiqueta. Expuesto por B16. ---
+  { catalogo: "condicion_radicular_entorno", codigo: "sin_alteracion_observable", etiqueta: "Sin alteración observable", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "condicion_radicular_entorno", codigo: "restriccion_del_desarrollo", etiqueta: "Restricción del desarrollo", orden: 1, estado: "vigente", cc: "PR-021" },
+  { catalogo: "condicion_radicular_entorno", codigo: "raices_sobresalientes", etiqueta: "Raíces sobresalientes", orden: 2, estado: "vigente", cc: "PR-021" },
+  { catalogo: "condicion_radicular_entorno", codigo: "ambas", etiqueta: "Ambas", orden: 3, estado: "vigente", cc: "PR-021" },
+
+  // --- condicion_tutorado: D-151. Dominio literal de la columna H; códigos snake_case de la etiqueta. Expuesto por B16. ---
+  { catalogo: "condicion_tutorado", codigo: "adecuado", etiqueta: "Adecuado", orden: 0, estado: "vigente", cc: "PR-021" },
+  { catalogo: "condicion_tutorado", codigo: "deteriorado", etiqueta: "Deteriorado", orden: 1, estado: "vigente", cc: "PR-021" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {
