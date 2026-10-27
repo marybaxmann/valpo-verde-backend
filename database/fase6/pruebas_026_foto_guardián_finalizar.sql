@@ -325,7 +325,7 @@ BEGIN
   -- F7: Evaluación instrumental sin fotografías → ÉXITO (exento)
   -- =================================================================
   v_ctx    := pg_temp.preparar_inspeccion(v_project_id, v_tree_id, v_sector_id, v_inspector, v_municipal,
-                'evaluacion_instrumental', 'tomografia', 'f7');
+                'evaluacion_instrumental', 'tomografia_sonica', 'f7');
   v_insp_id := (v_ctx->>'insp_id')::uuid;
 
   PERFORM pg_temp.finalizar(v_insp_id, v_inspector);
