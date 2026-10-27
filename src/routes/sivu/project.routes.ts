@@ -21,6 +21,8 @@ import {
   renombrarEspecieController,
 } from "../../controllers/sivu/species.controller";
 
+import { inspectionFormSchemaController } from "../../controllers/sivu/inspectionFormSchema.controller";
+
 const router = Router();
 
 // Autenticación para todas las rutas; la autorización fina (admin vs.
@@ -31,6 +33,7 @@ router.post("/", authMiddleware, crearProyecto);
 // Vista previa del sector (D-255; CC-047): no guarda nada. Antes de
 // "/:id" para que no se lea "sector-preview" como un id.
 router.post("/sector-preview", authMiddleware, previsualizarSectorController);
+router.get("/:id/inspection-form-schema", authMiddleware, inspectionFormSchemaController);
 router.get("/:id", authMiddleware, getProyecto);
 router.patch("/:id", authMiddleware, editarProyectoController);
 router.patch("/:id/estado", authMiddleware, cambiarEstadoProyectoController);
