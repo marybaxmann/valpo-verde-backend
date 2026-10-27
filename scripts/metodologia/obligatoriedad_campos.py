@@ -270,6 +270,7 @@ def main():
             "fila": fila, "hoja": row[0], "campo": texto(row[1]),
             "d": texto(row[3]), "h": texto(row[7]), "i": texto(row[8]),
             "j": texto(row[9]), "k": texto(row[10]),
+            "tipoDato": texto(row[6]), "unidadValores": texto(row[7]),
         })
     por_campo = {}
     for f in filas:
@@ -392,7 +393,7 @@ def main():
             print("  - " + e, file=sys.stderr)
         sys.exit(1)
 
-    ts = generar_ts(exigidos, no_exigidos)
+    ts = generar_ts(exigidos, no_exigidos, filas)
     if salida:
         with open(salida, "w", encoding="utf-8", newline="\n") as f:
             f.write(ts)
@@ -411,7 +412,7 @@ def entrada(r):
     return "  {\n" + cuerpo + ",\n  },"
 
 
-def generar_ts(exigidos, no_exigidos):
+def generar_ts(exigidos, no_exigidos, filas):
     lineas = [
         "// GENERADO por scripts/metodologia/obligatoriedad_campos.py desde DICCIONARIO_CAMPOS",
         "// (columnas D, I y K de ARBOLES y REGISTRO_EVALUACION) y las traducciones aprobadas",
@@ -472,6 +473,10 @@ def generar_ts(exigidos, no_exigidos):
     for r in no_exigidos:
         lineas.append(entrada(r))
     lineas += ["];", ""]
+    lineas += ["/** Metadatos literales de DICCIONARIO_CAMPOS, columnas G y H. */", "export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipoDato: string; unidadValores: string }[] = ["]
+    for f in filas:
+        lineas.append(entrada({k: f[k] for k in ("hoja", "campo", "tipoDato", "unidadValores")}))
+    lineas += ["] as const;", ""]
     return "\n".join(lineas)
 
 

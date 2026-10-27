@@ -28,3 +28,11 @@ it("entrega alcance, condiciones y opciones vigentes al miembro", async () => {
   expect(res.body.data.variables.find((x: any) => x.identificador === "tipo_red_aerea").opciones).toContainEqual({codigo:"electrica", etiqueta:"Eléctrica"});
   expect(res.body.data.variables[0]).toHaveProperty("etiqueta", null);
 });
+it("metadatos del diccionario conservan tipo y unidad literales", async () => {
+  auth.mockResolvedValue(fakeAuthUser({ id: MUNICIPAL_ID })); profile.mockResolvedValue(municipalProfileRow()); membership.mockResolvedValue({});
+  const res = await request(app).get(url).set("Authorization", `Bearer ${FAKE_TOKEN}`);
+  const altura = res.body.data.campos_arbol.find((x: any) => x.identificador === "altura_total_m");
+  expect(altura).toMatchObject({tipo: "Decimal", unidad: "m", unidad_valores_excel: "m", etiqueta: null, seccion: null});
+  const red = res.body.data.variables.find((x: any) => x.identificador === "tipo_red_aerea");
+  expect(red).toMatchObject({tipo: "Categoría", unidad: null});
+});
