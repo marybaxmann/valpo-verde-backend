@@ -15,7 +15,7 @@
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `a87292a` (PR #71 fusionado: cierre documental de la Fase 5, sobre `3a5be8b`/PR #68 y `874c938`/PR #70); frontend `main` = `187a90d` (PR #5). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Fase 6 en curso. B16 (esquema del formulario) en `feature/b16-inspection-form-schema`, sin push; etiquetas y secciones pendientes. Siguen B17 y B18.
+- **Resumen:** Fase 6 en curso. B16 (esquema del formulario) en `feature/b16-inspection-form-schema` (en GitHub); el borrador ya valida la selección única; etiquetas y secciones pendientes. Siguen B17 y B18.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -34,13 +34,14 @@
 
 ---
 
-## ▶ Novedad 2026-10-27 (bloque 12) — B16, esquema del formulario de Evaluación inicial (`feature/b16-inspection-form-schema`, sin push)
+## ▶ Novedad 2026-10-27 (bloque 12) — B16, esquema del formulario de Evaluación inicial (`feature/b16-inspection-form-schema`, en GitHub)
 
 `GET /api/sivu/projects/:id/inspection-form-schema?tipo=evaluacion_inicial` (JWT + `assertProjectAccess`). Base: dos commits de ChatGPT Work (`d264852`, `b9f6c4d`, importados desde un bundle) sobre `05ccd8d`, más un commit de Claude Code.
 
 - **Fuente:** el Excel del repo (`docs/excel/Base de Datos Valpo Verde.xlsx`, 2.1.0). La responsable confirmó el 2026-10-27 que es el mismo Excel «AUDITAR» y que manda.
 - **Opciones:** los 77 campos «Categoría» del formulario traen opciones. «Sí / No» se entrega como booleano (53 campos); el resto, desde `catalogs.ts` (`CATALOGO_DE_CAMPO_FORMULARIO` en el servicio, más `CATALOGO_SELECCION_MULTIPLE`). Una prueba compara cada catálogo de selección única con el dominio literal de la columna H, en orden.
-- **Catálogos nuevos (PR-021):** `clase_edad` y `rango_edad_estimada_anios`, con los códigos que ya aceptaba `camposArbolBaseSchema`; `materialidad_vereda` (D-93), `materialidad_calzada` (D-109), `condicion_radicular_entorno` (D-130) y `condicion_tutorado` (D-151), con códigos snake_case de la etiqueta. El guardado del borrador **todavía no valida** los valores de selección única de `variables` (solo los de selección múltiple y `clasificacion_vitalidad`).
+- **Catálogos nuevos (PR-021):** `clase_edad` y `rango_edad_estimada_anios`, con los códigos que ya aceptaba `camposArbolBaseSchema`; `materialidad_vereda` (D-93), `materialidad_calzada` (D-109), `condicion_radicular_entorno` (D-130) y `condicion_tutorado` (D-151), con códigos snake_case de la etiqueta.
+- **Validación del borrador (2026-10-28):** el guardado (POST y PATCH) valida los 19 campos de selección única de `variables` contra `CATALOGO_SELECCION_UNICA` (`alcanceInspeccion.ts`, la misma lista de la que sale `CATALOGO_DE_CAMPO_FORMULARIO`): código vigente o `null`; una etiqueta, un número o un booleano dan 400. Reemplaza la validación aparte de `clasificacion_vitalidad`. Los 53 campos «Sí / No» todavía no se validan como booleanos en el borrador.
 - **`tipo_entrada`** sale de la columna G (`decimal`, `entero`, `texto`, `fecha`, `booleano`, `seleccion`, `seleccion_multiple`, `lista_decimal`, `archivo`, `identificador`).
 - **Pendiente por decisión de la responsable (2026-10-27):** `etiqueta` = nombre del campo, con `etiqueta_pendiente: true`; `seccion` = `null`. Se revisan después. `orden` = fila D-n del diccionario.
 - **Pruebas:** `tsc --noEmit` limpio; Jest completo, ver el commit. Sin cambios en la base.
