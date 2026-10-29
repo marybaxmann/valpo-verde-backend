@@ -1,7 +1,13 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
 import { camposPermitidosPorTipo, CATALOGO_SELECCION_MULTIPLE, CATALOGO_SELECCION_UNICA } from "../../schemas/sivu/alcanceInspeccion";
-import { CAMPOS_NO_EXIGIDOS, REGLAS_COMPLETITUD, METADATOS_DICCIONARIO } from "../../schemas/sivu/completitudInspeccion";
+import {
+  CAMPOS_NO_EXIGIDOS,
+  REGLAS_COMPLETITUD,
+  METADATOS_DICCIONARIO,
+  SECCIONES_FORMULARIO,
+  SECCION_DE_CAMPO,
+} from "../../schemas/sivu/completitudInspeccion";
 import { camposArbolBaseSchema } from "../../schemas/sivu/inspeccion.schema";
 import { entradasVigentesDe } from "../rules/engine/catalogs";
 
@@ -40,12 +46,27 @@ const TIPO_ENTRADA: Readonly<Record<string, string>> = {
  * camposArbolBaseSchema (booleanas) y la adición de CC-056 (D-125,
  * "Irregular -> ingreso manual").
  */
-const SIN_FILA: Readonly<Record<string, { tipo_entrada: string; unidad: string | null }>> = {
-  copa_no_presenta: { tipo_entrada: "booleano", unidad: null },
-  altura_primera_rama_no_presenta: { tipo_entrada: "booleano", unidad: null },
-  altura_base_copa_viva_no_presenta: { tipo_entrada: "booleano", unidad: null },
-  superficie_alcorque_m2_manual: { tipo_entrada: "decimal", unidad: "m²" },
+const SIN_FILA: Readonly<Record<string, { tipo_entrada: string; unidad: string | null; junto_a: string }>> = {
+  copa_no_presenta: { tipo_entrada: "booleano", unidad: null, junto_a: "diametro_copa_eo_m" },
+  altura_primera_rama_no_presenta: { tipo_entrada: "booleano", unidad: null, junto_a: "altura_primera_rama_m" },
+  altura_base_copa_viva_no_presenta: { tipo_entrada: "booleano", unidad: null, junto_a: "altura_base_copa_viva_m" },
+  superficie_alcorque_m2_manual: { tipo_entrada: "decimal", unidad: "m²", junto_a: "superficie_alcorque_m2" },
 };
+
+/**
+ * Sección y orden de presentación (B16): la posición de la columna en su
+ * hoja del Excel. Un campo sin columna propia va justo después del campo
+ * al que acompaña.
+ */
+function ubicacion(hoja: Hoja, id: string): { seccion: (typeof SECCIONES_FORMULARIO)[number] | null; orden: number | null } {
+  const directo = SECCION_DE_CAMPO.find(s => s.hoja === hoja && s.campo === id);
+  const ancla = directo ?? SECCION_DE_CAMPO.find(s => s.hoja === hoja && s.campo === SIN_FILA[id]?.junto_a);
+  if (!ancla) return { seccion: null, orden: null };
+  return {
+    seccion: SECCIONES_FORMULARIO.find(s => s.codigo === ancla.seccion) ?? null,
+    orden: directo ? directo.orden : ancla.orden + 0.5,
+  };
+}
 
 // La columna H también contiene dominios y descripciones; solo estas son unidades.
 const UNIDADES = ["m", "cm", "m²", "grados", "% (0 a 100)", "% (0 a 100, porcentaje)", "Sin unidad", "cantidad", "Número entero adimencional"];
@@ -81,6 +102,7 @@ function campo(hoja: Hoja, id: string) {
     ? { tipo_entrada: sinFila.tipo_entrada, opciones: sinFila.tipo_entrada === "booleano" ? [{ codigo: true, etiqueta: "Sí" }, { codigo: false, etiqueta: "No" }] : null }
     : tipoYOpciones(id, meta?.tipoDato, meta?.unidadValores);
   const unidad = sinFila ? sinFila.unidad : meta && UNIDADES.includes(meta.unidadValores) ? meta.unidadValores : null;
+  const { seccion, orden } = ubicacion(hoja, id);
   return {
     identificador: id,
     // Etiqueta visible pendiente de definición: por ahora, el nombre del campo.
@@ -93,19 +115,25 @@ function campo(hoja: Hoja, id: string) {
     opciones,
     obligatoriedad: regla?.obligatoriedadExcel ?? noExigido?.obligatoriedadExcel ?? null,
     condicion_activacion: regla?.activacion ?? null,
-    seccion: null,
-    orden: regla?.fila ?? noExigido?.fila ?? null,
+    seccion: seccion ? { codigo: seccion.codigo, etiqueta: seccion.etiqueta, propuesta: seccion.propuesta } : null,
+    orden,
+    fila_diccionario: regla?.fila ?? noExigido?.fila ?? null,
     exigencia: regla?.exigencia ?? null,
     marca: regla?.marca ?? null,
     condicion_texto: regla?.condicionExcel ?? noExigido?.condicionExcel ?? null,
   };
 }
 
+function ordenar<T extends { orden: number | null }>(campos: T[]): T[] {
+  return [...campos].sort((a, b) => (a.orden ?? Infinity) - (b.orden ?? Infinity));
+}
+
 export function construirInspectionFormSchema() {
   return {
     tipo: "evaluacion_inicial",
-    variables: camposPermitidosPorTipo("evaluacion_inicial", null)!.map(id => campo("REGISTRO_EVALUACION", id)),
-    campos_arbol: Object.keys(camposArbolBaseSchema.shape).map(id => campo("ARBOLES", id)),
+    secciones: SECCIONES_FORMULARIO.map(s => ({ codigo: s.codigo, etiqueta: s.etiqueta, orden: s.orden, propuesta: s.propuesta })),
+    variables: ordenar(camposPermitidosPorTipo("evaluacion_inicial", null)!.map(id => campo("REGISTRO_EVALUACION", id))),
+    campos_arbol: ordenar(Object.keys(camposArbolBaseSchema.shape).map(id => campo("ARBOLES", id))),
   };
 }
 

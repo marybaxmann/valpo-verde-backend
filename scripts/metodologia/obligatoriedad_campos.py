@@ -55,6 +55,42 @@ RUTA_CATALOGOS = os.path.join(RAIZ, "src", "services", "rules", "engine", "catal
 
 HOJAS = ("ARBOLES", "REGISTRO_EVALUACION")
 
+# Secciones del formulario (B16; decisión de la responsable, 2026-10-28):
+# el orden de las columnas de las hojas ARBOLES y REGISTRO_EVALUACION.
+# REGISTRO_EVALUACION se corta después de cada campo observaciones_*.
+# Nombres: los componentes de REGLAS_INDICADORES (R01, R02, R03, M04);
+# "Árbol" es la hoja ARBOLES; "Tutorado" y el último bloque son
+# PROPUESTOS (propuesta: True) hasta que la responsable los apruebe.
+SECCIONES_EVALUACION = [
+    ("observaciones_radicular", "raices_cuello", "Raíces y cuello", False),
+    ("observaciones_tronco", "tronco", "Tronco", False),
+    ("observaciones_copa", "copa_ramas", "Copa y ramas", False),
+    ("observaciones_infraestructura", "infraestructura", "Infraestructura", False),
+    ("observaciones_tutorado", "tutorado", "Tutorado", True),
+    (None, "objetivo_consecuencias", "Objetivo, consecuencias y vitalidad", True),
+]
+
+
+def leer_secciones(wb):
+    """Sección y orden de cada campo según el orden de columnas de las hojas."""
+    secciones = [{"codigo": "arbol", "etiqueta": "Árbol", "orden": 0, "propuesta": False}]
+    for n, (_, codigo, etiqueta, propuesta) in enumerate(SECCIONES_EVALUACION, start=1):
+        secciones.append({"codigo": codigo, "etiqueta": etiqueta, "orden": n, "propuesta": propuesta})
+    campos = []
+    cabecera = [texto(c) for c in next(wb["ARBOLES"].iter_rows(max_row=1, values_only=True)) if c]
+    for i, c in enumerate(cabecera):
+        campos.append({"hoja": "ARBOLES", "campo": c, "seccion": "arbol", "orden": i})
+    cabecera = [texto(c) for c in next(wb["REGISTRO_EVALUACION"].iter_rows(max_row=1, values_only=True)) if c]
+    cabecera = [c for c in cabecera if c not in ("id_evaluacion", "id_inspeccion", "id_arbol")]
+    bloque = 0
+    for i, c in enumerate(cabecera):
+        campos.append({"hoja": "REGISTRO_EVALUACION", "campo": c, "seccion": SECCIONES_EVALUACION[bloque][1], "orden": i})
+        if bloque < len(SECCIONES_EVALUACION) - 1 and c == SECCIONES_EVALUACION[bloque][0]:
+            bloque += 1
+    if bloque != len(SECCIONES_EVALUACION) - 1:
+        sys.exit("REGISTRO_EVALUACION ya no tiene los cortes observaciones_* esperados: revisar SECCIONES_EVALUACION")
+    return secciones, campos
+
 D_SOLO_SISTEMA = {"Sistema", "Sistema / Administrador Plataforma", "Sistema / usuario autorizado"}
 
 # Campo que activa una condición -> catálogo de catalogs.ts cuando su
@@ -393,7 +429,8 @@ def main():
             print("  - " + e, file=sys.stderr)
         sys.exit(1)
 
-    ts = generar_ts(exigidos, no_exigidos, filas)
+    secciones, campos_seccion = leer_secciones(wb)
+    ts = generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion)
     if salida:
         with open(salida, "w", encoding="utf-8", newline="\n") as f:
             f.write(ts)
@@ -412,7 +449,7 @@ def entrada(r):
     return "  {\n" + cuerpo + ",\n  },"
 
 
-def generar_ts(exigidos, no_exigidos, filas):
+def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion):
     lineas = [
         "// GENERADO por scripts/metodologia/obligatoriedad_campos.py desde DICCIONARIO_CAMPOS",
         "// (columnas D, G, H, I y K de ARBOLES y REGISTRO_EVALUACION) y las traducciones aprobadas",
@@ -476,6 +513,14 @@ def generar_ts(exigidos, no_exigidos, filas):
     lineas += ["/** Metadatos literales de DICCIONARIO_CAMPOS, columnas G y H. */", "export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipoDato: string; unidadValores: string }[] = ["]
     for f in filas:
         lineas.append(entrada({k: f[k] for k in ("hoja", "campo", "tipoDato", "unidadValores")}))
+    lineas += ["] as const;", ""]
+    lineas += ["/** Secciones del formulario (B16): orden de columnas de las hojas; propuesta = nombre por aprobar. */", "export const SECCIONES_FORMULARIO: readonly { codigo: string; etiqueta: string; orden: number; propuesta: boolean }[] = ["]
+    for s in secciones:
+        lineas.append(entrada(s))
+    lineas += ["] as const;", ""]
+    lineas += ["/** Sección y orden (posición de la columna en su hoja) de cada campo. */", "export const SECCION_DE_CAMPO: readonly { hoja: string; campo: string; seccion: string; orden: number }[] = ["]
+    for c in campos_seccion:
+        lineas.append(entrada(c))
     lineas += ["] as const;", ""]
     return "\n".join(lineas)
 
