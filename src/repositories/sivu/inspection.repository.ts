@@ -292,3 +292,40 @@ export async function finalizarInspeccion(input: FinalizarInspeccionInput): Prom
 
   return data as unknown as FinalizarInspeccionResultado;
 }
+
+// ---------------------------------------------------------------------
+// B17: inspecciones de una OT con su borrador, para retomarlas. Con el
+// JWT del usuario (PR-018 v6.0): la RLS de la 017 es la segunda capa.
+// ---------------------------------------------------------------------
+
+export interface InspeccionDeOtRow {
+  id: string;
+  tree_id: string;
+  codigo_inspeccion: string | null;
+  estado_registro: string;
+  tipo_inspeccion_realizada: string | null;
+  subtipo_inspeccion: string | null;
+  metodo_instrumental: string | null;
+  fecha_inspeccion: string;
+  observaciones: string | null;
+  inspector: string | null;
+  finalizada_at: string | null;
+  motivo_anulacion: string | null;
+  fecha_anulacion: string | null;
+  created_at: string;
+}
+
+export async function listarInspeccionesDeOt(accessToken: string, workOrderId: string): Promise<InspeccionDeOtRow[]> {
+  const { data, error } = await createUserScopedClient(accessToken)
+    .from("inspections")
+    .select(
+      "id, tree_id, codigo_inspeccion, estado_registro, tipo_inspeccion_realizada, subtipo_inspeccion, metodo_instrumental, fecha_inspeccion, observaciones, inspector, finalizada_at, motivo_anulacion, fecha_anulacion, created_at"
+    )
+    .eq("work_order_id", workOrderId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+  return (data ?? []) as InspeccionDeOtRow[];
+}

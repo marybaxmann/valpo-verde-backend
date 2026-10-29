@@ -11,6 +11,7 @@ import { crearBorradorInspeccionController } from "../../controllers/sivu/inspec
 import {
   cancelarOrdenTrabajoController,
   completarOrdenTrabajoController,
+  listarInspeccionesDeOtController,
   reasignarOrdenTrabajoController,
 } from "../../controllers/sivu/cierreOt.controller";
 
@@ -32,5 +33,7 @@ router.patch("/:workOrderId/responsable", authMiddleware, reasignarOrdenTrabajoC
 // Primer guardado de una inspección (#58; CC-048/CC-050). Solo el
 // Inspector responsable asignado.
 router.post("/:workOrderId/inspections", authMiddleware, crearBorradorInspeccionController);
+// Inspecciones de la OT con su borrador, para retomarlo (B17). Cualquier miembro del proyecto.
+router.get("/:workOrderId/inspections", authMiddleware, listarInspeccionesDeOtController);
 
 export default router;

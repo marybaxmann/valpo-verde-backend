@@ -40,7 +40,8 @@
 - **025** (de `wip/completar-ot`, 5 commits traídos con cherry-pick) revisada así; su `.down.sql` borra también la función nueva. **026** sin cambios.
 - **TS:** `POST /api/sivu/work-orders/:id/completar`, `POST …/cancelar` (`motivo_cancelacion`), `PATCH …/responsable` (`responsable_accion_id`); solo Usuario municipal. `cierreOt.repository.ts`, `cierreOt.service.ts`, `cierreOt.controller.ts`; Jest 1351/1351.
 - **`pruebas_025_estados_ot_vigencia.sql`** actualizado a la firma nueva (helper `pg_temp.evaluaciones_prueba`), con C3t (fila en `tree_assessments`) y P1 (vista previa = vista). **Sin correr:** esta sesión todavía no tiene Supabase.
-- **Pendiente del bloque:** correr el ciclo de 025 y 026 en `gmlbmyreoxgoqrolhyxo`; prueba SQL de SV068; anular inspección (CC-045 a) con el mismo patrón; B17; B18 vigente; `schema.sql` desde lo aplicado; CC-050 (historial de implementación).
+- **B17** `GET /api/sivu/work-orders/:id/inspections`: inspecciones de la OT con `variables` y los `campos_arbol` registrados, con el JWT del usuario; cualquier miembro del proyecto (CC-064 a). Sin RLS probada en la base todavía.
+- **Pendiente del bloque:** correr el ciclo de 025 y 026 en `gmlbmyreoxgoqrolhyxo`; prueba SQL de SV068; anular inspección (CC-045 a) con el mismo patrón (pregunta abierta: qué Inspector puede anular); B18 vigente; `schema.sql` desde lo aplicado; CC-050 (historial de implementación).
 
 ---
 

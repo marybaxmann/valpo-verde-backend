@@ -7,6 +7,7 @@ import {
   workOrderIdParamSchema,
 } from "../../schemas/sivu/workOrder.schema";
 import { cancelarOrdenTrabajo, completarOrdenTrabajo, reasignarOrdenTrabajo } from "../../services/sivu/cierreOt.service";
+import { listarInspeccionesDeOrdenTrabajo } from "../../services/sivu/borradorOt.service";
 
 function parsear<T>(schema: z.ZodType<T>, valor: unknown, mensaje: string): T {
   const r = schema.safeParse(valor);
@@ -42,6 +43,16 @@ export async function reasignarOrdenTrabajoController(req: Request, res: Respons
     const { workOrderId } = parsear(workOrderIdParamSchema, req.params, "Parámetros inválidos");
     const { responsable_accion_id } = parsear(reasignarOrdenTrabajoSchema, req.body, "Datos inválidos");
     res.status(200).json({ data: await reasignarOrdenTrabajo(req.user!, workOrderId, responsable_accion_id, req.accessToken!) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /api/sivu/work-orders/:workOrderId/inspections (B17): retomar o consultar el borrador. */
+export async function listarInspeccionesDeOtController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { workOrderId } = parsear(workOrderIdParamSchema, req.params, "Parámetros inválidos");
+    res.status(200).json({ data: await listarInspeccionesDeOrdenTrabajo(req.user!, workOrderId, req.accessToken!) });
   } catch (err) {
     next(err);
   }
