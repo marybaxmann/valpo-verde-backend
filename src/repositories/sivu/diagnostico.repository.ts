@@ -150,3 +150,37 @@ export async function listarEvaluacionesDeInspecciones(
   }
   return filas;
 }
+
+export interface EvaluacionVigenteRow extends Omit<EvaluacionResultadoRow, "inspection_id"> {
+  tree_id: string;
+  evento: "ot_completada" | "inspeccion_anulada";
+  work_order_id: string | null;
+  inspection_id: string | null;
+  requiere_revision_ajuste: boolean;
+  created_at: string;
+}
+
+/**
+ * tree_assessments del proyecto (CC-050; ADR-017 v1.2), la más reciente
+ * primero: la primera de cada árbol es su evaluación vigente.
+ */
+export async function listarEvaluacionesVigentes(
+  accessToken: string,
+  projectId: string,
+  treeId?: string
+): Promise<EvaluacionVigenteRow[]> {
+  const filas = await paginar<EvaluacionVigenteRow & { trees: unknown }>((desde, hasta) => {
+    let query = createUserScopedClient(accessToken)
+      .from("tree_assessments")
+      .select(
+        `tree_id, evento, work_order_id, inspection_id, requiere_revision_ajuste, created_at, ${EVALUACION_COLUMNS.replace("inspection_id, ", "")}, trees!inner(project_id)`
+      )
+      .eq("trees.project_id", projectId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(desde, hasta);
+    if (treeId) query = query.eq("tree_id", treeId);
+    return query;
+  });
+  return filas.map(({ trees: _trees, ...fila }) => fila);
+}

@@ -3,10 +3,12 @@ import { assertProjectAccess } from "../authorization.service";
 import { CATALOGO } from "../rules/engine/catalogs";
 import {
   EvaluacionResultadoRow,
+  EvaluacionVigenteRow,
   InspeccionFinalizadaRow,
   listarArbolesResumen,
   listarEstadosOt,
   listarEvaluacionesDeInspecciones,
+  listarEvaluacionesVigentes,
   listarInspeccionesFinalizadas,
 } from "../../repositories/sivu/diagnostico.repository";
 import { obtenerMiembrosDeProyecto } from "../../repositories/sivu/workOrder.repository";
@@ -20,18 +22,48 @@ function conEtiqueta(catalogo: string, codigo: string | null): Valor {
   return { codigo, etiqueta: entrada?.etiqueta ?? null };
 }
 
-function diagnostico(ins: InspeccionFinalizadaRow, ev: EvaluacionResultadoRow | undefined) {
-  const componente = (prob: string | null, clas: string | null) => ({
+function componente(prob: string | null, clas: string | null) {
+  return {
     probabilidad_falla: conEtiqueta("probabilidad_falla", prob),
     clasificacion: conEtiqueta("clasificacion_riesgo", clas),
-  });
+  };
+}
+
+/** Columnas de resultado (evaluations o tree_assessments) con sus etiquetas; el ajuste prevalece. */
+function resultadoConEtiquetas(ev: Omit<EvaluacionResultadoRow, "inspection_id">) {
+  return {
+    clasificacion_riesgo: conEtiqueta("clasificacion_riesgo", ev.clasificacion_riesgo_ajustada ?? ev.clasificacion_riesgo_calculada),
+    riesgo_ajustado: ev.clasificacion_riesgo_ajustada !== null,
+    probabilidad_impacto: conEtiqueta("probabilidad_impacto", ev.probabilidad_impacto),
+    componentes: {
+      raices_cuello: componente(ev.probabilidad_falla_raices_cuello, ev.clasificacion_raices_cuello),
+      tronco: componente(ev.probabilidad_falla_tronco, ev.clasificacion_tronco),
+      copa_ramas: componente(ev.probabilidad_falla_copa_ramas, ev.clasificacion_copa_ramas),
+    },
+    infraestructura: {
+      clasificacion: conEtiqueta(
+        "clasificacion_infraestructura",
+        ev.clasificacion_infraestructura_ajustada ?? ev.clasificacion_infraestructura_calculada
+      ),
+      ajustada: ev.clasificacion_infraestructura_ajustada !== null,
+      puntaje: ev.puntaje_infraestructura,
+      porcentaje: ev.pct_infraestructura,
+    },
+    prioridad: conEtiqueta("clasificacion_prioridad", ev.clasificacion_prioridad_ajustada ?? ev.clasificacion_prioridad_calculada),
+    prioridad_ajustada: ev.clasificacion_prioridad_ajustada !== null,
+    indicadores: ev.indicadores ?? null,
+    rule_version: ev.rule_version,
+  };
+}
+
+function diagnostico(ins: InspeccionFinalizadaRow, ev: EvaluacionResultadoRow | undefined, vig: EvaluacionVigenteRow | undefined) {
   return {
     tree_id: ins.tree_id,
     tree_code: ins.trees?.tree_code ?? null,
     especie_cientifica: ins.trees?.especie_cientifica ?? null,
     nombre_comun: ins.trees?.nombre_comun ?? null,
-    // Inspección finalizada; la vigencia llega al completar la OT (CC-050),
-    // que esta versión no expone. Nunca se presenta como vigente.
+    // Diagnóstico finalizado: la última inspección finalizada, aunque su OT
+    // no esté completada. La evaluación vigente (CC-050) va aparte, en `vigente`.
     estado: "finalizado" as const,
     inspection_id: ins.id,
     codigo_inspeccion: ins.codigo_inspeccion,
@@ -43,29 +75,17 @@ function diagnostico(ins: InspeccionFinalizadaRow, ev: EvaluacionResultadoRow | 
     requiere_mantenimiento: ins.requiere_mantenimiento,
     fecha_proxima_inspeccion: ins.fecha_proxima_inspeccion,
     fecha_proximo_monitoreo: ins.fecha_proximo_monitoreo,
-    resultado: ev
+    resultado: ev ? resultadoConEtiquetas(ev) : null,
+    // Evaluación vigente del árbol (tree_assessments, la más reciente): null
+    // mientras ninguna OT del árbol esté completada.
+    vigente: vig
       ? {
-          clasificacion_riesgo: conEtiqueta("clasificacion_riesgo", ev.clasificacion_riesgo_ajustada ?? ev.clasificacion_riesgo_calculada),
-          riesgo_ajustado: ev.clasificacion_riesgo_ajustada !== null,
-          probabilidad_impacto: conEtiqueta("probabilidad_impacto", ev.probabilidad_impacto),
-          componentes: {
-            raices_cuello: componente(ev.probabilidad_falla_raices_cuello, ev.clasificacion_raices_cuello),
-            tronco: componente(ev.probabilidad_falla_tronco, ev.clasificacion_tronco),
-            copa_ramas: componente(ev.probabilidad_falla_copa_ramas, ev.clasificacion_copa_ramas),
-          },
-          infraestructura: {
-            clasificacion: conEtiqueta(
-              "clasificacion_infraestructura",
-              ev.clasificacion_infraestructura_ajustada ?? ev.clasificacion_infraestructura_calculada
-            ),
-            ajustada: ev.clasificacion_infraestructura_ajustada !== null,
-            puntaje: ev.puntaje_infraestructura,
-            porcentaje: ev.pct_infraestructura,
-          },
-          prioridad: conEtiqueta("clasificacion_prioridad", ev.clasificacion_prioridad_ajustada ?? ev.clasificacion_prioridad_calculada),
-          prioridad_ajustada: ev.clasificacion_prioridad_ajustada !== null,
-          indicadores: ev.indicadores ?? null,
-          rule_version: ev.rule_version,
+          evento: vig.evento,
+          work_order_id: vig.work_order_id,
+          inspection_id: vig.inspection_id,
+          desde: vig.created_at,
+          requiere_revision_ajuste: vig.requiere_revision_ajuste,
+          resultado: resultadoConEtiquetas(vig),
         }
       : null,
   };
@@ -81,10 +101,15 @@ export async function listarDiagnosticos(user: AuthenticatedUser, projectId: str
   const ultimaPorArbol = new Map<string, InspeccionFinalizadaRow>();
   for (const ins of inspecciones) if (!ultimaPorArbol.has(ins.tree_id)) ultimaPorArbol.set(ins.tree_id, ins);
   const ultimas = [...ultimaPorArbol.values()];
-  const evaluaciones = await listarEvaluacionesDeInspecciones(token, ultimas.map(i => i.id));
+  const [evaluaciones, vigentes] = await Promise.all([
+    listarEvaluacionesDeInspecciones(token, ultimas.map(i => i.id)),
+    listarEvaluacionesVigentes(token, projectId, treeId),
+  ]);
   const porInspeccion = new Map(evaluaciones.map(e => [e.inspection_id, e]));
+  const vigentePorArbol = new Map<string, EvaluacionVigenteRow>();
+  for (const v of vigentes) if (!vigentePorArbol.has(v.tree_id)) vigentePorArbol.set(v.tree_id, v);
   return ultimas
-    .map(ins => diagnostico(ins, porInspeccion.get(ins.id)))
+    .map(ins => diagnostico(ins, porInspeccion.get(ins.id), vigentePorArbol.get(ins.tree_id)))
     .sort((a, b) => (a.tree_code ?? "").localeCompare(b.tree_code ?? ""));
 }
 

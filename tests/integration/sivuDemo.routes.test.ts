@@ -8,7 +8,7 @@ import app from "../../src/app";
 import { getAuthUserByToken } from "../../src/repositories/auth.repository";
 import { findUserProfileById } from "../../src/repositories/userProfile.repository";
 import { findMembership } from "../../src/repositories/projectMember.repository";
-import { listarEvaluacionesDeInspecciones, listarInspeccionesFinalizadas } from "../../src/repositories/sivu/diagnostico.repository";
+import { listarEvaluacionesDeInspecciones, listarEvaluacionesVigentes, listarInspeccionesFinalizadas } from "../../src/repositories/sivu/diagnostico.repository";
 import { obtenerMiembrosDeProyecto } from "../../src/repositories/sivu/workOrder.repository";
 import { FAKE_TOKEN, MUNICIPAL_ID, fakeAuthUser, municipalProfileRow } from "../helpers/authFixtures";
 
@@ -18,6 +18,7 @@ const profile = findUserProfileById as jest.Mock;
 const membership = findMembership as jest.Mock;
 const ins = listarInspeccionesFinalizadas as jest.Mock;
 const evs = listarEvaluacionesDeInspecciones as jest.Mock;
+const vigs = listarEvaluacionesVigentes as jest.Mock;
 const miembros = obtenerMiembrosDeProyecto as jest.Mock;
 
 beforeEach(() => {
@@ -25,6 +26,7 @@ beforeEach(() => {
   auth.mockResolvedValue(fakeAuthUser({ id: MUNICIPAL_ID }));
   profile.mockResolvedValue(municipalProfileRow());
   membership.mockResolvedValue({});
+  vigs.mockResolvedValue([]);
 });
 const get = (url: string) => request(app).get(url).set("Authorization", `Bearer ${FAKE_TOKEN}`);
 
@@ -125,5 +127,38 @@ describe("GET /api/sivu/projects/:id/resumen (B7)", () => {
     const res = await get("/api/sivu/catalogs");
     expect(res.body.data.vista_foto.map((c: any) => c.etiqueta)).toEqual(["Árbol completo", "Base", "Tronco", "Copa"]);
     expect(res.body.data.estado_ciclo_vida.map((c: any) => c.codigo)).toEqual(["activo", "tocon", "retirado"]);
+  });
+});
+
+describe("B18: diagnóstico vigente (tree_assessments)", () => {
+  it("agrega la evaluación vigente más reciente del árbol, aparte del finalizado", async () => {
+    ins.mockResolvedValue([{
+      id: "i1", tree_id: "t1", codigo_inspeccion: "INS-1", work_order_id: "w", tipo_inspeccion_realizada: "evaluacion_inicial",
+      subtipo_inspeccion: null, fecha_inspeccion: "2026-10-27", finalizada_at: "2026-10-27T12:00:00Z", requiere_mantenimiento: false,
+      fecha_proxima_inspeccion: null, fecha_proximo_monitoreo: null, trees: { tree_code: "A-1", project_id: P, especie_cientifica: null, nombre_comun: null },
+    }]);
+    evs.mockResolvedValue([]);
+    vigs.mockResolvedValue([
+      { tree_id: "t1", evento: "ot_completada", work_order_id: "w", inspection_id: null, requiere_revision_ajuste: false, created_at: "2026-10-29T10:00:00Z",
+        clasificacion_riesgo_calculada: "moderado", clasificacion_riesgo_ajustada: null, clasificacion_prioridad_calculada: "media", clasificacion_prioridad_ajustada: null },
+      { tree_id: "t1", evento: "ot_completada", work_order_id: "w0", inspection_id: null, requiere_revision_ajuste: false, created_at: "2026-10-01T10:00:00Z",
+        clasificacion_riesgo_calculada: "bajo", clasificacion_riesgo_ajustada: null },
+    ]);
+    const res = await get(`/api/sivu/projects/${P}/diagnosticos`);
+    expect(res.status).toBe(200);
+    const d = res.body.data[0];
+    expect(d.estado).toBe("finalizado");
+    expect(d.vigente).toMatchObject({ evento: "ot_completada", work_order_id: "w", desde: "2026-10-29T10:00:00Z" });
+    expect(d.vigente.resultado.clasificacion_riesgo).toEqual({ codigo: "moderado", etiqueta: "Moderado" });
+  });
+  it("sin OT completada: vigente es null", async () => {
+    ins.mockResolvedValue([{
+      id: "i1", tree_id: "t1", codigo_inspeccion: "INS-1", work_order_id: "w", tipo_inspeccion_realizada: "evaluacion_inicial",
+      subtipo_inspeccion: null, fecha_inspeccion: "2026-10-27", finalizada_at: "2026-10-27T12:00:00Z", requiere_mantenimiento: false,
+      fecha_proxima_inspeccion: null, fecha_proximo_monitoreo: null, trees: { tree_code: "A-1", project_id: P, especie_cientifica: null, nombre_comun: null },
+    }]);
+    evs.mockResolvedValue([]);
+    const res = await get(`/api/sivu/projects/${P}/diagnosticos`);
+    expect(res.body.data[0].vigente).toBeNull();
   });
 });

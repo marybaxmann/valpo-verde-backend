@@ -41,8 +41,9 @@
 - **TS:** `POST /api/sivu/work-orders/:id/completar`, `POST …/cancelar` (`motivo_cancelacion`), `PATCH …/responsable` (`responsable_accion_id`); solo Usuario municipal. `cierreOt.repository.ts`, `cierreOt.service.ts`, `cierreOt.controller.ts`; Jest 1351/1351.
 - **`pruebas_025_estados_ot_vigencia.sql`** actualizado a la firma nueva (helper `pg_temp.evaluaciones_prueba`), con C3t (fila en `tree_assessments`) y P1 (vista previa = vista). **Sin correr:** esta sesión todavía no tiene Supabase.
 - **Anular (CC-067, aprobado 2026-10-29):** solo el Usuario municipal miembro anula una inspección Finalizada con motivo; el Inspector puede pedirlo fuera del sistema. Migración **027** `fn_anular_inspeccion` (SV069; SV068 si la composición cambió): con la OT completada recalcula la vigente sin la inspección (`fn_entradas_vigentes_previas` con `p_inspeccion_excluida`) e inserta `tree_assessments` con `inspeccion_anulada`. `POST /api/sivu/inspections/:id/anular`. PR-009 v6.0; AM-15 ampliado.
+- **B18 vigente:** `GET …/diagnosticos` agrega `vigente` por árbol (la fila más reciente de `tree_assessments`, con etiquetas; `null` sin OT completada), aparte del diagnóstico finalizado. B7 sigue contando el finalizado (CC-066); cambiarlo a vigente es decisión de la responsable.
 - **B17** `GET /api/sivu/work-orders/:id/inspections`: inspecciones de la OT con `variables` y los `campos_arbol` registrados, con el JWT del usuario; cualquier miembro del proyecto (CC-064 a). Sin RLS probada en la base todavía.
-- **Pendiente del bloque:** correr el ciclo de 025 y 026 en `gmlbmyreoxgoqrolhyxo`; prueba SQL de SV068; escribir `pruebas_027_anular_inspeccion.sql` (casos en CC-067, «Pruebas necesarias»); B18 vigente; `schema.sql` desde lo aplicado; CC-050 (historial de implementación).
+- **Pendiente del bloque:** correr el ciclo de 025 y 026 en `gmlbmyreoxgoqrolhyxo`; prueba SQL de SV068; escribir `pruebas_027_anular_inspeccion.sql` (casos en CC-067, «Pruebas necesarias»); prueba de RLS de `tree_assessments` para B18; `schema.sql` desde lo aplicado; CC-050 (historial de implementación).
 
 ---
 
