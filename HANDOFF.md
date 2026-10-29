@@ -15,7 +15,7 @@
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `a87292a` (PR #71 fusionado: cierre documental de la Fase 5, sobre `3a5be8b`/PR #68 y `874c938`/PR #70); frontend `main` = `187a90d` (PR #5). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Demo publicada: `release/demo` (B1, B7, B14, B15, B16, B18 mínimo) en Vercel con la base de pruebas. B16 sigue en `feature/b16-inspection-form-schema`: el borrador valida selección única y Sí / No; etiquetas y secciones pendientes.
+- **Resumen:** Fase 6. `feature/fase6-backend-api` = `release/demo` (CC-066 aprobado: B1, B7, B14 a B16, B18 mínimo). Sigue el Bloque 1: completar OT y vigencia (025/026, `wip/completar-ot`), con Supabase.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
