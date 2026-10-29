@@ -100,8 +100,9 @@ describe("secciones y orden (orden de columnas del Excel)", () => {
 describe("etiquetas visibles (aprobadas 2026-10-28)", () => {
   const schema = construirInspectionFormSchema();
   const todos = [...schema.variables, ...schema.campos_arbol];
-  it("solo obstaculos_crecimiento_radicular queda pendiente", () => {
-    expect(todos.filter(c => c.etiqueta_pendiente).map(c => c.identificador)).toEqual(["obstaculos_crecimiento_radicular"]);
+  it("ningún campo queda con etiqueta pendiente", () => {
+    expect(todos.filter(c => c.etiqueta_pendiente).map(c => c.identificador)).toEqual([]);
+    expect(todos.find(c => c.identificador === "obstaculos_crecimiento_radicular")!.etiqueta).toBe("Presenta obstáculos crecimiento radicular");
   });
   it("aplica la corrección de la responsable", () => {
     expect(todos.find(c => c.identificador === "suelo_sellado_impermeabilizado")!.etiqueta).toBe("Suelo sellado o impermeabilizado");
