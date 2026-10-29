@@ -10,6 +10,7 @@ import {
 } from "../../schemas/sivu/completitudInspeccion";
 import { camposArbolBaseSchema } from "../../schemas/sivu/inspeccion.schema";
 import { entradasVigentesDe } from "../rules/engine/catalogs";
+import { ETIQUETAS_FORMULARIO } from "../../schemas/sivu/etiquetasFormulario";
 
 type Hoja = "ARBOLES" | "REGISTRO_EVALUACION";
 type Opcion = { codigo: string | boolean; etiqueta: string };
@@ -105,9 +106,9 @@ function campo(hoja: Hoja, id: string) {
   const { seccion, orden } = ubicacion(hoja, id);
   return {
     identificador: id,
-    // Etiqueta visible pendiente de definición: por ahora, el nombre del campo.
-    etiqueta: id,
-    etiqueta_pendiente: true,
+    // Etiqueta aprobada (etiquetasFormulario.ts); sin ella, el nombre del campo.
+    etiqueta: ETIQUETAS_FORMULARIO[`${hoja}:${id}`] ?? id,
+    etiqueta_pendiente: ETIQUETAS_FORMULARIO[`${hoja}:${id}`] === undefined,
     tipo: meta?.tipoDato || null,
     tipo_entrada,
     unidad,
