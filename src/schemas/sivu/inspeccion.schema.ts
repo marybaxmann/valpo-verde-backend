@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   CATALOGO_SELECCION_MULTIPLE,
   CATALOGO_SELECCION_UNICA,
+  CAMPOS_SI_NO,
   camposPermitidosPorTipo,
   tipoSubtipoValido,
 } from "./alcanceInspeccion";
@@ -213,6 +214,17 @@ function validarAlcanceVariables(
         code: z.ZodIssueCode.custom,
         path: ["variables", clave],
         message: `"${clave}" debe ser un código vigente de ${catalogo}: ${JSON.stringify(valor)}`,
+      });
+    }
+  }
+
+  // Campos "Sí / No" (PR-021): true, false o null; "Sí", "si" o 1 se rechazan.
+  for (const [clave, valor] of Object.entries(data.variables)) {
+    if (CAMPOS_SI_NO.has(clave) && valor !== null && typeof valor !== "boolean") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variables", clave],
+        message: `"${clave}" es Sí / No: debe ser true, false o null: ${JSON.stringify(valor)}`,
       });
     }
   }

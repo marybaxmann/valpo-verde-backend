@@ -1,3 +1,4 @@
+import { METADATOS_DICCIONARIO } from "./completitudInspeccion";
 import { esCodigoVigente } from "../../services/rules/engine/catalogs";
 
 /**
@@ -63,6 +64,16 @@ export const CATALOGO_SELECCION_MULTIPLE: Readonly<Record<string, string>> = {
  * guardar para no aceptar un valor que después rechazaría el motor.
  * "Sí / No" no está aquí: es booleano, no catálogo (PR-021).
  */
+/**
+ * Campos "Sí / No" de REGISTRO_EVALUACION (columna H del diccionario): se
+ * guardan como booleano (PR-021). Sale de los metadatos generados del Excel.
+ */
+export const CAMPOS_SI_NO: ReadonlySet<string> = new Set(
+  METADATOS_DICCIONARIO.filter(
+    (m) => m.hoja === "REGISTRO_EVALUACION" && m.tipoDato === "Categoría" && m.unidadValores === "Sí / No"
+  ).map((m) => m.campo)
+);
+
 export const CATALOGO_SELECCION_UNICA: Readonly<Record<string, string>> = {
   cavidad_basal_interna: "resultado_cavidad_interna",
   cavidad_interna_tronco: "resultado_cavidad_interna",
