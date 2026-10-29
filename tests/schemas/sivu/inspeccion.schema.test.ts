@@ -1,4 +1,7 @@
 import { crearBorradorInspeccionSchema, guardarBorradorInspeccionSchema } from "../../../src/schemas/sivu/inspeccion.schema";
+import { CAMPOS_SI_NO, CATALOGO_SELECCION_UNICA, camposPermitidosPorTipo } from "../../../src/schemas/sivu/alcanceInspeccion";
+import { entradasVigentesDe } from "../../../src/services/rules/engine/catalogs";
+import { CATALOGO_DE_CAMPO_FORMULARIO } from "../../../src/services/sivu/inspectionFormSchema.service";
 
 const TREE_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -222,5 +225,63 @@ describe("variables — selección múltiple (D-132, D-139, D-143; CC-056 decisi
   it("clasificacion_vitalidad: valida el dominio también en la evaluación completa (CC-056 decisión g)", () => {
     expect(completa({ clasificacion_vitalidad: "2_estancamiento" }).success).toBe(true);
     expect(completa({ clasificacion_vitalidad: "regular" }).success).toBe(false);
+  });
+});
+
+describe("variables — selección única (PR-021; B16)", () => {
+  const completa = (variables: Record<string, unknown>) =>
+    crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "evaluacion_inicial", variables });
+  const campos = Object.entries(CATALOGO_SELECCION_UNICA);
+
+  it("cada catálogo asignado existe y tiene entradas vigentes", () => {
+    for (const [, catalogo] of campos) expect(entradasVigentesDe(catalogo).length).toBeGreaterThan(0);
+  });
+
+  it("el formulario de B16 ofrece las opciones de cada campo con el mismo catálogo", () => {
+    for (const [campo, catalogo] of campos) expect(CATALOGO_DE_CAMPO_FORMULARIO[campo]).toBe(catalogo);
+  });
+
+  it.each(campos)("%s: acepta cada código vigente de %s, y null", (campo, catalogo) => {
+    for (const { codigo } of entradasVigentesDe(catalogo)) {
+      expect(completa({ [campo]: codigo }).success).toBe(true);
+    }
+    expect(completa({ [campo]: null }).success).toBe(true);
+  });
+
+  it.each(campos)("%s: rechaza la etiqueta, un número, un booleano y un código inexistente", (campo, catalogo) => {
+    const { codigo, etiqueta } = entradasVigentesDe(catalogo)[0];
+    if (etiqueta !== codigo) expect(completa({ [campo]: etiqueta }).success).toBe(false);
+    expect(completa({ [campo]: 1 }).success).toBe(false);
+    expect(completa({ [campo]: true }).success).toBe(false);
+    expect(completa({ [campo]: "codigo_inexistente" }).success).toBe(false);
+  });
+
+  it("el error indica el campo y el catálogo", () => {
+    const resultado = completa({ materialidad_vereda: "Baldosa" });
+    expect(resultado.success).toBe(false);
+    if (resultado.success) return;
+    expect(resultado.error.issues[0].path).toEqual(["variables", "materialidad_vereda"]);
+    expect(resultado.error.issues[0].message).toContain("materialidad_vereda");
+  });
+});
+
+describe("variables — Sí / No como booleano (PR-021; B16)", () => {
+  const completa = (variables: Record<string, unknown>) =>
+    crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "evaluacion_inicial", variables });
+  const campos = [...CAMPOS_SI_NO];
+
+  it("sale de la columna H del Excel: 52 campos de REGISTRO_EVALUACION, todos en el alcance de la evaluación completa", () => {
+    const alcance = new Set<string>(camposPermitidosPorTipo("evaluacion_inicial", null)!);
+    expect(campos.filter((c) => alcance.has(c))).toHaveLength(campos.length);
+    expect(campos).toHaveLength(52);
+  });
+
+  it.each(campos)("%s: acepta true, false y null; rechaza \"Sí\", \"si\" y 1", (campo) => {
+    expect(completa({ [campo]: true }).success).toBe(true);
+    expect(completa({ [campo]: false }).success).toBe(true);
+    expect(completa({ [campo]: null }).success).toBe(true);
+    expect(completa({ [campo]: "Sí" }).success).toBe(false);
+    expect(completa({ [campo]: "si" }).success).toBe(false);
+    expect(completa({ [campo]: 1 }).success).toBe(false);
   });
 });

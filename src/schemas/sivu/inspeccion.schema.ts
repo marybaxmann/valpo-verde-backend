@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { CATALOGO_SELECCION_MULTIPLE, camposPermitidosPorTipo, tipoSubtipoValido } from "./alcanceInspeccion";
+import {
+  CATALOGO_SELECCION_MULTIPLE,
+  CATALOGO_SELECCION_UNICA,
+  CAMPOS_SI_NO,
+  camposPermitidosPorTipo,
+  tipoSubtipoValido,
+} from "./alcanceInspeccion";
 import { esCodigoVigente } from "../../services/rules/engine/catalogs";
 
 /**
@@ -90,8 +96,9 @@ export type CamposArbolBody = z.infer<typeof camposArbolSchema>;
  * tipa aquí uno por uno todavía (fuera de alcance de este pase, ver
  * `alcanceInspeccion.ts`) — se acepta cualquier valor primitivo o
  * `null` por clave, y una lista de textos solo en los campos de
- * selección múltiple (CC-056 decisión o; se valida en
- * `validarAlcanceVariables`). Lo que SÍ se exige, siempre, es que la
+ * selección múltiple (CC-056 decisión o). Los campos de selección
+ * múltiple y de selección única sí se validan contra su catálogo, en
+ * `validarAlcanceVariables`. Lo que SÍ se exige, siempre, es que la
  * CLAVE esté dentro del alcance de `tipo`/`subtipo` — `superRefine`
  * del esquema contenedor.
  */
@@ -194,21 +201,30 @@ function validarAlcanceVariables(
     }
   }
 
-  // clasificacion_vitalidad tiene catálogo propio (D-169; AM-17) — un
-  // valor fuera del dominio se rechaza aquí, no se deja pasar como
-  // texto libre. Está en el alcance de Monitoreo Vitalidad y de las
-  // evaluaciones completas (CC-056 decisión g).
-  {
-    const valor = data.variables["clasificacion_vitalidad"];
-    if (
-      valor !== undefined &&
-      valor !== null &&
-      (typeof valor !== "string" || !esCodigoVigente("clasificacion_vitalidad", valor))
-    ) {
+  // Campos de selección única (PR-021; B16), entre ellos
+  // clasificacion_vitalidad (D-169; AM-17): un código vigente de su
+  // catálogo, o null. Una etiqueta ("Baldosa" en vez de "baldosa"), un
+  // número o un booleano se rechazan aquí, no se dejan pasar como texto
+  // libre hasta que el motor los rechace al finalizar.
+  for (const [clave, valor] of Object.entries(data.variables)) {
+    const catalogo = CATALOGO_SELECCION_UNICA[clave];
+    if (catalogo === undefined || valor === null || Array.isArray(valor)) continue;
+    if (typeof valor !== "string" || !esCodigoVigente(catalogo, valor)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["variables", "clasificacion_vitalidad"],
-        message: `clasificacion_vitalidad fuera del dominio del Excel (D-169): ${JSON.stringify(valor)}`,
+        path: ["variables", clave],
+        message: `"${clave}" debe ser un código vigente de ${catalogo}: ${JSON.stringify(valor)}`,
+      });
+    }
+  }
+
+  // Campos "Sí / No" (PR-021): true, false o null; "Sí", "si" o 1 se rechazan.
+  for (const [clave, valor] of Object.entries(data.variables)) {
+    if (CAMPOS_SI_NO.has(clave) && valor !== null && typeof valor !== "boolean") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variables", clave],
+        message: `"${clave}" es Sí / No: debe ser true, false o null: ${JSON.stringify(valor)}`,
       });
     }
   }

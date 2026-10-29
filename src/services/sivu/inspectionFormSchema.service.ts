@@ -1,6 +1,6 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
-import { camposPermitidosPorTipo, CATALOGO_SELECCION_MULTIPLE } from "../../schemas/sivu/alcanceInspeccion";
+import { camposPermitidosPorTipo, CATALOGO_SELECCION_MULTIPLE, CATALOGO_SELECCION_UNICA } from "../../schemas/sivu/alcanceInspeccion";
 import { CAMPOS_NO_EXIGIDOS, REGLAS_COMPLETITUD, METADATOS_DICCIONARIO } from "../../schemas/sivu/completitudInspeccion";
 import { camposArbolBaseSchema } from "../../schemas/sivu/inspeccion.schema";
 import { entradasVigentesDe } from "../rules/engine/catalogs";
@@ -12,30 +12,14 @@ type Opcion = { codigo: string | boolean; etiqueta: string };
  * Campo de selección única -> catálogo de catalogs.ts. Las etiquetas de
  * cada catálogo son el dominio literal de la columna H (lo comprueba
  * tests/integration/inspectionFormSchema.routes.test.ts). "Sí / No" no es
- * un catálogo (PR-021): se guarda como booleano.
+ * un catálogo (PR-021): se guarda como booleano. Los de REGISTRO_EVALUACION
+ * vienen de CATALOGO_SELECCION_UNICA, la misma lista con que se valida el
+ * borrador; los de ARBOLES ya los valida camposArbolBaseSchema.
  */
 export const CATALOGO_DE_CAMPO_FORMULARIO: Readonly<Record<string, string>> = {
   clase_edad: "clase_edad",
   rango_edad_estimada_anios: "rango_edad_estimada_anios",
-  cavidad_basal_interna: "resultado_cavidad_interna",
-  cavidad_interna_tronco: "resultado_cavidad_interna",
-  condicion_heridas_tronco: "condicion_herida",
-  afectacion_fisura_grieta: "afectacion_grieta",
-  direccion_grieta: "direccion_grieta",
-  materialidad_vereda: "materialidad_vereda",
-  materialidad_calzada: "materialidad_calzada",
-  forma_alcorque: "forma_alcorque",
-  condicion_radicular_entorno: "condicion_radicular_entorno",
-  red_subterranea_presente: "si_no_no_determinado",
-  compromete_funcionalidad_red_subterranea: "si_no_no_determinado",
-  tipo_tutorado: "tipo_tutorado",
-  condicion_tutorado: "condicion_tutorado",
-  zona_objetivo: "zona_objetivo",
-  tasa_ocupacion_objetivo: "tasa_ocupacion",
-  consecuencia_raices_cuello: "consecuencia",
-  consecuencia_tronco: "consecuencia",
-  consecuencia_copa_ramas: "consecuencia",
-  clasificacion_vitalidad: "clasificacion_vitalidad",
+  ...CATALOGO_SELECCION_UNICA,
 };
 
 /** Columna G del diccionario -> tipo de entrada del formulario. */
