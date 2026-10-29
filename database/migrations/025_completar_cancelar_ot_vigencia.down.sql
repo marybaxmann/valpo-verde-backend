@@ -4,7 +4,7 @@
 -- Deshace, en orden inverso:
 --   6. DROP fn_reassign_work_order
 --   5. DROP fn_cancel_work_order
---   4. DROP fn_complete_work_order_inspeccion
+--   4. DROP fn_complete_work_order_inspeccion y fn_entradas_vigentes_previas
 --   3. Restaura v_tree_current_inputs y fn_refresh_tree_current
 --      a la versión exacta de la migración 021 (<> 'anulado').
 --   2. Restaura fn_check_ot_completada a la versión previa (solo D-239,
@@ -13,7 +13,8 @@
 
 DROP FUNCTION IF EXISTS public.fn_reassign_work_order(UUID, UUID, UUID);
 DROP FUNCTION IF EXISTS public.fn_cancel_work_order(UUID, TEXT, UUID);
-DROP FUNCTION IF EXISTS public.fn_complete_work_order_inspeccion(UUID, UUID, DATE);
+DROP FUNCTION IF EXISTS public.fn_complete_work_order_inspeccion(UUID, UUID, JSONB);
+DROP FUNCTION IF EXISTS public.fn_entradas_vigentes_previas(UUID, UUID, UUID);
 
 -- ---------------------------------------------------------------------
 -- Restaura v_tree_current_inputs — cuerpo exacto de la migración 021

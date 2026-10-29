@@ -109,3 +109,13 @@ export type TransicionarOrdenTrabajoBody = z.infer<typeof transicionarOrdenTraba
 export const workOrderIdParamSchema = z.object({
   workOrderId: z.string().uuid("workOrderId inválido"),
 });
+
+/** POST /api/sivu/work-orders/:workOrderId/cancelar (CC-050): motivo obligatorio. */
+export const cancelarOrdenTrabajoSchema = z
+  .object({ motivo_cancelacion: z.string().trim().min(1, "motivo_cancelacion es obligatorio (CC-050)").max(2000) })
+  .strict();
+
+/** PATCH /api/sivu/work-orders/:workOrderId/responsable (CC-050; D-244). */
+export const reasignarOrdenTrabajoSchema = z
+  .object({ responsable_accion_id: z.string().uuid("responsable_accion_id inválido") })
+  .strict();

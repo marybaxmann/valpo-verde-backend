@@ -8,6 +8,12 @@ import { crearBorradorInspeccionController } from "../../controllers/sivu/inspec
  * porque estas rutas no cuelgan de un proyecto en la URL — la OT ya
  * trae su `project_id`, que el service resuelve antes de autorizar.
  */
+import {
+  cancelarOrdenTrabajoController,
+  completarOrdenTrabajoController,
+  reasignarOrdenTrabajoController,
+} from "../../controllers/sivu/cierreOt.controller";
+
 const router = Router();
 
 // Mis OT (B4; CC-064 k y n; CC-065): las OT donde el usuario es el
@@ -18,6 +24,10 @@ router.get("/mine", authMiddleware, listarMisOtsController);
 // Transición Pendiente→Programada→En ejecución (018g; CC-050). Solo el
 // Inspector responsable asignado.
 router.patch("/:workOrderId/estado", authMiddleware, transicionarOrdenTrabajoController);
+// Completar, cancelar y reasignar (#60; CC-050; ADR-017 v1.2). Solo el Usuario municipal.
+router.post("/:workOrderId/completar", authMiddleware, completarOrdenTrabajoController);
+router.post("/:workOrderId/cancelar", authMiddleware, cancelarOrdenTrabajoController);
+router.patch("/:workOrderId/responsable", authMiddleware, reasignarOrdenTrabajoController);
 
 // Primer guardado de una inspección (#58; CC-048/CC-050). Solo el
 // Inspector responsable asignado.

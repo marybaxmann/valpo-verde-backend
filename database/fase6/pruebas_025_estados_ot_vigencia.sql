@@ -31,6 +31,18 @@
 
 BEGIN;
 
+-- ADR-017 v1.2: lo que el backend enviaría al completar. composicion =
+-- fn_entradas_vigentes_previas; resultado mínimo válido para tree_assessments.
+CREATE FUNCTION pg_temp.evaluaciones_prueba(p_ot uuid) RETURNS jsonb
+LANGUAGE sql AS $$
+  SELECT COALESCE(jsonb_agg(jsonb_build_object(
+    'tree_id', t.tree_id,
+    'composicion', public.fn_entradas_vigentes_previas(p_tree_id => t.tree_id, p_work_order_id => p_ot),
+    'resultado', jsonb_build_object('rule_version', '2.1', 'motor_commit', 'prueba-025', 'clasificacion_riesgo_calculada', 'bajo')
+  )), '[]'::jsonb)
+  FROM (SELECT DISTINCT tree_id FROM public.inspections WHERE work_order_id = p_ot AND estado_registro = 'finalizado') t;
+$$;
+
 CREATE FUNCTION pg_temp.crear_usuario_prueba(p_email text, p_rol text, p_nombre text) RETURNS uuid
 LANGUAGE plpgsql AS $$
 DECLARE
@@ -187,7 +199,7 @@ BEGIN
     PERFORM public.fn_complete_work_order_inspeccion(
       p_work_order_id  => v_wo_id,
       p_usuario        => v_municipal,
-      p_fecha_completada => CURRENT_DATE
+      p_evaluaciones   => pg_temp.evaluaciones_prueba(p_ot => v_wo_id)
     );
     RAISE EXCEPTION 'FALLA C1: debió rechazar completar sin inspección finalizada';
   EXCEPTION WHEN SQLSTATE 'SV065' THEN
@@ -222,7 +234,7 @@ BEGIN
     PERFORM public.fn_complete_work_order_inspeccion(
       p_work_order_id    => v_wo_id,
       p_usuario          => v_municipal,
-      p_fecha_completada => CURRENT_DATE
+      p_evaluaciones   => pg_temp.evaluaciones_prueba(p_ot => v_wo_id)
     );
     RAISE EXCEPTION 'FALLA C2: debió rechazar con inspección en preguardado';
   EXCEPTION WHEN SQLSTATE 'SV065' THEN
@@ -268,13 +280,33 @@ BEGIN
   PERFORM public.fn_complete_work_order_inspeccion(
     p_work_order_id    => v_wo_id,
     p_usuario          => v_municipal,
-    p_fecha_completada => CURRENT_DATE
+    p_evaluaciones   => pg_temp.evaluaciones_prueba(p_ot => v_wo_id)
   );
 
   -- Aserción: OT completada
   PERFORM pg_temp.assert(
-    EXISTS (SELECT 1 FROM public.work_orders WHERE id = v_wo_id AND estado_ot = 'completada' AND fecha_completada_ot = CURRENT_DATE),
-    'C3a: OT no quedó en estado completada o fecha_completada_ot incorrecta'
+    EXISTS (SELECT 1 FROM public.work_orders WHERE id = v_wo_id AND estado_ot = 'completada'
+            AND fecha_completada_ot = (now() AT TIME ZONE 'America/Santiago')::date),
+    'C3a: OT no quedó en estado completada o fecha_completada_ot no es la fecha de hoy en Chile (D-242)'
+  );
+
+  -- ADR-017 v1.2: una fila en tree_assessments por árbol, con la composición vigente
+  PERFORM pg_temp.assert(
+    (SELECT count(*) FROM public.tree_assessments
+      WHERE tree_id = v_tree_id AND work_order_id = v_wo_id AND evento = 'ot_completada'
+        AND rule_version = '2.1' AND clasificacion_riesgo_calculada = 'bajo'
+        AND entradas_vigentes <> '{}'::jsonb) = 1,
+    'C3t: completar la OT no insertó su evaluación vigente en tree_assessments'
+  );
+
+  -- P1: sin supuestos, fn_entradas_vigentes_previas = v_tree_current_inputs
+  PERFORM pg_temp.assert(
+    NOT EXISTS (
+      SELECT 1 FROM public.v_tree_current_inputs v
+      WHERE public.fn_entradas_vigentes_previas(p_tree_id => v.tree_id)
+            IS DISTINCT FROM jsonb_build_object('entradas_vigentes', v.entradas_vigentes, 'origen_por_campo', v.origen_por_campo)
+    ),
+    'P1: fn_entradas_vigentes_previas difiere de v_tree_current_inputs'
   );
 
   -- Aserción: árbol refrescado con valores vigentes de la inspección
@@ -309,7 +341,7 @@ BEGIN
     PERFORM public.fn_complete_work_order_inspeccion(
       p_work_order_id    => v_wo_id,
       p_usuario          => v_municipal,
-      p_fecha_completada => CURRENT_DATE
+      p_evaluaciones   => pg_temp.evaluaciones_prueba(p_ot => v_wo_id)
     );
     RAISE EXCEPTION 'FALLA C4: debió rechazar completar OT ya completada';
   EXCEPTION WHEN SQLSTATE 'SV065' THEN
@@ -337,7 +369,7 @@ BEGIN
   PERFORM public.fn_transition_work_order_estado(v_wo2_id, 'en_ejecucion', NULL, v_inspector);
 
   BEGIN
-    PERFORM public.fn_complete_work_order_inspeccion(v_wo2_id, v_inspector, CURRENT_DATE);
+    PERFORM public.fn_complete_work_order_inspeccion(p_work_order_id => v_wo2_id, p_usuario => v_inspector, p_evaluaciones => pg_temp.evaluaciones_prueba(p_ot => v_wo2_id));
     RAISE EXCEPTION 'FALLA C5: debió rechazar completar por inspector';
   EXCEPTION WHEN SQLSTATE 'SV065' THEN
     INSERT INTO test_log (msg) VALUES ('C5 OK: rechazó completar por inspector (rol incorrecto)');
@@ -347,7 +379,7 @@ BEGIN
   -- C5b: Completar OT por usuario_municipal no miembro -> rechazo SV065
   -- -------------------------------------------------------------------
   BEGIN
-    PERFORM public.fn_complete_work_order_inspeccion(v_wo2_id, v_municipal2, CURRENT_DATE);
+    PERFORM public.fn_complete_work_order_inspeccion(p_work_order_id => v_wo2_id, p_usuario => v_municipal2, p_evaluaciones => pg_temp.evaluaciones_prueba(p_ot => v_wo2_id));
     RAISE EXCEPTION 'FALLA C5b: debió rechazar completar por usuario no miembro';
   EXCEPTION WHEN SQLSTATE 'SV065' THEN
     INSERT INTO test_log (msg) VALUES ('C5b OK: rechazó completar por usuario no miembro del proyecto');
@@ -373,7 +405,7 @@ BEGIN
     )->>'id')::uuid;
 
     BEGIN
-      PERFORM public.fn_complete_work_order_inspeccion(v_wo_pend, v_municipal, CURRENT_DATE);
+      PERFORM public.fn_complete_work_order_inspeccion(p_work_order_id => v_wo_pend, p_usuario => v_municipal, p_evaluaciones => pg_temp.evaluaciones_prueba(p_ot => v_wo_pend));
       RAISE EXCEPTION 'FALLA C5c: debió rechazar completar OT en estado pendiente';
     EXCEPTION WHEN SQLSTATE 'SV065' THEN
       INSERT INTO test_log (msg) VALUES ('C5c OK: rechazó completar OT en estado pendiente');
@@ -580,7 +612,7 @@ BEGIN
         p_justificacion_ajuste_fecha        => NULL
       );
 
-      PERFORM public.fn_complete_work_order_inspeccion(v_wo_comp, v_municipal, CURRENT_DATE);
+      PERFORM public.fn_complete_work_order_inspeccion(p_work_order_id => v_wo_comp, p_usuario => v_municipal, p_evaluaciones => pg_temp.evaluaciones_prueba(p_ot => v_wo_comp));
 
       BEGIN
         PERFORM public.fn_reassign_work_order(v_wo_comp, v_inspector_2, v_municipal);

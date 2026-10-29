@@ -1151,13 +1151,15 @@ ADR-012
 
 ---
 
-## ADR-017 — Conexión directa a Postgres (node-postgres) para los flujos transaccionales de la Fase 6
+## ADR-017 — Flujos transaccionales de la Fase 6 con el motor en medio (v1.2: función SQL única con composición verificada; antes, conexión directa a Postgres)
 
 Estado: vigente
-Versión: 1.1
-Fecha: 2026-10-22
+Versión: 1.2
+Fecha: 2026-10-29
 Origen: Fase 6 (backend y API), planificación
 Motivo: `supabase-js` no permite abrir una transacción de base de datos que incluya, en medio, una llamada a código del backend (el motor de reglas, `src/services/rules/engine/`) entre dos operaciones SQL — cada llamada de `supabase-js` es su propia petición HTTP a PostgREST, no una sentencia dentro de una transacción abierta.
+
+**Cambio en v1.2 (issue #60; decisión de la responsable, 2026-10-29, opción B):** los dos flujos que quedaban (completar una OT y anular una inspección) **no** usan `node-postgres`. Se resuelven con el mismo patrón de `/finalizar` (CC-054): **(1)** el backend lee, con una función de solo lectura, la composición que *quedaría* vigente si el evento ocurre (`fn_entradas_vigentes_previas`: la lógica de `v_tree_current_inputs` con la OT tratada como completada hoy, o sin la inspección anulada); **(2)** el motor calcula en memoria (`ensamblarResultadoVigente`); **(3)** una sola función SQL `SECURITY DEFINER` recibe esa composición y el resultado, bloquea la OT (`FOR UPDATE`), vuelve a calcular la composición y la compara con la recibida (si cambió, rechaza y el backend recalcula), y en la misma transacción cambia el estado, ejecuta `fn_refresh_tree_current`, comprueba que `v_tree_current_inputs` quedó igual a la composición recibida e inserta en `tree_assessments`. Si cualquier paso falla, no queda nada aplicado. Motivos: el backend corre en funciones de Vercel que se apagan entre pedidos (las conexiones directas a Postgres funcionan mal ahí); no hace falta un rol de Postgres nuevo ni una cadena de conexión secreta adicional; y la atomicidad queda garantizada por la base, no por el backend. Lo dicho abajo sobre `pg`, `DATABASE_URL` y el rol dedicado queda **sin efecto**; se conserva como historial.
 
 **Cambio en v1.1 (issue #56):** se retira "crear proyecto + sector" de los flujos que necesitan `node-postgres`. Al implementarlo (migración 018b) resultó que ese flujo no tiene al motor de reglas en medio — solo dos `INSERT` relacionados y una validación geométrica que PostGIS hace en SQL — así que una función Postgres `SECURITY DEFINER` (`fn_create_project_with_sector`), invocada una sola vez vía `supabase-js` con el cliente `service_role`, ya es una transacción atómica: no hace falta una conexión nueva. Quedan solo los dos flujos que sí tienen el motor corriendo en memoria del backend entre pasos de base de datos (ver Contexto). El rol de Postgres dedicado para `pg` (punto pendiente de Consecuencias) se define antes del issue #60, cuando se implemente el primero de esos dos flujos.
 

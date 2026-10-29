@@ -5,6 +5,10 @@
 --
 -- PROPUESTA — NO APLICAR SIN APROBACIÓN DE LA RESPONSABLE.
 --
+-- Revisión 2026-10-29 (ADR-017 v1.2, opción B): completar la OT guarda
+-- además la evaluación vigente en tree_assessments, en la misma
+-- transacción; fecha_completada_ot la asigna el Sistema (D-242).
+--
 -- Contenido:
 -- 1. work_orders: columnas motivo_cancelacion, cancelado_por, fecha_cancelacion
 --    y constraint chk_work_orders_cancelada (CC-050, Opción A aprobada).
@@ -13,10 +17,14 @@
 -- 3. AM-19: unificación del filtro de inspecciones válidas a
 --    `estado_registro = 'finalizado'` en fn_refresh_tree_current y en
 --    v_tree_current_inputs (alineadas con v_tree_fechas_vigentes de la 020).
--- 4. fn_complete_work_order_inspeccion: transición a 'completada' por el
---    Usuario municipal activo miembro del proyecto, fija fecha_completada_ot
---    (D-242) y ejecuta fn_refresh_tree_current para cada árbol de la OT
---    (1 en OT estándar; N árboles en Levantamiento, AMD-19). SQLSTATE SV065.
+-- 4. fn_entradas_vigentes_previas (solo lectura) y
+--    fn_complete_work_order_inspeccion (ADR-017 v1.2): transición a
+--    'completada' por el Usuario municipal activo miembro del proyecto;
+--    fecha_completada_ot = fecha de hoy en Chile, la asigna el Sistema
+--    (D-242); verifica la composición vigente que calculó el backend,
+--    ejecuta fn_refresh_tree_current e inserta en tree_assessments, para
+--    cada árbol de la OT (1 en OT estándar; N en Levantamiento, AMD-19).
+--    SQLSTATE SV065 (precondición) y SV068 (la composición cambió).
 -- 5. fn_cancel_work_order: transición a 'cancelada' por el Usuario municipal
 --    activo miembro del proyecto, con motivo obligatorio y no vacío. SQLSTATE SV066.
 -- 6. fn_reassign_work_order: reasignación de responsable_accion_id por el
@@ -201,13 +209,67 @@ WHERE rn = 1
 GROUP BY tree_id;
 
 -- ---------------------------------------------------------------------
+-- 4a. fn_entradas_vigentes_previas (ADR-017 v1.2): composición campo por
+--     campo que QUEDARÍA vigente para un árbol. Misma lógica que
+--     v_tree_current_inputs, más dos supuestos opcionales:
+--     - p_work_order_id: esa OT se trata como completada hoy (hora de
+--       Chile), aunque todavía no lo esté;
+--     - p_inspeccion_excluida: esa inspección no cuenta (anulación).
+--     Sin supuestos devuelve lo mismo que la vista (prueba P1).
+-- ---------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.fn_entradas_vigentes_previas(
+  p_tree_id UUID,
+  p_work_order_id UUID DEFAULT NULL,
+  p_inspeccion_excluida UUID DEFAULT NULL
+) RETURNS JSONB
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  WITH validas AS (
+    SELECT
+      e.inspection_id,
+      CASE WHEN wo.id = p_work_order_id AND wo.estado_ot <> 'completada'
+           THEN (now() AT TIME ZONE 'America/Santiago')::date
+           ELSE wo.fecha_completada_ot END AS fecha_completada_ot,
+      i.fecha_inspeccion,
+      i.created_at,
+      kv.key,
+      kv.value
+    FROM public.evaluations e
+    JOIN public.inspections i ON i.id = e.inspection_id
+    JOIN public.work_orders wo ON wo.id = i.work_order_id
+    CROSS JOIN LATERAL jsonb_each(e.variables) AS kv(key, value)
+    WHERE e.tree_id = p_tree_id
+      AND i.estado_registro = 'finalizado'
+      AND (wo.estado_ot = 'completada' OR wo.id = p_work_order_id)
+      AND (p_inspeccion_excluida IS NULL OR i.id <> p_inspeccion_excluida)
+  ),
+  ranked AS (
+    SELECT key, value, inspection_id,
+      ROW_NUMBER() OVER (PARTITION BY key ORDER BY fecha_completada_ot DESC, fecha_inspeccion DESC, created_at DESC) AS rn
+    FROM validas
+  )
+  SELECT jsonb_build_object(
+    'entradas_vigentes', COALESCE(jsonb_object_agg(key, value) FILTER (WHERE rn = 1), '{}'::jsonb),
+    'origen_por_campo', COALESCE(jsonb_object_agg(key, to_jsonb(inspection_id)) FILTER (WHERE rn = 1), '{}'::jsonb)
+  )
+  FROM ranked;
+$$;
+
+REVOKE ALL ON FUNCTION public.fn_entradas_vigentes_previas(UUID, UUID, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.fn_entradas_vigentes_previas(UUID, UUID, UUID) TO service_role;
+
+-- ---------------------------------------------------------------------
 -- 4. fn_complete_work_order_inspeccion (CC-050, #60, D-239, D-242)
 -- ---------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.fn_complete_work_order_inspeccion(
   p_work_order_id UUID,
   p_usuario UUID,
-  p_fecha_completada DATE
+  p_evaluaciones JSONB
 ) RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -223,6 +285,10 @@ DECLARE
   v_es_miembro BOOLEAN;
   v_tree_ids UUID[];
   v_tid UUID;
+  v_hoy DATE := (now() AT TIME ZONE 'America/Santiago')::date;
+  v_item JSONB;
+  v_composicion JSONB;
+  v_vigente JSONB;
 BEGIN
   -- Anti-suplantación: en contexto PostgREST/RPC, auth.uid() debe coincidir con p_usuario
   IF auth.uid() IS NOT NULL AND auth.uid() <> p_usuario THEN
@@ -233,8 +299,8 @@ BEGIN
     RAISE EXCEPTION 'El identificador de usuario es obligatorio' USING ERRCODE = 'SV065';
   END IF;
 
-  IF p_fecha_completada IS NULL THEN
-    RAISE EXCEPTION 'fecha_completada es obligatoria para completar la OT' USING ERRCODE = 'SV065';
+  IF p_evaluaciones IS NULL OR jsonb_typeof(p_evaluaciones) <> 'array' THEN
+    RAISE EXCEPTION 'Faltan las evaluaciones vigentes calculadas por el backend (ADR-017 v1.2)' USING ERRCODE = 'SV065';
   END IF;
 
   -- Bloqueo FOR UPDATE para garantizar serialización y concurrencia segura
@@ -293,41 +359,104 @@ BEGIN
     RAISE EXCEPTION 'No se puede completar la orden de trabajo: debe tener al menos una inspección Finalizada (CC-050)' USING ERRCODE = 'SV065';
   END IF;
 
-  -- Resolver árboles a actualizar (1 en OT estándar, N en Levantamiento AMD-19)
-  IF v_tree_id IS NOT NULL THEN
-    v_tree_ids := ARRAY[v_tree_id];
-  ELSE
-    SELECT COALESCE(ARRAY_AGG(DISTINCT tree_id), '{}')
-    INTO v_tree_ids
-    FROM public.inspections
-    WHERE work_order_id = p_work_order_id AND estado_registro = 'finalizado' AND tree_id IS NOT NULL;
+  -- Árboles de la OT: los de sus inspecciones finalizadas (1 en OT
+  -- estándar; N en Levantamiento, AMD-19).
+  SELECT COALESCE(ARRAY_AGG(DISTINCT tree_id ORDER BY tree_id), '{}')
+  INTO v_tree_ids
+  FROM public.inspections
+  WHERE work_order_id = p_work_order_id AND estado_registro = 'finalizado';
+
+  IF jsonb_array_length(p_evaluaciones) <> cardinality(v_tree_ids)
+     OR EXISTS (
+       SELECT 1 FROM jsonb_array_elements(p_evaluaciones) AS e(value)
+       WHERE NOT ((e.value->>'tree_id')::uuid = ANY (v_tree_ids))
+     ) THEN
+    RAISE EXCEPTION 'Las evaluaciones recibidas no corresponden a los árboles de la OT' USING ERRCODE = 'SV065';
   END IF;
 
-  -- Transicionar estado
+  -- La composición que calculó el backend tiene que ser la que quedará
+  -- vigente (ADR-017 v1.2). Si cambió desde que la leyó, recalcula.
+  FOREACH v_tid IN ARRAY v_tree_ids LOOP
+    SELECT e.value INTO v_item FROM jsonb_array_elements(p_evaluaciones) AS e(value) WHERE (e.value->>'tree_id')::uuid = v_tid;
+    IF public.fn_entradas_vigentes_previas(p_tree_id => v_tid, p_work_order_id => p_work_order_id)
+       IS DISTINCT FROM v_item->'composicion' THEN
+      RAISE EXCEPTION 'Los datos vigentes del árbol % cambiaron: vuelva a intentar', v_tid USING ERRCODE = 'SV068';
+    END IF;
+  END LOOP;
+
+  -- Transicionar estado; la fecha la asigna el Sistema (D-242).
   UPDATE public.work_orders
   SET estado_ot = 'completada',
-      fecha_completada_ot = p_fecha_completada,
+      fecha_completada_ot = v_hoy,
       updated_at = now()
   WHERE id = p_work_order_id;
 
-  -- Refrescar árboles afectados en trees (valores vigentes)
-  IF v_tree_ids IS NOT NULL AND array_length(v_tree_ids, 1) > 0 THEN
-    FOREACH v_tid IN ARRAY v_tree_ids LOOP
-      PERFORM public.fn_refresh_tree_current(v_tid);
-    END LOOP;
-  END IF;
+  FOREACH v_tid IN ARRAY v_tree_ids LOOP
+    SELECT e.value INTO v_item FROM jsonb_array_elements(p_evaluaciones) AS e(value) WHERE (e.value->>'tree_id')::uuid = v_tid;
+    v_composicion := v_item->'composicion';
+
+    PERFORM public.fn_refresh_tree_current(v_tid);
+
+    SELECT jsonb_build_object(
+      'entradas_vigentes', COALESCE(v.entradas_vigentes, '{}'::jsonb),
+      'origen_por_campo', COALESCE(v.origen_por_campo, '{}'::jsonb)
+    ) INTO v_vigente
+    FROM (SELECT 1) uno
+    LEFT JOIN public.v_tree_current_inputs v ON v.tree_id = v_tid;
+
+    IF v_vigente IS DISTINCT FROM v_composicion THEN
+      RAISE EXCEPTION 'La composición vigente del árbol % no coincide con la calculada (fn_entradas_vigentes_previas y v_tree_current_inputs difieren)', v_tid;
+    END IF;
+
+    -- tree_assessments (diseño Fase 3, §3.10 bis): entradas_vigentes =
+    -- {campo: {valor, inspection_id}}; el resto, del resultado del motor.
+    INSERT INTO public.tree_assessments (
+      tree_id, evento, work_order_id, inspection_id, entradas_vigentes,
+      calculados, indicadores,
+      puntaje_raices_cuello, probabilidad_falla_raices_cuello,
+      puntaje_tronco, probabilidad_falla_tronco,
+      puntaje_copa_ramas, probabilidad_falla_copa_ramas,
+      probabilidad_impacto,
+      clasificacion_raices_cuello, clasificacion_tronco, clasificacion_copa_ramas,
+      clasificacion_riesgo_calculada,
+      puntaje_infraestructura, pct_infraestructura, clasificacion_infraestructura_calculada,
+      clasificacion_prioridad_calculada,
+      clasificacion_riesgo_ajustada, clasificacion_infraestructura_ajustada, clasificacion_prioridad_ajustada,
+      adjustment_ids, ajustes_descartados, requiere_revision_ajuste,
+      rule_version, motor_commit
+    )
+    SELECT
+      v_tid, 'ot_completada', p_work_order_id, NULL,
+      COALESCE((
+        SELECT jsonb_object_agg(k.key, jsonb_build_object('valor', k.value, 'inspection_id', v_composicion->'origen_por_campo'->k.key))
+        FROM jsonb_each(v_composicion->'entradas_vigentes') k
+      ), '{}'::jsonb),
+      r.calculados, r.indicadores,
+      r.puntaje_raices_cuello, r.probabilidad_falla_raices_cuello,
+      r.puntaje_tronco, r.probabilidad_falla_tronco,
+      r.puntaje_copa_ramas, r.probabilidad_falla_copa_ramas,
+      r.probabilidad_impacto,
+      r.clasificacion_raices_cuello, r.clasificacion_tronco, r.clasificacion_copa_ramas,
+      r.clasificacion_riesgo_calculada,
+      r.puntaje_infraestructura, r.pct_infraestructura, r.clasificacion_infraestructura_calculada,
+      r.clasificacion_prioridad_calculada,
+      r.clasificacion_riesgo_ajustada, r.clasificacion_infraestructura_ajustada, r.clasificacion_prioridad_ajustada,
+      COALESCE(r.adjustment_ids, '{}'), r.ajustes_descartados, COALESCE(r.requiere_revision_ajuste, false),
+      r.rule_version, r.motor_commit
+    FROM jsonb_populate_record(NULL::public.tree_assessments, v_item->'resultado') r;
+  END LOOP;
 
   RETURN jsonb_build_object(
     'work_order_id', p_work_order_id,
     'estado_ot', 'completada',
-    'fecha_completada_ot', p_fecha_completada,
-    'tree_ids', COALESCE(to_jsonb(v_tree_ids), '[]'::jsonb)
+    'fecha_completada_ot', v_hoy,
+    'tree_ids', to_jsonb(v_tree_ids)
   );
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.fn_complete_work_order_inspeccion(UUID, UUID, DATE) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.fn_complete_work_order_inspeccion(UUID, UUID, DATE) TO service_role;
+REVOKE ALL ON FUNCTION public.fn_complete_work_order_inspeccion(UUID, UUID, JSONB) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.fn_complete_work_order_inspeccion(UUID, UUID, JSONB) TO service_role;
 
 -- ---------------------------------------------------------------------
 -- 5. fn_cancel_work_order (CC-050, PR-003 v8.0)
