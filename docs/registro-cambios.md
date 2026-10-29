@@ -2870,3 +2870,40 @@ motivo)
 |---|---|---|---|
 | 2026-10-29 | EN REVISIÓN | marybaxmann | Registro de lo publicado en la demo; redacción pendiente de aprobación. |
 | 2026-10-29 | APROBADO METODOLÓGICAMENTE | marybaxmann | Aprobado en el chat. `release/demo` se lleva a `feature/fase6-backend-api` con `--ff-only`. |
+
+---
+
+### CC-067 — Anulación de una inspección finalizada: la registra el Usuario municipal
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-10-29 |
+| Origen | Planificación del Bloque 1 (#60; CC-045 a; ADR-017 v1.2): al implementar la anulación faltaba definir qué Inspector podía anular. La responsable decidió cambiar el rol. |
+| Tipo | 3 — permisos (cambia una regla del Excel) |
+| Estado | APROBADO METODOLÓGICAMENTE |
+| Regla / campo afectado | INSPECCION: D-209 `estado_registro`, D-210 `motivo_anulacion`, D-211 `anulado_por`, D-212 `fecha_anulacion`; REGLAS_GENERALES «Historial y vigencia»; PR-009 v5.0; CC-031; CC-045 (a). |
+| Versión anterior | Excel (D-209, D-210, D-211, REGLAS_GENERALES) y PR-009 v5.0: solo el Inspector anula una inspección finalizada; `anulado_por` debe tener rol Inspector; el Usuario municipal, el Administrador y el Encargado de mantención no anulan. |
+| Versión nueva | **(1)** Solo el **Usuario municipal** activo y miembro del proyecto anula una inspección **Finalizada**, con `motivo_anulacion` obligatorio, no vacío y no editable después. **(2)** El **Inspector** puede solicitar la anulación al Usuario municipal **fuera del sistema** (correo, teléfono): no hay registro de la solicitud. **(3)** El Sistema registra `anulado_por` (el Usuario municipal) y `fecha_anulacion`. **(4)** Sin cambios: la inspección anulada se conserva en el historial con todos sus valores y deja de considerarse para la vigencia; los datos correctos se registran en una nueva inspección (en la misma OT si no está completada; si lo está, en una nueva OT). **(5)** Si la OT está completada, la vigente del árbol se recalcula como si la inspección nunca hubiera existido (CC-045 a) y se agrega una fila en `tree_assessments` con evento `inspeccion_anulada`, en la misma transacción (ADR-017 v1.2). Los ajustes de la inspección anulada no se aplican nunca; los de la inspección válida que queda como la última se vuelven a evaluar con CC-040 (d). Si la OT no está completada, solo cambia el estado de la inspección (nada de ella era vigente). |
+| Motivo | Decisión de la responsable: la anulación afecta la evaluación vigente que ve el municipio, por eso la decide el Usuario municipal; el Inspector conserva la posibilidad de pedirla. |
+| Fundamento / fuente | Decisión de la responsable (marybaxmann) en el chat, 2026-10-29: «el Usuario municipal tenga la facultad de anular una inspección finalizada, mientras que el Inspector pueda solicitar su anulación»; solicitud sin registro en el sistema (opción b). |
+| Archivos afectados | Esta ficha; `docs/project-rules.md` (PR-009 v6.0); `docs/roadmap.md` (AM-15). Migración `027_anular_inspeccion.sql` con su `.down.sql` y sus pruebas; capa TS de la anulación. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Sí, va a AM-15: D-209 («El valor Anulado lo registra el Usuario municipal»), D-210 (quién lo ingresa: Usuario municipal), D-211 (`anulado_por`: referencia a USUARIOS con rol Usuario municipal) y REGLAS_GENERALES «Historial y vigencia» («Solo el Usuario municipal anula inspecciones; el Inspector puede solicitarlo»). |
+| Impacto en BD | Función nueva `fn_anular_inspeccion` (027). Sin cambios de tablas: las columnas de anulación ya existen (014). |
+| Impacto en backend | `POST /api/sivu/inspections/:inspectionId/anular` con `motivo_anulacion`, solo Usuario municipal. |
+| Impacto en API | El endpoint nuevo. |
+| Impacto en frontend | Acción «Anular inspección» para el Usuario municipal en una inspección finalizada; el Inspector no la ve. |
+| Pruebas necesarias | Jest: solo el Usuario municipal miembro; motivo obligatorio; inspección no finalizada → 422; OT completada → envía la composición sin la inspección anulada y el resultado del motor; SV068 → recalcula una vez y después 409. SQL (027): anular en OT sin completar solo cambia el estado; en OT completada recalcula la vigente, refresca el árbol e inserta `tree_assessments` con `inspeccion_anulada`; composición cambiada → SV068; Inspector, Administrador o no miembro → rechazo; segunda anulación → rechazo. |
+| Dependencias | CC-031, CC-040 (d), CC-045 (a), CC-050; ADR-017 v1.2; AM-15. |
+| rule_version | sin cambio |
+| Aprobado por | marybaxmann |
+| Fecha de aprobación | 2026-10-29 |
+| Fecha de implementación | — |
+| Commits / PR asociados | `wip/bloque1-completar-ot`, sin PR. |
+| Observaciones | Contradice el Excel 2.1.0 hasta que se publique el paquete con AM-15. Mientras tanto, el backend aplica este CC. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-29 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión en el chat (rol y solicitud fuera del sistema). |

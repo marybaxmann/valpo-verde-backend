@@ -1433,17 +1433,17 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-009 — Inspecciones (v5.0)
+## PR-009 — Inspecciones (v6.0)
 Estado: vigente
-Versión: 5.0
-Reemplaza: PR-009 v4.0
-Origen: CC-040, CC-041
-Motivo: alcance de la evaluación según el tipo de inspección y vigencia por dato (CC-040); el ajuste de clasificaciones solo antes de finalizar (CC-041).
+Versión: 6.0
+Reemplaza: PR-009 v5.0 (texto anterior: «Solo el Inspector anula inspecciones»)
+Origen: CC-040, CC-041, CC-067
+Motivo: alcance de la evaluación según el tipo de inspección y vigencia por dato (CC-040); el ajuste de clasificaciones solo antes de finalizar (CC-041); la anulación pasa al Usuario municipal (CC-067).
 
 Las inspecciones:
 - pertenecen a un árbol y a una OT de Inspección (Evaluación inicial, Reevaluación, Evaluación instrumental, Monitoreo o Levantamiento). Una OT de Levantamiento puede abarcar varios árboles aún no identificados al crearla; su alcance es el proyecto y el área de trabajo descrita en la OT;
 - las realiza el Inspector (PR-019 v1.1); no las realizan el Administrador ni el Usuario municipal;
-- tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado **dentro del alcance de su tipo** (ver "Alcance"); `Finalizado` cuando están completas; `Anulado` cuando el Inspector anula una inspección finalizada (CC-031). Preguardado y Finalizado equivalen a `borrador` y `completada` de ADR-007;
+- tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado **dentro del alcance de su tipo** (ver "Alcance"); `Finalizado` cuando están completas; `Anulado` cuando el Usuario municipal anula una inspección finalizada (CC-031; CC-067). Preguardado y Finalizado equivalen a `borrador` y `completada` de ADR-007;
 - admiten guardado parcial;
 - "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
 - las de Evaluación inicial, Reevaluación y Levantamiento exigen las cuatro vistas fotográficas del árbol; la Evaluación instrumental no considera fotografías y en el Monitoreo son opcionales (PR-010 v4.0, CC-040);
@@ -1456,10 +1456,10 @@ Recordatorio (CC-037): SIVU no agenda automáticamente. Al llegar el inicio del 
 
 Corrección y anulación (CC-031):
 - Mientras la inspección está Preguardado, el Inspector modifica libremente todos sus datos, incluidos los datos técnicos del árbol registrados en ella.
-- Una inspección Finalizado no se modifica. Si contiene un error, el Inspector la anula registrando el motivo; el Sistema registra quién y cuándo.
+- Una inspección Finalizado no se modifica. Si contiene un error, el Usuario municipal miembro del proyecto la anula registrando el motivo (el Inspector puede pedírselo, fuera del sistema); el Sistema registra quién y cuándo (CC-067).
 - La inspección anulada se conserva en el historial con todos sus valores y deja de considerarse para la vigencia.
 - Los datos correctos se registran en una nueva inspección: en la misma OT si todavía no está completada; si lo está, en una nueva OT.
-- Solo el Inspector anula inspecciones. El Usuario municipal, el Administrador y el Encargado de mantención no anulan.
+- Solo el Usuario municipal anula inspecciones (CC-067). El Inspector, el Administrador y el Encargado de mantención no anulan; el Inspector puede solicitar la anulación al Usuario municipal, sin registro en el sistema.
 
 Alcance de la evaluación según el tipo de inspección (CC-040):
 - **Evaluación inicial, Reevaluación y Levantamiento:** evaluación completa (todos los datos obligatorios y condicionales activados de ARBOLES y REGISTRO_EVALUACION).
