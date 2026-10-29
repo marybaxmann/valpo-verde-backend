@@ -3037,13 +3037,13 @@ export const SECCIONES_FORMULARIO: readonly { codigo: string; etiqueta: string; 
     codigo: "tutorado",
     etiqueta: "Tutorado",
     orden: 5,
-    propuesta: true,
+    propuesta: false,
   },
   {
     codigo: "objetivo_consecuencias",
     etiqueta: "Objetivo, consecuencias y vitalidad",
     orden: 6,
-    propuesta: true,
+    propuesta: false,
   },
 ] as const;
 

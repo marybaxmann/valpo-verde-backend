@@ -29,13 +29,13 @@ it("entrega alcance, condiciones y opciones vigentes al miembro", async () => {
   expect(res.body.data.variables.map((x: any) => x.identificador)).toEqual([...CAMPOS_EVALUACION_COMPLETA]);
   expect(res.body.data.campos_arbol.find((x: any) => x.identificador === "numero_fustes").condicion_activacion).toEqual({op:"igual", campo:"multifustal", valor:true});
   expect(res.body.data.variables.find((x: any) => x.identificador === "tipo_red_aerea").opciones).toContainEqual({codigo:"electrica", etiqueta:"Eléctrica"});
-  expect(res.body.data.variables[0]).toMatchObject({ etiqueta: res.body.data.variables[0].identificador, etiqueta_pendiente: true });
+  expect(res.body.data.variables[0]).toMatchObject({ etiqueta_pendiente: false });
 });
 it("metadatos del diccionario conservan tipo y unidad literales", async () => {
   auth.mockResolvedValue(fakeAuthUser({ id: MUNICIPAL_ID })); profile.mockResolvedValue(municipalProfileRow()); membership.mockResolvedValue({});
   const res = await request(app).get(url).set("Authorization", `Bearer ${FAKE_TOKEN}`);
   const altura = res.body.data.campos_arbol.find((x: any) => x.identificador === "altura_total_m");
-  expect(altura).toMatchObject({tipo: "Decimal", tipo_entrada: "decimal", unidad: "m", unidad_valores_excel: "m", etiqueta: "altura_total_m", seccion: { codigo: "arbol", etiqueta: "Árbol", propuesta: false }});
+  expect(altura).toMatchObject({tipo: "Decimal", tipo_entrada: "decimal", unidad: "m", unidad_valores_excel: "m", etiqueta: "Altura total (m)", seccion: { codigo: "arbol", etiqueta: "Árbol", propuesta: false }});
   const red = res.body.data.variables.find((x: any) => x.identificador === "tipo_red_aerea");
   expect(red).toMatchObject({tipo: "Categoría", tipo_entrada: "seleccion_multiple", unidad: null});
 });
@@ -92,7 +92,18 @@ describe("secciones y orden (orden de columnas del Excel)", () => {
     expect(manual.seccion!.codigo).toBe("infraestructura");
     expect(manual.orden! % 1).toBe(0.5);
   });
-  it("marca como propuesta solo los nombres por aprobar", () => {
-    expect(schema.secciones.filter(s => s.propuesta).map(s => s.codigo)).toEqual(["tutorado", "objetivo_consecuencias"]);
+  it("todos los nombres de sección están aprobados", () => {
+    expect(schema.secciones.filter(s => s.propuesta)).toEqual([]);
+  });
+});
+
+describe("etiquetas visibles (aprobadas 2026-10-28)", () => {
+  const schema = construirInspectionFormSchema();
+  const todos = [...schema.variables, ...schema.campos_arbol];
+  it("solo obstaculos_crecimiento_radicular queda pendiente", () => {
+    expect(todos.filter(c => c.etiqueta_pendiente).map(c => c.identificador)).toEqual(["obstaculos_crecimiento_radicular"]);
+  });
+  it("aplica la corrección de la responsable", () => {
+    expect(todos.find(c => c.identificador === "suelo_sellado_impermeabilizado")!.etiqueta).toBe("Suelo sellado o impermeabilizado");
   });
 });

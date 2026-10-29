@@ -59,15 +59,15 @@ HOJAS = ("ARBOLES", "REGISTRO_EVALUACION")
 # el orden de las columnas de las hojas ARBOLES y REGISTRO_EVALUACION.
 # REGISTRO_EVALUACION se corta después de cada campo observaciones_*.
 # Nombres: los componentes de REGLAS_INDICADORES (R01, R02, R03, M04);
-# "Árbol" es la hoja ARBOLES; "Tutorado" y el último bloque son
-# PROPUESTOS (propuesta: True) hasta que la responsable los apruebe.
+# "Árbol" es la hoja ARBOLES; "Tutorado" y el último bloque, aprobados
+# por la responsable el 2026-10-28.
 SECCIONES_EVALUACION = [
     ("observaciones_radicular", "raices_cuello", "Raíces y cuello", False),
     ("observaciones_tronco", "tronco", "Tronco", False),
     ("observaciones_copa", "copa_ramas", "Copa y ramas", False),
     ("observaciones_infraestructura", "infraestructura", "Infraestructura", False),
-    ("observaciones_tutorado", "tutorado", "Tutorado", True),
-    (None, "objetivo_consecuencias", "Objetivo, consecuencias y vitalidad", True),
+    ("observaciones_tutorado", "tutorado", "Tutorado", False),
+    (None, "objetivo_consecuencias", "Objetivo, consecuencias y vitalidad", False),
 ]
 
 
