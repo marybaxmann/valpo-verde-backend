@@ -112,6 +112,7 @@ export const ETIQUETAS_FORMULARIO: Readonly<Record<string, string>> = {
   "REGISTRO_EVALUACION:dano_interferencia_alcorque": "Daño interferencia alcorque",
   "REGISTRO_EVALUACION:indicios_compactacion_superficial": "Indicios compactacion superficial",
   "REGISTRO_EVALUACION:suelo_sellado_impermeabilizado": "Suelo sellado o impermeabilizado",
+  "REGISTRO_EVALUACION:obstaculos_crecimiento_radicular": "Presenta obstáculos crecimiento radicular",
   "REGISTRO_EVALUACION:condicion_radicular_entorno": "Condición radicular entorno",
   "REGISTRO_EVALUACION:contacto_interferencia_infraestructura_vertical": "Contacto interferencia infraestructura vertical",
   "REGISTRO_EVALUACION:tipo_infraestructura_vertical": "Tipo infraestructura vertical",
