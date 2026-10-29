@@ -107,3 +107,73 @@ export async function reasignarOt(workOrderId: string, nuevoResponsableId: strin
   if (error) lanzar(error);
   return data as { work_order_id: string; responsable_accion_id: string };
 }
+
+// ---------------------------------------------------------------------------
+// Anular una inspección finalizada (CC-067; CC-045 a; migración 027).
+// ---------------------------------------------------------------------------
+
+export const SQLSTATE_ANULAR_INSPECCION = "SV069";
+
+/** Composición que quedaría vigente sin la inspección (CC-045 a). */
+export async function obtenerComposicionSinInspeccion(treeId: string, inspectionId: string): Promise<ComposicionVigente> {
+  const { data, error } = await supabaseAdmin.rpc("fn_entradas_vigentes_previas", {
+    p_tree_id: treeId,
+    p_inspeccion_excluida: inspectionId,
+  });
+  if (error) lanzar(error);
+  return data as ComposicionVigente;
+}
+
+export interface InspeccionValidaRow {
+  id: string;
+  fecha_inspeccion: string;
+  created_at: string;
+  work_orders: { estado_ot: string; fecha_completada_ot: string | null };
+}
+
+/**
+ * La inspección válida que queda como la última del árbol sin la
+ * anulada: finalizada, de una OT completada; orden de REGLAS_GENERALES
+ * fila 13 (fecha_completada_ot, fecha_inspeccion, created_at). null si no queda ninguna.
+ */
+export async function obtenerUltimaInspeccionValidaSin(treeId: string, inspectionId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from("inspections")
+    .select("id, fecha_inspeccion, created_at, work_orders!inner(estado_ot, fecha_completada_ot)")
+    .eq("tree_id", treeId)
+    .eq("estado_registro", "finalizado")
+    .neq("id", inspectionId)
+    .eq("work_orders.estado_ot", "completada");
+  if (error) lanzar(error);
+  const filas = (data ?? []) as unknown as InspeccionValidaRow[];
+  filas.sort(
+    (a, b) =>
+      (b.work_orders.fecha_completada_ot ?? "").localeCompare(a.work_orders.fecha_completada_ot ?? "") ||
+      b.fecha_inspeccion.localeCompare(a.fecha_inspeccion) ||
+      b.created_at.localeCompare(a.created_at)
+  );
+  return filas[0]?.id ?? null;
+}
+
+export async function anularInspeccion(
+  inspectionId: string,
+  usuario: string,
+  motivo: string,
+  evaluacion: Omit<EvaluacionVigentePayload, "tree_id"> | null
+) {
+  const { data, error } = await supabaseAdmin.rpc("fn_anular_inspeccion", {
+    p_inspection_id: inspectionId,
+    p_usuario: usuario,
+    p_motivo: motivo,
+    p_evaluacion: evaluacion,
+  });
+  if (error) lanzar(error);
+  return data as {
+    inspection_id: string;
+    estado_registro: "anulado";
+    motivo_anulacion: string;
+    anulado_por: string;
+    fecha_anulacion: string;
+    vigente_recalculada: boolean;
+  };
+}

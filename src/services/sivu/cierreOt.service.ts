@@ -8,15 +8,20 @@ import {
   SQLSTATE_CANCELAR_OT,
   SQLSTATE_COMPLETAR_OT,
   SQLSTATE_COMPOSICION_CAMBIO,
+  SQLSTATE_ANULAR_INSPECCION,
   SQLSTATE_REASIGNAR_OT,
+  anularInspeccion,
   cancelarOt,
   completarOt,
   listarAjustesDeInspecciones,
   listarInspeccionesFinalizadasDeOt,
   obtenerComposicionPrevia,
+  obtenerComposicionSinInspeccion,
+  obtenerUltimaInspeccionValidaSin,
   reasignarOt,
 } from "../../repositories/sivu/cierreOt.repository";
 import { OrdenTrabajoRow, obtenerOrdenTrabajoPorId } from "../../repositories/sivu/workOrder.repository";
+import { obtenerInspeccionPorId } from "../../repositories/sivu/inspection.repository";
 import { AjusteVigente, AjustesEntrada, ensamblarResultadoVigente } from "../rules/engine/ensamblaje";
 import { componerVariablesCalculo } from "./finalizacion.service";
 
@@ -132,6 +137,55 @@ export async function reasignarOrdenTrabajo(
     return await reasignarOt(workOrderId, nuevoResponsableId, user.id);
   } catch (err: unknown) {
     throw traducirError(err, SQLSTATE_REASIGNAR_OT);
+  }
+}
+
+/**
+ * POST /api/sivu/inspections/:inspectionId/anular (CC-067; CC-045 a;
+ * ADR-017 v1.2). Solo el Usuario municipal miembro del proyecto anula
+ * una inspección Finalizada, con motivo. Si su OT está completada, la
+ * vigente se recalcula como si la inspección no hubiera existido: los
+ * ajustes candidatos son los de la inspección válida que queda como la
+ * última; los de la anulada nunca aplican.
+ */
+export async function anularInspeccionFinalizada(
+  user: AuthenticatedUser,
+  inspectionId: string,
+  motivo: string,
+  accessToken: string
+) {
+  const inspeccion = await obtenerInspeccionPorId(inspectionId);
+  if (!inspeccion) throw new AppError("La inspección no existe", 404);
+  const ot = await obtenerOrdenTrabajoPorId(inspeccion.work_order_id);
+  if (!ot) throw new AppError("La orden de trabajo de la inspección no existe", 404);
+  await assertProjectRole(user, ot.project_id, ["usuario_municipal"], accessToken);
+  if (inspeccion.estado_registro !== "finalizado") {
+    throw new AppError(`Solo se anula una inspección Finalizada (estado actual: ${inspeccion.estado_registro}) (D-209)`, 422);
+  }
+
+  for (let intento = 1; ; intento++) {
+    let evaluacion: Omit<EvaluacionVigentePayload, "tree_id"> | null = null;
+    if (ot.estado_ot === "completada") {
+      const [composicion, ultimaValida] = await Promise.all([
+        obtenerComposicionSinInspeccion(inspeccion.tree_id, inspectionId),
+        obtenerUltimaInspeccionValidaSin(inspeccion.tree_id, inspectionId),
+      ]);
+      const ajustes = ultimaValida ? await listarAjustesDeInspecciones([ultimaValida]) : [];
+      const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
+        variablesCalculo: componerVariablesCalculo(composicion.entradas_vigentes, {}),
+        ajustes: ultimaValida ? ajustesDeLaInspeccion(ajustes, ultimaValida) : {},
+        inspeccionAnuladaId: inspectionId,
+        motorCommit: env.MOTOR_COMMIT,
+      });
+      evaluacion = { composicion, resultado };
+    }
+    try {
+      return await anularInspeccion(inspectionId, user.id, motivo, evaluacion);
+    } catch (err: unknown) {
+      const cause = (err as { cause?: unknown }).cause;
+      if (cause === SQLSTATE_COMPOSICION_CAMBIO && intento < INTENTOS_COMPLETAR) continue;
+      throw traducirError(err, SQLSTATE_ANULAR_INSPECCION);
+    }
   }
 }
 

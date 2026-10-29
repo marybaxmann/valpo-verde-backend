@@ -2,11 +2,17 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../../utils/AppError";
 import {
+  anularInspeccionSchema,
   cancelarOrdenTrabajoSchema,
   reasignarOrdenTrabajoSchema,
   workOrderIdParamSchema,
 } from "../../schemas/sivu/workOrder.schema";
-import { cancelarOrdenTrabajo, completarOrdenTrabajo, reasignarOrdenTrabajo } from "../../services/sivu/cierreOt.service";
+import {
+  anularInspeccionFinalizada,
+  cancelarOrdenTrabajo,
+  completarOrdenTrabajo,
+  reasignarOrdenTrabajo,
+} from "../../services/sivu/cierreOt.service";
 import { listarInspeccionesDeOrdenTrabajo } from "../../services/sivu/borradorOt.service";
 
 function parsear<T>(schema: z.ZodType<T>, valor: unknown, mensaje: string): T {
@@ -53,6 +59,19 @@ export async function listarInspeccionesDeOtController(req: Request, res: Respon
   try {
     const { workOrderId } = parsear(workOrderIdParamSchema, req.params, "Parámetros inválidos");
     res.status(200).json({ data: await listarInspeccionesDeOrdenTrabajo(req.user!, workOrderId, req.accessToken!) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+const inspectionIdParamSchema = z.object({ inspectionId: z.string().uuid("inspectionId inválido") });
+
+/** POST /api/sivu/inspections/:inspectionId/anular (CC-067). Solo el Usuario municipal. */
+export async function anularInspeccionController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { inspectionId } = parsear(inspectionIdParamSchema, req.params, "Parámetros inválidos");
+    const { motivo_anulacion } = parsear(anularInspeccionSchema, req.body, "Datos inválidos");
+    res.status(200).json({ data: await anularInspeccionFinalizada(req.user!, inspectionId, motivo_anulacion, req.accessToken!) });
   } catch (err) {
     next(err);
   }

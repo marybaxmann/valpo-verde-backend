@@ -119,3 +119,8 @@ export const cancelarOrdenTrabajoSchema = z
 export const reasignarOrdenTrabajoSchema = z
   .object({ responsable_accion_id: z.string().uuid("responsable_accion_id inválido") })
   .strict();
+
+/** POST /api/sivu/inspections/:inspectionId/anular (CC-067; D-210): motivo obligatorio. */
+export const anularInspeccionSchema = z
+  .object({ motivo_anulacion: z.string().trim().min(1, "motivo_anulacion es obligatorio (D-210)").max(2000) })
+  .strict();

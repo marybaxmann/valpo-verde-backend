@@ -12,6 +12,8 @@ import {
 } from "../../controllers/sivu/photo.controller";
 
 /** Montado en /api/sivu/inspections (#58). */
+import { anularInspeccionController } from "../../controllers/sivu/cierreOt.controller";
+
 const router = Router();
 
 // Guardados siguientes de una inspección en Preguardado (018e/018f).
@@ -30,5 +32,7 @@ router.get("/:inspectionId/photos", authMiddleware, listarFotosInspeccionControl
 // responsable asignado.
 router.post("/:inspectionId/calcular", authMiddleware, calcularInspeccionController);
 router.post("/:inspectionId/finalizar", authMiddleware, finalizarInspeccionController);
+// Anular una inspección Finalizada (CC-067; CC-045 a). Solo el Usuario municipal.
+router.post("/:inspectionId/anular", authMiddleware, anularInspeccionController);
 
 export default router;

@@ -4,6 +4,7 @@ jest.mock("../../src/repositories/auth.repository");
 jest.mock("../../src/repositories/userProfile.repository");
 jest.mock("../../src/repositories/projectMember.repository");
 jest.mock("../../src/repositories/sivu/workOrder.repository");
+jest.mock("../../src/repositories/sivu/inspection.repository");
 jest.mock("../../src/repositories/sivu/cierreOt.repository", () => ({
   ...jest.requireActual("../../src/repositories/sivu/cierreOt.repository"),
   listarInspeccionesFinalizadasDeOt: jest.fn(),
@@ -12,6 +13,9 @@ jest.mock("../../src/repositories/sivu/cierreOt.repository", () => ({
   completarOt: jest.fn(),
   cancelarOt: jest.fn(),
   reasignarOt: jest.fn(),
+  obtenerComposicionSinInspeccion: jest.fn(),
+  obtenerUltimaInspeccionValidaSin: jest.fn(),
+  anularInspeccion: jest.fn(),
 }));
 
 import app from "../../src/app";
@@ -26,7 +30,11 @@ import {
   listarInspeccionesFinalizadasDeOt,
   obtenerComposicionPrevia,
   reasignarOt,
+  obtenerComposicionSinInspeccion,
+  obtenerUltimaInspeccionValidaSin,
+  anularInspeccion,
 } from "../../src/repositories/sivu/cierreOt.repository";
+import { obtenerInspeccionPorId } from "../../src/repositories/sivu/inspection.repository";
 import { FAKE_TOKEN, INSPECTOR_ID, MUNICIPAL_ID, fakeAuthUser, inspectorProfileRow, municipalProfileRow } from "../helpers/authFixtures";
 
 const mAuth = getAuthUserByToken as jest.Mock;
@@ -39,6 +47,10 @@ const mAjustes = listarAjustesDeInspecciones as jest.Mock;
 const mCompletar = completarOt as jest.Mock;
 const mCancelar = cancelarOt as jest.Mock;
 const mReasignar = reasignarOt as jest.Mock;
+const mInspeccion = obtenerInspeccionPorId as jest.Mock;
+const mSinInspeccion = obtenerComposicionSinInspeccion as jest.Mock;
+const mUltimaValida = obtenerUltimaInspeccionValidaSin as jest.Mock;
+const mAnular = anularInspeccion as jest.Mock;
 
 const PROJECT_ID = "33333333-3333-4333-8333-333333333333";
 const TREE_ID = "44444444-4444-4444-8444-444444444444";
@@ -184,5 +196,70 @@ describe("PATCH /api/sivu/work-orders/:id/responsable (CC-050; D-244)", () => {
   it("responsable que no corresponde (SV067): 422", async () => {
     mReasignar.mockRejectedValue(errorDb("SV067"));
     expect((await reasignar({ responsable_accion_id: INSPECTOR_ID })).status).toBe(422);
+  });
+});
+
+describe("POST /api/sivu/inspections/:id/anular (CC-067; CC-045 a)", () => {
+  const anular = (body: unknown) => request(app).post(`/api/sivu/inspections/${INS_NUEVA}/anular`).set(auth).send(body as object);
+
+  beforeEach(() => {
+    mInspeccion.mockResolvedValue({ id: INS_NUEVA, work_order_id: OT_ID, tree_id: TREE_ID, estado_registro: "finalizado" });
+    mAnular.mockResolvedValue({ inspection_id: INS_NUEVA, estado_registro: "anulado", vigente_recalculada: false });
+  });
+
+  it("el Inspector no anula: 403 (CC-067)", async () => {
+    mAuth.mockResolvedValue(fakeAuthUser({ id: INSPECTOR_ID }));
+    mPerfil.mockResolvedValue(inspectorProfileRow());
+    expect((await anular({ motivo_anulacion: "error de registro" })).status).toBe(403);
+    expect(mAnular).not.toHaveBeenCalled();
+  });
+
+  it("motivo obligatorio: 400", async () => {
+    expect((await anular({ motivo_anulacion: " " })).status).toBe(400);
+  });
+
+  it("inspección no finalizada: 422", async () => {
+    mInspeccion.mockResolvedValue({ id: INS_NUEVA, work_order_id: OT_ID, tree_id: TREE_ID, estado_registro: "preguardado" });
+    expect((await anular({ motivo_anulacion: "x" })).status).toBe(422);
+  });
+
+  it("OT sin completar: solo anula, sin evaluación", async () => {
+    expect((await anular({ motivo_anulacion: "  dato equivocado " })).status).toBe(200);
+    expect(mAnular).toHaveBeenCalledWith(INS_NUEVA, MUNICIPAL_ID, "dato equivocado", null);
+    expect(mSinInspeccion).not.toHaveBeenCalled();
+  });
+
+  it("OT completada: envía la composición sin la inspección y los ajustes de la válida anterior", async () => {
+    otEnEjecucion({ estado_ot: "completada" });
+    mSinInspeccion.mockResolvedValue({ entradas_vigentes: { raices_expuestas: true }, origen_por_campo: { raices_expuestas: INS_VIEJA } });
+    mUltimaValida.mockResolvedValue(INS_VIEJA);
+    mAjustes.mockResolvedValue([]);
+    mAnular.mockResolvedValue({ inspection_id: INS_NUEVA, estado_registro: "anulado", vigente_recalculada: true });
+    expect((await anular({ motivo_anulacion: "x" })).status).toBe(200);
+    expect(mSinInspeccion).toHaveBeenCalledWith(TREE_ID, INS_NUEVA);
+    expect(mAjustes).toHaveBeenCalledWith([INS_VIEJA]);
+    const evaluacion = mAnular.mock.calls[0][3];
+    expect(evaluacion.composicion.origen_por_campo).toEqual({ raices_expuestas: INS_VIEJA });
+    expect(evaluacion.resultado).toHaveProperty("rule_version");
+    expect(evaluacion.resultado).not.toHaveProperty("entradas_vigentes");
+  });
+
+  it("OT completada sin otra inspección válida: no pide ajustes", async () => {
+    otEnEjecucion({ estado_ot: "completada" });
+    mSinInspeccion.mockResolvedValue({ entradas_vigentes: {}, origen_por_campo: {} });
+    mUltimaValida.mockResolvedValue(null);
+    expect((await anular({ motivo_anulacion: "x" })).status).toBe(200);
+    expect(mAjustes).not.toHaveBeenCalled();
+  });
+
+  it("composición cambiada dos veces: 409; regla rechazada (SV069): 422", async () => {
+    otEnEjecucion({ estado_ot: "completada" });
+    mSinInspeccion.mockResolvedValue({ entradas_vigentes: {}, origen_por_campo: {} });
+    mUltimaValida.mockResolvedValue(null);
+    mAnular.mockRejectedValue(errorDb("SV068"));
+    expect((await anular({ motivo_anulacion: "x" })).status).toBe(409);
+    expect(mAnular).toHaveBeenCalledTimes(2);
+    mAnular.mockReset().mockRejectedValue(errorDb("SV069"));
+    expect((await anular({ motivo_anulacion: "x" })).status).toBe(422);
   });
 });

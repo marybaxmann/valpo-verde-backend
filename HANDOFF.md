@@ -15,7 +15,7 @@
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `a87292a` (PR #71 fusionado: cierre documental de la Fase 5, sobre `3a5be8b`/PR #68 y `874c938`/PR #70); frontend `main` = `187a90d` (PR #5). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Bloque 1 (#60) en `wip/bloque1-completar-ot`: 025 revisada con ADR-017 v1.2 y capa TS de completar/cancelar/reasignar; sin aplicar (falta Supabase en la sesión). Falta anular inspección.
+- **Resumen:** Bloque 1 (#60) en `wip/bloque1-completar-ot`: completar/cancelar/reasignar OT, anular inspección (CC-067) y B17 implementados en TS; 025/026/027 sin aplicar (falta Supabase en la sesión).
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -40,8 +40,9 @@
 - **025** (de `wip/completar-ot`, 5 commits traídos con cherry-pick) revisada así; su `.down.sql` borra también la función nueva. **026** sin cambios.
 - **TS:** `POST /api/sivu/work-orders/:id/completar`, `POST …/cancelar` (`motivo_cancelacion`), `PATCH …/responsable` (`responsable_accion_id`); solo Usuario municipal. `cierreOt.repository.ts`, `cierreOt.service.ts`, `cierreOt.controller.ts`; Jest 1351/1351.
 - **`pruebas_025_estados_ot_vigencia.sql`** actualizado a la firma nueva (helper `pg_temp.evaluaciones_prueba`), con C3t (fila en `tree_assessments`) y P1 (vista previa = vista). **Sin correr:** esta sesión todavía no tiene Supabase.
+- **Anular (CC-067, aprobado 2026-10-29):** solo el Usuario municipal miembro anula una inspección Finalizada con motivo; el Inspector puede pedirlo fuera del sistema. Migración **027** `fn_anular_inspeccion` (SV069; SV068 si la composición cambió): con la OT completada recalcula la vigente sin la inspección (`fn_entradas_vigentes_previas` con `p_inspeccion_excluida`) e inserta `tree_assessments` con `inspeccion_anulada`. `POST /api/sivu/inspections/:id/anular`. PR-009 v6.0; AM-15 ampliado.
 - **B17** `GET /api/sivu/work-orders/:id/inspections`: inspecciones de la OT con `variables` y los `campos_arbol` registrados, con el JWT del usuario; cualquier miembro del proyecto (CC-064 a). Sin RLS probada en la base todavía.
-- **Pendiente del bloque:** correr el ciclo de 025 y 026 en `gmlbmyreoxgoqrolhyxo`; prueba SQL de SV068; anular inspección (CC-045 a) con el mismo patrón (pregunta abierta: qué Inspector puede anular); B18 vigente; `schema.sql` desde lo aplicado; CC-050 (historial de implementación).
+- **Pendiente del bloque:** correr el ciclo de 025 y 026 en `gmlbmyreoxgoqrolhyxo`; prueba SQL de SV068; escribir `pruebas_027_anular_inspeccion.sql` (casos en CC-067, «Pruebas necesarias»); B18 vigente; `schema.sql` desde lo aplicado; CC-050 (historial de implementación).
 
 ---
 
