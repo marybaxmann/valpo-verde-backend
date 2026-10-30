@@ -90,15 +90,18 @@ describe("altaMunicipalArbol (#57)", () => {
     );
   });
 
-  it("árbol fuera del sector (CC-046, SQLSTATE SV046) → 422", async () => {
+  it("árbol fuera del sector (CC-046, SQLSTATE SV046) → 422 sin nombrar el tree_code que no se creó (B-4)", async () => {
     mockFindSector.mockResolvedValueOnce({ id: SECTOR_ID, project_id: PROJECT_ID });
     const mensaje = "El árbol A-000005 queda fuera de la delimitación del sector de su proyecto";
     mockCrearArbolAlta.mockRejectedValueOnce(new Error(mensaje, { cause: SQLSTATE_ARBOL_FUERA_SECTOR }));
 
-    await expect(altaMunicipalArbol(usuario("usuario_municipal"), PROJECT_ID, bodyValido(), TOKEN)).rejects.toMatchObject({
-      statusCode: 422,
-      message: mensaje,
-    });
+    const error = await altaMunicipalArbol(usuario("usuario_municipal"), PROJECT_ID, bodyValido(), TOKEN).catch((e) => e);
+
+    expect(error.statusCode).toBe(422);
+    expect(error.message).not.toContain("A-000005");
+    expect(error.message).toBe(
+      "El árbol no se registró: la ubicación indicada queda fuera del sector del proyecto. Revise las coordenadas UTM (este y norte)."
+    );
   });
 
   it("campo obligatorio ausente en fn_create_tree_alta (SQLSTATE SV057; defensa en profundidad) → 422", async () => {

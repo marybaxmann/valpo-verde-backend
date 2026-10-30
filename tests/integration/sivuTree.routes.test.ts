@@ -109,6 +109,7 @@ describe("POST /api/sivu/projects/:id/trees — alta municipal mínima (#57)", (
     const res = await request(app).post(`/api/sivu/projects/${PROJECT_ID}/trees`).set(authHeader).send(bodyValido());
 
     expect(res.status).toBe(422);
-    expect(JSON.stringify(res.body)).toContain(mensaje);
+    expect(JSON.stringify(res.body)).toContain("queda fuera del sector del proyecto");
+    expect(JSON.stringify(res.body)).not.toContain("A-000005");
   });
 });

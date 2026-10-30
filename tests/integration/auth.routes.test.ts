@@ -52,6 +52,16 @@ describe("AUTH — GET /api/auth/me", () => {
     expect(res.body.error).toBe("Perfil de usuario no encontrado");
   });
 
+  it("perfil ilegible (falla la lectura, no que no exista) -> 503, no 403 (B-4)", async () => {
+    mockGetAuthUserByToken.mockResolvedValue(fakeAuthUser());
+    mockFindUserProfileById.mockRejectedValue(new Error("Error al leer el perfil del usuario: timeout"));
+
+    const res = await request(app).get("/api/auth/me").set(authHeader);
+
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe("No se pudo leer su perfil de usuario en este momento. Intente de nuevo en unos segundos.");
+  });
+
   it("perfil inactivo -> 403 (no 401)", async () => {
     mockGetAuthUserByToken.mockResolvedValue(fakeAuthUser());
     mockFindUserProfileById.mockResolvedValue(adminProfileRow({ activo: false }));

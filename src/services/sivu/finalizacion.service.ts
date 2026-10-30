@@ -30,6 +30,7 @@ import { SubtipoInspeccionCodigo, TipoInspeccionRealizadaCodigo } from "../rules
 import { FechaSugeridaResultado } from "../rules/engine/fechas-sugeridas";
 import { RULE_VERSION } from "../rules/engine/version";
 import { CampoFaltante, evaluarCompletitud } from "./completitud";
+import { mensajeCheck } from "../../utils/mensajesBase";
 
 /**
  * Cierre de una inspección en dos pasos (#59/#72; CC-054):
@@ -542,7 +543,7 @@ function traducirErrorFinalizar(err: unknown): Error {
     return new AppError(error.message, 422);
   }
   if (cause === "23514") {
-    return new AppError(error.message, 400);
+    return new AppError(mensajeCheck(error.message), 400);
   }
   return error;
 }

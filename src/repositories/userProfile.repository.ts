@@ -12,6 +12,8 @@ interface UserProfileRow {
  * Supabase), incluyendo el nombre de su rol vía join con `roles`.
  * Devuelve null si no existe fila — la interpretación de ese caso
  * (perfil no encontrado) queda a cargo del service que la invoque.
+ * Si la lectura falla (base caída, timeout), lanza: no es lo mismo que
+ * no tener perfil, y el service lo responde como 503, no 403.
  */
 export async function findUserProfileById(
   userId: string
@@ -20,13 +22,13 @@ export async function findUserProfileById(
     .from("user_profiles")
     .select("id, nombre, activo, role:roles(nombre)")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
-    return null;
+  if (error) {
+    throw new Error(`Error al leer el perfil del usuario: ${error.message}`, { cause: error.code });
   }
 
-  return data as unknown as UserProfileRow;
+  return (data as unknown as UserProfileRow) ?? null;
 }
 
 /**

@@ -14,6 +14,7 @@ import {
   renombrarEspecie as renombrarEspecieRepo,
 } from "../../repositories/sivu/species.repository";
 import { CompletarEspecieBody, RenombrarEspecieBody } from "../../schemas/sivu/especies.schema";
+import { mensajeCheck } from "../../utils/mensajesBase";
 
 /** SQLSTATE de una violación de CHECK (dominio fuera del Excel). */
 const SQLSTATE_CHECK_VIOLATION = "23514";
@@ -118,7 +119,7 @@ function traducirErrorEspecie(err: unknown, sqlstate: string): Error {
     return new AppError(error.message, 422);
   }
   if (cause === SQLSTATE_CHECK_VIOLATION) {
-    return new AppError(error.message, 400);
+    return new AppError(mensajeCheck(error.message), 400);
   }
   return error;
 }

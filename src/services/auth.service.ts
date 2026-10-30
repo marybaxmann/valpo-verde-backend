@@ -35,7 +35,14 @@ export async function resolveAuthenticatedUser(
     throw new AppError("Token inválido o expirado", 401);
   }
 
-  const profile = await findUserProfileById(authUser.id);
+  let profile: Awaited<ReturnType<typeof findUserProfileById>>;
+  try {
+    profile = await findUserProfileById(authUser.id);
+  } catch {
+    // La lectura del perfil falló (no es que no exista): error
+    // transitorio del servicio, no falta de permisos (plan B-4).
+    throw new AppError("No se pudo leer su perfil de usuario en este momento. Intente de nuevo en unos segundos.", 503);
+  }
 
   if (!profile) {
     // El usuario existe en Supabase Auth pero no tiene fila en

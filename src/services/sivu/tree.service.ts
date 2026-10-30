@@ -1,6 +1,7 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { AppError } from "../../utils/AppError";
 import { hoyEnChile } from "../../utils/fechaChile";
+import { mensajeAltaFueraDeSector, mensajeCheck } from "../../utils/mensajesBase";
 import { assertProjectRole } from "../authorization.service";
 import { findSectorByProyectoId, SQLSTATE_ARBOL_FUERA_SECTOR } from "../../repositories/sivu/project.repository";
 import {
@@ -78,11 +79,14 @@ function traducirErrorAltaArbol(err: unknown): Error {
   const error = err as Error;
   const cause = (error as { cause?: unknown }).cause;
 
-  if (cause === SQLSTATE_ARBOL_FUERA_SECTOR || cause === SQLSTATE_CAMPO_OBLIGATORIO_ALTA) {
+  if (cause === SQLSTATE_ARBOL_FUERA_SECTOR) {
+    return new AppError(mensajeAltaFueraDeSector(error.message), 422);
+  }
+  if (cause === SQLSTATE_CAMPO_OBLIGATORIO_ALTA) {
     return new AppError(error.message, 422);
   }
   if (cause === SQLSTATE_CHECK_VIOLATION) {
-    return new AppError(error.message, 400);
+    return new AppError(mensajeCheck(error.message), 400);
   }
 
   return error;

@@ -428,6 +428,18 @@ describe("POST /finalizar (#59/#72; CC-054, CC-055, CC-056)", () => {
     await expect(finalizarInspeccion(usuario(), INSPECTION_ID, { huella }, TOKEN)).rejects.toMatchObject({ statusCode: 400 });
   });
 
+  it("especie inválida al incorporarla al catálogo (23514) → 400 en palabras simples (B-4)", async () => {
+    preparar();
+    const huella = await huellaActual();
+    mockFinalizarRpc.mockRejectedValueOnce(
+      new Error('new row for relation "species" violates check constraint "chk_species_especie_cientifica_valida"', { cause: "23514" })
+    );
+    const error = await finalizarInspeccion(usuario(), INSPECTION_ID, { huella }, TOKEN).catch((e) => e);
+    expect(error.statusCode).toBe(400);
+    expect(error.message).not.toContain("chk_");
+    expect(error.message).toContain("nombre completo de una especie");
+  });
+
   it("riesgo No determinado (CC-045 b): fechas de Extremo con el motivo de precaución, y se puede finalizar", async () => {
     preparar({
       variables: {
