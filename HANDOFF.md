@@ -15,7 +15,7 @@
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `a87292a` (PR #71 fusionado: cierre documental de la Fase 5, sobre `3a5be8b`/PR #68 y `874c938`/PR #70); frontend `main` = `187a90d` (PR #5). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Bloque 1 (#60) en `wip/bloque1-completar-ot`: completar/cancelar/reasignar OT, anular inspección (CC-067) y B17 implementados en TS; 025/026/027 sin aplicar (falta Supabase en la sesión).
+- **Resumen:** Relevo en `docs/relevo/RELEVO_2026-10-29.md`. Bloque 1 (#60) en `wip/bloque1-completar-ot`: código listo; 025/026/027 sin aplicar, esperan autorización de la responsable.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -46,7 +46,7 @@
 - **Pendiente del bloque:** correr el ciclo de 025 y 026 en `gmlbmyreoxgoqrolhyxo`; prueba SQL de SV068; escribir `pruebas_027_anular_inspeccion.sql` (casos en CC-067, «Pruebas necesarias»); prueba de RLS de `tree_assessments` para B18; `schema.sql` desde lo aplicado; CC-050 (historial de implementación).
 
 - **Base de pruebas (verificado 2026-10-29 con el conector Supabase):** última migración aplicada 024; 0 OT completadas; 0 filas en `tree_assessments`; 025 y 026 sin aplicar. Diff de la 026 contra la 020: solo agrega la comprobación de las 4 vistas.
-- **Relevo a una cuenta nueva (2026-10-29):** prompt completo en `C:/Users/usuario/code/PROMPT_MIGRACION_SIVU_2026-10-29.md` (fuera del repo). Agente receptor sugerido: Claude Code con el conector Supabase.
+- **Relevo a una cuenta nueva (2026-10-29):** todo el contexto, la metodología, las auditorías, las decisiones y los pendientes están en **`docs/relevo/RELEVO_2026-10-29.md`** (sección 9: prompt listo para copiar). Agente receptor sugerido: Claude Code con el conector Supabase.
 - **Instrucción directa para el siguiente agente:** (1) pedir a la responsable la autorización pendiente para aplicar 025 → 026 → 027 en `gmlbmyreoxgoqrolhyxo` con el ciclo completo, después de escribir `pruebas_027_anular_inspeccion.sql` y el caso SV068 en `pruebas_025`; (2) RLS de B7, B17 y B18 en la base; (3) `schema.sql`, historial de CC-050/066/067, panel Avance SIVU; (4) `--ff-only` de esta rama a `feature/fase6-backend-api` y `release/demo`, con aprobación; (5) #61 Mantenimiento (depende de AM-22).
 
 ---
