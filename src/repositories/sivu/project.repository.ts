@@ -162,6 +162,42 @@ export async function findSectorByProyectoId(
   return data as unknown as SectorRow;
 }
 
+/** GeoJSON del contorno del sector, en WGS84 (SRID 4326, D-255). */
+export interface GeometriaSectorGeojson {
+  type: "MultiPolygon";
+  coordinates: number[][][][];
+}
+
+export interface SectorConGeometriaRow extends SectorRow {
+  geometria_sector: GeometriaSectorGeojson | null;
+}
+
+/**
+ * El sector del proyecto con su contorno (B13), para que el frontend lo
+ * dibuje. `geometria_sector::geometry`: PostgREST devuelve el GeoJSON que
+ * serializa PostGIS en vez del EWKB hexadecimal de la columna `geography`
+ * (mismo patrón que `ubicacion::geometry` en los árboles). Aparte de
+ * findSectorByProyectoId para no cargar la geometría donde solo se
+ * necesita el id.
+ */
+export async function findSectorConGeometriaByProyectoId(
+  accessToken: string,
+  projectId: string
+): Promise<SectorConGeometriaRow | null> {
+  const supabase = createUserScopedClient(accessToken);
+  const { data, error } = await supabase
+    .from("sectors")
+    .select(`${SECTOR_COLUMNS}, geometria_sector::geometry`)
+    .eq("project_id", projectId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as unknown as SectorConGeometriaRow;
+}
+
 export interface CrearProyectoConSectorResult {
   project_id: string;
   sector_id: string;

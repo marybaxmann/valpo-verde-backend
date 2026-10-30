@@ -6,10 +6,11 @@ import {
   findProyectoById,
   findProyectosForMember,
   findSectorByProyectoId,
+  findSectorConGeometriaByProyectoId,
   POSTGRES_RAISE_EXCEPTION,
   previsualizarSuperficiesKmlRpc,
   ProyectoRow,
-  SectorRow,
+  SectorConGeometriaRow,
   SQLSTATE_ARBOL_FUERA_SECTOR,
   SQLSTATE_GEOMETRIA_SECTOR,
   updateEstadoProyecto,
@@ -29,7 +30,8 @@ import {
 
 export interface ProyectoConSector {
   proyecto: ProyectoRow;
-  sector: SectorRow | null;
+  /** Con `geometria_sector` en GeoJSON WGS84 (B13). */
+  sector: SectorConGeometriaRow | null;
 }
 
 export interface CrearProyectoConSectorResultado {
@@ -75,7 +77,7 @@ export async function getProyectoByIdForUser(
     throw new AppError("Proyecto no encontrado", 404);
   }
 
-  const sector = await findSectorByProyectoId(accessToken, projectId);
+  const sector = await findSectorConGeometriaByProyectoId(accessToken, projectId);
   return { proyecto, sector };
 }
 

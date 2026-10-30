@@ -10,6 +10,7 @@ import { findUserProfileById } from "../../src/repositories/userProfile.reposito
 import {
   findProyectoById,
   findSectorByProyectoId,
+  findSectorConGeometriaByProyectoId,
   previsualizarSuperficiesKmlRpc,
   SQLSTATE_GEOMETRIA_SECTOR,
   updateGeometriaSector,
@@ -22,6 +23,7 @@ const mockFindProyectoById = findProyectoById as unknown as jest.Mock;
 const mockFindSectorByProyectoId = findSectorByProyectoId as unknown as jest.Mock;
 const mockPrevisualizarRpc = previsualizarSuperficiesKmlRpc as unknown as jest.Mock;
 const mockUpdateGeometria = updateGeometriaSector as unknown as jest.Mock;
+const mockFindSectorConGeometria = findSectorConGeometriaByProyectoId as unknown as jest.Mock;
 
 const authHeader = { Authorization: `Bearer ${FAKE_TOKEN}` };
 const PROJECT_ID = "33333333-3333-3333-3333-333333333333";
@@ -36,6 +38,32 @@ function authAsMunicipal() {
   mockGetAuthUserByToken.mockResolvedValue(fakeAuthUser({ id: "22222222-2222-2222-2222-222222222222" }));
   mockFindUserProfileById.mockResolvedValue(municipalProfileRow());
 }
+
+describe("GET /api/sivu/projects/:id — contorno del sector (B13)", () => {
+  it("devuelve sector.geometria_sector en GeoJSON WGS84", async () => {
+    authAsAdmin();
+    const geometria = { type: "MultiPolygon", coordinates: [[[[-71.63, -33.05], [-71.61, -33.05], [-71.61, -33.038], [-71.63, -33.05]]]] };
+    mockFindProyectoById.mockResolvedValue({ id: PROJECT_ID, nombre_proyecto: "Piloto" });
+    mockFindSectorConGeometria.mockResolvedValue({ id: "s1", project_id: PROJECT_ID, nombre_sector: "Plazas", geometria_sector: geometria });
+
+    const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.sector.geometria_sector).toEqual(geometria);
+    expect(mockFindSectorConGeometria).toHaveBeenCalledWith(FAKE_TOKEN, PROJECT_ID);
+  });
+
+  it("proyecto sin sector -> sector null", async () => {
+    authAsAdmin();
+    mockFindProyectoById.mockResolvedValue({ id: PROJECT_ID, nombre_proyecto: "Piloto" });
+    mockFindSectorConGeometria.mockResolvedValue(null);
+
+    const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.sector).toBeNull();
+  });
+});
 
 describe("POST /api/sivu/projects/sector-preview (D-255; CC-047)", () => {
   it("admin -> 200 con cada elemento, su índice y su estado", async () => {
