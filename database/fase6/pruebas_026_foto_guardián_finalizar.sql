@@ -18,6 +18,13 @@
 
 BEGIN;
 
+-- Sector de prueba en UTM 19S (mismo que pruebas_020 y pruebas_021).
+CREATE FUNCTION pg_temp.geom_sector() RETURNS geography LANGUAGE sql AS $$
+  SELECT ST_Multi(ST_Transform(ST_SetSRID(ST_GeomFromText(
+    'POLYGON((255000 6340000, 257000 6340000, 257000 6342000, 255000 6342000, 255000 6340000))'
+  ), 32719), 4326))::geography;
+$$;
+
 CREATE FUNCTION pg_temp.crear_usuario_prueba(p_email text, p_rol text, p_nombre text) RETURNS uuid
 LANGUAGE plpgsql AS $$
 DECLARE
@@ -128,23 +135,20 @@ BEGIN
   PERFORM public.fn_finalizar_inspeccion(
     p_inspection_id                     => p_insp_id,
     p_usuario                           => p_inspector,
-    p_resultado                         => '{
-      "variables_calculo": {},
-      "calculados": {}, "indicadores": {},
-      "puntaje_raices_cuello": 2, "probabilidad_falla_raices_cuello": "improbable",
-      "puntaje_tronco": 3,        "probabilidad_falla_tronco": "improbable",
-      "puntaje_copa_ramas": 1,    "probabilidad_falla_copa_ramas": "improbable",
-      "probabilidad_impacto": "improbable",
-      "clasificacion_raices_cuello": "bajo", "clasificacion_tronco": "bajo",
-      "clasificacion_copa_ramas": "bajo",    "clasificacion_riesgo_calculada": "bajo",
-      "puntaje_infraestructura": 0, "pct_infraestructura": 0,
-      "clasificacion_infraestructura_calculada": "bajo",
-      "clasificacion_prioridad_calculada": "baja",
-      "clasificacion_riesgo_ajustada": null,
-      "clasificacion_infraestructura_ajustada": null,
-      "clasificacion_prioridad_ajustada": null,
-      "rule_version": "2.1", "motor_commit": "test"
-    }'::jsonb,
+    p_resultado                         => jsonb_build_object(
+      'variables_calculo', '{"dap_cm": 25, "altura_total_m": 8}'::jsonb,
+      'calculados', '{}'::jsonb, 'indicadores', '{}'::jsonb,
+      'puntaje_raices_cuello', 0, 'probabilidad_falla_raices_cuello', 'improbable',
+      'puntaje_tronco', 0, 'probabilidad_falla_tronco', 'improbable',
+      'puntaje_copa_ramas', 0, 'probabilidad_falla_copa_ramas', 'improbable',
+      'probabilidad_impacto', 'baja',
+      'clasificacion_raices_cuello', 'bajo', 'clasificacion_tronco', 'bajo', 'clasificacion_copa_ramas', 'bajo',
+      'clasificacion_riesgo_calculada', 'bajo',
+      'puntaje_infraestructura', 0, 'pct_infraestructura', 0, 'clasificacion_infraestructura_calculada', 'no_aplica',
+      'clasificacion_prioridad_calculada', 'baja',
+      'clasificacion_riesgo_ajustada', NULL, 'clasificacion_infraestructura_ajustada', NULL, 'clasificacion_prioridad_ajustada', NULL,
+      'rule_version', '2.1', 'motor_commit', 'prueba-026'
+    ),
     p_ajustes                           => '[]'::jsonb,
     p_fecha_proxima_inspeccion_sugerida => CURRENT_DATE + 365,
     p_fecha_proximo_monitoreo_sugerida  => CURRENT_DATE + 180,
@@ -193,19 +197,17 @@ DECLARE
   v_insp_id_otro uuid;
 BEGIN
   -- 1. Usuarios
-  v_municipal := pg_temp.crear_usuario_prueba('muni_026@sivu.example.test', 'usuario_municipal', 'Municipal 026');
-  v_inspector := pg_temp.crear_usuario_prueba('insp_026@sivu.example.test', 'inspector', 'Inspector 026');
+  v_municipal := pg_temp.crear_usuario_prueba(p_email => 'muni_026@sivu.example.test', p_rol => 'usuario_municipal', p_nombre => 'Municipal 026');
+  v_inspector := pg_temp.crear_usuario_prueba(p_email => 'insp_026@sivu.example.test', p_rol => 'inspector', p_nombre => 'Inspector 026');
 
   -- 2. Proyecto, sector y miembros
-  INSERT INTO public.projects (nombre, institution_name, responsible_professional, created_by)
-  VALUES ('Proyecto 026', 'Mun 026', 'Prof 026', v_municipal)
+  INSERT INTO public.projects (nombre_proyecto, created_by)
+  VALUES ('026 prueba ' || gen_random_uuid(), v_municipal)
   RETURNING id INTO v_project_id;
 
-  INSERT INTO public.sectors (project_id, nombre, geometria_sector)
-  VALUES (
-    v_project_id, 'Sector 026',
-    ST_Multi(ST_GeomFromText('POLYGON((-71.65 -33.05, -71.60 -33.05, -71.60 -33.02, -71.65 -33.02, -71.65 -33.05))', 4326))
-  ) RETURNING id INTO v_sector_id;
+  INSERT INTO public.sectors (project_id, nombre_sector, geometria_sector)
+  VALUES (v_project_id, 'Sector 026', pg_temp.geom_sector())
+  RETURNING id INTO v_sector_id;
 
   INSERT INTO public.project_members (project_id, user_id, added_by)
   VALUES (v_project_id, v_municipal, v_municipal),
@@ -214,25 +216,27 @@ BEGIN
   -- 3. Árbol de prueba
   v_tree_res := public.fn_create_tree_alta(
     p_project_id            => v_project_id,
+    p_sector_id             => v_sector_id,
+    p_sector                => 'Barrio Puerto',
+    p_ubicacion_descriptiva => 'Plaza 026',
+    p_utm_este              => 256100,
+    p_utm_norte             => 6341100,
     p_especie_cientifica    => 'Quillaja saponaria',
     p_nombre_comun          => 'Quillay',
-    p_sector_id             => v_sector_id,
-    p_ubicacion_descriptiva => 'Plaza 026',
-    p_coordenadas_utm       => '{"este": 254100, "norte": 6340100}'::jsonb,
-    p_creado_por            => v_municipal,
-    p_qr_token              => 'qr-026-test'
+    p_fecha_registro        => CURRENT_DATE,
+    p_registrado_por        => v_municipal
   );
-  v_tree_id := (v_tree_res->>'tree_id')::uuid;
+  v_tree_id := (v_tree_res->>'id')::uuid;
 
   -- =================================================================
   -- F1: evaluacion_inicial sin fotografías → SV064
   -- =================================================================
-  v_ctx    := pg_temp.preparar_inspeccion(v_project_id, v_tree_id, v_sector_id, v_inspector, v_municipal,
-                'evaluacion_inicial', NULL, 'f1');
+  v_ctx    := pg_temp.preparar_inspeccion(p_project_id => v_project_id, p_tree_id => v_tree_id, p_sector_id => v_sector_id,
+                p_inspector => v_inspector, p_municipal => v_municipal, p_tipo => 'evaluacion_inicial', p_subtipo => NULL, p_email_suffix => 'f1');
   v_insp_id := (v_ctx->>'insp_id')::uuid;
 
   BEGIN
-    PERFORM pg_temp.finalizar(v_insp_id, v_inspector);
+    PERFORM pg_temp.finalizar(p_insp_id => v_insp_id, p_inspector => v_inspector);
     RAISE EXCEPTION 'FALLA F1: debió rechazar sin fotografías';
   EXCEPTION WHEN SQLSTATE 'SV064' THEN
     INSERT INTO test_log (msg) VALUES ('F1 OK: rechazó evaluacion_inicial sin fotografías (SV064)');
@@ -241,10 +245,10 @@ BEGIN
   -- =================================================================
   -- F2: evaluacion_inicial con 1 vista sola (arbol_completo) → SV064
   -- =================================================================
-  PERFORM pg_temp.insertar_foto(v_insp_id, v_tree_id, v_inspector, 'arbol_completo');
+  PERFORM pg_temp.insertar_foto(p_inspection_id => v_insp_id, p_tree_id => v_tree_id, p_uploaded_by => v_inspector, p_vista => 'arbol_completo');
 
   BEGIN
-    PERFORM pg_temp.finalizar(v_insp_id, v_inspector);
+    PERFORM pg_temp.finalizar(p_insp_id => v_insp_id, p_inspector => v_inspector);
     RAISE EXCEPTION 'FALLA F2: debió rechazar con solo 1 vista';
   EXCEPTION WHEN SQLSTATE 'SV064' THEN
     INSERT INTO test_log (msg) VALUES ('F2 OK: rechazó evaluacion_inicial con 1 vista (SV064)');
@@ -253,12 +257,12 @@ BEGIN
   -- =================================================================
   -- F3: evaluacion_inicial con 3 vistas (falta copa) → SV064
   -- =================================================================
-  PERFORM pg_temp.insertar_foto(v_insp_id, v_tree_id, v_inspector, 'base');
-  PERFORM pg_temp.insertar_foto(v_insp_id, v_tree_id, v_inspector, 'tronco');
+  PERFORM pg_temp.insertar_foto(p_inspection_id => v_insp_id, p_tree_id => v_tree_id, p_uploaded_by => v_inspector, p_vista => 'base');
+  PERFORM pg_temp.insertar_foto(p_inspection_id => v_insp_id, p_tree_id => v_tree_id, p_uploaded_by => v_inspector, p_vista => 'tronco');
   -- 'copa' deliberadamente ausente
 
   BEGIN
-    PERFORM pg_temp.finalizar(v_insp_id, v_inspector);
+    PERFORM pg_temp.finalizar(p_insp_id => v_insp_id, p_inspector => v_inspector);
     RAISE EXCEPTION 'FALLA F3: debió rechazar con 3 vistas (falta copa)';
   EXCEPTION WHEN SQLSTATE 'SV064' THEN
     INSERT INTO test_log (msg) VALUES ('F3 OK: rechazó evaluacion_inicial con 3 vistas / falta copa (SV064)');
@@ -274,19 +278,19 @@ BEGIN
   -- Nota: las dos OT del mismo árbol son independientes; la 025 valida
   -- que solo una inspección finalizada por OT sea necesaria para
   -- completar, pero aquí no completamos la OT — solo creamos el contexto.
-  v_ctx := pg_temp.preparar_inspeccion(v_project_id, v_tree_id, v_sector_id, v_inspector, v_municipal,
-             'reevaluacion', NULL, 'f4-otro');
+  v_ctx := pg_temp.preparar_inspeccion(p_project_id => v_project_id, p_tree_id => v_tree_id, p_sector_id => v_sector_id,
+                p_inspector => v_inspector, p_municipal => v_municipal, p_tipo => 'reevaluacion', p_subtipo => NULL, p_email_suffix => 'f4-otro');
   v_insp_id_otro := (v_ctx->>'insp_id')::uuid;
 
   -- Fotos en la inspección "otro" (no en v_insp_id del caso F1-F3)
-  PERFORM pg_temp.insertar_foto(v_insp_id_otro, v_tree_id, v_inspector, 'arbol_completo');
-  PERFORM pg_temp.insertar_foto(v_insp_id_otro, v_tree_id, v_inspector, 'base');
-  PERFORM pg_temp.insertar_foto(v_insp_id_otro, v_tree_id, v_inspector, 'tronco');
-  PERFORM pg_temp.insertar_foto(v_insp_id_otro, v_tree_id, v_inspector, 'copa');
+  PERFORM pg_temp.insertar_foto(p_inspection_id => v_insp_id_otro, p_tree_id => v_tree_id, p_uploaded_by => v_inspector, p_vista => 'arbol_completo');
+  PERFORM pg_temp.insertar_foto(p_inspection_id => v_insp_id_otro, p_tree_id => v_tree_id, p_uploaded_by => v_inspector, p_vista => 'base');
+  PERFORM pg_temp.insertar_foto(p_inspection_id => v_insp_id_otro, p_tree_id => v_tree_id, p_uploaded_by => v_inspector, p_vista => 'tronco');
+  PERFORM pg_temp.insertar_foto(p_inspection_id => v_insp_id_otro, p_tree_id => v_tree_id, p_uploaded_by => v_inspector, p_vista => 'copa');
 
   -- v_insp_id (F1) sigue con solo 3 vistas (arbol_completo, base, tronco)
   BEGIN
-    PERFORM pg_temp.finalizar(v_insp_id, v_inspector);
+    PERFORM pg_temp.finalizar(p_insp_id => v_insp_id, p_inspector => v_inspector);
     RAISE EXCEPTION 'FALLA F4: debió rechazar — fotos de otra inspección no cuentan';
   EXCEPTION WHEN SQLSTATE 'SV064' THEN
     INSERT INTO test_log (msg) VALUES ('F4 OK: rechazó — fotos de otra inspección no sustituyen a las propias (SV064)');
@@ -296,9 +300,9 @@ BEGIN
   -- F5: evaluacion_inicial con las 4 vistas correctas → ÉXITO
   -- =================================================================
   -- Añadimos 'copa' a v_insp_id (que ya tiene arbol_completo, base, tronco)
-  PERFORM pg_temp.insertar_foto(v_insp_id, v_tree_id, v_inspector, 'copa');
+  PERFORM pg_temp.insertar_foto(p_inspection_id => v_insp_id, p_tree_id => v_tree_id, p_uploaded_by => v_inspector, p_vista => 'copa');
 
-  PERFORM pg_temp.finalizar(v_insp_id, v_inspector);
+  PERFORM pg_temp.finalizar(p_insp_id => v_insp_id, p_inspector => v_inspector);
 
   PERFORM pg_temp.assert(
     EXISTS (SELECT 1 FROM public.inspections WHERE id = v_insp_id AND estado_registro = 'finalizado'),
@@ -309,11 +313,11 @@ BEGIN
   -- =================================================================
   -- F6: Monitoreo sin fotografías → ÉXITO (exento PR-010 v4.0)
   -- =================================================================
-  v_ctx    := pg_temp.preparar_inspeccion(v_project_id, v_tree_id, v_sector_id, v_inspector, v_municipal,
-                'monitoreo', 'fitosanitario', 'f6');
+  v_ctx    := pg_temp.preparar_inspeccion(p_project_id => v_project_id, p_tree_id => v_tree_id, p_sector_id => v_sector_id,
+                p_inspector => v_inspector, p_municipal => v_municipal, p_tipo => 'monitoreo', p_subtipo => 'fitosanitario', p_email_suffix => 'f6');
   v_insp_id := (v_ctx->>'insp_id')::uuid;
 
-  PERFORM pg_temp.finalizar(v_insp_id, v_inspector);
+  PERFORM pg_temp.finalizar(p_insp_id => v_insp_id, p_inspector => v_inspector);
 
   PERFORM pg_temp.assert(
     EXISTS (SELECT 1 FROM public.inspections WHERE id = v_insp_id AND estado_registro = 'finalizado'),
@@ -324,11 +328,11 @@ BEGIN
   -- =================================================================
   -- F7: Evaluación instrumental sin fotografías → ÉXITO (exento)
   -- =================================================================
-  v_ctx    := pg_temp.preparar_inspeccion(v_project_id, v_tree_id, v_sector_id, v_inspector, v_municipal,
-                'evaluacion_instrumental', 'tomografia_sonica', 'f7');
+  v_ctx    := pg_temp.preparar_inspeccion(p_project_id => v_project_id, p_tree_id => v_tree_id, p_sector_id => v_sector_id,
+                p_inspector => v_inspector, p_municipal => v_municipal, p_tipo => 'evaluacion_instrumental', p_subtipo => 'tomografia_sonica', p_email_suffix => 'f7');
   v_insp_id := (v_ctx->>'insp_id')::uuid;
 
-  PERFORM pg_temp.finalizar(v_insp_id, v_inspector);
+  PERFORM pg_temp.finalizar(p_insp_id => v_insp_id, p_inspector => v_inspector);
 
   PERFORM pg_temp.assert(
     EXISTS (SELECT 1 FROM public.inspections WHERE id = v_insp_id AND estado_registro = 'finalizado'),

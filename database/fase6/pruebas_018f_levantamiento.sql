@@ -309,7 +309,11 @@ BEGIN
   );
   v_tree_id_5 := (v_res->>'tree_id')::uuid;
 
-  UPDATE work_orders SET estado_ot = 'cancelada' WHERE id = v_wo_id_5;
+  -- Desde la 025 (CC-050) una OT cancelada exige motivo, quién y cuándo
+  -- (chk_work_orders_cancelada).
+  UPDATE work_orders SET estado_ot = 'cancelada', motivo_cancelacion = 'Prueba L6',
+    cancelado_por = v_no_inspector, fecha_cancelacion = now()
+  WHERE id = v_wo_id_5;
 
   IF NOT EXISTS (
     SELECT 1 FROM trees WHERE id = v_tree_id_5 AND sector = 'Barrio Puerto' AND nombre_comun = 'Árbol L6'

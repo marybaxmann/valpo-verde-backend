@@ -11,17 +11,16 @@
 --   Las funciones fn_complete_work_order_inspeccion, fn_cancel_work_order y
 --   fn_reassign_work_order son SECURITY DEFINER con REVOKE a PUBLIC/anon/
 --   authenticated y GRANT solo a service_role.
---   En el flujo normal de producción, el backend invoca estas funciones a
---   través de node-postgres (pg.Pool) con la cadena DATABASE_URL del rol
---   service_role (ADR-017), NO a través de PostgREST/supabase-js.
+--   El backend las invoca por RPC de PostgREST (supabase-js) con la
+--   credencial de servicio, sin conexión directa a Postgres (ADR-017 v1.2).
 --   El backend extrae el UUID del usuario autenticado exclusivamente del JWT
 --   validado por Supabase Auth (`req.user.id`), nunca del cuerpo del request,
 --   antes de llamar a la función SQL. El parámetro `p_usuario` es así el UUID
 --   que el backend ya autenticó, no una entrada del cliente.
 --   La comprobación `auth.uid() IS NOT NULL AND auth.uid() <> p_usuario`
---   sirve como defensa adicional si la función fuese invocada mediante RPC
---   PostgREST (contexto con auth.uid()), pero no reemplaza el control de
---   privilegios: con una conexión service_role directa, auth.uid() es NULL
+--   sirve como defensa adicional si la función se invocara con el JWT de un
+--   usuario (contexto con auth.uid()), pero no reemplaza el control de
+--   privilegios: con la credencial de servicio, auth.uid() es NULL
 --   y esa condición no se evalúa, lo que es correcto porque en ese contexto
 --   el backend ya es quien autentica al usuario antes de llamar.
 --   El riesgo de suplantación vía p_usuario con la conexión service_role
@@ -30,6 +29,13 @@
 --   activo y membresía que comprueban el perfil real del UUID recibido.
 
 BEGIN;
+
+-- Sector de prueba en UTM 19S (mismo que pruebas_020 y pruebas_021).
+CREATE FUNCTION pg_temp.geom_sector() RETURNS geography LANGUAGE sql AS $$
+  SELECT ST_Multi(ST_Transform(ST_SetSRID(ST_GeomFromText(
+    'POLYGON((255000 6340000, 257000 6340000, 257000 6342000, 255000 6342000, 255000 6340000))'
+  ), 32719), 4326))::geography;
+$$;
 
 -- ADR-017 v1.2: lo que el backend enviaría al completar. composicion =
 -- fn_entradas_vigentes_previas; resultado mínimo válido para tree_assessments.
@@ -41,6 +47,27 @@ LANGUAGE sql AS $$
     'resultado', jsonb_build_object('rule_version', '2.1', 'motor_commit', 'prueba-025', 'clasificacion_riesgo_calculada', 'bajo')
   )), '[]'::jsonb)
   FROM (SELECT DISTINCT tree_id FROM public.inspections WHERE work_order_id = p_ot AND estado_registro = 'finalizado') t;
+$$;
+
+-- Resultado del motor con la forma de evaluations_resultado_input (igual
+-- que resultado_base de pruebas_020, que pasa chk_evaluations_calculado_coherente).
+CREATE FUNCTION pg_temp.resultado_prueba(p_variables jsonb) RETURNS jsonb LANGUAGE sql AS $$
+  SELECT jsonb_build_object(
+    'variables_calculo', p_variables,
+    'calculados', '{}'::jsonb,
+    'indicadores', '{}'::jsonb,
+    'puntaje_raices_cuello', 0, 'probabilidad_falla_raices_cuello', 'improbable',
+    'puntaje_tronco', 0, 'probabilidad_falla_tronco', 'improbable',
+    'puntaje_copa_ramas', 0, 'probabilidad_falla_copa_ramas', 'improbable',
+    'probabilidad_impacto', 'baja',
+    'clasificacion_raices_cuello', 'bajo', 'clasificacion_tronco', 'bajo', 'clasificacion_copa_ramas', 'bajo',
+    'clasificacion_riesgo_calculada', 'bajo',
+    'puntaje_infraestructura', 0, 'pct_infraestructura', 0, 'clasificacion_infraestructura_calculada', 'no_aplica',
+    'clasificacion_prioridad_calculada', 'baja',
+    'clasificacion_riesgo_ajustada', NULL, 'clasificacion_infraestructura_ajustada', NULL, 'clasificacion_prioridad_ajustada', NULL,
+    'rule_version', '2.1',
+    'motor_commit', 'prueba'
+  );
 $$;
 
 CREATE FUNCTION pg_temp.crear_usuario_prueba(p_email text, p_rol text, p_nombre text) RETURNS uuid
@@ -127,16 +154,12 @@ BEGIN
   );
 
   -- 2. Proyecto y sector
-  INSERT INTO public.projects (nombre, institution_name, responsible_professional, created_by)
-  VALUES ('Proyecto 025', 'Mun 025', 'Prof 025', v_municipal)
+  INSERT INTO public.projects (nombre_proyecto, created_by)
+  VALUES ('025 prueba ' || gen_random_uuid(), v_municipal)
   RETURNING id INTO v_project_id;
 
-  INSERT INTO public.sectors (project_id, nombre, geometria_sector)
-  VALUES (
-    v_project_id,
-    'Sector 025',
-    ST_Multi(ST_GeomFromText('POLYGON((-71.65 -33.05, -71.60 -33.05, -71.60 -33.02, -71.65 -33.02, -71.65 -33.05))', 4326))
-  )
+  INSERT INTO public.sectors (project_id, nombre_sector, geometria_sector)
+  VALUES (v_project_id, 'Sector 025', pg_temp.geom_sector())
   RETURNING id INTO v_sector_id;
 
   INSERT INTO public.project_members (project_id, user_id, added_by)
@@ -148,16 +171,18 @@ BEGIN
 
   -- 3. Árbol de prueba
   v_tree_res := public.fn_create_tree_alta(
-    p_project_id             => v_project_id,
-    p_especie_cientifica     => 'Cryptocarya alba',
-    p_nombre_comun           => 'Peumo',
-    p_sector_id              => v_sector_id,
-    p_ubicacion_descriptiva  => 'Plaza 025',
-    p_coordenadas_utm        => '{"este": 254000, "norte": 6340000}'::jsonb,
-    p_creado_por             => v_municipal,
-    p_qr_token               => 'qr-025-test'
+    p_project_id            => v_project_id,
+    p_sector_id             => v_sector_id,
+    p_sector                => 'Barrio Puerto',
+    p_ubicacion_descriptiva => 'Plaza 025',
+    p_utm_este              => 256000,
+    p_utm_norte             => 6341000,
+    p_especie_cientifica    => 'Cryptocarya alba',
+    p_nombre_comun          => 'Peumo',
+    p_fecha_registro        => CURRENT_DATE,
+    p_registrado_por        => v_municipal
   );
-  v_tree_id := (v_tree_res->>'tree_id')::uuid;
+  v_tree_id := (v_tree_res->>'id')::uuid;
 
   -- Captura vigente_desde_inspection_id antes de completar la OT
   SELECT vigente_desde_inspection_id INTO v_vigente_antes FROM public.trees WHERE id = v_tree_id;
@@ -214,7 +239,7 @@ BEGIN
     p_work_order_id              => v_wo_id,
     p_tree_id                    => v_tree_id,
     p_inspector                  => v_inspector,
-    p_fecha_inspeccion           => CURRENT_DATE,
+    p_fecha_inspeccion           => CURRENT_DATE - 1,  -- ayer: C10c (hoy) queda después sin empate de orden
     p_fecha_registro             => CURRENT_DATE,
     p_rule_version               => '2.1',
     p_tipo_inspeccion_realizada  => 'evaluacion_inicial',
@@ -257,18 +282,7 @@ BEGIN
   PERFORM public.fn_finalizar_inspeccion(
     p_inspection_id                     => v_insp_id,
     p_usuario                           => v_inspector,
-    p_resultado                         => '{"entradas_vigentes": {"dap_cm": 25, "altura_total_m": 8},
-                                             "calculados": {}, "indicadores": {},
-                                             "puntaje_raices_cuello": 2, "probabilidad_falla_raices_cuello": "improbable",
-                                             "puntaje_tronco": 3, "probabilidad_falla_tronco": "improbable",
-                                             "puntaje_copa_ramas": 1, "probabilidad_falla_copa_ramas": "improbable",
-                                             "probabilidad_impacto": "improbable",
-                                             "clasificacion_raices_cuello": "bajo", "clasificacion_tronco": "bajo",
-                                             "clasificacion_copa_ramas": "bajo", "clasificacion_riesgo_calculada": "bajo",
-                                             "clasificacion_prioridad_calculada": "baja",
-                                             "fecha_proxima_inspeccion_sugerida": "2028-10-26",
-                                             "fecha_proximo_monitoreo_sugerida": "2027-10-26",
-                                             "ajustes_descartados": []}'::jsonb,
+    p_resultado                         => pg_temp.resultado_prueba(p_variables => '{"dap_cm": 25, "altura_total_m": 8}'::jsonb),
     p_ajustes                           => '[]'::jsonb,
     p_fecha_proxima_inspeccion_sugerida => CURRENT_DATE + 365,
     p_fecha_proximo_monitoreo_sugerida  => CURRENT_DATE + 180,
@@ -365,8 +379,8 @@ BEGIN
     p_fecha_creacion_ot    => CURRENT_DATE
   )->>'id')::uuid;
 
-  PERFORM public.fn_transition_work_order_estado(v_wo2_id, 'programada', CURRENT_DATE + 1, v_inspector);
-  PERFORM public.fn_transition_work_order_estado(v_wo2_id, 'en_ejecucion', NULL, v_inspector);
+  PERFORM public.fn_transition_work_order_estado(p_work_order_id => v_wo2_id, p_nuevo_estado => 'programada', p_fecha_accion_programada => CURRENT_DATE + 1, p_usuario => v_inspector);
+  PERFORM public.fn_transition_work_order_estado(p_work_order_id => v_wo2_id, p_nuevo_estado => 'en_ejecucion', p_fecha_accion_programada => NULL, p_usuario => v_inspector);
 
   BEGIN
     PERFORM public.fn_complete_work_order_inspeccion(p_work_order_id => v_wo2_id, p_usuario => v_inspector, p_evaluaciones => pg_temp.evaluaciones_prueba(p_ot => v_wo2_id));
@@ -438,7 +452,7 @@ BEGIN
   -- C7: Cancelar OT ya cancelada -> rechazo SV066 (solicitud repetida)
   -- -------------------------------------------------------------------
   BEGIN
-    PERFORM public.fn_cancel_work_order(v_wo2_id, 'Segundo intento', v_municipal);
+    PERFORM public.fn_cancel_work_order(p_work_order_id => v_wo2_id, p_motivo => 'Segundo intento', p_usuario => v_municipal);
     RAISE EXCEPTION 'FALLA C7: debió rechazar cancelar OT ya cancelada';
   EXCEPTION WHEN SQLSTATE 'SV066' THEN
     INSERT INTO test_log (msg) VALUES ('C7 OK: rechazó cancelar OT ya cancelada (solicitud repetida)');
@@ -464,14 +478,14 @@ BEGIN
     )->>'id')::uuid;
 
     BEGIN
-      PERFORM public.fn_cancel_work_order(v_wo_cancel, '   ', v_municipal);
+      PERFORM public.fn_cancel_work_order(p_work_order_id => v_wo_cancel, p_motivo => '   ', p_usuario => v_municipal);
       RAISE EXCEPTION 'FALLA C8a: debió rechazar motivo solo espacios';
     EXCEPTION WHEN SQLSTATE 'SV066' THEN
       INSERT INTO test_log (msg) VALUES ('C8a OK: rechazó cancelación con motivo solo espacios');
     END;
 
     BEGIN
-      PERFORM public.fn_cancel_work_order(v_wo_cancel, NULL, v_municipal);
+      PERFORM public.fn_cancel_work_order(p_work_order_id => v_wo_cancel, p_motivo => NULL, p_usuario => v_municipal);
       RAISE EXCEPTION 'FALLA C8b: debió rechazar motivo NULL';
     EXCEPTION WHEN SQLSTATE 'SV066' THEN
       INSERT INTO test_log (msg) VALUES ('C8b OK: rechazó cancelación con motivo NULL');
@@ -505,7 +519,7 @@ BEGIN
     )->>'id')::uuid;
 
     BEGIN
-      PERFORM public.fn_cancel_work_order(v_wo_cancelrol, 'No quiero', v_inspector);
+      PERFORM public.fn_cancel_work_order(p_work_order_id => v_wo_cancelrol, p_motivo => 'No quiero', p_usuario => v_inspector);
       RAISE EXCEPTION 'FALLA C9: debió rechazar cancelar por inspector';
     EXCEPTION WHEN SQLSTATE 'SV066' THEN
       INSERT INTO test_log (msg) VALUES ('C9 OK: rechazó cancelar por inspector (rol incorrecto)');
@@ -531,7 +545,7 @@ BEGIN
       p_fecha_creacion_ot    => CURRENT_DATE
     )->>'id')::uuid;
 
-    PERFORM public.fn_reassign_work_order(v_wo_reasig, v_inspector_2, v_municipal);
+    PERFORM public.fn_reassign_work_order(p_work_order_id => v_wo_reasig, p_nuevo_responsable_id => v_inspector_2, p_usuario => v_municipal);
 
     PERFORM pg_temp.assert(
       EXISTS (SELECT 1 FROM public.work_orders WHERE id = v_wo_reasig AND responsable_accion_id = v_inspector_2),
@@ -541,7 +555,7 @@ BEGIN
 
     -- C10b: Reasignar a rol incorrecto -> rechazo SV067
     BEGIN
-      PERFORM public.fn_reassign_work_order(v_wo_reasig, v_encargado, v_municipal);
+      PERFORM public.fn_reassign_work_order(p_work_order_id => v_wo_reasig, p_nuevo_responsable_id => v_encargado, p_usuario => v_municipal);
       RAISE EXCEPTION 'FALLA C10b: debió rechazar encargado en OT de inspección';
     EXCEPTION WHEN SQLSTATE 'SV067' THEN
       INSERT INTO test_log (msg) VALUES ('C10b OK: rechazó asignar Encargado a OT de Inspección');
@@ -565,8 +579,8 @@ BEGIN
         p_fecha_creacion_ot     => CURRENT_DATE
       )->>'id')::uuid;
 
-      PERFORM public.fn_transition_work_order_estado(v_wo_comp, 'programada', CURRENT_DATE + 1, v_inspector);
-      PERFORM public.fn_transition_work_order_estado(v_wo_comp, 'en_ejecucion', NULL, v_inspector);
+      PERFORM public.fn_transition_work_order_estado(p_work_order_id => v_wo_comp, p_nuevo_estado => 'programada', p_fecha_accion_programada => CURRENT_DATE + 1, p_usuario => v_inspector);
+      PERFORM public.fn_transition_work_order_estado(p_work_order_id => v_wo_comp, p_nuevo_estado => 'en_ejecucion', p_fecha_accion_programada => NULL, p_usuario => v_inspector);
 
       v_insp2_res := public.fn_save_inspection_draft(
         p_inspection_id             => NULL,
@@ -592,18 +606,7 @@ BEGIN
       PERFORM public.fn_finalizar_inspeccion(
         p_inspection_id                     => v_insp2_id,
         p_usuario                           => v_inspector,
-        p_resultado                         => '{"entradas_vigentes": {"dap_cm": 26},
-                                                 "calculados": {}, "indicadores": {},
-                                                 "puntaje_raices_cuello": 1, "probabilidad_falla_raices_cuello": "improbable",
-                                                 "puntaje_tronco": 1, "probabilidad_falla_tronco": "improbable",
-                                                 "puntaje_copa_ramas": 1, "probabilidad_falla_copa_ramas": "improbable",
-                                                 "probabilidad_impacto": "improbable",
-                                                 "clasificacion_raices_cuello": "bajo", "clasificacion_tronco": "bajo",
-                                                 "clasificacion_copa_ramas": "bajo", "clasificacion_riesgo_calculada": "bajo",
-                                                 "clasificacion_prioridad_calculada": "baja",
-                                                 "fecha_proxima_inspeccion_sugerida": "2028-10-26",
-                                                 "fecha_proximo_monitoreo_sugerida": "2027-10-26",
-                                                 "ajustes_descartados": []}'::jsonb,
+        p_resultado                         => pg_temp.resultado_prueba(p_variables => '{"dap_cm": 26}'::jsonb),
         p_ajustes                           => '[]'::jsonb,
         p_fecha_proxima_inspeccion_sugerida => CURRENT_DATE + 365,
         p_fecha_proximo_monitoreo_sugerida  => CURRENT_DATE + 180,
@@ -615,7 +618,7 @@ BEGIN
       PERFORM public.fn_complete_work_order_inspeccion(p_work_order_id => v_wo_comp, p_usuario => v_municipal, p_evaluaciones => pg_temp.evaluaciones_prueba(p_ot => v_wo_comp));
 
       BEGIN
-        PERFORM public.fn_reassign_work_order(v_wo_comp, v_inspector_2, v_municipal);
+        PERFORM public.fn_reassign_work_order(p_work_order_id => v_wo_comp, p_nuevo_responsable_id => v_inspector_2, p_usuario => v_municipal);
         RAISE EXCEPTION 'FALLA C10c: debió rechazar reasignar OT completada';
       EXCEPTION WHEN SQLSTATE 'SV067' THEN
         INSERT INTO test_log (msg) VALUES ('C10c OK: rechazó reasignar OT completada');
@@ -623,7 +626,7 @@ BEGIN
     END;
 
     -- C10d: Reasignación repetida con mismo responsable (permitida, sin error)
-    PERFORM public.fn_reassign_work_order(v_wo_reasig, v_inspector_2, v_municipal);
+    PERFORM public.fn_reassign_work_order(p_work_order_id => v_wo_reasig, p_nuevo_responsable_id => v_inspector_2, p_usuario => v_municipal);
     PERFORM pg_temp.assert(
       EXISTS (SELECT 1 FROM public.work_orders WHERE id = v_wo_reasig AND responsable_accion_id = v_inspector_2),
       'C10d: reasignación repetida con mismo responsable cambió el estado incorrectamente'
@@ -635,10 +638,99 @@ BEGIN
   -- C11: Cancelar OT completada -> rechazo SV066 (estado terminal)
   -- -------------------------------------------------------------------
   BEGIN
-    PERFORM public.fn_cancel_work_order(v_wo_id, 'Intento tardío', v_municipal);
+    PERFORM public.fn_cancel_work_order(p_work_order_id => v_wo_id, p_motivo => 'Intento tardío', p_usuario => v_municipal);
     RAISE EXCEPTION 'FALLA C11: debió rechazar cancelar OT completada';
   EXCEPTION WHEN SQLSTATE 'SV066' THEN
     INSERT INTO test_log (msg) VALUES ('C11 OK: rechazó cancelar OT completada (estado terminal)');
+  END;
+
+  -- -------------------------------------------------------------------
+  -- C12: Completar con la composición alterada -> rechazo SV068 y nada
+  -- escrito; el reintento con la composición correcta completa
+  -- (ADR-017 v1.2). Registra diametro_copa_ns_m, que ninguna otra
+  -- inspección del árbol tiene, para no depender de empates de orden.
+  -- -------------------------------------------------------------------
+  DECLARE v_wo_sv uuid; v_insp_sv uuid; v_evals jsonb;
+  BEGIN
+    v_wo_sv := (public.fn_create_work_order_inspeccion(
+      p_project_id            => v_project_id,
+      p_tree_id               => v_tree_id,
+      p_incident_id           => NULL,
+      p_accion_solicitada     => 'monitoreo',
+      p_subtipo_accion        => 'fitosanitario',
+      p_motivo                => 'Control C12',
+      p_prioridad             => 'baja',
+      p_observaciones         => NULL,
+      p_responsable_accion_id => v_inspector,
+      p_creado_por            => v_municipal,
+      p_fecha_creacion_ot     => CURRENT_DATE
+    )->>'id')::uuid;
+
+    PERFORM public.fn_transition_work_order_estado(p_work_order_id => v_wo_sv, p_nuevo_estado => 'programada', p_fecha_accion_programada => CURRENT_DATE + 1, p_usuario => v_inspector);
+    PERFORM public.fn_transition_work_order_estado(p_work_order_id => v_wo_sv, p_nuevo_estado => 'en_ejecucion', p_fecha_accion_programada => NULL, p_usuario => v_inspector);
+
+    v_insp_sv := (public.fn_save_inspection_draft(
+      p_inspection_id             => NULL,
+      p_work_order_id             => v_wo_sv,
+      p_tree_id                   => v_tree_id,
+      p_inspector                 => v_inspector,
+      p_fecha_inspeccion          => CURRENT_DATE,
+      p_fecha_registro            => CURRENT_DATE,
+      p_rule_version              => '2.1',
+      p_tipo_inspeccion_realizada => 'monitoreo',
+      p_subtipo_inspeccion        => 'fitosanitario',
+      p_metodo_instrumental       => NULL,
+      p_resultado_general         => NULL,
+      p_requiere_mantenimiento    => false,
+      p_observaciones             => NULL,
+      p_registrado_por            => v_inspector,
+      p_variables                 => '{"diametro_copa_ns_m": 6}'::jsonb,
+      p_campos_arbol              => '{"diametro_copa_ns_m": 6}'::jsonb,
+      p_campos_registrados_arbol  => ARRAY['diametro_copa_ns_m']
+    )->>'inspection_id')::uuid;
+
+    PERFORM public.fn_finalizar_inspeccion(
+      p_inspection_id                     => v_insp_sv,
+      p_usuario                           => v_inspector,
+      p_resultado                         => pg_temp.resultado_prueba(p_variables => '{"diametro_copa_ns_m": 6}'::jsonb),
+      p_ajustes                           => '[]'::jsonb,
+      p_fecha_proxima_inspeccion_sugerida => CURRENT_DATE + 365,
+      p_fecha_proximo_monitoreo_sugerida  => CURRENT_DATE + 180,
+      p_fecha_proxima_inspeccion          => CURRENT_DATE + 365,
+      p_fecha_proximo_monitoreo           => CURRENT_DATE + 180,
+      p_justificacion_ajuste_fecha        => NULL
+    );
+
+    v_evals := pg_temp.evaluaciones_prueba(p_ot => v_wo_sv);
+
+    BEGIN
+      PERFORM public.fn_complete_work_order_inspeccion(
+        p_work_order_id => v_wo_sv,
+        p_usuario       => v_municipal,
+        p_evaluaciones  => jsonb_set(v_evals, '{0,composicion,entradas_vigentes,diametro_copa_ns_m}', '99')
+      );
+      RAISE EXCEPTION 'FALLA C12: debió rechazar la composición alterada';
+    EXCEPTION WHEN SQLSTATE 'SV068' THEN
+      INSERT INTO test_log (msg) VALUES ('C12 OK: rechazó completar con la composición alterada (SV068)');
+    END;
+
+    PERFORM pg_temp.assert(
+      EXISTS (SELECT 1 FROM public.work_orders WHERE id = v_wo_sv AND estado_ot = 'en_ejecucion' AND fecha_completada_ot IS NULL)
+      AND NOT EXISTS (SELECT 1 FROM public.tree_assessments WHERE work_order_id = v_wo_sv)
+      AND EXISTS (SELECT 1 FROM public.trees WHERE id = v_tree_id AND diametro_copa_ns_m IS DISTINCT FROM 6),
+      'C12b: tras SV068 quedó algo escrito'
+    );
+
+    -- Reintento con la composición recalculada (el backend reintenta una vez).
+    PERFORM public.fn_complete_work_order_inspeccion(p_work_order_id => v_wo_sv, p_usuario => v_municipal, p_evaluaciones => pg_temp.evaluaciones_prueba(p_ot => v_wo_sv));
+
+    PERFORM pg_temp.assert(
+      EXISTS (SELECT 1 FROM public.work_orders WHERE id = v_wo_sv AND estado_ot = 'completada')
+      AND (SELECT count(*) FROM public.tree_assessments WHERE work_order_id = v_wo_sv AND evento = 'ot_completada') = 1
+      AND EXISTS (SELECT 1 FROM public.trees WHERE id = v_tree_id AND diametro_copa_ns_m = 6),
+      'C12c: el reintento con la composición correcta no completó la OT'
+    );
+    INSERT INTO test_log (msg) VALUES ('C12c OK: el reintento con la composición correcta completó la OT');
   END;
 
 END $$;

@@ -167,6 +167,12 @@ BEGIN
     p_tipo, p_subtipo, '2.1', p_fecha_inspeccion, p_fecha_inspeccion, p_inspector
   ) RETURNING id INTO v_inspection_id;
 
+  -- Desde la 026 (D-27, PR-010 v4.0) una evaluación inicial, reevaluación
+  -- o levantamiento exige las cuatro vistas para finalizar.
+  INSERT INTO photos (tree_id, storage_path, vista, inspection_id, uploaded_by)
+  SELECT v_tree_id, 'tree-photos/020/' || v_inspection_id || '/' || vista || '.jpg', vista, v_inspection_id, p_inspector
+  FROM unnest(ARRAY['arbol_completo', 'base', 'tronco', 'copa']) AS vista;
+
   IF p_con_evaluacion THEN
     INSERT INTO evaluations (inspection_id, tree_id, variables)
     VALUES (v_inspection_id, v_tree_id, '{"raices_expuestas": true}'::jsonb);
