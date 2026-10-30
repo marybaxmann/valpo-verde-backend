@@ -7,6 +7,7 @@ import {
   guardarBorradorInspeccionController,
 } from "../../controllers/sivu/inspection.controller";
 import {
+  eliminarFotoInspeccionController,
   listarFotosInspeccionController,
   subirFotoInspeccionController,
 } from "../../controllers/sivu/photo.controller";
@@ -25,6 +26,8 @@ router.patch("/:inspectionId", authMiddleware, guardarBorradorInspeccionControll
 // evidencia). Listar: cualquier rol con acceso al proyecto.
 router.post("/:inspectionId/photos", authMiddleware, subirFotoUnica, subirFotoInspeccionController);
 router.get("/:inspectionId/photos", authMiddleware, listarFotosInspeccionController);
+// Quitar una foto subida por error: solo el Inspector responsable y solo en Preguardado.
+router.delete("/:inspectionId/photos/:photoId", authMiddleware, eliminarFotoInspeccionController);
 
 // Cierre en dos pasos (#59/#72; CC-054): /calcular no escribe nada;
 // /finalizar exige la huella de /calcular y, si todo está completo,

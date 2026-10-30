@@ -13,12 +13,15 @@ import {
   PhotoRow,
   crearFotoRegistro,
   eliminarArchivoDeStorage,
+  eliminarFotoRegistro,
   generarUrlFirmada,
+  obtenerFotoPorId,
   listarFotosPorInspeccion,
   subirArchivoAStorage,
 } from "../../../src/repositories/sivu/photo.repository";
 import { assertProjectAccess, assertProjectRole } from "../../../src/services/authorization.service";
 import {
+  eliminarFotoInspeccion,
   listarFotosInspeccion,
   subirFotoInspeccion,
   verificarYProcesarFoto,
@@ -33,6 +36,8 @@ const mockCrearFoto = crearFotoRegistro as jest.Mock;
 const mockEliminarArchivo = eliminarArchivoDeStorage as jest.Mock;
 const mockListarFotos = listarFotosPorInspeccion as jest.Mock;
 const mockGenerarUrl = generarUrlFirmada as jest.Mock;
+const mockObtenerFoto = obtenerFotoPorId as jest.Mock;
+const mockEliminarFotoRegistro = eliminarFotoRegistro as jest.Mock;
 const mockAssertProjectAccess = assertProjectAccess as jest.Mock;
 const mockAssertProjectRole = assertProjectRole as jest.Mock;
 
@@ -341,5 +346,83 @@ describe("listarFotosInspeccion (cualquier rol con acceso al proyecto)", () => {
     expect(resultado).toEqual([
       { id: "foto-1", vista: "arbol_completo", url: "https://signed.example/foto-1", created_at: "2026-10-25T00:00:00Z", uploaded_by: INSPECTOR_ID },
     ]);
+  });
+});
+
+describe("eliminarFotoInspeccion (solo en Preguardado, solo el Inspector responsable)", () => {
+  const PHOTO_ID = "55555555-5555-5555-5555-555555555555";
+  const STORAGE_PATH = `${PROJECT_ID}/${TREE_ID}/inspeccion/${PHOTO_ID}.jpg`;
+
+  function fotoBase(overrides: Partial<Record<string, unknown>> = {}) {
+    return { id: PHOTO_ID, inspection_id: INSPECTION_ID, storage_path: STORAGE_PATH, vista: "arbol_completo", ...overrides };
+  }
+
+  async function eliminarConFixtures(
+    inspeccionOverrides: Partial<Record<string, unknown>> = {},
+    otOverrides: Partial<Record<string, unknown>> = {},
+    userId = INSPECTOR_ID
+  ) {
+    mockObtenerInspeccion.mockResolvedValueOnce(inspeccionBase(inspeccionOverrides));
+    mockObtenerOt.mockResolvedValueOnce(otBase(otOverrides));
+    return eliminarFotoInspeccion(usuario(userId, "inspector"), INSPECTION_ID, PHOTO_ID, TOKEN);
+  }
+
+  it("404 si la inspección no existe", async () => {
+    mockObtenerInspeccion.mockResolvedValueOnce(null);
+    await expect(eliminarFotoInspeccion(usuario(INSPECTOR_ID, "inspector"), INSPECTION_ID, PHOTO_ID, TOKEN)).rejects.toMatchObject({
+      statusCode: 404,
+    });
+    expect(mockEliminarFotoRegistro).not.toHaveBeenCalled();
+  });
+
+  it("exige rol Inspector en el proyecto", async () => {
+    mockAssertProjectRole.mockRejectedValueOnce(Object.assign(new Error("sin rol"), { statusCode: 403 }));
+    await expect(eliminarConFixtures()).rejects.toMatchObject({ statusCode: 403 });
+    expect(mockAssertProjectRole).toHaveBeenCalledWith(expect.anything(), PROJECT_ID, ["inspector"], TOKEN);
+    expect(mockEliminarFotoRegistro).not.toHaveBeenCalled();
+  });
+
+  it("otro Inspector (no el responsable de la OT) → 403", async () => {
+    await expect(eliminarConFixtures({}, {}, "inspector-2")).rejects.toMatchObject({ statusCode: 403 });
+    expect(mockEliminarFotoRegistro).not.toHaveBeenCalled();
+  });
+
+  it("OT no En ejecución → 422", async () => {
+    await expect(eliminarConFixtures({}, { estado_ot: "completada" })).rejects.toMatchObject({ statusCode: 422 });
+    expect(mockEliminarFotoRegistro).not.toHaveBeenCalled();
+  });
+
+  it.each(["finalizado", "anulado"])("inspección %s → 422: su evidencia no se toca", async (estado) => {
+    await expect(eliminarConFixtures({ estado_registro: estado })).rejects.toMatchObject({ statusCode: 422 });
+    expect(mockObtenerFoto).not.toHaveBeenCalled();
+    expect(mockEliminarFotoRegistro).not.toHaveBeenCalled();
+    expect(mockEliminarArchivo).not.toHaveBeenCalled();
+  });
+
+  it("404 si la foto no existe", async () => {
+    mockObtenerFoto.mockResolvedValueOnce(null);
+    await expect(eliminarConFixtures()).rejects.toMatchObject({ statusCode: 404 });
+    expect(mockEliminarFotoRegistro).not.toHaveBeenCalled();
+  });
+
+  it("404 si la foto es de otra inspección", async () => {
+    mockObtenerFoto.mockResolvedValueOnce(fotoBase({ inspection_id: "66666666-6666-6666-6666-666666666666" }));
+    await expect(eliminarConFixtures()).rejects.toMatchObject({ statusCode: 404 });
+    expect(mockEliminarFotoRegistro).not.toHaveBeenCalled();
+  });
+
+  it("con todo válido, borra la fila y después el archivo de Storage", async () => {
+    mockObtenerFoto.mockResolvedValueOnce(fotoBase());
+    await eliminarConFixtures();
+    expect(mockEliminarFotoRegistro).toHaveBeenCalledWith(PHOTO_ID, INSPECTION_ID);
+    expect(mockEliminarArchivo).toHaveBeenCalledWith(STORAGE_PATH);
+    expect(mockEliminarFotoRegistro.mock.invocationCallOrder[0]).toBeLessThan(mockEliminarArchivo.mock.invocationCallOrder[0]);
+  });
+
+  it("si falla el borrado de la fila, no toca el archivo", async () => {
+    mockObtenerFoto.mockResolvedValueOnce(fotoBase());
+    mockEliminarFotoRegistro.mockRejectedValueOnce(new Error("proyecto cerrado"));
+    await expect(eliminarConFixtures()).rejects.toThrow("proyecto cerrado");
+    expect(mockEliminarArchivo).not.toHaveBeenCalled();
   });
 });

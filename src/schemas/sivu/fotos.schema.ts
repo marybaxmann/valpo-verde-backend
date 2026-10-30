@@ -26,3 +26,10 @@ export const subirFotoInspeccionSchema = z
   .strict();
 
 export type SubirFotoInspeccionBody = z.infer<typeof subirFotoInspeccionSchema>;
+
+export const fotoInspeccionParamSchema = z.object({
+  inspectionId: z.string().uuid("id de inspección inválido"),
+  photoId: z.string().uuid("id de foto inválido"),
+});
+
+export type FotoInspeccionParam = z.infer<typeof fotoInspeccionParamSchema>;

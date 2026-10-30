@@ -9,6 +9,8 @@ import {
   PhotoRow,
   crearFotoRegistro,
   eliminarArchivoDeStorage,
+  eliminarFotoRegistro,
+  obtenerFotoPorId,
   generarUrlFirmada,
   listarFotosPorInspeccion,
   subirArchivoAStorage,
@@ -201,4 +203,52 @@ export async function listarFotosInspeccion(
       uploaded_by: foto.uploaded_by,
     }))
   );
+}
+
+/**
+ * DELETE /api/sivu/inspections/:inspectionId/photos/:photoId — el
+ * Inspector responsable quita una foto subida por error mientras la
+ * inspección está en Preguardado (decisión de la responsable,
+ * 2026-10-30). Una inspección Finalizada o Anulada nunca pierde fotos:
+ * son evidencia (D-27). Mismas reglas que subir (CC-048/CC-050).
+ *
+ * Se borra primero la fila y después el archivo: si falla el archivo,
+ * queda un huérfano en Storage (recuperable) y la foto ya no cuenta
+ * para finalizar; al revés, quedaría una fila apuntando a nada.
+ */
+export async function eliminarFotoInspeccion(
+  user: AuthenticatedUser,
+  inspectionId: string,
+  photoId: string,
+  accessToken: string
+): Promise<void> {
+  const inspeccion = await obtenerInspeccionPorId(inspectionId);
+  if (!inspeccion) {
+    throw new AppError("La inspección no existe", 404);
+  }
+
+  const ot = await obtenerOrdenTrabajoPorId(inspeccion.work_order_id);
+  if (!ot) {
+    throw new AppError("La orden de trabajo de la inspección no existe", 404);
+  }
+
+  await assertProjectRole(user, ot.project_id, ["inspector"], accessToken);
+
+  if (ot.responsable_accion_id !== user.id) {
+    throw new AppError("Solo el Inspector responsable asignado de esta orden de trabajo puede eliminar fotos", 403);
+  }
+  if (ot.estado_ot !== "en_ejecucion") {
+    throw new AppError("La orden de trabajo no está En ejecución", 422);
+  }
+  if (inspeccion.estado_registro !== "preguardado") {
+    throw new AppError("Solo se pueden eliminar fotos de una inspección en borrador (Preguardado)", 422);
+  }
+
+  const foto = await obtenerFotoPorId(photoId);
+  if (!foto || foto.inspection_id !== inspectionId) {
+    throw new AppError("La foto no existe en esta inspección", 404);
+  }
+
+  await eliminarFotoRegistro(photoId, inspectionId);
+  await eliminarArchivoDeStorage(foto.storage_path);
 }

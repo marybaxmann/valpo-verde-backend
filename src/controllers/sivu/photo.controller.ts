@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../utils/AppError";
-import { inspectionIdParamSchema, subirFotoInspeccionSchema } from "../../schemas/sivu/fotos.schema";
-import { listarFotosInspeccion, subirFotoInspeccion } from "../../services/sivu/photo.service";
+import { fotoInspeccionParamSchema, inspectionIdParamSchema, subirFotoInspeccionSchema } from "../../schemas/sivu/fotos.schema";
+import { eliminarFotoInspeccion, listarFotosInspeccion, subirFotoInspeccion } from "../../services/sivu/photo.service";
 
 /** POST /api/sivu/inspections/:inspectionId/photos (CC-049) */
 export async function subirFotoInspeccionController(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -43,6 +43,21 @@ export async function listarFotosInspeccionController(req: Request, res: Respons
 
     const data = await listarFotosInspeccion(req.user!, parsedParams.data.inspectionId, req.accessToken!);
     res.status(200).json({ data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** DELETE /api/sivu/inspections/:inspectionId/photos/:photoId (solo en Preguardado) */
+export async function eliminarFotoInspeccionController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const parsedParams = fotoInspeccionParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      throw new AppError(parsedParams.error.issues[0]?.message ?? "Parámetros inválidos", 400);
+    }
+
+    await eliminarFotoInspeccion(req.user!, parsedParams.data.inspectionId, parsedParams.data.photoId, req.accessToken!);
+    res.status(204).end();
   } catch (err) {
     next(err);
   }
