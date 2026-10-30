@@ -45,6 +45,10 @@
 - **B17** `GET /api/sivu/work-orders/:id/inspections`: inspecciones de la OT con `variables` y los `campos_arbol` registrados, con el JWT del usuario; cualquier miembro del proyecto (CC-064 a). Sin RLS probada en la base todavía.
 - **Pendiente del bloque:** correr el ciclo de 025 y 026 en `gmlbmyreoxgoqrolhyxo`; prueba SQL de SV068; escribir `pruebas_027_anular_inspeccion.sql` (casos en CC-067, «Pruebas necesarias»); prueba de RLS de `tree_assessments` para B18; `schema.sql` desde lo aplicado; CC-050 (historial de implementación).
 
+- **Base de pruebas (verificado 2026-10-29 con el conector Supabase):** última migración aplicada 024; 0 OT completadas; 0 filas en `tree_assessments`; 025 y 026 sin aplicar. Diff de la 026 contra la 020: solo agrega la comprobación de las 4 vistas.
+- **Relevo a una cuenta nueva (2026-10-29):** prompt completo en `C:/Users/usuario/code/PROMPT_MIGRACION_SIVU_2026-10-29.md` (fuera del repo). Agente receptor sugerido: Claude Code con el conector Supabase.
+- **Instrucción directa para el siguiente agente:** (1) pedir a la responsable la autorización pendiente para aplicar 025 → 026 → 027 en `gmlbmyreoxgoqrolhyxo` con el ciclo completo, después de escribir `pruebas_027_anular_inspeccion.sql` y el caso SV068 en `pruebas_025`; (2) RLS de B7, B17 y B18 en la base; (3) `schema.sql`, historial de CC-050/066/067, panel Avance SIVU; (4) `--ff-only` de esta rama a `feature/fase6-backend-api` y `release/demo`, con aprobación; (5) #61 Mantenimiento (depende de AM-22).
+
 ---
 
 ## ▶ Novedad 2026-10-27 (bloque 13) — Rama `release/demo` para el despliegue de prueba (base de pruebas)
