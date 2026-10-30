@@ -2872,6 +2872,7 @@ motivo)
 | 2026-10-29 | EN REVISIÓN | marybaxmann | Registro de lo publicado en la demo; redacción pendiente de aprobación. |
 | 2026-10-29 | APROBADO METODOLÓGICAMENTE | marybaxmann | Aprobado en el chat. `release/demo` se lleva a `feature/fase6-backend-api` con `--ff-only`. |
 | 2026-10-29 | APROBADO METODOLÓGICAMENTE | Valej | Sin cambio de estado. Observación (d): B18 agrega `vigente` (la fila más reciente de `tree_assessments`, `af30be0` en `wip/bloque1-completar-ot`), que ahora tiene datos cuando una OT se completa (025 aplicada en `valpo-verde-conecta-pruebas`). B7 sigue contando el finalizado. Sigue sin hacer: pruebas de RLS de B7 y B18 (incluido `tree_assessments`) en la base. |
+| 2026-10-30 | APROBADO METODOLÓGICAMENTE | Valej | Sin cambio de estado. Pruebas de RLS hechas: `pruebas_rls_b7_b17_b18.sql`: R1 Usuario municipal, Inspector y Encargado miembros ven las 8 lecturas de B7, B17 y B18 (incluido `tree_assessments`); R2 Usuario municipal e Inspector de otro proyecto no ven ninguna fila; 5/5 en `valpo-verde-conecta-pruebas`. Queda por confirmar con la responsable que el Encargado lea B17 y `tree_assessments` (se infiere de CC-064 a, que no los nombra). Administrador sin probar. |
 
 ---
 

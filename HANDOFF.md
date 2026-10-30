@@ -15,7 +15,7 @@
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `a87292a` (PR #71 fusionado: cierre documental de la Fase 5, sobre `3a5be8b`/PR #68 y `874c938`/PR #70); frontend `main` = `187a90d` (PR #5). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
-- **Resumen:** Bloque 1 (#60) en `wip/bloque1-completar-ot`: 025/026/027 aplicadas y probadas en pruebas; faltan RLS de B7/B17/B18, Jest/tsc y `--ff-only`.
+- **Resumen:** Plan de la presentación (2026-11-03): B-1 y B-2 cerradas; sigue B-3 (geometría del sector en B13).
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -42,7 +42,7 @@
 - **Scripts corregidos (`464281a`):** `pruebas_025`, `026` y `027` usaban columnas y firmas que no existen (`projects.nombre`, `institution_name`, `p_qr_token`, resultado del motor incompleto) y nunca habían corrido; se arreglaron con el patrón de 020/021. `pruebas_025`: llamadas con nombre, C3 con fecha de ayer (sin empates de orden), comentario sin `pg.Pool`. `pruebas_018f` L6: la cancelación directa registra motivo, quién y cuándo (`chk_work_orders_cancelada`). `pruebas_020`: `preparar_inspeccion` agrega las cuatro vistas de foto (guardián de la 026).
 - **`schema.sql` revisión 23 (`f416e0b`):** copiado de las migraciones; md5 de cada cuerpo de función = `prosrc` aplicado. GRANT/REVOKE solo en las migraciones.
 - **Hallazgo sin corregir:** los `.down` de 025 y 026 no son copias byte a byte de la 021/014 y la 020 (formato y comentarios); revertir deja el mismo comportamiento, no el mismo texto.
-- **Sin hacer en esta sesión:** Jest y `tsc`; pruebas de RLS de B7, B17 y B18 (incluido `tree_assessments`); push de la rama.
+- **Hecho después (plan de la presentación):** B-1 (Jest 1365/1365, tsc limpio, `feature/fase6-backend-api` y `release/demo` al día) y B-2 (RLS de B7, B17 y B18 en verde, `pruebas_rls_b7_b17_b18.sql`). Ver `docs/plan/plan-presentacion-2026-11-03.md`, «Registro».
 - **Instrucción directa para el siguiente agente:** (1) RLS de B7, B17 y B18 en la base, con un usuario miembro y uno de otro proyecto; (2) Jest completo y `tsc --noEmit`; (3) con aprobación, push y `--ff-only` de esta rama a `feature/fase6-backend-api` y `release/demo`; (4) avisar al frontend de los endpoints nuevos; (5) #61 Mantenimiento (depende de AM-22).
 
 ---

@@ -34,7 +34,7 @@ El lunes 2 a las 12:00, el sitio publicado muestra el **ciclo central de SIVU co
 | ID | Tarea | Para | Depende de | Hecho cuando |
 |---|---|---|---|---|
 | [x] B-1 | Revisar `wip/bloque1-completar-ot` (Jest, tsc, diff), llevarla con `--ff-only` a `feature/fase6-backend-api` y dejar `release/demo` igual (Vercel redespliega) | Vie 30, 12:00 | 025–027 aplicadas (ya están) | `sivu-api.vercel.app` responde completar, cancelar, reasignar, anular, B17 y B18 con `vigente` |
-| B-2 | Pruebas de RLS en la base de B7, B17 y B18 (incluido `tree_assessments`) | Vie 30 | B-1 | Script con miembro y no miembro, en verde |
+| [x] B-2 | Pruebas de RLS en la base de B7, B17 y B18 (incluido `tree_assessments`) | Vie 30 | B-1 | Script con miembro y no miembro, en verde |
 | B-3 | B13: geometría del sector en `GET /api/sivu/projects/:id` (GeoJSON WGS84) | Vie 30 | — | El frontend puede dibujar el contorno |
 | B-4 | Mensajes de error claros: alta rechazada sin nombrar un `tree_code` que no se creó; especie inválida en palabras simples; perfil ilegible → 503 (no 403) | Sáb 31 | — | Tests de cada mensaje |
 | B-5 | Búsqueda sin tildes en B1 y en especies («platano» encuentra «plátano») | Sáb 31 | — | Test con y sin tilde |
@@ -74,3 +74,4 @@ Una línea por tarea cerrada: `AAAA-MM-DD HH:MM · ID · commit · nota`.
 
 - 2026-10-29 · plan acordado con la responsable.
 - 2026-10-30 00:05 · B-1 · `361df75` · tsc limpio y Jest 1365/1365; `wip/bloque1-completar-ot`, `feature/fase6-backend-api` y `release/demo` en `361df75` (avance rápido, sin forzar); sivu-api responde completar, cancelar, reasignar, anular, B17 y B18 con `vigente` (rutas publicadas: 401 sin token, comprobado desde fuera; el contenido de `vigente` no se probó con un usuario real). Endpoints anotados en `coordinacion.md`.
+- 2026-10-30 00:10 · B-2 · `c5bdfd3` · `pruebas_rls_b7_b17_b18.sql`: R1 Usuario municipal, Inspector y Encargado miembros ven las 8 lecturas de B7, B17 y B18 (incluido `tree_assessments`); R2 Usuario municipal e Inspector de otro proyecto no ven ninguna fila; 5/5 en `valpo-verde-conecta-pruebas`. Queda por confirmar con la responsable que el Encargado lea B17 y `tree_assessments` (se infiere de CC-064 a, que no los nombra). Administrador sin probar.
