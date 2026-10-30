@@ -1,7 +1,18 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 22 — migraciones 023 y 024 (2026-10-26; CC-065): índice
+--   (revisión 23 — migraciones 025, 026 y 027 (2026-10-29; #60; CC-050,
+--   CC-067; ADR-017 v1.2; AM-19; D-27): cancelación en work_orders
+--   (columnas y chk_work_orders_cancelada), fn_check_ot_completada exige
+--   una inspección finalizada, fn_refresh_tree_current y
+--   v_tree_current_inputs filtran «finalizado» (AM-19),
+--   fn_entradas_vigentes_previas, fn_complete_work_order_inspeccion,
+--   fn_cancel_work_order, fn_reassign_work_order, guardián de fotos en
+--   fn_finalizar_inspeccion y fn_anular_inspeccion, copiados de lo
+--   aplicado en `valpo-verde-conecta-pruebas` (md5 de lo aplicado =
+--   archivo de migración en LF; los GRANT/REVOKE quedan solo en la
+--   migración);
+--   antes revisión 22 — migraciones 023 y 024 (2026-10-26; CC-065): índice
 --   idx_work_orders_responsable y función fn_miembros_proyecto, copiados
 --   de lo aplicado en `valpo-verde-conecta-pruebas` (los GRANT/REVOKE
 --   quedan solo en la migración);
@@ -1698,8 +1709,9 @@ GRANT EXECUTE ON FUNCTION fn_create_tree_alta(uuid, uuid, text, text, numeric, n
 -- aquí junto a tree_data_versions.
 --
 -- Por cada campo: si existe una versión válida (OT completada, inspección
--- no anulada) que lo haya registrado, se usa el valor de la MÁS RECIENTE
--- de esas versiones — incluso si ese valor es NULL (p. ej. "No presenta").
+-- finalizada; migración 025, AM-19) que lo haya registrado, se usa el
+-- valor de la MÁS RECIENTE de esas versiones — incluso si ese valor es
+-- NULL (p. ej. "No presenta").
 -- Solo si NINGUNA versión válida registró el campo se usa el valor del
 -- alta. Por eso es CASE WHEN EXISTS (...), no COALESCE: COALESCE seguiría
 -- buscando hacia atrás ante un NULL legítimo, perdiendo la actualización.
@@ -1728,7 +1740,7 @@ BEGIN
     JOIN work_orders wo ON wo.id = i.work_order_id
     LEFT JOIN species s ON s.id = tdv.species_id
     WHERE tdv.tree_id = p_tree_id
-      AND i.estado_registro <> 'anulado'
+      AND i.estado_registro = 'finalizado'
       AND wo.estado_ot = 'completada'
   ),
   alta AS (
@@ -1801,7 +1813,11 @@ BEGIN
     rango_edad_estimada_anios = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados))
       THEN (SELECT v.rango_edad_estimada_anios FROM validas v WHERE 'rango_edad_estimada_anios' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.rango_edad_estimada_anios FROM alta a) END,
-    vigente_desde_inspection_id = (SELECT v.inspection_id FROM validas v ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+    vigente_desde_inspection_id = (
+      SELECT v.inspection_id FROM validas v
+      ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC
+      LIMIT 1
+    )
   WHERE t.id = p_tree_id;
 END;
 $$;
@@ -1924,6 +1940,10 @@ CREATE TABLE work_orders (
   observaciones                 TEXT,
   created_at                    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at                    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  -- Cancelación (migración 025; CC-050): las registra fn_cancel_work_order.
+  motivo_cancelacion            TEXT,
+  cancelado_por                 UUID REFERENCES user_profiles(id),
+  fecha_cancelacion             TIMESTAMPTZ,
 
   CONSTRAINT chk_work_orders_tree_levantamiento
     CHECK ((tree_id IS NULL) = (accion_solicitada = 'levantamiento')),
@@ -1936,7 +1956,14 @@ CREATE TABLE work_orders (
   CONSTRAINT chk_work_orders_observaciones
     CHECK (accion_solicitada NOT IN ('levantamiento', 'otra', 'otra_intervencion') OR observaciones IS NOT NULL),
   -- Destino de la FK compuesta de maintenance_records (coherencia con tipo_ot).
-  CONSTRAINT work_orders_id_tipo_ot_key UNIQUE (id, tipo_ot)
+  CONSTRAINT work_orders_id_tipo_ot_key UNIQUE (id, tipo_ot),
+  -- Cancelada si y solo si tiene motivo no vacío, quién y cuándo (025; CC-050).
+  CONSTRAINT chk_work_orders_cancelada
+    CHECK (
+      (estado_ot = 'cancelada' AND motivo_cancelacion IS NOT NULL AND btrim(motivo_cancelacion) <> '' AND cancelado_por IS NOT NULL AND fecha_cancelacion IS NOT NULL)
+      OR
+      (estado_ot <> 'cancelada' AND motivo_cancelacion IS NULL AND cancelado_por IS NULL AND fecha_cancelacion IS NULL)
+    )
 );
 
 CREATE INDEX idx_work_orders_project ON work_orders (project_id);
@@ -2092,16 +2119,27 @@ CREATE TRIGGER trg_inspections_tree_coherente
   BEFORE INSERT OR UPDATE ON inspections
   FOR EACH ROW EXECUTE FUNCTION fn_check_inspection_tree_coherente();
 
--- OT no completada con inspecciones preguardadas (§5.2; D-239).
+-- OT no completada con inspecciones preguardadas (§5.2; D-239); desde la
+-- 025 (CC-050), una OT de Inspección exige además una inspección finalizada.
 CREATE FUNCTION fn_check_ot_completada() RETURNS TRIGGER
 LANGUAGE plpgsql
 SET search_path = public, pg_temp
 AS $$
 BEGIN
-  IF NEW.estado_ot = 'completada' AND EXISTS (
-    SELECT 1 FROM inspections WHERE work_order_id = NEW.id AND estado_registro = 'preguardado'
-  ) THEN
-    RAISE EXCEPTION 'La OT % tiene inspecciones en preguardado: no puede completarse', NEW.codigo_ot;
+  IF NEW.estado_ot = 'completada' THEN
+    -- Ninguna inspección en preguardado (D-239)
+    IF EXISTS (
+      SELECT 1 FROM public.inspections WHERE work_order_id = NEW.id AND estado_registro = 'preguardado'
+    ) THEN
+      RAISE EXCEPTION 'La OT % tiene inspecciones en preguardado: no puede completarse', NEW.codigo_ot;
+    END IF;
+
+    -- En OT de Inspección, exige al menos una inspección Finalizada (CC-050)
+    IF NEW.tipo_ot = 'inspeccion' AND NOT EXISTS (
+      SELECT 1 FROM public.inspections WHERE work_order_id = NEW.id AND estado_registro = 'finalizado'
+    ) THEN
+      RAISE EXCEPTION 'La OT % de Inspección no tiene ninguna inspección finalizada: no puede completarse (CC-050)', NEW.codigo_ot;
+    END IF;
   END IF;
   RETURN NEW;
 END;
@@ -2813,6 +2851,9 @@ CREATE INDEX idx_classification_adjustments_evaluation ON classification_adjustm
 -- fechas, y pasa la inspección a Finalizado. No toca trees, work_orders
 -- ni tree_assessments. SQLSTATE SV064. evaluations_resultado_input es la
 -- forma de p_resultado (mismo patrón que tree_data_versions_arbol_input).
+-- Migración 026 (D-27; PR-010 v4.0; CC-056 punto 2): Evaluación inicial,
+-- Reevaluación y Levantamiento exigen las cuatro vistas de foto
+-- (arbol_completo, base, tronco, copa) de la propia inspección (SV064).
 CREATE TYPE evaluations_resultado_input AS (
   variables_calculo                        jsonb,
   calculados                               jsonb,
@@ -2878,6 +2919,7 @@ DECLARE
   v_ajustada text;
   v_fecha_vigente date;
   v_fecha_ajustada boolean;
+  v_vistas_presentes integer;
 BEGIN
   -- (b) Bloquea la inspección y su OT hasta el final de la transacción.
   SELECT i.tree_id, i.work_order_id, i.estado_registro, i.tipo_inspeccion_realizada, i.fecha_inspeccion,
@@ -2922,6 +2964,28 @@ BEGIN
   IF v_estado_registro <> 'preguardado' THEN
     RAISE EXCEPTION 'La inspección % no está en Preguardado (estado actual: %) — no se puede finalizar de nuevo', p_inspection_id, v_estado_registro
       USING ERRCODE = 'SV064';
+  END IF;
+
+  -- ---------------------------------------------------------------
+  -- (foto) D-27 / PR-010 v4.0: fotografías obligatorias.
+  -- Solo para evaluacion_inicial, reevaluacion y levantamiento.
+  -- Monitoreo y evaluacion_instrumental quedan exentos (CC-056 p.2).
+  -- ---------------------------------------------------------------
+  IF v_tipo_inspeccion_realizada IN ('evaluacion_inicial', 'reevaluacion', 'levantamiento') THEN
+    SELECT COUNT(DISTINCT vista)
+    INTO v_vistas_presentes
+    FROM public.photos
+    WHERE inspection_id = p_inspection_id
+      AND vista IN ('arbol_completo', 'base', 'tronco', 'copa');
+
+    IF v_vistas_presentes < 4 THEN
+      RAISE EXCEPTION
+        'Faltan fotografías obligatorias (D-27 / PR-010 v4.0): se requieren las cuatro vistas '
+        'arbol_completo, base, tronco y copa para finalizar una %. '
+        'Vistas presentes: %.',
+        v_tipo_inspeccion_realizada, v_vistas_presentes
+        USING ERRCODE = 'SV064';
+    END IF;
   END IF;
 
   -- (a) Sin fila en `evaluations` no hay borrador que finalizar.
@@ -3145,6 +3209,616 @@ CREATE TABLE tree_assessments (
 );
 
 CREATE INDEX idx_tree_assessments_tree ON tree_assessments (tree_id, created_at DESC);
+
+-- Estados de la OT y vigencia (migraciones 025 y 027; #60; CC-050,
+-- CC-067; ADR-017 v1.2). Van después de tree_assessments porque la
+-- escriben. Flujo con el motor en medio: el backend lee la composición
+-- que quedaría vigente (fn_entradas_vigentes_previas), el motor calcula
+-- en memoria y una sola función SQL verifica esa composición (SV068 si
+-- cambió), escribe, refresca el árbol e inserta en tree_assessments.
+
+-- fn_entradas_vigentes_previas (025): composición campo por campo que
+-- QUEDARÍA vigente; misma lógica que v_tree_current_inputs, con dos
+-- supuestos opcionales: p_work_order_id se trata como completada hoy
+-- (hora de Chile) y p_inspeccion_excluida no cuenta (anulación).
+CREATE FUNCTION fn_entradas_vigentes_previas(
+  p_tree_id UUID,
+  p_work_order_id UUID DEFAULT NULL,
+  p_inspeccion_excluida UUID DEFAULT NULL
+) RETURNS JSONB
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  WITH validas AS (
+    SELECT
+      e.inspection_id,
+      CASE WHEN wo.id = p_work_order_id AND wo.estado_ot <> 'completada'
+           THEN (now() AT TIME ZONE 'America/Santiago')::date
+           ELSE wo.fecha_completada_ot END AS fecha_completada_ot,
+      i.fecha_inspeccion,
+      i.created_at,
+      kv.key,
+      kv.value
+    FROM public.evaluations e
+    JOIN public.inspections i ON i.id = e.inspection_id
+    JOIN public.work_orders wo ON wo.id = i.work_order_id
+    CROSS JOIN LATERAL jsonb_each(e.variables) AS kv(key, value)
+    WHERE e.tree_id = p_tree_id
+      AND i.estado_registro = 'finalizado'
+      AND (wo.estado_ot = 'completada' OR wo.id = p_work_order_id)
+      AND (p_inspeccion_excluida IS NULL OR i.id <> p_inspeccion_excluida)
+  ),
+  ranked AS (
+    SELECT key, value, inspection_id,
+      ROW_NUMBER() OVER (PARTITION BY key ORDER BY fecha_completada_ot DESC, fecha_inspeccion DESC, created_at DESC) AS rn
+    FROM validas
+  )
+  SELECT jsonb_build_object(
+    'entradas_vigentes', COALESCE(jsonb_object_agg(key, value) FILTER (WHERE rn = 1), '{}'::jsonb),
+    'origen_por_campo', COALESCE(jsonb_object_agg(key, to_jsonb(inspection_id)) FILTER (WHERE rn = 1), '{}'::jsonb)
+  )
+  FROM ranked;
+$$;
+
+-- fn_complete_work_order_inspeccion (025; D-239, D-242): el Usuario
+-- municipal activo y miembro completa una OT de Inspección En ejecución
+-- sin preguardados y con al menos una finalizada; fecha_completada_ot =
+-- hoy en Chile (la asigna el Sistema); verifica la composición de cada
+-- árbol, refresca y guarda la vigente (evento ot_completada). SV065/SV068.
+CREATE FUNCTION fn_complete_work_order_inspeccion(
+  p_work_order_id UUID,
+  p_usuario UUID,
+  p_evaluaciones JSONB
+) RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_estado_ot TEXT;
+  v_tipo_ot TEXT;
+  v_project_id UUID;
+  v_tree_id UUID;
+  v_rol TEXT;
+  v_activo BOOLEAN;
+  v_es_miembro BOOLEAN;
+  v_tree_ids UUID[];
+  v_tid UUID;
+  v_hoy DATE := (now() AT TIME ZONE 'America/Santiago')::date;
+  v_item JSONB;
+  v_composicion JSONB;
+  v_vigente JSONB;
+BEGIN
+  -- Anti-suplantación: en contexto PostgREST/RPC, auth.uid() debe coincidir con p_usuario
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_usuario THEN
+    RAISE EXCEPTION 'No está autorizado a ejecutar esta acción en nombre de otro usuario' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_usuario IS NULL THEN
+    RAISE EXCEPTION 'El identificador de usuario es obligatorio' USING ERRCODE = 'SV065';
+  END IF;
+
+  IF p_evaluaciones IS NULL OR jsonb_typeof(p_evaluaciones) <> 'array' THEN
+    RAISE EXCEPTION 'Faltan las evaluaciones vigentes calculadas por el backend (ADR-017 v1.2)' USING ERRCODE = 'SV065';
+  END IF;
+
+  -- Bloqueo FOR UPDATE para garantizar serialización y concurrencia segura
+  SELECT estado_ot, tipo_ot, project_id, tree_id
+  INTO v_estado_ot, v_tipo_ot, v_project_id, v_tree_id
+  FROM public.work_orders
+  WHERE id = p_work_order_id
+  FOR UPDATE;
+
+  IF v_estado_ot IS NULL THEN
+    RAISE EXCEPTION 'La orden de trabajo % no existe', p_work_order_id USING ERRCODE = 'SV065';
+  END IF;
+
+  IF v_tipo_ot <> 'inspeccion' THEN
+    RAISE EXCEPTION 'Esta función solo completa OT de tipo Inspección (tipo actual: %)', v_tipo_ot USING ERRCODE = 'SV065';
+  END IF;
+
+  IF v_estado_ot <> 'en_ejecucion' THEN
+    RAISE EXCEPTION 'La orden de trabajo no está En ejecución (estado actual: %) - no se puede completar', v_estado_ot USING ERRCODE = 'SV065';
+  END IF;
+
+  -- Verificación del usuario solicitante (Usuario municipal activo miembro del proyecto)
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up
+  JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_usuario;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_usuario USING ERRCODE = 'SV065';
+  END IF;
+  IF v_rol <> 'usuario_municipal' THEN
+    RAISE EXCEPTION 'Solo un Usuario municipal puede completar la orden de trabajo (rol actual: %)', v_rol USING ERRCODE = 'SV065';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_usuario USING ERRCODE = 'SV065';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.project_members WHERE project_id = v_project_id AND user_id = p_usuario
+  ) INTO v_es_miembro;
+
+  IF NOT v_es_miembro THEN
+    RAISE EXCEPTION 'El usuario % no es miembro del proyecto %', p_usuario, v_project_id USING ERRCODE = 'SV065';
+  END IF;
+
+  -- Validación de inspecciones (D-239, CC-050)
+  IF EXISTS (
+    SELECT 1 FROM public.inspections WHERE work_order_id = p_work_order_id AND estado_registro = 'preguardado'
+  ) THEN
+    RAISE EXCEPTION 'No se puede completar la orden de trabajo: tiene inspecciones en Preguardado (D-239)' USING ERRCODE = 'SV065';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.inspections WHERE work_order_id = p_work_order_id AND estado_registro = 'finalizado'
+  ) THEN
+    RAISE EXCEPTION 'No se puede completar la orden de trabajo: debe tener al menos una inspección Finalizada (CC-050)' USING ERRCODE = 'SV065';
+  END IF;
+
+  -- Árboles de la OT: los de sus inspecciones finalizadas (1 en OT
+  -- estándar; N en Levantamiento, AMD-19).
+  SELECT COALESCE(ARRAY_AGG(DISTINCT tree_id ORDER BY tree_id), '{}')
+  INTO v_tree_ids
+  FROM public.inspections
+  WHERE work_order_id = p_work_order_id AND estado_registro = 'finalizado';
+
+  IF jsonb_array_length(p_evaluaciones) <> cardinality(v_tree_ids)
+     OR EXISTS (
+       SELECT 1 FROM jsonb_array_elements(p_evaluaciones) AS e(value)
+       WHERE NOT ((e.value->>'tree_id')::uuid = ANY (v_tree_ids))
+     ) THEN
+    RAISE EXCEPTION 'Las evaluaciones recibidas no corresponden a los árboles de la OT' USING ERRCODE = 'SV065';
+  END IF;
+
+  -- La composición que calculó el backend tiene que ser la que quedará
+  -- vigente (ADR-017 v1.2). Si cambió desde que la leyó, recalcula.
+  FOREACH v_tid IN ARRAY v_tree_ids LOOP
+    SELECT e.value INTO v_item FROM jsonb_array_elements(p_evaluaciones) AS e(value) WHERE (e.value->>'tree_id')::uuid = v_tid;
+    IF public.fn_entradas_vigentes_previas(p_tree_id => v_tid, p_work_order_id => p_work_order_id)
+       IS DISTINCT FROM v_item->'composicion' THEN
+      RAISE EXCEPTION 'Los datos vigentes del árbol % cambiaron: vuelva a intentar', v_tid USING ERRCODE = 'SV068';
+    END IF;
+  END LOOP;
+
+  -- Transicionar estado; la fecha la asigna el Sistema (D-242).
+  UPDATE public.work_orders
+  SET estado_ot = 'completada',
+      fecha_completada_ot = v_hoy,
+      updated_at = now()
+  WHERE id = p_work_order_id;
+
+  FOREACH v_tid IN ARRAY v_tree_ids LOOP
+    SELECT e.value INTO v_item FROM jsonb_array_elements(p_evaluaciones) AS e(value) WHERE (e.value->>'tree_id')::uuid = v_tid;
+    v_composicion := v_item->'composicion';
+
+    PERFORM public.fn_refresh_tree_current(v_tid);
+
+    SELECT jsonb_build_object(
+      'entradas_vigentes', COALESCE(v.entradas_vigentes, '{}'::jsonb),
+      'origen_por_campo', COALESCE(v.origen_por_campo, '{}'::jsonb)
+    ) INTO v_vigente
+    FROM (SELECT 1) uno
+    LEFT JOIN public.v_tree_current_inputs v ON v.tree_id = v_tid;
+
+    IF v_vigente IS DISTINCT FROM v_composicion THEN
+      RAISE EXCEPTION 'La composición vigente del árbol % no coincide con la calculada (fn_entradas_vigentes_previas y v_tree_current_inputs difieren)', v_tid;
+    END IF;
+
+    -- tree_assessments (diseño Fase 3, §3.10 bis): entradas_vigentes =
+    -- {campo: {valor, inspection_id}}; el resto, del resultado del motor.
+    INSERT INTO public.tree_assessments (
+      tree_id, evento, work_order_id, inspection_id, entradas_vigentes,
+      calculados, indicadores,
+      puntaje_raices_cuello, probabilidad_falla_raices_cuello,
+      puntaje_tronco, probabilidad_falla_tronco,
+      puntaje_copa_ramas, probabilidad_falla_copa_ramas,
+      probabilidad_impacto,
+      clasificacion_raices_cuello, clasificacion_tronco, clasificacion_copa_ramas,
+      clasificacion_riesgo_calculada,
+      puntaje_infraestructura, pct_infraestructura, clasificacion_infraestructura_calculada,
+      clasificacion_prioridad_calculada,
+      clasificacion_riesgo_ajustada, clasificacion_infraestructura_ajustada, clasificacion_prioridad_ajustada,
+      adjustment_ids, ajustes_descartados, requiere_revision_ajuste,
+      rule_version, motor_commit
+    )
+    SELECT
+      v_tid, 'ot_completada', p_work_order_id, NULL,
+      COALESCE((
+        SELECT jsonb_object_agg(k.key, jsonb_build_object('valor', k.value, 'inspection_id', v_composicion->'origen_por_campo'->k.key))
+        FROM jsonb_each(v_composicion->'entradas_vigentes') k
+      ), '{}'::jsonb),
+      r.calculados, r.indicadores,
+      r.puntaje_raices_cuello, r.probabilidad_falla_raices_cuello,
+      r.puntaje_tronco, r.probabilidad_falla_tronco,
+      r.puntaje_copa_ramas, r.probabilidad_falla_copa_ramas,
+      r.probabilidad_impacto,
+      r.clasificacion_raices_cuello, r.clasificacion_tronco, r.clasificacion_copa_ramas,
+      r.clasificacion_riesgo_calculada,
+      r.puntaje_infraestructura, r.pct_infraestructura, r.clasificacion_infraestructura_calculada,
+      r.clasificacion_prioridad_calculada,
+      r.clasificacion_riesgo_ajustada, r.clasificacion_infraestructura_ajustada, r.clasificacion_prioridad_ajustada,
+      COALESCE(r.adjustment_ids, '{}'), r.ajustes_descartados, COALESCE(r.requiere_revision_ajuste, false),
+      r.rule_version, r.motor_commit
+    FROM jsonb_populate_record(NULL::public.tree_assessments, v_item->'resultado') r;
+  END LOOP;
+
+  RETURN jsonb_build_object(
+    'work_order_id', p_work_order_id,
+    'estado_ot', 'completada',
+    'fecha_completada_ot', v_hoy,
+    'tree_ids', to_jsonb(v_tree_ids)
+  );
+END;
+$$;
+
+-- fn_cancel_work_order (025; CC-050): el Usuario municipal activo y
+-- miembro cancela una OT Pendiente, Programada o En ejecución, con motivo
+-- obligatorio. SV066.
+CREATE FUNCTION fn_cancel_work_order(
+  p_work_order_id UUID,
+  p_motivo TEXT,
+  p_usuario UUID
+) RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_estado_ot TEXT;
+  v_project_id UUID;
+  v_rol TEXT;
+  v_activo BOOLEAN;
+  v_es_miembro BOOLEAN;
+  v_motivo_limpio TEXT;
+BEGIN
+  -- Anti-suplantación: en contexto PostgREST/RPC, auth.uid() debe coincidir con p_usuario
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_usuario THEN
+    RAISE EXCEPTION 'No está autorizado a ejecutar esta acción en nombre de otro usuario' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_usuario IS NULL THEN
+    RAISE EXCEPTION 'El identificador de usuario es obligatorio' USING ERRCODE = 'SV066';
+  END IF;
+
+  v_motivo_limpio := btrim(p_motivo);
+  IF v_motivo_limpio IS NULL OR v_motivo_limpio = '' THEN
+    RAISE EXCEPTION 'motivo_cancelacion es obligatorio para cancelar la orden de trabajo (CC-050)' USING ERRCODE = 'SV066';
+  END IF;
+
+  -- Bloqueo FOR UPDATE
+  SELECT estado_ot, project_id INTO v_estado_ot, v_project_id
+  FROM public.work_orders
+  WHERE id = p_work_order_id
+  FOR UPDATE;
+
+  IF v_estado_ot IS NULL THEN
+    RAISE EXCEPTION 'La orden de trabajo % no existe', p_work_order_id USING ERRCODE = 'SV066';
+  END IF;
+
+  IF v_estado_ot NOT IN ('pendiente', 'programada', 'en_ejecucion') THEN
+    RAISE EXCEPTION 'No se puede cancelar una orden de trabajo en estado % (CC-050: solo Pendiente, Programada o En ejecución)', v_estado_ot USING ERRCODE = 'SV066';
+  END IF;
+
+  -- Verificación del usuario solicitante (Usuario municipal activo miembro)
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up
+  JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_usuario;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_usuario USING ERRCODE = 'SV066';
+  END IF;
+  IF v_rol <> 'usuario_municipal' THEN
+    RAISE EXCEPTION 'Solo un Usuario municipal puede cancelar la orden de trabajo (rol actual: %)', v_rol USING ERRCODE = 'SV066';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_usuario USING ERRCODE = 'SV066';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.project_members WHERE project_id = v_project_id AND user_id = p_usuario
+  ) INTO v_es_miembro;
+
+  IF NOT v_es_miembro THEN
+    RAISE EXCEPTION 'El usuario % no es miembro del proyecto %', p_usuario, v_project_id USING ERRCODE = 'SV066';
+  END IF;
+
+  UPDATE public.work_orders
+  SET estado_ot = 'cancelada',
+      motivo_cancelacion = v_motivo_limpio,
+      cancelado_por = p_usuario,
+      fecha_cancelacion = now(),
+      updated_at = now()
+  WHERE id = p_work_order_id;
+
+  RETURN jsonb_build_object(
+    'work_order_id', p_work_order_id,
+    'estado_ot', 'cancelada',
+    'motivo_cancelacion', v_motivo_limpio,
+    'cancelado_por', p_usuario,
+    'fecha_cancelacion', now()
+  );
+END;
+$$;
+
+-- fn_reassign_work_order (025; CC-050, D-244): el Usuario municipal
+-- activo y miembro reasigna el responsable de una OT no Completada ni
+-- Cancelada (Inspector en Inspección, Encargado en Mantenimiento). SV067.
+CREATE FUNCTION fn_reassign_work_order(
+  p_work_order_id UUID,
+  p_nuevo_responsable_id UUID,
+  p_usuario UUID
+) RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_estado_ot TEXT;
+  v_tipo_ot TEXT;
+  v_project_id UUID;
+  v_rol_solicitante TEXT;
+  v_activo_solicitante BOOLEAN;
+  v_es_miembro_solicitante BOOLEAN;
+  v_rol_nuevo TEXT;
+  v_activo_nuevo BOOLEAN;
+  v_es_miembro_nuevo BOOLEAN;
+BEGIN
+  -- Anti-suplantación: en contexto PostgREST/RPC, auth.uid() debe coincidir con p_usuario
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_usuario THEN
+    RAISE EXCEPTION 'No está autorizado a ejecutar esta acción en nombre de otro usuario' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_usuario IS NULL THEN
+    RAISE EXCEPTION 'El identificador de usuario solicitante es obligatorio' USING ERRCODE = 'SV067';
+  END IF;
+
+  IF p_nuevo_responsable_id IS NULL THEN
+    RAISE EXCEPTION 'El identificador del nuevo responsable es obligatorio' USING ERRCODE = 'SV067';
+  END IF;
+
+  -- Bloqueo FOR UPDATE
+  SELECT estado_ot, tipo_ot, project_id INTO v_estado_ot, v_tipo_ot, v_project_id
+  FROM public.work_orders
+  WHERE id = p_work_order_id
+  FOR UPDATE;
+
+  IF v_estado_ot IS NULL THEN
+    RAISE EXCEPTION 'La orden de trabajo % no existe', p_work_order_id USING ERRCODE = 'SV067';
+  END IF;
+
+  IF v_estado_ot IN ('completada', 'cancelada') THEN
+    RAISE EXCEPTION 'No se puede reasignar una orden de trabajo en estado % (CC-050: solo mientras no esté Completada ni Cancelada)', v_estado_ot USING ERRCODE = 'SV067';
+  END IF;
+
+  -- Verificación del solicitante (Usuario municipal activo miembro)
+  SELECT r.nombre, up.activo INTO v_rol_solicitante, v_activo_solicitante
+  FROM public.user_profiles up
+  JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_usuario;
+
+  IF v_rol_solicitante IS NULL THEN
+    RAISE EXCEPTION 'El usuario solicitante % no existe', p_usuario USING ERRCODE = 'SV067';
+  END IF;
+  IF v_rol_solicitante <> 'usuario_municipal' THEN
+    RAISE EXCEPTION 'Solo un Usuario municipal puede reasignar el responsable (rol actual: %)', v_rol_solicitante USING ERRCODE = 'SV067';
+  END IF;
+  IF NOT v_activo_solicitante THEN
+    RAISE EXCEPTION 'El usuario solicitante % no está activo', p_usuario USING ERRCODE = 'SV067';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.project_members WHERE project_id = v_project_id AND user_id = p_usuario
+  ) INTO v_es_miembro_solicitante;
+
+  IF NOT v_es_miembro_solicitante THEN
+    RAISE EXCEPTION 'El usuario solicitante % no es miembro del proyecto %', p_usuario, v_project_id USING ERRCODE = 'SV067';
+  END IF;
+
+  -- Verificación del nuevo responsable
+  SELECT r.nombre, up.activo INTO v_rol_nuevo, v_activo_nuevo
+  FROM public.user_profiles up
+  JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_nuevo_responsable_id;
+
+  IF v_rol_nuevo IS NULL THEN
+    RAISE EXCEPTION 'El nuevo responsable % no existe', p_nuevo_responsable_id USING ERRCODE = 'SV067';
+  END IF;
+  IF NOT v_activo_nuevo THEN
+    RAISE EXCEPTION 'El nuevo responsable % no está activo', p_nuevo_responsable_id USING ERRCODE = 'SV067';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.project_members WHERE project_id = v_project_id AND user_id = p_nuevo_responsable_id
+  ) INTO v_es_miembro_nuevo;
+
+  IF NOT v_es_miembro_nuevo THEN
+    RAISE EXCEPTION 'El nuevo responsable % no es miembro del proyecto %', p_nuevo_responsable_id, v_project_id USING ERRCODE = 'SV067';
+  END IF;
+
+  IF v_tipo_ot = 'inspeccion' AND v_rol_nuevo <> 'inspector' THEN
+    RAISE EXCEPTION 'Para una orden de trabajo de Inspección, el responsable debe tener el rol Inspector (rol actual: %)', v_rol_nuevo USING ERRCODE = 'SV067';
+  END IF;
+
+  IF v_tipo_ot = 'mantenimiento' AND v_rol_nuevo <> 'encargado_mantencion' THEN
+    RAISE EXCEPTION 'Para una orden de trabajo de Mantenimiento, el responsable debe tener el rol Encargado de mantención (rol actual: %)', v_rol_nuevo USING ERRCODE = 'SV067';
+  END IF;
+
+  UPDATE public.work_orders
+  SET responsable_accion_id = p_nuevo_responsable_id,
+      updated_at = now()
+  WHERE id = p_work_order_id;
+
+  RETURN jsonb_build_object(
+    'work_order_id', p_work_order_id,
+    'responsable_accion_id', p_nuevo_responsable_id
+  );
+END;
+$$;
+
+-- fn_anular_inspeccion (027; CC-067; D-209 a D-212): el Usuario municipal
+-- activo y miembro anula una inspección Finalizada con motivo. En OT sin
+-- completar solo cambia el estado; en OT completada verifica la
+-- composición sin la inspección, refresca el árbol e inserta la vigente
+-- (evento inspeccion_anulada). SV069/SV068.
+CREATE FUNCTION fn_anular_inspeccion(
+  p_inspection_id UUID,
+  p_usuario UUID,
+  p_motivo TEXT,
+  p_evaluacion JSONB DEFAULT NULL
+) RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_estado_registro TEXT;
+  v_tree_id UUID;
+  v_work_order_id UUID;
+  v_estado_ot TEXT;
+  v_project_id UUID;
+  v_rol TEXT;
+  v_activo BOOLEAN;
+  v_motivo TEXT := btrim(COALESCE(p_motivo, ''));
+  v_composicion JSONB;
+  v_vigente JSONB;
+  v_ahora TIMESTAMPTZ := now();
+BEGIN
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_usuario THEN
+    RAISE EXCEPTION 'No está autorizado a ejecutar esta acción en nombre de otro usuario' USING ERRCODE = '42501';
+  END IF;
+  IF p_usuario IS NULL THEN
+    RAISE EXCEPTION 'El identificador de usuario es obligatorio' USING ERRCODE = 'SV069';
+  END IF;
+  IF v_motivo = '' THEN
+    RAISE EXCEPTION 'motivo_anulacion es obligatorio para anular la inspección (D-210)' USING ERRCODE = 'SV069';
+  END IF;
+
+  SELECT i.estado_registro, i.tree_id, i.work_order_id
+  INTO v_estado_registro, v_tree_id, v_work_order_id
+  FROM public.inspections i
+  WHERE i.id = p_inspection_id
+  FOR UPDATE;
+
+  IF v_estado_registro IS NULL THEN
+    RAISE EXCEPTION 'La inspección % no existe', p_inspection_id USING ERRCODE = 'SV069';
+  END IF;
+
+  -- La OT también se bloquea: completarla en paralelo cambiaría la vigencia.
+  SELECT wo.estado_ot, wo.project_id INTO v_estado_ot, v_project_id
+  FROM public.work_orders wo
+  WHERE wo.id = v_work_order_id
+  FOR UPDATE;
+
+  IF v_estado_registro <> 'finalizado' THEN
+    RAISE EXCEPTION 'Solo se anula una inspección Finalizada (estado actual: %) (D-209)', v_estado_registro USING ERRCODE = 'SV069';
+  END IF;
+
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up
+  JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_usuario;
+
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION 'El usuario % no existe', p_usuario USING ERRCODE = 'SV069';
+  END IF;
+  IF v_rol <> 'usuario_municipal' THEN
+    RAISE EXCEPTION 'Solo un Usuario municipal puede anular una inspección (rol actual: %) (CC-067)', v_rol USING ERRCODE = 'SV069';
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION 'El usuario % no está activo', p_usuario USING ERRCODE = 'SV069';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.project_members WHERE project_id = v_project_id AND user_id = p_usuario) THEN
+    RAISE EXCEPTION 'El usuario % no es miembro del proyecto %', p_usuario, v_project_id USING ERRCODE = 'SV069';
+  END IF;
+
+  IF v_estado_ot <> 'completada' THEN
+    IF p_evaluacion IS NOT NULL THEN
+      RAISE EXCEPTION 'La OT no está completada: la anulación no recalcula la vigente y no recibe evaluación' USING ERRCODE = 'SV069';
+    END IF;
+  ELSE
+    IF p_evaluacion IS NULL THEN
+      RAISE EXCEPTION 'La OT está completada: falta la evaluación vigente recalculada por el backend (ADR-017 v1.2)' USING ERRCODE = 'SV069';
+    END IF;
+    v_composicion := p_evaluacion->'composicion';
+    IF public.fn_entradas_vigentes_previas(p_tree_id => v_tree_id, p_inspeccion_excluida => p_inspection_id)
+       IS DISTINCT FROM v_composicion THEN
+      RAISE EXCEPTION 'Los datos vigentes del árbol % cambiaron: vuelva a intentar', v_tree_id USING ERRCODE = 'SV068';
+    END IF;
+  END IF;
+
+  UPDATE public.inspections
+  SET estado_registro = 'anulado',
+      motivo_anulacion = v_motivo,
+      anulado_por = p_usuario,
+      fecha_anulacion = v_ahora
+  WHERE id = p_inspection_id;
+
+  IF v_estado_ot = 'completada' THEN
+    PERFORM public.fn_refresh_tree_current(v_tree_id);
+
+    SELECT jsonb_build_object(
+      'entradas_vigentes', COALESCE(v.entradas_vigentes, '{}'::jsonb),
+      'origen_por_campo', COALESCE(v.origen_por_campo, '{}'::jsonb)
+    ) INTO v_vigente
+    FROM (SELECT 1) uno
+    LEFT JOIN public.v_tree_current_inputs v ON v.tree_id = v_tree_id;
+
+    IF v_vigente IS DISTINCT FROM v_composicion THEN
+      RAISE EXCEPTION 'La composición vigente del árbol % no coincide con la calculada (fn_entradas_vigentes_previas y v_tree_current_inputs difieren)', v_tree_id;
+    END IF;
+
+    INSERT INTO public.tree_assessments (
+      tree_id, evento, work_order_id, inspection_id, entradas_vigentes,
+      calculados, indicadores,
+      puntaje_raices_cuello, probabilidad_falla_raices_cuello,
+      puntaje_tronco, probabilidad_falla_tronco,
+      puntaje_copa_ramas, probabilidad_falla_copa_ramas,
+      probabilidad_impacto,
+      clasificacion_raices_cuello, clasificacion_tronco, clasificacion_copa_ramas,
+      clasificacion_riesgo_calculada,
+      puntaje_infraestructura, pct_infraestructura, clasificacion_infraestructura_calculada,
+      clasificacion_prioridad_calculada,
+      clasificacion_riesgo_ajustada, clasificacion_infraestructura_ajustada, clasificacion_prioridad_ajustada,
+      adjustment_ids, ajustes_descartados, requiere_revision_ajuste,
+      rule_version, motor_commit
+    )
+    SELECT
+      v_tree_id, 'inspeccion_anulada', NULL, p_inspection_id,
+      COALESCE((
+        SELECT jsonb_object_agg(k.key, jsonb_build_object('valor', k.value, 'inspection_id', v_composicion->'origen_por_campo'->k.key))
+        FROM jsonb_each(v_composicion->'entradas_vigentes') k
+      ), '{}'::jsonb),
+      r.calculados, r.indicadores,
+      r.puntaje_raices_cuello, r.probabilidad_falla_raices_cuello,
+      r.puntaje_tronco, r.probabilidad_falla_tronco,
+      r.puntaje_copa_ramas, r.probabilidad_falla_copa_ramas,
+      r.probabilidad_impacto,
+      r.clasificacion_raices_cuello, r.clasificacion_tronco, r.clasificacion_copa_ramas,
+      r.clasificacion_riesgo_calculada,
+      r.puntaje_infraestructura, r.pct_infraestructura, r.clasificacion_infraestructura_calculada,
+      r.clasificacion_prioridad_calculada,
+      r.clasificacion_riesgo_ajustada, r.clasificacion_infraestructura_ajustada, r.clasificacion_prioridad_ajustada,
+      COALESCE(r.adjustment_ids, '{}'), r.ajustes_descartados, COALESCE(r.requiere_revision_ajuste, false),
+      r.rule_version, r.motor_commit
+    FROM jsonb_populate_record(NULL::public.tree_assessments, p_evaluacion->'resultado') r;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'inspection_id', p_inspection_id,
+    'estado_registro', 'anulado',
+    'motivo_anulacion', v_motivo,
+    'anulado_por', p_usuario,
+    'fecha_anulacion', v_ahora,
+    'vigente_recalculada', v_estado_ot = 'completada'
+  );
+END;
+$$;
 
 -- ---------------------------------------------------------------------
 -- CAPA 1 — OBSERVACIONES (lo que el inspector registra en terreno)
@@ -3605,7 +4279,8 @@ LEFT JOIN evaluations e ON e.inspection_id = i.id;
 -- entradas_vigentes: el valor más reciente de cada clave;
 -- origen_por_campo: la inspección que lo aportó. «La más reciente»
 -- (migración 021; CC-055): fecha_completada_ot DESC, fecha_inspeccion
--- DESC, inspections.created_at DESC.
+-- DESC, inspections.created_at DESC. Solo inspecciones finalizadas de OT
+-- completadas (migración 025, AM-19).
 CREATE VIEW v_tree_current_inputs WITH (security_invoker = true) AS
 WITH validas AS (
   SELECT
@@ -3616,11 +4291,11 @@ WITH validas AS (
     i.created_at,
     kv.key,
     kv.value
-  FROM evaluations e
-  JOIN inspections i ON i.id = e.inspection_id
-  JOIN work_orders wo ON wo.id = i.work_order_id
+  FROM public.evaluations e
+  JOIN public.inspections i ON i.id = e.inspection_id
+  JOIN public.work_orders wo ON wo.id = i.work_order_id
   CROSS JOIN LATERAL jsonb_each(e.variables) AS kv(key, value)
-  WHERE i.estado_registro <> 'anulado'
+  WHERE i.estado_registro = 'finalizado'
     AND wo.estado_ot = 'completada'
 ),
 ranked AS (
