@@ -1,4 +1,5 @@
 import { createUserScopedClient } from "../../config/supabase";
+import { patronSinTildes } from "../../utils/busquedaSinTildes";
 
 // ---------------------------------------------------------------------------
 // Inventario arbóreo (B1 — GET /api/sivu/projects/:id/trees)
@@ -72,11 +73,13 @@ export async function listarArbolesInventario(
     query = query.eq("estado_ciclo_vida", filtros.estadoCicloVida);
   }
   if (filtros.busqueda) {
-    // Búsqueda parcial en especie_cientifica O nombre_comun (ILIKE).
-    // PostgREST admite el operador `ilike` y el combinador `or`.
-    const termino = `%${filtros.busqueda}%`;
+    // Búsqueda parcial en especie_cientifica O nombre_comun, sin
+    // distinguir tildes ni mayúsculas (B-5): `imatch` (~*) con el patrón
+    // de patronSinTildes. Entre comillas dobles porque puede llevar «.»,
+    // reservado en el `or` de PostgREST; el patrón nunca lleva `"` ni `\`.
+    const patron = patronSinTildes(filtros.busqueda);
     query = query.or(
-      `especie_cientifica.ilike.${termino},nombre_comun.ilike.${termino}`
+      `especie_cientifica.imatch."${patron}",nombre_comun.imatch."${patron}"`
     );
   }
 

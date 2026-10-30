@@ -1,4 +1,5 @@
 import { createUserScopedClient, supabaseAdmin } from "../../config/supabase";
+import { patronSinTildes } from "../../utils/busquedaSinTildes";
 
 /**
  * SQLSTATE propio de `fn_rename_species` (migración 018i; #73). El
@@ -48,17 +49,18 @@ const ESPECIE_COLUMNS =
  * a diferencia de la mayoría de las tablas de esta fase, no necesita
  * `service_role` para leer (CC-033).
  *
- * `ilike` sobre un patrón no indexado: aceptable al tamaño actual del
- * catálogo (incorporado a mano por Inspectores, no una importación
- * masiva); si el catálogo crece mucho, un índice trigram es un cambio
- * de rendimiento, no de esta migración.
+ * `imatch` (~*) sin distinguir tildes ni mayúsculas (B-5;
+ * patronSinTildes), sobre un patrón no indexado: aceptable al tamaño
+ * actual del catálogo (incorporado a mano por Inspectores, no una
+ * importación masiva); si el catálogo crece mucho, un índice trigram es
+ * un cambio de rendimiento, no de esta migración.
  */
 export async function buscarEspeciesPorNombre(accessToken: string, nombre: string): Promise<EspecieRow[]> {
   const supabase = createUserScopedClient(accessToken);
   const { data, error } = await supabase
     .from("species")
     .select(ESPECIE_COLUMNS)
-    .ilike("especie_cientifica", `%${nombre}%`)
+    .filter("especie_cientifica", "imatch", patronSinTildes(nombre))
     .order("especie_cientifica", { ascending: true })
     .limit(20);
 
