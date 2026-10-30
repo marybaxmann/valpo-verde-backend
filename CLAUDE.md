@@ -1,5 +1,9 @@
 # Valpo Verde — Instrucciones de proyecto
 
+## Prioridad vigente hasta el 2026-11-02 12:00
+
+Antes de cualquier tarea, lee `docs/plan/plan-presentacion-2026-11-03.md`. Ese plan manda sobre cualquier otra prioridad hasta el congelamiento del lunes 2 de noviembre a las 12:00 (presentación el martes 3 en la mañana). Solo trabajas en las tareas B-n del plan, en su orden. Al cerrar cada una: commit y push, márcala `[x]` en el plan y escribe una línea en «Registro» con fecha, hora y commit, en el mismo push. Cada endpoint nuevo o cambiado se anota el mismo día en `docs/plan/coordinacion.md`. Una revisión automática lee GitHub a las 9:00 y a las 19:00: solo cuenta lo subido y registrado. Si algo no está en el plan, o una tarea se atrasa más de medio día, pregunta a la responsable antes, con una propuesta.
+
 Punto de entrada. Deliberadamente corto: indica qué leer y qué fuente manda. No repite el contenido de `docs/`.
 
 ## Antes de trabajar — orden de lectura
