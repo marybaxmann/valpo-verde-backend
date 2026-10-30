@@ -2239,17 +2239,17 @@ motivo)
 | Archivos afectados | `database/migrations/018e_evaluations_preguardado.sql` (`fn_save_inspection_draft`, punto "Registro de la inspección"); `database/migrations/018g_transicion_estados_ot_inspeccion.sql` y `.down.sql` (`fn_transition_work_order_estado`, SQLSTATE nuevo `SV059`); `database/fase6/pruebas_018g_transicion_estados_ot.sql` (G1–G7); esta ficha. Completada, Cancelada, cambio de responsable y notificaciones siguen en su propio bloque, fuera del #58. |
 | Impacto en diagramas | Ninguno (fuera del paquete, CC-030). |
 | Impacto en Excel metodológico | Pendiente: D-241 columna "¿Quién lo ingresa?" (Usuario municipal → el responsable asignado, al pasar a Programada) y D-239 columna de validación (agregar "y al menos una inspección Finalizada" al requisito de Completada) — en la próxima versión del paquete (AM-15). |
-| Impacto en BD | Implementado en 018e: `fn_save_inspection_draft` exige `estado_ot = 'en_ejecucion'`. Implementado en 018g: `fn_transition_work_order_estado` (Pendiente→Programada→En ejecución, solo el responsable Inspector, con la validación de D-241 agregada por la responsable: `fecha_accion_programada` no puede ser anterior a `fecha_creacion_ot`). Pendiente: Completada, Cancelada, cambio de responsable (issue por asignar); Mantenimiento (#61, mismo criterio de CC-050, Encargado de mantención). |
-| Impacto en backend | Implementado (2026-10-25) para Pendiente→Programada→En ejecución: `src/repositories/sivu/workOrder.repository.ts`, `src/services/sivu/workOrder.service.ts` invocan `fn_transition_work_order_estado`. El resto — Completada, Cancelada, reasignación, Mantenimiento (#61) — pendiente, issue por asignar. |
-| Impacto en API | Implementado (2026-10-25): `PATCH /api/sivu/work-orders/:workOrderId/estado`. |
+| Impacto en BD | Implementado en 018e: `fn_save_inspection_draft` exige `estado_ot = 'en_ejecucion'`. Implementado en 018g: `fn_transition_work_order_estado` (Pendiente→Programada→En ejecución, solo el responsable Inspector, con la validación de D-241 agregada por la responsable: `fecha_accion_programada` no puede ser anterior a `fecha_creacion_ot`). Implementado en la 025 (2026-10-29, #60): `fn_complete_work_order_inspeccion` (SV065/SV068; exige al menos una Finalizada también en el trigger `fn_check_ot_completada`; `fecha_completada_ot` = hoy en Chile, D-242; guarda la vigente en `tree_assessments`, ADR-017 v1.2), `fn_cancel_work_order` (SV066; columnas `motivo_cancelacion`, `cancelado_por`, `fecha_cancelacion` y `chk_work_orders_cancelada`) y `fn_reassign_work_order` (SV067). Pendiente: Mantenimiento (#61, mismo criterio de CC-050, Encargado de mantención). |
+| Impacto en backend | Implementado (2026-10-25) para Pendiente→Programada→En ejecución: `src/repositories/sivu/workOrder.repository.ts`, `src/services/sivu/workOrder.service.ts` invocan `fn_transition_work_order_estado`. Implementado (2026-10-29, #60) para Completada, Cancelada y reasignación: `src/repositories/sivu/cierreOt.repository.ts`, `src/services/sivu/cierreOt.service.ts`, `src/controllers/sivu/cierreOt.controller.ts`; solo el Usuario municipal; SV068 se reintenta una vez y después responde 409. Pendiente: Mantenimiento (#61) y notificaciones (CC-051). |
+| Impacto en API | Implementado (2026-10-25): `PATCH /api/sivu/work-orders/:workOrderId/estado`. Implementado (2026-10-29): `POST /api/sivu/work-orders/:workOrderId/completar`, `POST …/cancelar` (`motivo_cancelacion`), `PATCH …/responsable` (`responsable_accion_id`). |
 | Impacto en frontend | Ninguno todavía (Fase 7). |
-| Pruebas necesarias | Implementadas en `database/fase6/pruebas_018e_inspection_draft.sql`: B0, B3. Implementadas en `database/fase6/pruebas_018g_transicion_estados_ot.sql`: G1 (Programada sin fecha, rechazado), G2 (fecha anterior a la creación de la OT, rechazado, D-241), G3 (Programada con fecha válida, aceptado), G4 (Programada→En ejecución, aceptado), G5 (salto directo Pendiente→En ejecución, rechazado), G6 (otro usuario, rechazado), G7 (OT de Mantenimiento, rechazado — remite al #61). G1–G7: 14/14 en dos rondas (aplicar → probar → revertir → reaplicar → probar), sin usuarios de prueba remanentes, asesor de seguridad sin hallazgos nuevos. Pendientes (issue por asignar): Completada exige al menos una Finalizada; cancelación con motivo y notificación; cambio de responsable con notificación y pérdida/transferencia de acceso al borrador. |
+| Pruebas necesarias | Implementadas en `database/fase6/pruebas_018e_inspection_draft.sql`: B0, B3. Implementadas en `database/fase6/pruebas_018g_transicion_estados_ot.sql`: G1 (Programada sin fecha, rechazado), G2 (fecha anterior a la creación de la OT, rechazado, D-241), G3 (Programada con fecha válida, aceptado), G4 (Programada→En ejecución, aceptado), G5 (salto directo Pendiente→En ejecución, rechazado), G6 (otro usuario, rechazado), G7 (OT de Mantenimiento, rechazado — remite al #61). G1–G7: 14/14 en dos rondas (aplicar → probar → revertir → reaplicar → probar), sin usuarios de prueba remanentes, asesor de seguridad sin hallazgos nuevos. Implementadas en `database/fase6/pruebas_025_estados_ot_vigencia.sql` (2026-10-29): C1–C5c (completar: sin finalizada, con preguardado, éxito con vigencia y `tree_assessments`, repetida, Inspector, no miembro, Pendiente), C6–C9 y C11 (cancelar: éxito con auditoría, repetida, motivo vacío o NULL, Inspector, OT completada), C10–C10d (reasignar), C12 (composición alterada → SV068, nada escrito, reintento correcto). 20/20 en dos rondas en `valpo-verde-conecta-pruebas`. Pendientes: notificaciones de cancelación y reasignación (CC-051); acceso al borrador del nuevo responsable sin caso propio en la 025 (lo exige `fn_save_inspection_draft`, 018e). |
 | Dependencias | DA-04, PA-07 (roadmap); D-239, D-241, D-244; CC-048 (018e, punto "Registro de la inspección"); CC-051 (notificaciones de cancelación y reasignación); #58, #59, #61. |
 | rule_version | sin cambios |
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-23 |
-| Fecha de implementación | Parcial: 2026-10-23 (018e punto 3; 018g Pendiente→Programada→En ejecución). El resto, pendiente. |
-| Commits / PR asociados | `feature/fase6-backend-api`, sin PR todavía. |
+| Fecha de implementación | Parcial: 2026-10-23 (018e punto 3; 018g Pendiente→Programada→En ejecución); 2026-10-29 (025: Completada, Cancelada y reasignación de OT de Inspección, en `valpo-verde-conecta-pruebas`). Pendiente: Mantenimiento (#61) y notificaciones (CC-051). |
+| Commits / PR asociados | `feature/fase6-backend-api`, sin PR todavía. `wip/bloque1-completar-ot`: `5e2d3e7` (025 y capa TS), `464281a` (pruebas SQL), `f416e0b` (`schema.sql` revisión 23). |
 | Observaciones | Decisión completa registrada. 018g aplicada y probada en `valpo-verde-conecta-pruebas`, dos rondas completas. Completada/Cancelada/reasignación y Mantenimiento (#61) necesitan un issue propio — no se mezclan con el #58. |
 
 **Historial de estados**
@@ -2258,6 +2258,7 @@ motivo)
 |---|---|---|---|
 | 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial. Punto 3 (OT En ejecución para guardar una inspección) implementado en la 018e; el resto queda pendiente de un issue propio. |
 | 2026-10-23 | IMPLEMENTADO (pruebas) | marybaxmann | Aprobada con ajustes: (1) confirmado sin saltos; (2) corregido el comentario/mensaje de Mantenimiento (CC-050 también aplica, lo hace el Encargado de mantención, se implementa en el #61 — no "sigue el flujo del Excel sin cambios"); (3) agregada la validación de D-241 (fecha_accion_programada no anterior a fecha_creacion_ot) con su prueba (G2). Aplicada 018g en `valpo-verde-conecta-pruebas`: G1–G7 (14/14, dos rondas), cero usuarios de prueba remanentes, asesor de seguridad sin hallazgos nuevos. |
+| 2026-10-29 | IMPLEMENTADO (pruebas) | Valej | Completada, Cancelada y reasignación de OT de Inspección: 025 aplicada en `valpo-verde-conecta-pruebas` con el ciclo completo; pruebas 025 20/20, 026 7/7, 027 14/14 antes y después de revertir y reaplicar; regresión de `fn_refresh_tree_current` 018d 7/7, 018f 7/7, 018i 10/10, 020 28/28, 021 5/5. md5 de lo aplicado = archivo; asesor sin avisos nuevos; cero usuarios de prueba. Siguen pendientes Mantenimiento (#61) y las notificaciones (CC-051). |
 
 ---
 
@@ -2870,6 +2871,7 @@ motivo)
 |---|---|---|---|
 | 2026-10-29 | EN REVISIÓN | marybaxmann | Registro de lo publicado en la demo; redacción pendiente de aprobación. |
 | 2026-10-29 | APROBADO METODOLÓGICAMENTE | marybaxmann | Aprobado en el chat. `release/demo` se lleva a `feature/fase6-backend-api` con `--ff-only`. |
+| 2026-10-29 | APROBADO METODOLÓGICAMENTE | Valej | Sin cambio de estado. Observación (d): B18 agrega `vigente` (la fila más reciente de `tree_assessments`, `af30be0` en `wip/bloque1-completar-ot`), que ahora tiene datos cuando una OT se completa (025 aplicada en `valpo-verde-conecta-pruebas`). B7 sigue contando el finalizado. Sigue sin hacer: pruebas de RLS de B7 y B18 (incluido `tree_assessments`) en la base. |
 
 ---
 
@@ -2898,8 +2900,8 @@ motivo)
 | rule_version | sin cambio |
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-29 |
-| Fecha de implementación | — |
-| Commits / PR asociados | `wip/bloque1-completar-ot`, sin PR. |
+| Fecha de implementación | 2026-10-29: 027 aplicada en `valpo-verde-conecta-pruebas`. |
+| Commits / PR asociados | `wip/bloque1-completar-ot`, sin PR: `2ae3eed` (027 y endpoint), `464281a` (`pruebas_027_anular_inspeccion.sql`), `f416e0b` (`schema.sql` revisión 23). |
 | Observaciones | Contradice el Excel 2.1.0 hasta que se publique el paquete con AM-15. Mientras tanto, el backend aplica este CC. |
 
 **Historial de estados**
@@ -2907,3 +2909,4 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-10-29 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión en el chat (rol y solicitud fuera del sistema). |
+| 2026-10-29 | IMPLEMENTADO (pruebas) | Valej | 027 aplicada con el ciclo completo; `pruebas_027` A0–A5 (OT sin completar: Preguardado, evaluación no permitida, motivo vacío o NULL, Inspector, Administrador, no miembro, éxito sin `tree_assessments`, segunda anulación) y B1–B5 (OT completada: sin evaluación, composición alterada y sin excluir → SV068, éxito con vigente recalculada e `inspeccion_anulada`, segunda anulación), 14/14 en dos rondas. Jest del endpoint sin correr en esta sesión. |
