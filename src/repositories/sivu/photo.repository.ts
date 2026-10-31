@@ -133,3 +133,26 @@ export async function generarUrlFirmada(path: string, segundos: number = SEGUNDO
 
   return data.signedUrl;
 }
+
+export async function obtenerFotoPorId(photoId: string): Promise<PhotoRow | null> {
+  const { data, error } = await supabaseAdmin.from("photos").select(PHOTO_COLUMNS).eq("id", photoId).maybeSingle();
+
+  if (error) {
+    throw new Error(`Error al obtener la foto: ${error.message}`);
+  }
+
+  return (data as unknown as PhotoRow) ?? null;
+}
+
+/**
+ * Borra la fila de una foto de un borrador, con `service_role` (sin policy
+ * de escritura para `authenticated`, CC-033). Condicionado a la inspección
+ * para no borrar nunca una foto de otra.
+ */
+export async function eliminarFotoRegistro(photoId: string, inspectionId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from("photos").delete().eq("id", photoId).eq("inspection_id", inspectionId);
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+}
