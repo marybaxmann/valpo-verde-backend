@@ -16,7 +16,7 @@
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** Plan de la presentación (2026-11-03): B-1 y B-2 cerradas; sigue B-3 (geometría del sector en B13).
+- **Resumen:** Plan cambiado (2026-10-31): terminar el backend entre el 31 y el 1; Conecta #62 implementado (028 aplicada en pruebas); siguen apoyo a la carga y congelar.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -34,6 +34,14 @@
 - **`execute_sql` no queda en el historial de migraciones de Supabase (`list_migrations`); `apply_migration`, sí.** La herramienta `apply_migration` del MCP falló dos veces consecutivas con `Invalid or expired requestState` al revertir la 018f (2026-10-24, justo al cruzar la medianoche de la sesión) — se reemplazó por `execute_sql` para no bloquear el trabajo, y eso dejó el historial de migraciones desincronizado del estado real de la base durante casi un día (`fn_transition_work_order_estado` viva con la corrección de D-241, pero el historial marcándola como borrada). **Corregido el 2026-10-25:** revertida y reaplicada la 018g otra vez, esta vez solo con `apply_migration` (falló una vez más con el mismo error transitorio, el reintento funcionó) — `list_migrations` vs. estado real 018a–018h, cero diferencias. **Regla correcta: `execute_sql` es solo para pruebas y consultas de solo lectura — nunca para aplicar o revertir una migración.** Si `apply_migration` falla, **reintentar `apply_migration`**; nunca sustituirlo por `execute_sql` para que el cambio quede en el historial.
 
 ---
+
+## ▶ Novedad 2026-10-31 (bloque 16) — Valpo Verde Conecta (#62): migración 028 y endpoints
+
+- La responsable cambió el plan: terminar todo el backend entre el 31-oct y el 1-nov (Conecta incluido).
+- **028** aplicada en la base de pruebas con el ciclo completo (K1–K6 6/6 antes y después de revertir; md5 de up y down = archivo en LF). Nombre y RUT ya existían en `incident_reporters` (015): `docs/plan/conecta-62-backend.md` decía que no; contradicción reportada.
+- Decisiones de la responsable (2026-10-31): código de seguimiento según CC-062 aunque falte en el Excel (AM-15); purga de huellas desde el backend (sin pg_cron); reglas de revisión tal como el Excel; placas en PDF con qrcode + pdfkit; ficha 60/hora/IP; máximo 3 fotos por reporte.
+- Fijado por el backend (avisado): códigos de `tipo_incidencia` desde las etiquetas de D-180; placas solo de árboles activos y con el `tree_code` impreso en chico; `trust proxy` 1 para los límites por IP en Vercel.
+- Falta: configurar `CONECTA_URL_BASE` en Vercel (dirección de la ficha pública del frontend) y, si las vistas públicas van en otro dominio, `CORS_ORIGIN`. No verificado: escanear una placa impresa con un teléfono; los endpoints contra la API publicada.
 
 ## ▶ Novedad 2026-10-29 (bloque 15) — 025, 026 y 027 aplicadas y probadas en la base de pruebas
 

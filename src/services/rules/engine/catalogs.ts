@@ -311,6 +311,47 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "estado_ciclo_vida", codigo: "activo", etiqueta: "Presente", orden: 0, estado: "vigente", cc: "pendiente" },
   { catalogo: "estado_ciclo_vida", codigo: "tocon", etiqueta: "Talado", orden: 1, estado: "vigente", cc: "pendiente" },
   { catalogo: "estado_ciclo_vida", codigo: "retirado", etiqueta: "Retirado", orden: 2, estado: "vigente", cc: "pendiente" },
+
+  // --- Incidencias (Valpo Verde Conecta, #62; CC-036, CC-062). Dominios literales de la columna H;
+  //     tipo_incidencia: códigos snake_case de la etiqueta (LISTAS no los trae); el resto, los de la base. ---
+  // tipo_incidencia: D-180.
+  { catalogo: "tipo_incidencia", codigo: "rama_caida", etiqueta: "Rama caída", orden: 0, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_incidencia", codigo: "rama_quebrada", etiqueta: "Rama quebrada", orden: 1, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_incidencia", codigo: "arbol_inclinado", etiqueta: "Árbol inclinado", orden: 2, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_incidencia", codigo: "arbol_caido", etiqueta: "Árbol caído", orden: 3, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_incidencia", codigo: "dano_en_infraestructura", etiqueta: "Daño en infraestructura", orden: 4, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_incidencia", codigo: "raices_expuestas", etiqueta: "Raíces expuestas", orden: 5, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_incidencia", codigo: "problema_fitosanitario", etiqueta: "Problema fitosanitario", orden: 6, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_incidencia", codigo: "obstruccion", etiqueta: "Obstrucción", orden: 7, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_incidencia", codigo: "otro", etiqueta: "Otro", orden: 8, estado: "vigente", cc: "CC-062" },
+  // estado_incidencia: D-184 (CHECK de la 015).
+  { catalogo: "estado_incidencia", codigo: "ingresada", etiqueta: "Ingresada", orden: 0, estado: "vigente", cc: "CC-062" },
+  { catalogo: "estado_incidencia", codigo: "en_revision", etiqueta: "En revisión", orden: 1, estado: "vigente", cc: "CC-062" },
+  { catalogo: "estado_incidencia", codigo: "derivada", etiqueta: "Derivada", orden: 2, estado: "vigente", cc: "CC-062" },
+  { catalogo: "estado_incidencia", codigo: "resuelta", etiqueta: "Resuelta", orden: 3, estado: "vigente", cc: "CC-062" },
+  { catalogo: "estado_incidencia", codigo: "descartada", etiqueta: "Descartada", orden: 4, estado: "vigente", cc: "CC-062" },
+  // resultado_revision: D-187.
+  { catalogo: "resultado_revision", codigo: "validada", etiqueta: "Validada", orden: 0, estado: "vigente", cc: "CC-036" },
+  { catalogo: "resultado_revision", codigo: "requiere_antecedentes", etiqueta: "Requiere antecedentes", orden: 1, estado: "vigente", cc: "CC-036" },
+  { catalogo: "resultado_revision", codigo: "descartada", etiqueta: "Descartada", orden: 2, estado: "vigente", cc: "CC-036" },
+  // prioridad_municipal: D-189.
+  { catalogo: "prioridad_municipal", codigo: "baja", etiqueta: "Baja", orden: 0, estado: "vigente", cc: "CC-036" },
+  { catalogo: "prioridad_municipal", codigo: "media", etiqueta: "Media", orden: 1, estado: "vigente", cc: "CC-036" },
+  { catalogo: "prioridad_municipal", codigo: "alta", etiqueta: "Alta", orden: 2, estado: "vigente", cc: "CC-036" },
+  { catalogo: "prioridad_municipal", codigo: "critica", etiqueta: "Crítica", orden: 3, estado: "vigente", cc: "CC-036" },
+
+  // --- «Sobre esta especie» (CATALOGO_ESPECIES; CC-062 punto 3). no_determinado: regla de D-260. ---
+  { catalogo: "origen_biogeografico", codigo: "nativa", etiqueta: "Nativa", orden: 0, estado: "vigente", cc: "CC-062" },
+  { catalogo: "origen_biogeografico", codigo: "endemica", etiqueta: "Endémica", orden: 1, estado: "vigente", cc: "CC-062" },
+  { catalogo: "origen_biogeografico", codigo: "introducida", etiqueta: "Introducida", orden: 2, estado: "vigente", cc: "CC-062" },
+  { catalogo: "origen_biogeografico", codigo: "no_determinado", etiqueta: "Origen no determinado", orden: 3, estado: "vigente", cc: "CC-062" },
+  { catalogo: "persistencia_follaje", codigo: "perennifolia", etiqueta: "Perennifolia", orden: 0, estado: "vigente", cc: "CC-062" },
+  { catalogo: "persistencia_follaje", codigo: "caducifolia", etiqueta: "Caducifolia", orden: 1, estado: "vigente", cc: "CC-062" },
+  { catalogo: "persistencia_follaje", codigo: "semicaducifolia", etiqueta: "Semicaducifolia", orden: 2, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_hoja", codigo: "latifoliada", etiqueta: "Latifoliada", orden: 0, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_hoja", codigo: "acicular", etiqueta: "Acicular", orden: 1, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_hoja", codigo: "escuamiforme", etiqueta: "Escuamiforme", orden: 2, estado: "vigente", cc: "CC-062" },
+  { catalogo: "tipo_hoja", codigo: "palmera", etiqueta: "Palmera", orden: 3, estado: "vigente", cc: "CC-062" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {

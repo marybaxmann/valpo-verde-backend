@@ -15,6 +15,10 @@ const envSchema = z.object({
   // Commit del motor de reglas desplegado: se guarda en cada evaluación
   // finalizada (evaluations.motor_commit; CC-054/CC-056 decisión d).
   MOTOR_COMMIT: z.string().trim().min(1, "MOTOR_COMMIT es obligatoria"),
+  // Dirección pública de la ficha de Conecta en el frontend; cada QR de
+  // las placas apunta a `${CONECTA_URL_BASE}/${qr_token}` (CC-062).
+  // Opcional: sin ella, solo las placas responden 503.
+  CONECTA_URL_BASE: z.string().url({ message: "CONECTA_URL_BASE debe ser una URL válida" }).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -6,6 +6,11 @@ import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
+// Detrás del proxy de Vercel: la IP del cliente es la primera de
+// X-Forwarded-For. Sin esto, los límites por IP de Conecta (CC-062)
+// contarían a todos los visitantes como uno solo.
+app.set("trust proxy", 1);
+
 // Las respuestas de la API son datos que cambian (OT, diagnósticos): sin ETag
 // ni caché del navegador, para que nunca se muestre un estado viejo (304).
 app.set("etag", false);

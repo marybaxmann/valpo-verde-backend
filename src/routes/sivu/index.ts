@@ -2,6 +2,7 @@ import { Router } from "express";
 import projectRoutes from "./project.routes";
 import workOrderRoutes from "./workOrder.routes";
 import inspectionRoutes from "./inspection.routes";
+import conectaRoutes from "./conecta.routes";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 import { listarCatalogosController } from "../../controllers/sivu/diagnostico.controller";
 
@@ -15,6 +16,8 @@ const router = Router();
 router.use("/projects", projectRoutes);
 router.use("/work-orders", workOrderRoutes);
 router.use("/inspections", inspectionRoutes);
+// Valpo Verde Conecta, público (#62; CC-062).
+router.use("/conecta", conectaRoutes);
 // Catálogos vigentes con código y etiqueta (B15; PR-021).
 router.get("/catalogs", authMiddleware, listarCatalogosController);
 

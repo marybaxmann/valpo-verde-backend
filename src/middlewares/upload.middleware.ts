@@ -25,19 +25,38 @@ const uploadFoto = multer({
  * responder `AppError`, cualquier otro error cae a 500 genérico.
  */
 export function subirFotoUnica(req: Request, res: Response, next: NextFunction): void {
-  uploadFoto.single("foto")(req, res, (err: unknown) => {
-    if (!err) {
-      next();
+  uploadFoto.single("foto")(req, res, (err: unknown) => traducirErrorMulter(err, next));
+}
+
+/** Máximo de fotos por reporte ciudadano (D-183 pide al menos una; el máximo, decisión de la responsable, 2026-10-31). */
+export const MAX_FOTOS_REPORTE = 3;
+
+const uploadFotosReporte = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FOTO_BYTES, files: MAX_FOTOS_REPORTE },
+});
+
+/** Hasta MAX_FOTOS_REPORTE archivos en el campo `fotos` (formulario ciudadano, #62). */
+export function subirFotosReporte(req: Request, res: Response, next: NextFunction): void {
+  uploadFotosReporte.array("fotos", MAX_FOTOS_REPORTE)(req, res, (err: unknown) => traducirErrorMulter(err, next));
+}
+
+function traducirErrorMulter(err: unknown, next: NextFunction): void {
+  if (!err) {
+    next();
+    return;
+  }
+  if (err instanceof MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      next(new AppError("La foto supera el máximo de 10 MB", 413));
       return;
     }
-    if (err instanceof MulterError) {
-      if (err.code === "LIMIT_FILE_SIZE") {
-        next(new AppError("La foto supera el máximo de 10 MB", 413));
-        return;
-      }
-      next(new AppError(`Archivo inválido: ${err.message}`, 400));
+    if (err.code === "LIMIT_FILE_COUNT" || err.code === "LIMIT_UNEXPECTED_FILE") {
+      next(new AppError(`Se admiten hasta ${MAX_FOTOS_REPORTE} fotos, en el campo «fotos»`, 400));
       return;
     }
-    next(err);
-  });
+    next(new AppError(`Archivo inválido: ${err.message}`, 400));
+    return;
+  }
+  next(err);
 }

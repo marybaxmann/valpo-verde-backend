@@ -24,6 +24,12 @@ import {
 
 import { inspectionFormSchemaController } from "../../controllers/sivu/inspectionFormSchema.controller";
 import { listarDiagnosticosController, listarMiembrosAsignablesController, resumenProyectoController } from "../../controllers/sivu/diagnostico.controller";
+import {
+  detalleIncidenciaController,
+  listarIncidenciasController,
+  placasQrController,
+  revisarIncidenciaController,
+} from "../../controllers/sivu/conecta.controller";
 
 const router = Router();
 
@@ -67,5 +73,12 @@ router.get("/:id/resumen", authMiddleware, resumenProyectoController);
 router.get("/:id/species", authMiddleware, buscarEspeciesController);
 router.patch("/:id/species/:speciesId", authMiddleware, completarEspecieController);
 router.patch("/:id/species/:speciesId/nombre", authMiddleware, renombrarEspecieController);
+
+// Valpo Verde Conecta, parte interna (#62; CC-036, CC-062). Incidencias:
+// todos los miembros; nombre y RUT, revisión y placas: solo el Usuario municipal.
+router.get("/:id/incidencias", authMiddleware, listarIncidenciasController);
+router.get("/:id/incidencias/:incidentId", authMiddleware, detalleIncidenciaController);
+router.patch("/:id/incidencias/:incidentId/revision", authMiddleware, revisarIncidenciaController);
+router.get("/:id/placas-qr", authMiddleware, placasQrController);
 
 export default router;
