@@ -88,3 +88,15 @@ describe("renombrarEspecieSchema (CC-053 punto 5)", () => {
     expect(renombrarEspecieSchema.safeParse({ especie_cientifica: "   " }).success).toBe(false);
   });
 });
+
+describe("buscarEspeciesQuerySchema: mensajes en español", () => {
+  it("sin nombre dice «nombre es obligatorio» (no «Required»)", () => {
+    const r = buscarEspeciesQuerySchema.safeParse({});
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe("nombre es obligatorio");
+  });
+
+  it("con nombre vacío, el mismo mensaje", () => {
+    expect(buscarEspeciesQuerySchema.safeParse({ nombre: "  " }).error?.issues[0]?.message).toBe("nombre es obligatorio");
+  });
+});

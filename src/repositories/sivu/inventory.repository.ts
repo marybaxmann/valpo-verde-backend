@@ -40,7 +40,7 @@ export interface FiltrosInventario {
   sectorId?: string;
   /** Filtro opcional por estado_ciclo_vida ('activo' | 'retirado' | 'tocon'). */
   estadoCicloVida?: string;
-  /** Búsqueda parcial (ILIKE) por especie_cientifica o nombre_comun. */
+  /** Búsqueda parcial por especie_cientifica o nombre_comun, sin tildes ni mayúsculas (B-5). */
   busqueda?: string;
   limit: number;
   offset: number;

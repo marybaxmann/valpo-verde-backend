@@ -6,7 +6,8 @@ import { z } from "zod";
  * Todos los filtros son opcionales; la paginación tiene valores por defecto
  * razonables para el frontend (50 filas, página 0).
  *
- * `busqueda`: búsqueda parcial por especie_cientifica o nombre_comun (ILIKE).
+ * `busqueda`: búsqueda parcial por especie_cientifica o nombre_comun, sin
+ *   distinguir tildes ni mayúsculas (B-5: `imatch` con patronSinTildes).
  * `sector_id`: filtro por UUID de sector del proyecto.
  * `estado_ciclo_vida`: 'activo' | 'retirado' | 'tocon' (catálogo mínimo vigente).
  */
@@ -22,7 +23,7 @@ export const inventarioQuerySchema = z
         }),
       })
       .optional(),
-    /** Máximo 200 caracteres para evitar consultas ILIKE excesivamente largas. */
+    /** Máximo 200 caracteres para evitar patrones de búsqueda excesivamente largos. */
     busqueda: z.string().trim().min(1).max(200).optional(),
   })
   .strict();

@@ -16,7 +16,11 @@ import { z } from "zod";
  */
 
 export function textoObligatorio(nombreCampo: string) {
-  return z.string().trim().min(1, `${nombreCampo} es obligatorio`);
+  // Mismo mensaje si el campo falta o viene vacío (Zod diría «Required»).
+  return z
+    .string({ required_error: `${nombreCampo} es obligatorio`, invalid_type_error: `${nombreCampo} debe ser texto` })
+    .trim()
+    .min(1, `${nombreCampo} es obligatorio`);
 }
 
 /**

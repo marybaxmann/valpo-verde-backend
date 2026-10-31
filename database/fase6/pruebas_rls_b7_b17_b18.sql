@@ -30,6 +30,8 @@
 --     ven todas las lecturas (CC-064 a).
 -- R2: un Usuario municipal y un Inspector de otro proyecto no ven
 --     ninguna fila.
+-- R3: el Administrador, sin ser miembro del proyecto, ve todas las
+--     lecturas (policies *_admin de la 017, is_admin()).
 
 BEGIN;
 
@@ -210,12 +212,14 @@ DECLARE
   v_usuario uuid;
   v_rol text;
   v_clave text;
+  v_admin uuid;
 BEGIN
   v_municipal      := pg_temp.crear_usuario_prueba(p_email => 'muni-rls@sivu.example.test',       p_rol => 'usuario_municipal',    p_nombre => 'Municipal RLS');
   v_inspector      := pg_temp.crear_usuario_prueba(p_email => 'insp-rls@sivu.example.test',       p_rol => 'inspector',            p_nombre => 'Inspector RLS');
   v_encargado      := pg_temp.crear_usuario_prueba(p_email => 'manten-rls@sivu.example.test',     p_rol => 'encargado_mantencion', p_nombre => 'Encargado RLS');
   v_municipal_otro := pg_temp.crear_usuario_prueba(p_email => 'muni-otro-rls@sivu.example.test',  p_rol => 'usuario_municipal',    p_nombre => 'Municipal otro proyecto RLS');
   v_inspector_otro := pg_temp.crear_usuario_prueba(p_email => 'insp-otro-rls@sivu.example.test',  p_rol => 'inspector',            p_nombre => 'Inspector otro proyecto RLS');
+  v_admin          := pg_temp.crear_usuario_prueba(p_email => 'admin-rls@sivu.example.test',      p_rol => 'admin',                p_nombre => 'Administrador RLS');
 
   INSERT INTO public.projects (nombre_proyecto, created_by) VALUES ('RLS B7 B17 B18 ' || gen_random_uuid(), v_municipal) RETURNING id INTO v_project_id;
   INSERT INTO public.projects (nombre_proyecto, created_by) VALUES ('RLS otro ' || gen_random_uuid(), v_municipal_otro) RETURNING id INTO v_project_otro;
@@ -302,6 +306,19 @@ BEGIN
     END LOOP;
     INSERT INTO test_log (msg) VALUES (format('R2 OK (%s): ninguna fila', v_rol));
   END LOOP;
+
+  -- R3: el Administrador no miembro ve lo mismo que un miembro.
+  v_r := pg_temp.lecturas_como(p_usuario => v_admin, p_project => v_project_id, p_tree => v_tree_id,
+                               p_ot_borrador => v_ot_borrador, p_finalizada => v_finalizada, p_borrador => v_borrador);
+  IF (v_r->>'b7_work_orders')::int <> 2 OR (v_r->>'b18_tree_assessments')::int <> 1 OR (v_r->>'b17_inspections')::int <> 1 THEN
+    RAISE EXCEPTION 'R3 FALLA: el Administrador no ve las lecturas: %', v_r;
+  END IF;
+  FOR v_clave IN SELECT jsonb_object_keys(v_r) LOOP
+    IF (v_r->>v_clave)::int = 0 THEN
+      RAISE EXCEPTION 'R3 FALLA: el Administrador no ve % (%)', v_clave, v_r;
+    END IF;
+  END LOOP;
+  INSERT INTO test_log (msg) VALUES (format('R3 OK (Administrador no miembro): %s', v_r));
 END $$;
 
 SELECT id, msg FROM test_log ORDER BY id;
