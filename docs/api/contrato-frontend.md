@@ -132,7 +132,7 @@ Estados (`estado_registro`): `preguardado` (borrador) → `finalizado`; o `anula
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|
 | `GET /api/sivu/projects/:id/diagnosticos` (B18) | Miembros y Administrador | `tree_id?` | 200 `{ data: [ { tree_id, tree_code, especie_cientifica, nombre_comun, estado: "finalizado", inspection_id, codigo_inspeccion, work_order_id, tipo_inspeccion, subtipo_inspeccion, fecha_inspeccion, finalizada_at, requiere_mantenimiento, fecha_proxima_inspeccion, fecha_proximo_monitoreo, resultado, vigente } ] }`: un elemento por árbol con inspección finalizada (la última). |
-| `GET /api/sivu/projects/:id/resumen` (B7) | Miembros y Administrador | — | 200 `{ data: { arboles_total, por_ciclo_vida, georreferenciados, sin_georreferenciar, con_diagnostico, sin_evaluacion, por_riesgo, especies_distintas, especies_top, ot_por_estado } }` |
+| `GET /api/sivu/projects/:id/resumen` (B7) | Miembros y Administrador | — | 200 `{ data: { arboles_total, por_ciclo_vida, georreferenciados, sin_georreferenciar, con_diagnostico, sin_evaluacion, por_riesgo, especies_distintas, especies_top, ot_por_estado, incidencias_por_estado } }`; los conteos por catálogo como `[{ codigo, etiqueta, total }]` |
 
 **`vigente`** (evaluación vigente, ADR-017): `null` mientras ninguna OT del árbol esté completada. Si existe:
 `{ evento, work_order_id, inspection_id, desde, requiere_revision_ajuste, resultado }`.
@@ -185,7 +185,6 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 
 ## 9. Pendiente o en revisión
 
-- **B7:** incidencias por estado.
 - **B2** (ficha del árbol), **B5** (próximas inspecciones; requiere corregir una vista, AM-18), **B6** (OT
   «vencida»: sin definición), **B8** (lectura de infraestructura), **B11** (usuarios disponibles para agregar como
   miembros), **B19** (indicadores; depende de CC-016), **#61** Mantenimiento (depende de AM-22).

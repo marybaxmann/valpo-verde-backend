@@ -6,6 +6,7 @@ import {
   EvaluacionVigenteRow,
   InspeccionFinalizadaRow,
   listarArbolesResumen,
+  listarEstadosIncidencias,
   listarEstadosOt,
   listarEvaluacionesDeInspecciones,
   listarEvaluacionesVigentes,
@@ -128,9 +129,10 @@ function contarPor(valores: Array<string | null>, catalogo: string) {
  */
 export async function resumenProyecto(user: AuthenticatedUser, projectId: string, token: string) {
   await assertProjectAccess(user, projectId, token);
-  const [arboles, estadosOt, diagnosticos] = await Promise.all([
+  const [arboles, estadosOt, estadosIncidencias, diagnosticos] = await Promise.all([
     listarArbolesResumen(token, projectId),
     listarEstadosOt(token, projectId),
+    listarEstadosIncidencias(token, projectId),
     listarDiagnosticos(user, projectId, token),
   ]);
   const georreferenciados = arboles.filter(a => a.ubicacion !== null).length;
@@ -152,6 +154,8 @@ export async function resumenProyecto(user: AuthenticatedUser, projectId: string
     especies_distintas: especies.size,
     especies_top: [...especies.values()].sort((a, b) => b.total - a.total || a.especie_cientifica.localeCompare(b.especie_cientifica)).slice(0, 10),
     ot_por_estado: contarPor(estadosOt.map(o => o.estado_ot), "estado_ot"),
+    // Incidencias por estado (D-184), pedido del Paso 4 (pendientes-backend.md, B7).
+    incidencias_por_estado: contarPor(estadosIncidencias.map(i => i.estado_incidencia), "estado_incidencia"),
   };
 }
 

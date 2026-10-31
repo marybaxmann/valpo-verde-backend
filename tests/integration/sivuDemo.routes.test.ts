@@ -99,7 +99,8 @@ describe("caché de la API", () => {
 
 describe("GET /api/sivu/projects/:id/resumen (B7)", () => {
   it("cuenta árboles, georreferencia, diagnóstico, especies y OT con etiquetas", async () => {
-    const { listarArbolesResumen, listarEstadosOt } = jest.requireMock("../../src/repositories/sivu/diagnostico.repository");
+    const { listarArbolesResumen, listarEstadosOt, listarEstadosIncidencias } = jest.requireMock("../../src/repositories/sivu/diagnostico.repository");
+    (listarEstadosIncidencias as jest.Mock).mockResolvedValue([{ estado_incidencia: "ingresada" }, { estado_incidencia: "en_revision" }, { estado_incidencia: "ingresada" }]);
     (listarArbolesResumen as jest.Mock).mockResolvedValue([
       { id: "t1", estado_ciclo_vida: "activo", ubicacion: { type: "Point" }, especie_cientifica: "Schinus molle", nombre_comun: "Pimiento" },
       { id: "t2", estado_ciclo_vida: "activo", ubicacion: null, especie_cientifica: "Schinus molle", nombre_comun: "Pimiento" },
@@ -121,6 +122,7 @@ describe("GET /api/sivu/projects/:id/resumen (B7)", () => {
       por_riesgo: [{ codigo: "alto", etiqueta: "Alto", total: 1 }],
       por_ciclo_vida: [{ codigo: "activo", etiqueta: "Presente", total: 2 }, { codigo: "tocon", etiqueta: "Talado", total: 1 }],
       ot_por_estado: [{ codigo: "pendiente", etiqueta: "Pendiente", total: 2 }, { codigo: "en_ejecucion", etiqueta: "En ejecución", total: 1 }],
+      incidencias_por_estado: [{ codigo: "ingresada", etiqueta: "Ingresada", total: 2 }, { codigo: "en_revision", etiqueta: "En revisión", total: 1 }],
     });
   });
   it("catálogos incluyen vista_foto y estado_ciclo_vida", async () => {

@@ -99,6 +99,18 @@ export async function listarEstadosOt(accessToken: string, projectId: string): P
   );
 }
 
+/** Estado de cada incidencia del proyecto (B7), con el JWT del usuario. */
+export async function listarEstadosIncidencias(accessToken: string, projectId: string): Promise<Array<{ estado_incidencia: string }>> {
+  return paginar<{ estado_incidencia: string }>((desde, hasta) =>
+    createUserScopedClient(accessToken)
+      .from("incidents")
+      .select("estado_incidencia")
+      .eq("project_id", projectId)
+      .order("id", { ascending: true })
+      .range(desde, hasta)
+  );
+}
+
 type ArbolConInspecciones = {
   id: string; tree_code: string; project_id: string; especie_cientifica: string | null; nombre_comun: string | null;
   inspections: Array<Omit<InspeccionFinalizadaRow, "trees">> | null;
