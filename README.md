@@ -101,6 +101,12 @@ Deliberadamente NO implementado todavía (fuera de alcance de esta iteración):
 
 ## Contrato para frontend
 
+**API del modelo nuevo (`/api/sivu`):** el contrato completo y vigente —endpoints,
+método, quién puede usarlos, entradas, respuestas, errores y estados— está en
+[`docs/api/contrato-frontend.md`](docs/api/contrato-frontend.md) (B12). Los cambios
+del día a día se anotan en [`docs/plan/coordinacion.md`](docs/plan/coordinacion.md).
+Lo que sigue abajo documenta las rutas de la demo (`/api`, sin `sivu`).
+
 `valpo-verde-frontend` (repositorio separado, ADR-001) consume esta API
 bajo este contrato (PR-018 v2.0 / ADR-014):
 
