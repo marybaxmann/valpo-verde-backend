@@ -81,7 +81,7 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|
 | `POST /api/sivu/projects/:id/trees` | Usuario municipal | `{ sector, ubicacion_descriptiva, utm_este, utm_norte, especie_cientifica?, nombre_comun? }` (al menos uno de los dos últimos; UTM 19S) | 201 `{ data }`. 422 si el punto queda fuera del sector («El árbol no se registró…»). |
-| `GET /api/sivu/projects/:id/trees` (B1) | Miembros y Administrador | `limit`, `offset`, `sector_id?`, `estado_ciclo_vida?` (`activo`, `retirado`, `tocon`), `busqueda?` (especie o nombre común, sin distinguir tildes ni mayúsculas) | 200 `{ data: [{ id, tree_code, sector_id, sector, ubicacion_descriptiva, utm_este, utm_norte, ubicacion: { lng, lat } \| null, especie_cientifica, nombre_comun, estado_ciclo_vida, fecha_registro }], total, limit, offset }`. **Pendiente:** columnas aprobadas el 27-oct (ver §9). |
+| `GET /api/sivu/projects/:id/trees` (B1) | Miembros y Administrador | `limit`, `offset`, `sector_id?`, `estado_ciclo_vida?` (`activo`, `retirado`, `tocon`), `busqueda?` (especie o nombre común, sin distinguir tildes ni mayúsculas) | 200 `{ data: [{ id, tree_code, sector_id, sector, ubicacion_descriptiva, utm_este, utm_norte, ubicacion: { lng, lat } \| null, especie_cientifica, nombre_comun, estado_ciclo_vida (código), ciclo_vida: { codigo, etiqueta }, fecha_registro, multifustal, numero_fustes, dap_cm (en multifustal, el DAP equivalente que calcula la plataforma), altura_total_m, riesgo: { codigo, etiqueta, ajustada } \| null, vigente_desde }], total, limit, offset }`. `riesgo` es el efectivo de la evaluación vigente (el ajustado por el Inspector si existe; si no, el calculado); `null` = sin evaluación. `vigente_desde` = fecha en que se completó la OT que aportó los datos vigentes; `null` si solo hay datos del alta. |
 | `GET /api/sivu/projects/:id/species?nombre=` | Miembros y Administrador | `nombre` obligatorio | 200 `{ data: [especie] }` (hasta 20; busca en la especie científica, sin tildes) |
 | `PATCH /api/sivu/projects/:id/species/:speciesId` | Inspector | `{ genero?, familia?, origen_biogeografico?, persistencia_follaje?, tipo_hoja? }` | 200 `{ data }` |
 | `PATCH /api/sivu/projects/:id/species/:speciesId/nombre` | Inspector | `{ especie_cientifica }` (nombre completo; no «Género sp.» ni «No determinado») | 200 `{ data }`; 409 si ya existe |
@@ -185,8 +185,6 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 
 ## 9. Pendiente o en revisión
 
-- **B1:** agregar etiqueta del ciclo de vida, DAP (equivalente en multifustal), multifustal, número de fustes,
-  altura total, riesgo efectivo (`{ codigo, etiqueta }`, `ajustada`, `null` = sin evaluación) y `vigente_desde`.
 - **B7:** incidencias por estado.
 - **B2** (ficha del árbol), **B5** (próximas inspecciones; requiere corregir una vista, AM-18), **B6** (OT
   «vencida»: sin definición), **B8** (lectura de infraestructura), **B11** (usuarios disponibles para agregar como

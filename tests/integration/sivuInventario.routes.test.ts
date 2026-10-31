@@ -5,13 +5,15 @@ jest.mock("../../src/repositories/userProfile.repository");
 jest.mock("../../src/repositories/projectMember.repository");
 jest.mock("../../src/repositories/sivu/inventory.repository", () => ({
   listarArbolesInventario: jest.fn(),
+  listarRiesgoVigente: jest.fn(),
+  listarFechasVigencia: jest.fn(),
 }));
 
 import app from "../../src/app";
 import { getAuthUserByToken } from "../../src/repositories/auth.repository";
 import { findUserProfileById } from "../../src/repositories/userProfile.repository";
 import { findMembership } from "../../src/repositories/projectMember.repository";
-import { listarArbolesInventario } from "../../src/repositories/sivu/inventory.repository";
+import { listarArbolesInventario, listarFechasVigencia, listarRiesgoVigente } from "../../src/repositories/sivu/inventory.repository";
 import {
   FAKE_TOKEN,
   ADMIN_ID,
@@ -41,6 +43,11 @@ const arbolFila = {
   nombre_comun: "Plátano oriental",
   estado_ciclo_vida: "activo",
   fecha_registro: "2026-01-15",
+  multifustal: false,
+  numero_fustes: null,
+  dap_cm: 31.5,
+  altura_total_m: 12,
+  vigente_desde_inspection_id: null,
 };
 
 /** Árbol esperado en la respuesta (DTO). */
@@ -56,7 +63,14 @@ const arbolDto = {
   especie_cientifica: "Platanus orientalis",
   nombre_comun: "Plátano oriental",
   estado_ciclo_vida: "activo",
+  ciclo_vida: { codigo: "activo", etiqueta: "Presente" },
   fecha_registro: "2026-01-15",
+  multifustal: false,
+  numero_fustes: null,
+  dap_cm: 31.5,
+  altura_total_m: 12,
+  riesgo: null,
+  vigente_desde: null,
 };
 
 function auth(
@@ -75,6 +89,8 @@ function auth(
 
 beforeEach(() => {
   jest.clearAllMocks();
+  (listarRiesgoVigente as jest.Mock).mockResolvedValue([]);
+  (listarFechasVigencia as jest.Mock).mockResolvedValue([]);
   (listarArbolesInventario as jest.Mock).mockResolvedValue({
     filas: [],
     total: 0,
@@ -218,5 +234,37 @@ describe("GET /api/sivu/projects/:id/trees (B1 — inventario arbóreo; CC-064)"
     expect(
       (listarArbolesInventario as jest.Mock).mock.calls[0][1]
     ).toMatchObject({ limit: 50, offset: 0 });
+  });
+
+  it("columnas aprobadas el 27-oct: riesgo efectivo (ajustado si existe) y vigente_desde", async () => {
+    auth(MUNICIPAL_ID, municipalProfileRow());
+    const INS = "cccc0001-0000-0000-0000-000000000001";
+    const otro = { ...arbolFila, id: "aaaa0001-0000-0000-0000-000000000002", tree_code: "A-000002", vigente_desde_inspection_id: INS };
+    (listarArbolesInventario as jest.Mock).mockResolvedValue({ filas: [arbolFila, otro], total: 2 });
+    (listarRiesgoVigente as jest.Mock).mockResolvedValue([
+      { tree_id: arbolFila.id, clasificacion_riesgo_calculada: "bajo", clasificacion_riesgo_ajustada: null },
+      { tree_id: otro.id, clasificacion_riesgo_calculada: "moderado", clasificacion_riesgo_ajustada: "alto" },
+    ]);
+    (listarFechasVigencia as jest.Mock).mockResolvedValue([{ id: INS, fecha_completada_ot: "2026-10-31" }]);
+
+    const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}/trees`).set(authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].riesgo).toEqual({ codigo: "bajo", etiqueta: "Bajo", ajustada: false });
+    expect(res.body.data[0].vigente_desde).toBeNull();
+    expect(res.body.data[1].riesgo).toEqual({ codigo: "alto", etiqueta: "Alto", ajustada: true });
+    expect(res.body.data[1].vigente_desde).toBe("2026-10-31");
+    expect(listarRiesgoVigente).toHaveBeenCalledWith(FAKE_TOKEN, [arbolFila.id, otro.id]);
+    expect(listarFechasVigencia).toHaveBeenCalledWith(FAKE_TOKEN, [INS]);
+  });
+
+  it("evaluación vigente sin clasificación (p. ej. tras anular la única inspección): riesgo null", async () => {
+    auth(MUNICIPAL_ID, municipalProfileRow());
+    (listarArbolesInventario as jest.Mock).mockResolvedValue({ filas: [arbolFila], total: 1 });
+    (listarRiesgoVigente as jest.Mock).mockResolvedValue([
+      { tree_id: arbolFila.id, clasificacion_riesgo_calculada: null, clasificacion_riesgo_ajustada: null },
+    ]);
+    const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}/trees`).set(authHeader);
+    expect(res.body.data[0].riesgo).toBeNull();
   });
 });

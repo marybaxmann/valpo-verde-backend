@@ -28,11 +28,17 @@ export interface ArbolInventarioRow {
   nombre_comun: string | null;              // D-14
   estado_ciclo_vida: string;               // 'activo' | 'retirado' | 'tocon'
   fecha_registro: string;                   // D-4
+  multifustal: boolean | null;              // D-15: valor vigente
+  numero_fustes: number | null;             // D-16
+  dap_cm: number | null;                    // D-18: en multifustal, el equivalente que calcula la plataforma
+  altura_total_m: number | null;            // D-19
+  /** Inspección que aportó el último valor vigente (fn_refresh_tree_current, 025). */
+  vigente_desde_inspection_id: string | null;
 }
 
 /** Columnas seleccionadas del inventario — lista constante para reutilizar. */
 const INVENTARIO_COLUMNS =
-  "id, tree_code, project_id, sector_id, sector, ubicacion_descriptiva, utm_este, utm_norte, ubicacion::geometry, especie_cientifica, nombre_comun, estado_ciclo_vida, fecha_registro";
+  "id, tree_code, project_id, sector_id, sector, ubicacion_descriptiva, utm_este, utm_norte, ubicacion::geometry, especie_cientifica, nombre_comun, estado_ciclo_vida, fecha_registro, multifustal, numero_fustes, dap_cm, altura_total_m, vigente_desde_inspection_id";
 
 export interface FiltrosInventario {
   projectId: string;
@@ -95,4 +101,50 @@ export async function listarArbolesInventario(
     filas: (data ?? []) as unknown as ArbolInventarioRow[],
     total: count ?? 0,
   };
+}
+
+/** Riesgo de la evaluación vigente de cada árbol (v_tree_current_assessment; ADR-017). */
+export interface RiesgoVigenteRow {
+  tree_id: string;
+  clasificacion_riesgo_calculada: string | null;
+  clasificacion_riesgo_ajustada: string | null;
+}
+
+/**
+ * Evaluación vigente de los árboles de una página del inventario (hasta
+ * 200 ids), con el JWT del usuario: la RLS de tree_assessments deja verla
+ * a los miembros del proyecto (pruebas_rls_b7_b17_b18).
+ */
+export async function listarRiesgoVigente(accessToken: string, treeIds: string[]): Promise<RiesgoVigenteRow[]> {
+  if (treeIds.length === 0) return [];
+  const { data, error } = await createUserScopedClient(accessToken)
+    .from("v_tree_current_assessment")
+    .select("tree_id, clasificacion_riesgo_calculada, clasificacion_riesgo_ajustada")
+    .in("tree_id", treeIds);
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+  return (data ?? []) as RiesgoVigenteRow[];
+}
+
+/**
+ * «Datos vigentes desde» (decisión de la responsable, 2026-10-27):
+ * `fecha_completada_ot` de la OT de la inspección que aportó los datos.
+ */
+export async function listarFechasVigencia(
+  accessToken: string,
+  inspectionIds: string[]
+): Promise<Array<{ id: string; fecha_completada_ot: string | null }>> {
+  if (inspectionIds.length === 0) return [];
+  const { data, error } = await createUserScopedClient(accessToken)
+    .from("inspections")
+    .select("id, work_orders!inner(fecha_completada_ot)")
+    .in("id", inspectionIds);
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+  return ((data ?? []) as unknown as Array<{ id: string; work_orders: { fecha_completada_ot: string | null } | null }>).map((f) => ({
+    id: f.id,
+    fecha_completada_ot: f.work_orders?.fecha_completada_ot ?? null,
+  }));
 }
