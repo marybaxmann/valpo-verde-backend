@@ -140,6 +140,21 @@ export async function listarMisOts(
   );
 }
 
+/**
+ * B2 — OT de un árbol para su ficha: todos los estados y, por decisión de
+ * la responsable (2026-10-31), todas las OT para todos los miembros (en la
+ * ficha no se aplica el filtro por rol de B3). Sin autorización: la hace
+ * quien llama.
+ */
+export async function listarOtsDeArbol(user: AuthenticatedUser, projectId: string, treeId: string, accessToken: string): Promise<OtListada[]> {
+  const { data } = await armarListado(
+    user,
+    { projectId, treeId, estados: ["pendiente", "programada", "en_ejecucion", "completada", "cancelada"], limit: 200, offset: 0 },
+    accessToken
+  );
+  return data;
+}
+
 async function armarListado(user: AuthenticatedUser, filtros: FiltrosListadoOt, accessToken: string): Promise<ListadoOt> {
   const { filas, total } = await listarOrdenesTrabajo(accessToken, filtros);
 

@@ -104,13 +104,14 @@ const INCIDENCIA_COLUMNS =
 
 export async function listarIncidenciasProyecto(
   accessToken: string,
-  filtros: { projectId: string; estado?: string; limit: number; offset: number }
+  filtros: { projectId: string; estado?: string; treeId?: string; limit: number; offset: number }
 ): Promise<{ filas: IncidenciaRow[]; total: number }> {
   let query = createUserScopedClient(accessToken)
     .from("incidents")
     .select(INCIDENCIA_COLUMNS, { count: "exact" })
     .eq("project_id", filtros.projectId);
   if (filtros.estado) query = query.eq("estado_incidencia", filtros.estado);
+  if (filtros.treeId) query = query.eq("tree_id", filtros.treeId);
   const { data, error, count } = await query
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })

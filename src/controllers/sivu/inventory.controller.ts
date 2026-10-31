@@ -3,6 +3,8 @@ import { AppError } from "../../utils/AppError";
 import { proyectoIdParamSchema } from "../../schemas/sivu/proyectos.schema";
 import { inventarioQuerySchema } from "../../schemas/sivu/inventario.schema";
 import { listarInventario } from "../../services/sivu/inventory.service";
+import { obtenerFichaArbol } from "../../services/sivu/fichaArbol.service";
+import { z } from "zod";
 
 /**
  * GET /api/sivu/projects/:id/trees — Inventario arbóreo del proyecto (B1).
@@ -41,6 +43,19 @@ export async function listarInventarioController(
     );
 
     res.json(resultado);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /api/sivu/projects/:id/trees/:treeId — ficha del árbol (B2). */
+export async function fichaArbolController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const params = z.object({ id: z.string().uuid("id de proyecto inválido"), treeId: z.string().uuid("id de árbol inválido") }).safeParse(req.params);
+    if (!params.success) {
+      throw new AppError(params.error.issues[0]?.message ?? "Parámetros inválidos", 400);
+    }
+    res.json({ data: await obtenerFichaArbol(req.user!, params.data.id, params.data.treeId, req.accessToken!) });
   } catch (err) {
     next(err);
   }

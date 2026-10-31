@@ -79,17 +79,40 @@ function diagnostico(ins: InspeccionFinalizadaRow, ev: EvaluacionResultadoRow | 
     resultado: ev ? resultadoConEtiquetas(ev) : null,
     // Evaluación vigente del árbol (tree_assessments, la más reciente): null
     // mientras ninguna OT del árbol esté completada.
-    vigente: vig
-      ? {
-          evento: vig.evento,
-          work_order_id: vig.work_order_id,
-          inspection_id: vig.inspection_id,
-          desde: vig.created_at,
-          requiere_revision_ajuste: vig.requiere_revision_ajuste,
-          resultado: resultadoConEtiquetas(vig),
-        }
-      : null,
+    vigente: vigenteConEtiquetas(vig),
   };
+}
+
+function vigenteConEtiquetas(vig: EvaluacionVigenteRow | undefined) {
+  return vig
+    ? {
+        evento: vig.evento,
+        work_order_id: vig.work_order_id,
+        inspection_id: vig.inspection_id,
+        desde: vig.created_at,
+        requiere_revision_ajuste: vig.requiere_revision_ajuste,
+        resultado: resultadoConEtiquetas(vig),
+      }
+    : null;
+}
+
+/**
+ * B2: diagnóstico de un árbol para su ficha. `ultima_finalizada` es el
+ * elemento de B18 sin su `vigente` (o null si no tiene inspección
+ * finalizada); `vigente` va aparte porque puede existir sin una
+ * finalizada (p. ej. tras anular la única). Sin autorización: la hace
+ * quien llama.
+ */
+export async function diagnosticoDeArbol(token: string, projectId: string, treeId: string) {
+  const inspecciones = await listarInspeccionesFinalizadas(token, projectId, treeId);
+  const ultima = inspecciones[0];
+  const [evaluaciones, vigentes] = await Promise.all([
+    ultima ? listarEvaluacionesDeInspecciones(token, [ultima.id]) : Promise.resolve([]),
+    listarEvaluacionesVigentes(token, projectId, treeId),
+  ]);
+  if (!ultima) return { ultima_finalizada: null, vigente: vigenteConEtiquetas(vigentes[0]) };
+  const { vigente, ...finalizada } = diagnostico(ultima, evaluaciones[0], vigentes[0]);
+  return { ultima_finalizada: finalizada, vigente };
 }
 
 /**

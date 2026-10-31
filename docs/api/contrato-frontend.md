@@ -82,10 +82,30 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
 |---|---|---|---|
 | `POST /api/sivu/projects/:id/trees` | Usuario municipal | `{ sector, ubicacion_descriptiva, utm_este, utm_norte, especie_cientifica?, nombre_comun? }` (al menos uno de los dos últimos; UTM 19S) | 201 `{ data }`. 422 si el punto queda fuera del sector («El árbol no se registró…»). |
 | `GET /api/sivu/projects/:id/trees` (B1) | Miembros y Administrador | `limit`, `offset`, `sector_id?`, `estado_ciclo_vida?` (`activo`, `retirado`, `tocon`), `busqueda?` (especie o nombre común, sin distinguir tildes ni mayúsculas) | 200 `{ data: [{ id, tree_code, sector_id, sector, ubicacion_descriptiva, utm_este, utm_norte, ubicacion: { lng, lat } \| null, especie_cientifica, nombre_comun, estado_ciclo_vida (código), ciclo_vida: { codigo, etiqueta }, fecha_registro, multifustal, numero_fustes, dap_cm (en multifustal, el DAP equivalente que calcula la plataforma), altura_total_m, riesgo: { codigo, etiqueta, ajustada } \| null, vigente_desde }], total, limit, offset }`. `riesgo` es el efectivo de la evaluación vigente (el ajustado por el Inspector si existe; si no, el calculado); `null` = sin evaluación. `vigente_desde` = fecha en que se completó la OT que aportó los datos vigentes; `null` si solo hay datos del alta. |
+| `GET /api/sivu/projects/:id/trees/:treeId` (B2, ficha) | Miembros y Administrador | — | 200 `{ data: { arbol, sobre_la_especie, evaluacion_vigente, ultima_inspeccion_finalizada, historial, ordenes_trabajo, incidencias } }` (detalle abajo). 404 si el árbol no es del proyecto. |
 | `GET /api/sivu/projects/:id/species?nombre=` | Miembros y Administrador | `nombre` obligatorio | 200 `{ data: [especie] }` (hasta 20; busca en la especie científica, sin tildes) |
 | `PATCH /api/sivu/projects/:id/species/:speciesId` | Inspector | `{ genero?, familia?, origen_biogeografico?, persistencia_follaje?, tipo_hoja? }` | 200 `{ data }` |
 | `PATCH /api/sivu/projects/:id/species/:speciesId/nombre` | Inspector | `{ especie_cientifica }` (nombre completo; no «Género sp.» ni «No determinado») | 200 `{ data }`; 409 si ya existe |
 | `GET /api/sivu/catalogs` (B15) | Cualquier usuario con sesión | — | 200 `{ data }`: catálogos vigentes con `codigo`, `etiqueta`, `orden`, `padre` |
+
+**Ficha del árbol (B2):**
+- `arbol`: `id`, `tree_code`, `sector_id`, `ubicacion: { lng, lat } | null`, `estado_ciclo_vida: { codigo, etiqueta }`,
+  `fecha_registro` y los valores vigentes de medición e identificación: `sector`, `ubicacion_descriptiva`, `utm_este`,
+  `utm_norte`, `especie_cientifica`, `nombre_comun`, `multifustal`, `numero_fustes`, `dap_fustes_cm`, `dap_cm`,
+  `altura_total_m`, `diametro_copa_ns_m`, `diametro_copa_eo_m`, `diametro_copa_m`, `copa_no_presenta`,
+  `altura_primera_rama_m`, `altura_primera_rama_no_presenta`, `altura_base_copa_viva_m`,
+  `altura_base_copa_viva_no_presenta`, `clase_edad` y `rango_edad_estimada_anios` (estos dos como `{ codigo, etiqueta }`).
+- `sobre_la_especie`: `genero`, `familia`, `origen_biogeografico`, `persistencia_follaje`, `tipo_hoja` (los tres
+  últimos como `{ codigo, etiqueta }`; sin especie vigente: «Origen no determinado» y los otros dos `null`).
+- `evaluacion_vigente`: igual que `vigente` de B18 (§6), o `null`.
+- `ultima_inspeccion_finalizada`: igual que un elemento de B18 sin `vigente`, o `null`.
+- `historial`: las versiones que fueron vigentes, de la más reciente a la más antigua: el alta y las inspecciones
+  finalizadas de OT completadas. Cada una: `{ origen: "alta" | "inspeccion", vigente_desde, inspection_id,
+  codigo_inspeccion, fecha_inspeccion, valores }`; `valores` trae solo los campos que registró esa versión.
+- `ordenes_trabajo`: todas las OT del árbol, de todos los estados, con la misma forma que B3. **En la ficha se
+  muestran todas a cualquier miembro** (decisión de la responsable, 2026-10-31; en B3 rige el filtro por rol de CC-061).
+- `incidencias`: las del árbol, con la misma forma que B9 (`reportante` solo para el Usuario municipal).
+- No incluye la presencia (Presente/Talado/Retirado: pendiente de AM-22) ni fotos (se piden por inspección, §5).
 
 ---
 
@@ -185,7 +205,7 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 
 ## 9. Pendiente o en revisión
 
-- **B2** (ficha del árbol), **B5** (próximas inspecciones; requiere corregir una vista, AM-18), **B6** (OT
+- **B5** (próximas inspecciones; requiere corregir una vista, AM-18), **B6** (OT
   «vencida»: sin definición), **B8** (lectura de infraestructura), **B11** (usuarios disponibles para agregar como
   miembros), **B19** (indicadores; depende de CC-016), **#61** Mantenimiento (depende de AM-22).
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde

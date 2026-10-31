@@ -50,6 +50,12 @@ function incidencia(fila: IncidenciaRow, user: AuthenticatedUser) {
   };
 }
 
+/** B2 — incidencias de un árbol para su ficha (hasta 200). Sin autorización: la hace quien llama. */
+export async function listarIncidenciasDeArbol(user: AuthenticatedUser, projectId: string, treeId: string, token: string) {
+  const { filas } = await listarIncidenciasProyecto(token, { projectId, treeId, limit: 200, offset: 0 });
+  return filas.map((f) => incidencia(f, user));
+}
+
 /** B9 — GET /api/sivu/projects/:id/incidencias */
 export async function listarIncidencias(user: AuthenticatedUser, projectId: string, query: ListarIncidenciasQuery, token: string) {
   await assertProjectAccess(user, projectId, token);

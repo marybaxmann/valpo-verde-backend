@@ -235,6 +235,8 @@ export interface FiltrosListadoOt {
    * Mantenimiento más las de Inspección donde es el responsable actual.
    */
   mantenimientoOInspeccionDe?: string;
+  /** Solo las OT de este árbol (B2). */
+  treeId?: string;
   estados: readonly string[];
   limit: number;
   offset: number;
@@ -256,6 +258,7 @@ export async function listarOrdenesTrabajo(
   if (filtros.projectId) query = query.eq("project_id", filtros.projectId);
   if (filtros.responsableId) query = query.eq("responsable_accion_id", filtros.responsableId);
   if (filtros.tipoOt) query = query.eq("tipo_ot", filtros.tipoOt);
+  if (filtros.treeId) query = query.eq("tree_id", filtros.treeId);
   if (filtros.mantenimientoOInspeccionDe) {
     query = query.or(
       `tipo_ot.eq.mantenimiento,and(tipo_ot.eq.inspeccion,responsable_accion_id.eq.${filtros.mantenimientoOInspeccionDe})`
