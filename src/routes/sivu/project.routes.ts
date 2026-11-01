@@ -11,6 +11,7 @@ import {
 import {
   addMiembro,
   listMiembros,
+  listarUsuariosDisponiblesController,
   removeMiembro,
 } from "../../controllers/sivu/projectMember.controller";
 import { altaMunicipalArbolController } from "../../controllers/sivu/tree.controller";
@@ -49,6 +50,8 @@ router.patch("/:id/estado", authMiddleware, cambiarEstadoProyectoController);
 router.get("/:id/members", authMiddleware, listMiembros);
 router.post("/:id/members", authMiddleware, addMiembro);
 router.delete("/:id/members/:userId", authMiddleware, removeMiembro);
+// Usuarios que aún no son miembros, para agregarlos (B11). Solo el Administrador.
+router.get("/:id/available-users", authMiddleware, listarUsuariosDisponiblesController);
 
 // Alta municipal mínima del árbol (#57). Solo usuario_municipal; el
 // sector lo resuelve el servidor desde el proyecto (nunca del body).

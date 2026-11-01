@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../utils/AppError";
 import { proyectoIdParamSchema } from "../../schemas/sivu/proyectos.schema";
-import { agregarMiembroSchema, miembroParamsSchema } from "../../schemas/sivu/miembros.schema";
+import { agregarMiembroSchema, miembroParamsSchema, usuariosDisponiblesQuerySchema } from "../../schemas/sivu/miembros.schema";
 import {
   addProyectoMember,
   listProyectoMembers,
+  listarUsuariosDisponibles,
   removeProyectoMember,
 } from "../../services/sivu/projectMember.service";
 
@@ -63,6 +64,24 @@ export async function removeMiembro(req: Request, res: Response, next: NextFunct
       req.accessToken!
     );
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /api/sivu/projects/:id/available-users?rol= (B11) */
+export async function listarUsuariosDisponiblesController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const parsedParams = proyectoIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      throw new AppError(parsedParams.error.issues[0]?.message ?? "Parámetros inválidos", 400);
+    }
+    const parsedQuery = usuariosDisponiblesQuerySchema.safeParse(req.query);
+    if (!parsedQuery.success) {
+      throw new AppError(parsedQuery.error.issues[0]?.message ?? "Parámetros inválidos", 400);
+    }
+    const data = await listarUsuariosDisponibles(req.user!, parsedParams.data.id, req.accessToken!, parsedQuery.data.rol);
+    res.json({ data });
   } catch (err) {
     next(err);
   }

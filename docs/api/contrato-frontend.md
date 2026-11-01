@@ -72,6 +72,7 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
 | `GET /api/sivu/projects/:id/members` | Administrador | — | 200 `{ data }` |
 | `POST /api/sivu/projects/:id/members` | Administrador | `{ user_id }` | 201 `{ data }` |
 | `DELETE /api/sivu/projects/:id/members/:userId` | Administrador | — | 204 |
+| `GET /api/sivu/projects/:id/available-users?rol=` (B11) | Administrador | `rol` opcional (`admin`, `usuario_municipal`, `inspector`, `encargado_mantencion`) | 200 `{ data: [{ id, nombre, codigo_usuario, rol, activo }] }`: usuarios que aún no son miembros del proyecto, ordenados por nombre (incluye inactivos; el frontend decide cómo mostrarlos). 404 si el proyecto no existe. |
 | `GET /api/sivu/projects/:id/assignable-members?rol=inspector` | Miembros y Administrador | `rol` opcional | 200 `{ data: [{ id, nombre, rol }] }` (B14) |
 
 ---
@@ -206,7 +207,6 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 ## 9. Pendiente o en revisión
 
 - **B5** (próximas inspecciones; requiere corregir una vista, AM-18), **B6** (OT
-  «vencida»: sin definición), **B8** (lectura de infraestructura), **B11** (usuarios disponibles para agregar como
-  miembros), **B19** (indicadores; depende de CC-016), **#61** Mantenimiento (depende de AM-22).
+  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (indicadores; depende de CC-016), **#61** Mantenimiento (depende de AM-22).
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde
   otro dominio, `CORS_ORIGIN`.

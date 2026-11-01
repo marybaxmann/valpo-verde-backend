@@ -1,7 +1,11 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 24 — migración 028 (2026-10-31; #62; CC-062 / PR-022 v2.0):
+--   (revisión 25 — migración 029 (2026-11-01; B11): política
+--   roles_select_authenticated (solo lectura del catálogo de roles con la
+--   sesión del usuario); como el resto de las políticas, vive solo en la
+--   migración. Sin cambios de tablas ni funciones;
+--   antes revisión 24 — migración 028 (2026-10-31; #62; CC-062 / PR-022 v2.0):
 --   incidents.codigo_seguimiento_huella y las funciones de Valpo Verde
 --   Conecta (fn_crear_incidencia_ciudadana, fn_ficha_publica_arbol,
 --   fn_estado_seguimiento, fn_purgar_huellas_vencidas,

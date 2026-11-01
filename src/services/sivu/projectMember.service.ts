@@ -5,6 +5,7 @@ import {
   createMembershipSivu,
   deleteMembershipSivu,
   DuplicateMembershipError,
+  listarUsuariosNoMiembros,
 } from "../../repositories/sivu/projectMember.repository";
 import {
   listMembersByProject,
@@ -89,4 +90,19 @@ export async function removeProyectoMember(
     throw new AppError("Membresía no encontrada", 404);
   }
   invalidateMembership(projectId, targetUserId);
+}
+
+/**
+ * B11 — GET /api/sivu/projects/:id/available-users: usuarios que aún no
+ * son miembros, para elegir a quién agregar (admin-only, como el resto de
+ * la gestión de miembros, PR-004). Se entregan todos, con su rol y si
+ * están activos; filtro opcional por rol.
+ */
+export async function listarUsuariosDisponibles(user: AuthenticatedUser, projectId: string, accessToken: string, rol?: string) {
+  assertAdmin(user);
+  await assertProyectoExists(accessToken, projectId);
+  const filas = await listarUsuariosNoMiembros(accessToken, projectId);
+  return filas
+    .map((f) => ({ id: f.id, nombre: f.nombre, codigo_usuario: f.codigo_usuario, rol: f.role?.nombre ?? null, activo: f.activo }))
+    .filter((u) => rol === undefined || u.rol === rol);
 }

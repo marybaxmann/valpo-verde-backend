@@ -19,3 +19,12 @@ export const miembroParamsSchema = z.object({
 });
 
 export type MiembroParams = z.infer<typeof miembroParamsSchema>;
+
+/** Query de GET /api/sivu/projects/:id/available-users (B11). */
+export const usuariosDisponiblesQuerySchema = z
+  .object({
+    rol: z.enum(["admin", "usuario_municipal", "inspector", "encargado_mantencion"], {
+      errorMap: () => ({ message: "rol debe ser admin, usuario_municipal, inspector o encargado_mantencion" }),
+    }).optional(),
+  })
+  .strict();

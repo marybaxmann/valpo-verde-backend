@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../../config/supabase";
+import { createUserScopedClient, supabaseAdmin } from "../../config/supabase";
 import { ProjectMemberRow } from "../../repositories/projectMember.repository";
 
 /**
@@ -68,4 +68,29 @@ export async function deleteMembershipSivu(projectId: string, userId: string): P
   }
 
   return (data ?? []).length > 0;
+}
+
+export interface UsuarioDisponibleRow {
+  id: string;
+  nombre: string | null;
+  codigo_usuario: string | null;
+  activo: boolean;
+  role: { nombre: string } | null;
+}
+
+/**
+ * B11: usuarios que todavía no son miembros del proyecto. Lectura con el
+ * JWT del Administrador: `user_profiles_select_admin` (017) le deja leer
+ * todos los perfiles.
+ */
+export async function listarUsuariosNoMiembros(accessToken: string, projectId: string): Promise<UsuarioDisponibleRow[]> {
+  const cliente = createUserScopedClient(accessToken);
+  const [perfiles, miembros] = await Promise.all([
+    cliente.from("user_profiles").select("id, nombre, codigo_usuario, activo, role:roles(nombre)").order("nombre", { ascending: true }),
+    cliente.from("project_members").select("user_id").eq("project_id", projectId),
+  ]);
+  if (perfiles.error) throw new Error(perfiles.error.message, { cause: perfiles.error.code });
+  if (miembros.error) throw new Error(miembros.error.message, { cause: miembros.error.code });
+  const yaMiembros = new Set((miembros.data ?? []).map((m) => m.user_id as string));
+  return ((perfiles.data ?? []) as unknown as UsuarioDisponibleRow[]).filter((p) => !yaMiembros.has(p.id));
 }
