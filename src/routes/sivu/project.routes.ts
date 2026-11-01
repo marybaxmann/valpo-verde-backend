@@ -24,7 +24,7 @@ import {
 } from "../../controllers/sivu/species.controller";
 
 import { inspectionFormSchemaController } from "../../controllers/sivu/inspectionFormSchema.controller";
-import { listarDiagnosticosController, listarMiembrosAsignablesController, resumenProyectoController } from "../../controllers/sivu/diagnostico.controller";
+import { listarDiagnosticosController, listarMiembrosAsignablesController, proximasInspeccionesController, resumenProyectoController } from "../../controllers/sivu/diagnostico.controller";
 import {
   detalleIncidenciaController,
   listarIncidenciasController,
@@ -71,6 +71,8 @@ router.get("/:id/assignable-members", authMiddleware, listarMiembrosAsignablesCo
 router.get("/:id/diagnosticos", authMiddleware, listarDiagnosticosController);
 // Resumen del proyecto para el Dashboard (B7).
 router.get("/:id/resumen", authMiddleware, resumenProyectoController);
+// Próximas inspecciones y monitoreos (B5; CC-037): recordatorios, no agenda.
+router.get("/:id/upcoming-inspections", authMiddleware, proximasInspeccionesController);
 
 // Catálogo de especies incorporado por el Inspector (#73; CC-053).
 // Búsqueda: cualquier rol con acceso al proyecto. Completar/corregir:

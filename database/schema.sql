@@ -1,7 +1,13 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 25 — migración 029 (2026-11-01; B11): política
+--   (revisión 26 — migración 030 (2026-11-01; AM-18; B5):
+--   v_upcoming_inspections reconstruida sobre v_tree_fechas_vigentes (solo
+--   fechas de inspecciones Finalizadas de OT Completadas; una fila por
+--   árbol y tipo), copiada de lo aplicado en `valpo-verde-conecta-pruebas`
+--   (md5 de lo aplicado = archivo de migración en LF; los GRANT/REVOKE
+--   quedan solo en la migración);
+--   antes revisión 25 — migración 029 (2026-11-01; B11): política
 --   roles_select_authenticated (solo lectura del catálogo de roles con la
 --   sesión del usuario); como el resto de las políticas, vive solo en la
 --   migración. Sin cambios de tablas ni funciones;
@@ -4599,18 +4605,34 @@ LEFT JOIN species s
 -- fecha ajustada si existe (D-202, D-203; CC-037). El rango
 -- (inicio/término) lo calcula el backend desde nivel_riesgo con su
 -- tabla de plazos — "Impacto en BD: ninguno adicional" (CC-037).
-CREATE VIEW v_upcoming_inspections WITH (security_invoker = true) AS
-SELECT DISTINCT ON (t.id)
+-- Migración 030 (AM-18; B5; CC-037): solo fechas vigentes, una fila por
+-- árbol y tipo; el término del rango lo calcula el backend.
+CREATE VIEW public.v_upcoming_inspections WITH (security_invoker = true) AS
+WITH origen AS (
+  SELECT f.tree_id, 'inspeccion'::text AS tipo, f.fecha_proxima_inspeccion AS fecha, f.origen_fecha_proxima_inspeccion AS inspection_id
+  FROM public.v_tree_fechas_vigentes f
+  WHERE f.fecha_proxima_inspeccion IS NOT NULL
+  UNION ALL
+  SELECT f.tree_id, 'monitoreo'::text, f.fecha_proximo_monitoreo, f.origen_fecha_proximo_monitoreo
+  FROM public.v_tree_fechas_vigentes f
+  WHERE f.fecha_proximo_monitoreo IS NOT NULL
+)
+SELECT
   t.project_id,
-  t.id AS tree_id,
-  i.id AS inspection_id,
-  COALESCE(i.fecha_proxima_inspeccion, i.fecha_proxima_inspeccion_sugerida) AS fecha_proxima_inspeccion,
-  COALESCE(i.fecha_proximo_monitoreo, i.fecha_proximo_monitoreo_sugerida) AS fecha_proximo_monitoreo,
+  o.tree_id,
+  o.tipo,
+  o.fecha,
+  CASE o.tipo
+    WHEN 'inspeccion' THEN i.fecha_proxima_inspeccion IS NOT NULL AND i.fecha_proxima_inspeccion IS DISTINCT FROM i.fecha_proxima_inspeccion_sugerida
+    ELSE i.fecha_proximo_monitoreo IS NOT NULL AND i.fecha_proximo_monitoreo IS DISTINCT FROM i.fecha_proximo_monitoreo_sugerida
+  END AS ajustada,
+  o.inspection_id,
+  i.fecha_inspeccion,
   COALESCE(e.clasificacion_riesgo_ajustada, e.clasificacion_riesgo_calculada) AS nivel_riesgo
-FROM trees t
-JOIN inspections i ON i.tree_id = t.id AND i.estado_registro = 'finalizado'
-LEFT JOIN evaluations e ON e.inspection_id = i.id
-ORDER BY t.id, i.fecha_inspeccion DESC, i.created_at DESC;
+FROM origen o
+JOIN public.trees t ON t.id = o.tree_id
+JOIN public.inspections i ON i.id = o.inspection_id
+LEFT JOIN public.evaluations e ON e.inspection_id = o.inspection_id;
 
 -- Fecha vigente de próxima inspección y de próximo monitoreo por árbol
 -- (migración 020; CC-055): la de la última inspección Finalizada de una
