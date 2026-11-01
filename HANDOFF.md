@@ -16,7 +16,7 @@
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** #61 y AM-22 verificados en la API; Conecta: catálogo público, B9 ampliado y qr_token en B1 (sin verificar en la API).
+- **Resumen:** #61 y AM-22 verificados en la API; Conecta: catálogo público, B9 ampliado y qr_token en B1 verificados en la API (QA Fase 7).
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -42,7 +42,12 @@
 - `9ab367a`: B9 con filtros `origen` (D-177) y `tipo` (D-180), `cantidad_fotos`, `ot_derivadas`, `revisado_por: { id, nombre }` (fn_miembros_proyecto) y `origen_reporte` con etiqueta (catálogo nuevo desde D-177). Cambian de forma `origen_reporte` y `revisado_por`.
 - `df7d0ed`: `qr_token` en B1 solo para el Usuario municipal.
 - Pruebas: tsc limpio; Jest focalizado (Conecta, ficha, inventario, búsqueda, catálogos, completitud): todo verde. Suite completa no corrida. Sin migraciones.
-- Pendiente: verificar los tres cambios en la API publicada; opción A (contadores compartidos en PostgreSQL, con migración a autorizar); `CONECTA_URL_BASE` y `CORS_ORIGIN` en Vercel.
+- Verificado funcionalmente en la API publicada (2026-11-01, Valej, sesiones autenticadas; proyecto QA Fase 7). Registros simulados de QA, no una intervención real: INC-000017 y OT-I-000358.
+  - Bloque 1: `GET /conecta/catalogos` sin sesión entrega los 9 tipos; `/catalogs` sin token, 401.
+  - Bloque 2: filtros `origen=comunidad` y `tipo=rama_quebrada`; INC-000017 con `origen_reporte` `{ codigo, etiqueta }` y `cantidad_fotos` 1; revisión municipal; `revisado_por` con id y nombre «Municipal Fase 7»; OT-I-000358 creada con `incident_id` y listada en `ot_derivadas` con estado `pendiente`.
+  - Bloque 3: `qr_token` presente para el Usuario municipal y ausente para el Inspector, en los mismos cinco árboles.
+- Sin probar: varias OT por incidencia (orden de `ot_derivadas`); otros roles (Administrador y Encargado en B1; Encargado en B9); `revisado_por` de un revisor fuera del proyecto; filtros fuera de la lista contra la API; límite por IP global (hoy por instancia).
+- Pendiente: opción A (contadores compartidos en PostgreSQL, con migración a autorizar); `CONECTA_URL_BASE` y `CORS_ORIGIN` en Vercel.
 
 ## ▶ Novedad 2026-11-01 (bloque 17) — Mantenimiento (#61) y presencia (AM-22)
 
