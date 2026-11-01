@@ -305,9 +305,9 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "vista_foto", codigo: "tronco", etiqueta: "Tronco", orden: 2, estado: "vigente", cc: "CC-049" },
   { catalogo: "vista_foto", codigo: "copa", etiqueta: "Copa", orden: 3, estado: "vigente", cc: "CC-049" },
 
-  // --- estado_ciclo_vida: PROVISIONAL (demo 2026-10-27, decisión de la responsable). La base usa
-  //     activo/retirado/tocon; el Excel define estado_presencia (D-28) Presente/Talado/Retirado.
-  //     Contradicción pendiente de resolver; mientras tanto, etiquetas de D-28. ---
+  // --- estado_ciclo_vida: AM-22 resuelto (Valej, 2026-11-01): un solo estado. Rige estado_presencia
+  //     (D-28, derivado); estado_ciclo_vida conserva sus códigos (PR-021) como copia que el Sistema
+  //     actualiza al aprobarse una Tala (tocon) o un Retiro_tocón (retirado). Etiquetas de D-28. ---
   { catalogo: "estado_ciclo_vida", codigo: "activo", etiqueta: "Presente", orden: 0, estado: "vigente", cc: "pendiente" },
   { catalogo: "estado_ciclo_vida", codigo: "tocon", etiqueta: "Talado", orden: 1, estado: "vigente", cc: "pendiente" },
   { catalogo: "estado_ciclo_vida", codigo: "retirado", etiqueta: "Retirado", orden: 2, estado: "vigente", cc: "pendiente" },
@@ -352,6 +352,20 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "tipo_hoja", codigo: "acicular", etiqueta: "Acicular", orden: 1, estado: "vigente", cc: "CC-062" },
   { catalogo: "tipo_hoja", codigo: "escuamiforme", etiqueta: "Escuamiforme", orden: 2, estado: "vigente", cc: "CC-062" },
   { catalogo: "tipo_hoja", codigo: "palmera", etiqueta: "Palmera", orden: 3, estado: "vigente", cc: "CC-062" },
+
+  // --- Mantenimiento (#61; PR-020). Códigos de los CHECK de maintenance_records (014). ---
+  // resultado_mantenimiento: D-220.
+  { catalogo: "resultado_mantenimiento", codigo: "ejecutado_completamente", etiqueta: "Ejecutado completamente", orden: 0, estado: "vigente", cc: "PR-020" },
+  { catalogo: "resultado_mantenimiento", codigo: "ejecutado_parcialmente", etiqueta: "Ejecutado parcialmente", orden: 1, estado: "vigente", cc: "PR-020" },
+  { catalogo: "resultado_mantenimiento", codigo: "no_ejecutado", etiqueta: "No ejecutado", orden: 2, estado: "vigente", cc: "PR-020" },
+  // estado_revision: D-225.
+  { catalogo: "estado_revision", codigo: "pendiente_revision", etiqueta: "Pendiente de revisión", orden: 0, estado: "vigente", cc: "PR-020" },
+  { catalogo: "estado_revision", codigo: "aprobado", etiqueta: "Aprobado", orden: 1, estado: "vigente", cc: "PR-020" },
+  { catalogo: "estado_revision", codigo: "rechazado", etiqueta: "Rechazado", orden: 2, estado: "vigente", cc: "PR-020" },
+  // estado_presencia: D-28 (v_tree_presence; AM-22). Rige sobre estado_ciclo_vida, que es su copia.
+  { catalogo: "estado_presencia", codigo: "presente", etiqueta: "Presente", orden: 0, estado: "vigente", cc: "AM-22" },
+  { catalogo: "estado_presencia", codigo: "talado", etiqueta: "Talado", orden: 1, estado: "vigente", cc: "AM-22" },
+  { catalogo: "estado_presencia", codigo: "retirado", etiqueta: "Retirado", orden: 2, estado: "vigente", cc: "AM-22" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {

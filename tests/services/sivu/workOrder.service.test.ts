@@ -115,12 +115,13 @@ describe("transicionarOrdenTrabajo (018g; CC-050)", () => {
     expect(mockAssertProjectRole).not.toHaveBeenCalled();
   });
 
-  it("422 si la OT es de Mantenimiento (CC-050: se implementa en el #61)", async () => {
+  it("OT de Mantenimiento: exige el rol Encargado de mantención (#61; 031)", async () => {
     mockObtenerOt.mockResolvedValueOnce({ id: WORK_ORDER_ID, project_id: PROJECT_ID, tipo_ot: "mantenimiento" });
 
-    await expect(
-      transicionarOrdenTrabajo(usuario("inspector"), WORK_ORDER_ID, bodyValido(), TOKEN)
-    ).rejects.toMatchObject({ statusCode: 422 });
+    await transicionarOrdenTrabajo(usuario("encargado_mantencion"), WORK_ORDER_ID, bodyValido(), TOKEN);
+
+    expect(mockAssertProjectRole).toHaveBeenCalledWith(expect.anything(), PROJECT_ID, ["encargado_mantencion"], TOKEN);
+    expect(mockTransicionar).toHaveBeenCalled();
   });
 
   it("exige rol Inspector en el proyecto antes de invocar la función SQL", async () => {

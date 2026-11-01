@@ -107,7 +107,9 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
 - `ordenes_trabajo`: todas las OT del árbol, de todos los estados, con la misma forma que B3. **En la ficha se
   muestran todas a cualquier miembro** (decisión de la responsable, 2026-10-31; en B3 rige el filtro por rol de CC-061).
 - `incidencias`: las del árbol, con la misma forma que B9 (`reportante` solo para el Usuario municipal).
-- No incluye la presencia (Presente/Talado/Retirado: pendiente de AM-22) ni fotos (se piden por inspección, §5).
+- `presencia`: `{ codigo, etiqueta, desde }` (D-28, D-29): `presente`, `talado` o `retirado` y desde cuándo. Rige sobre
+  `estado_ciclo_vida` (AM-22, 2026-11-01): solo cambia cuando el Inspector aprueba una Tala o un Retiro_tocón **ejecutado**.
+- No incluye fotos (se piden por inspección, §5, o por ejecución de mantenimiento, §5 bis).
 
 ---
 
@@ -118,15 +120,41 @@ Estados (`estado_ot`): `pendiente` → `programada` → `en_ejecucion` → `comp
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|
 | `POST /api/sivu/projects/:id/work-orders` | Usuario municipal | `{ tree_id (salvo levantamiento), accion_solicitada, subtipo_accion?, motivo?, prioridad?, observaciones? (obligatoria en levantamiento), responsable_accion_id, incident_id? }` | 201 `{ data }` |
-| `GET /api/sivu/projects/:id/work-orders` (B3) | Miembros y Administrador. El Inspector ve solo las de Inspección donde es responsable; el Encargado, ninguna de Inspección (403 si las pide) | `estado?` (lista separada por coma; por defecto pendiente, programada y en ejecución), `tipo_ot?`, `limit`, `offset` | 200 `{ data: [OT], total, limit, offset }`; cada OT con `estado`, `accion`, `prioridad` en `{ codigo, etiqueta }`, `arbol`, `proyecto`, `responsable` y `acciones` permitidas |
+| `GET /api/sivu/projects/:id/work-orders` (B3) | Miembros y Administrador. El Inspector ve solo las de Inspección donde es responsable; el Encargado, ninguna de Inspección (403 si las pide) | `estado?` (lista separada por coma; por defecto pendiente, programada y en ejecución), `tipo_ot?`, `limit`, `offset` | 200 `{ data: [OT], total, limit, offset }`; cada OT con `estado`, `accion`, `prioridad` en `{ codigo, etiqueta }`, `arbol`, `proyecto`, `responsable`, `inspector_revisor` (Mantenimiento con revisión; si no, `null`) y `acciones` del usuario: `programar`, `iniciar`, `trabajar` (Inspector) o `registrar_ejecucion` (Encargado) |
 | `GET /api/sivu/work-orders/mine` (B4) | Cualquier miembro | `project_id?`, `estado?`, `tipo_ot?`, `limit`, `offset` | Igual que B3, solo las OT donde el usuario es el responsable |
-| `PATCH /api/sivu/work-orders/:id/estado` | Inspector responsable | `{ estado: "programada" \| "en_ejecucion", fecha_accion_programada? }` (fecha obligatoria al programar) | 200 `{ data }` |
+| `PATCH /api/sivu/work-orders/:id/estado` | Responsable asignado: Inspector (Inspección) o Encargado de mantención (Mantenimiento) | `{ estado: "programada" \| "en_ejecucion", fecha_accion_programada? }` (fecha obligatoria al programar) | 200 `{ data }` |
 | `POST /api/sivu/work-orders/:id/completar` | Usuario municipal | `{}` (la fecha la pone el Sistema) | 200 `{ data }`; 422 sin inspección finalizada o con un borrador; 409 si los datos cambiaron dos veces (reintentar) |
 | `POST /api/sivu/work-orders/:id/cancelar` | Usuario municipal | `{ motivo_cancelacion }` (obligatorio) | 200 `{ data }`. Solo desde pendiente, programada o en ejecución. |
 | `PATCH /api/sivu/work-orders/:id/responsable` | Usuario municipal | `{ responsable_accion_id }` (Inspector miembro y activo) | 200 `{ data }`. No en completada ni cancelada. |
 | `GET /api/sivu/work-orders/:id/inspections` (B17) | Miembros y Administrador | — | 200 `{ data: [inspección con variables y campos_arbol] }` |
 
 ---
+
+## 5 bis. Mantenimiento (#61; PR-020 v1.1; migración 031)
+
+Flujo: el Usuario municipal crea la OT y elige al Encargado responsable (y, si requiere revisión, al Inspector revisor) →
+el Encargado la programa y la inicia (`PATCH …/estado`) → registra la ejecución con fotos → sin revisión, el Sistema
+completa la OT si el resultado es «Ejecutado completamente»; con revisión, el Inspector revisor aprueba (completa la OT)
+o rechaza (la OT sigue en ejecución y el Encargado registra una **corrección como un registro nuevo**; los anteriores se
+conservan). Tala y Retiro_tocón exigen revisión siempre. Completar a mano (`POST …/completar`) no aplica a Mantenimiento.
+
+| Método y ruta | Quién | Entrada | Respuesta |
+|---|---|---|---|
+| `POST /api/sivu/projects/:id/work-orders/mantenimiento` | Usuario municipal | `{ tree_id, incident_id?, accion_solicitada, subtipo_accion? (obligatorio si la acción tiene subtipos), motivo?, prioridad, observaciones? (obligatoria con otra_intervencion), responsable_accion_id (Encargado), requiere_revision_inspector?, inspector_revisor_id? (obligatorio si requiere revisión) }` | 201 `{ data: { id, codigo_ot, estado_ot, requiere_revision_inspector, inspector_revisor_id } }`; 422 si una regla se rechaza |
+| `PATCH /api/sivu/work-orders/:id/revisor` | Usuario municipal | `{ inspector_revisor_id }` | 200; solo OT con revisión y no cerradas |
+| `GET /api/sivu/work-orders/:id/ejecuciones` | Miembros y Administrador | — | 200 `{ data: [ejecución] }`, de la más antigua a la más reciente (incluye las rechazadas) |
+| `POST /api/sivu/work-orders/:id/ejecuciones` | Encargado responsable, OT en ejecución | `multipart/form-data`: `fecha_ejecucion`, `accion_ejecutada` (= la solicitada), `subtipo_ejecutado?`, `resultado`, `observaciones?`, `requiere_seguimiento` (`true`/`false`), `fecha_seguimiento?` (posterior a la ejecución), `fotos` (1 a 10 JPG/PNG, hasta 10 MB) | 201 `{ data: { id, codigo_mantenimiento, estado_revision, estado_ot } }`; 422 si hay otra ejecución pendiente de revisión |
+| `PATCH /api/sivu/work-orders/:id/ejecuciones/:recordId/revision` | Inspector revisor asignado | `{ estado_revision: "aprobado" \| "rechazado", observaciones_revision? (obligatoria al rechazar), requiere_correccion, fecha_limite_correccion? (obligatoria si requiere corrección) }` | 200 `{ data: { id, estado_revision, estado_ot, estado_presencia } }`. Aprobar exige resultado «Ejecutado completamente». |
+| `GET /api/sivu/work-orders/revisiones` | Inspector | `project_id?`, `solo_pendientes?` (`true`/`false`) | 200 `{ data: [OT con la forma de B3 + ejecucion_pendiente] }`: sus OT como revisor (CC-064 b) |
+
+**Ejecución:** `{ id, codigo_mantenimiento, work_order_id, fecha_ejecucion, ejecutado_por, accion_ejecutada, subtipo_ejecutado,
+resultado, observaciones, requiere_seguimiento, fecha_seguimiento, estado_revision, revisado_por, fecha_revision,
+observaciones_revision, requiere_correccion, fecha_limite_correccion, created_at, fotos: [{ id, url, created_at }] }`;
+los valores de lista como `{ codigo, etiqueta }` (catálogos `accion_mantenimiento`, `subtipo_mantenimiento`,
+`resultado_mantenimiento`, `estado_revision`).
+
+**Decisiones de Valej (2026-11-01):** revisor asignado al crear la OT (campo fuera del Excel, AM-23); una ejecución nueva solo
+cuando no hay otra pendiente; aprobar exige resultado completo.
 
 ## 5. Inspecciones y fotos
 
@@ -229,7 +257,7 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 ## 9. Pendiente o en revisión
 
 - **B6** (OT
-  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (indicadores; depende de CC-016), **#61** Mantenimiento (depende de AM-22).
+  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (indicadores; depende de CC-016).
 - **CC-052:** la búsqueda de cercanos está disponible; el radio por defecto y la pantalla los define el frontend.
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde
   otro dominio, `CORS_ORIGIN`.

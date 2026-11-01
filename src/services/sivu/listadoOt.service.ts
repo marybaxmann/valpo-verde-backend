@@ -61,6 +61,8 @@ export interface OtListada {
   } | null;
   requiere_revision_inspector: boolean | null;
   responsable: { id: string; nombre: string | null; fuera_del_proyecto?: true } | null;
+  /** Inspector revisor de una OT de Mantenimiento con revisión (#61); null en las demás. */
+  inspector_revisor: { id: string; nombre: string | null; fuera_del_proyecto?: true } | null;
   acciones: string[];
 }
 
@@ -155,6 +157,32 @@ export async function listarOtsDeArbol(user: AuthenticatedUser, projectId: strin
   return data;
 }
 
+/**
+ * «Revisiones de mantenimiento» del Inspector (CC-064 b; #61): las OT de
+ * Mantenimiento donde es el Inspector revisor asignado, de todos sus
+ * proyectos o de uno. Por defecto, las que no están cerradas.
+ */
+export async function listarOtsEnRevision(
+  user: AuthenticatedUser,
+  opciones: { projectId?: string; estados?: readonly string[] },
+  accessToken: string
+): Promise<OtListada[]> {
+  if (opciones.projectId) await assertProjectAccess(user, opciones.projectId, accessToken);
+  const { data } = await armarListado(
+    user,
+    {
+      projectId: opciones.projectId,
+      inspectorRevisorId: user.id,
+      tipoOt: "mantenimiento",
+      estados: opciones.estados ?? ESTADOS_OT_POR_DEFECTO,
+      limit: 200,
+      offset: 0,
+    },
+    accessToken
+  );
+  return data;
+}
+
 async function armarListado(user: AuthenticatedUser, filtros: FiltrosListadoOt, accessToken: string): Promise<ListadoOt> {
   const { filas, total } = await listarOrdenesTrabajo(accessToken, filtros);
 
@@ -175,20 +203,17 @@ async function armarListado(user: AuthenticatedUser, filtros: FiltrosListadoOt, 
 
   return {
     data: filas.map((fila) => {
-      const responsableId = fila.responsable_accion_id;
-      const miembro = responsableId
-        ? miembrosPorProyectoMap.get(fila.project_id)?.get(responsableId)
-        : undefined;
-      const responsable = responsableId
-        ? miembro
-          ? { id: responsableId, nombre: miembro.nombre }
-          : { id: responsableId, nombre: null, fuera_del_proyecto: true as const }
-        : null;
+      const persona = (id: string | null) => {
+        if (!id) return null;
+        const miembro = miembrosPorProyectoMap.get(fila.project_id)?.get(id);
+        return miembro ? { id, nombre: miembro.nombre } : { id, nombre: null, fuera_del_proyecto: true as const };
+      };
 
       return aOtListada(user, fila, {
         arbol: fila.tree_id ? arbolPorId.get(fila.tree_id) ?? null : null,
         nombreProyecto: proyectoPorId.get(fila.project_id)?.nombre_proyecto ?? null,
-        responsable,
+        responsable: persona(fila.responsable_accion_id),
+        inspectorRevisor: persona(fila.inspector_revisor_id ?? null),
       });
     }),
     total,
@@ -204,6 +229,7 @@ function aOtListada(
     arbol: ArbolDeOtRow | null;
     nombreProyecto: string | null;
     responsable: { id: string; nombre: string | null; fuera_del_proyecto?: true } | null;
+    inspectorRevisor: { id: string; nombre: string | null; fuera_del_proyecto?: true } | null;
   }
 ): OtListada {
   const esInspeccion = fila.tipo_ot === "inspeccion";
@@ -235,6 +261,7 @@ function aOtListada(
       : null,
     requiere_revision_inspector: fila.requiere_revision_inspector,
     responsable: extra.responsable,
+    inspector_revisor: extra.inspectorRevisor,
     acciones: accionesDisponibles(user, fila),
   };
 }
@@ -244,22 +271,25 @@ function conEtiqueta(catalogo: string, codigo: string): CodigoEtiqueta {
 }
 
 /**
- * Acciones que ya están implementadas (CC-065 punto 5): el Inspector
- * responsable de una OT de Inspección la programa, la inicia (018g) y
- * trabaja la inspección (#58, #59, #72). Completar, cancelar y reasignar
- * (Usuario municipal) y lo de Mantenimiento (#61) todavía no existen.
+ * Acciones del responsable actual (CC-065 punto 5): el Inspector en una OT
+ * de Inspección la programa, la inicia y trabaja la inspección; el
+ * Encargado de mantención en una OT de Mantenimiento la programa, la
+ * inicia y registra la ejecución (#61; CC-064 c). La revisión del
+ * Inspector revisor va en «Revisiones de mantenimiento».
  */
 function accionesDisponibles(user: AuthenticatedUser, fila: OtListadoRow): string[] {
-  if (user.role !== "inspector" || fila.tipo_ot !== "inspeccion" || fila.responsable_accion_id !== user.id) {
-    return [];
-  }
+  const esResponsable =
+    fila.responsable_accion_id === user.id &&
+    ((user.role === "inspector" && fila.tipo_ot === "inspeccion") ||
+      (user.role === "encargado_mantencion" && fila.tipo_ot === "mantenimiento"));
+  if (!esResponsable) return [];
   switch (fila.estado_ot) {
     case "pendiente":
       return ["programar"];
     case "programada":
       return ["iniciar"];
     case "en_ejecucion":
-      return ["trabajar"];
+      return [fila.tipo_ot === "inspeccion" ? "trabajar" : "registrar_ejecucion"];
     default:
       return [];
   }

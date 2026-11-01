@@ -38,10 +38,26 @@ const uploadFotosReporte = multer({
 
 /** Hasta MAX_FOTOS_REPORTE archivos en el campo `fotos` (formulario ciudadano, #62). */
 export function subirFotosReporte(req: Request, res: Response, next: NextFunction): void {
-  uploadFotosReporte.array("fotos", MAX_FOTOS_REPORTE)(req, res, (err: unknown) => traducirErrorMulter(err, next));
+  uploadFotosReporte.array("fotos", MAX_FOTOS_REPORTE)(req, res, (err: unknown) => traducirErrorMulter(err, next, MAX_FOTOS_REPORTE));
 }
 
-function traducirErrorMulter(err: unknown, next: NextFunction): void {
+/**
+ * Máximo de fotos por ejecución de mantenimiento: D-224 exige al menos una
+ * y no fija máximo; 10 es un tope técnico de la solicitud, no una regla.
+ */
+export const MAX_FOTOS_EJECUCION = 10;
+
+const uploadFotosEjecucion = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FOTO_BYTES, files: MAX_FOTOS_EJECUCION },
+});
+
+/** Hasta MAX_FOTOS_EJECUCION archivos en el campo `fotos` (ejecución de mantenimiento, #61). */
+export function subirFotosEjecucion(req: Request, res: Response, next: NextFunction): void {
+  uploadFotosEjecucion.array("fotos", MAX_FOTOS_EJECUCION)(req, res, (err: unknown) => traducirErrorMulter(err, next, MAX_FOTOS_EJECUCION));
+}
+
+function traducirErrorMulter(err: unknown, next: NextFunction, maxFotos = 1): void {
   if (!err) {
     next();
     return;
@@ -52,7 +68,7 @@ function traducirErrorMulter(err: unknown, next: NextFunction): void {
       return;
     }
     if (err.code === "LIMIT_FILE_COUNT" || err.code === "LIMIT_UNEXPECTED_FILE") {
-      next(new AppError(`Se admiten hasta ${MAX_FOTOS_REPORTE} fotos, en el campo «fotos»`, 400));
+      next(new AppError(`Se admiten hasta ${maxFotos} fotos, en el campo «fotos»`, 400));
       return;
     }
     next(new AppError(`Archivo inválido: ${err.message}`, 400));

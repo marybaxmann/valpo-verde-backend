@@ -24,6 +24,7 @@ import {
 } from "../../controllers/sivu/species.controller";
 
 import { inspectionFormSchemaController } from "../../controllers/sivu/inspectionFormSchema.controller";
+import { crearOtMantenimientoController } from "../../controllers/sivu/mantenimiento.controller";
 import { listarDiagnosticosController, listarMiembrosAsignablesController, proximasInspeccionesController, resumenProyectoController } from "../../controllers/sivu/diagnostico.controller";
 import {
   detalleIncidenciaController,
@@ -65,6 +66,8 @@ router.get("/:id/trees/:treeId", authMiddleware, fichaArbolController);
 router.get("/:id/nearby-trees", authMiddleware, arbolesCercanosController);
 // Crear una OT de Inspección (#58; D-238, D-244, CC-036). Solo usuario_municipal.
 router.post("/:id/work-orders", authMiddleware, crearOrdenTrabajoInspeccionController);
+// Crear una OT de Mantenimiento (#61; D-233 a D-246; PR-020). Solo usuario_municipal.
+router.post("/:id/work-orders/mantenimiento", authMiddleware, crearOtMantenimientoController);
 // OT del proyecto (B3; CC-061, CC-065): visibilidad por rol y tipo de OT.
 router.get("/:id/work-orders", authMiddleware, listarOtsProyectoController);
 // Miembros asignables como responsables (B14; fn_miembros_proyecto, 024).

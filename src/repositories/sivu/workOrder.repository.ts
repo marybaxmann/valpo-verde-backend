@@ -220,10 +220,12 @@ export interface OtListadoRow {
   fecha_completada_ot: string | null;
   responsable_accion_id: string | null;
   requiere_revision_inspector: boolean | null;
+  /** Inspector revisor de una OT de Mantenimiento con revisión (031). */
+  inspector_revisor_id: string | null;
 }
 
 const OT_LISTADO_COLUMNS =
-  "id, codigo_ot, project_id, tree_id, tipo_ot, accion_solicitada, subtipo_accion, prioridad, estado_ot, fecha_creacion_ot, fecha_accion_programada, fecha_completada_ot, responsable_accion_id, requiere_revision_inspector";
+  "id, codigo_ot, project_id, tree_id, tipo_ot, accion_solicitada, subtipo_accion, prioridad, estado_ot, fecha_creacion_ot, fecha_accion_programada, fecha_completada_ot, responsable_accion_id, requiere_revision_inspector, inspector_revisor_id";
 
 export interface FiltrosListadoOt {
   projectId?: string;
@@ -237,6 +239,8 @@ export interface FiltrosListadoOt {
   mantenimientoOInspeccionDe?: string;
   /** Solo las OT de este árbol (B2). */
   treeId?: string;
+  /** Solo las OT de Mantenimiento con este Inspector revisor (031). */
+  inspectorRevisorId?: string;
   estados: readonly string[];
   limit: number;
   offset: number;
@@ -259,6 +263,7 @@ export async function listarOrdenesTrabajo(
   if (filtros.responsableId) query = query.eq("responsable_accion_id", filtros.responsableId);
   if (filtros.tipoOt) query = query.eq("tipo_ot", filtros.tipoOt);
   if (filtros.treeId) query = query.eq("tree_id", filtros.treeId);
+  if (filtros.inspectorRevisorId) query = query.eq("inspector_revisor_id", filtros.inspectorRevisorId);
   if (filtros.mantenimientoOInspeccionDe) {
     query = query.or(
       `tipo_ot.eq.mantenimiento,and(tipo_ot.eq.inspeccion,responsable_accion_id.eq.${filtros.mantenimientoOInspeccionDe})`

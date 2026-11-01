@@ -55,6 +55,7 @@ function ot(over: Partial<OtListadoRow>): OtListadoRow {
     fecha_completada_ot: null,
     responsable_accion_id: INSPECTOR.id,
     requiere_revision_inspector: null,
+    inspector_revisor_id: null,
     ...over,
   };
 }
@@ -193,10 +194,11 @@ describe("B4 — Mis OT (CC-064 k y n, CC-065)", () => {
     expect(mockAccess).not.toHaveBeenCalled();
   });
 
-  it("Encargado: sus OT de Mantenimiento de todos sus proyectos, sin acciones (el #61 no existe)", async () => {
+  it("Encargado: sus OT de Mantenimiento de todos sus proyectos, con sus acciones (#61)", async () => {
     const r = await listarMisOts(ENCARGADO, QUERY, TOKEN);
     expect(codigos(r)).toEqual(["OT-M-000001", "OT-M-000002"]);
-    expect(r.data.every((o) => o.acciones.length === 0)).toBe(true);
+    const esperadas: Record<string, string[]> = { pendiente: ["programar"], programada: ["iniciar"], en_ejecucion: ["registrar_ejecucion"] };
+    for (const o of r.data) expect(o.acciones).toEqual(esperadas[o.estado.codigo] ?? []);
   });
 
   it("filtro por proyecto: exige acceso y filtra", async () => {

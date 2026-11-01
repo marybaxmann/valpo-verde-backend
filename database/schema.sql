@@ -1,7 +1,16 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 26 — migración 030 (2026-11-01; AM-18; B5):
+--   (revisión 27 — migración 031 (2026-11-01; #61; AM-22):
+--   work_orders.inspector_revisor_id y su CHECK, v_tree_presence según
+--   D-28 (subtipo ejecutado), fn_transition_work_order_estado también
+--   para Mantenimiento, y las funciones de Mantenimiento
+--   (fn_create_work_order_mantenimiento, fn_reassign_inspector_revisor,
+--   fn_registrar_ejecucion_mantenimiento, fn_revisar_mantenimiento y
+--   auxiliares), copiadas de lo aplicado en `valpo-verde-conecta-pruebas`
+--   (md5 de lo aplicado = archivo de migración en LF; los GRANT/REVOKE
+--   quedan solo en la migración);
+--   antes revisión 26 — migración 030 (2026-11-01; AM-18; B5):
 --   v_upcoming_inspections reconstruida sobre v_tree_fechas_vigentes (solo
 --   fechas de inspecciones Finalizadas de OT Completadas; una fila por
 --   árbol y tipo), copiada de lo aplicado en `valpo-verde-conecta-pruebas`
@@ -2175,6 +2184,7 @@ CREATE TRIGGER trg_work_orders_completada
 -- fecha_creacion_ot (D-241). Mantenimiento y la transición a Completada no
 -- están implementadas todavía (#61 y el bloque de estados restantes de la
 -- OT, respectivamente). SQLSTATE SV059.
+-- Migración 031 (#61): también OT de Mantenimiento, por su Encargado de mantención.
 CREATE FUNCTION fn_transition_work_order_estado(
   p_work_order_id uuid,
   p_nuevo_estado text,
@@ -2192,6 +2202,7 @@ DECLARE
   v_fecha_creacion_ot date;
   v_rol text;
   v_activo boolean;
+  v_rol_esperado text;
 BEGIN
   SELECT estado_ot, tipo_ot, responsable_accion_id, fecha_creacion_ot
   INTO v_estado_ot, v_tipo_ot, v_responsable_accion_id, v_fecha_creacion_ot
@@ -2200,10 +2211,8 @@ BEGIN
   IF v_estado_ot IS NULL THEN
     RAISE EXCEPTION 'La orden de trabajo % no existe', p_work_order_id USING ERRCODE = 'SV059';
   END IF;
-  IF v_tipo_ot <> 'inspeccion' THEN
-    RAISE EXCEPTION 'Esta función todavía no transiciona OT de Mantenimiento (CC-050: las hace el Encargado de mantención; se implementa en el #61)'
-      USING ERRCODE = 'SV059';
-  END IF;
+  -- D-244: Inspector en Inspección; Encargado de mantención en Mantenimiento.
+  v_rol_esperado := CASE v_tipo_ot WHEN 'inspeccion' THEN 'inspector' ELSE 'encargado_mantencion' END;
   IF v_responsable_accion_id IS NULL OR v_responsable_accion_id <> p_usuario THEN
     RAISE EXCEPTION 'El usuario % no es el responsable asignado de la orden de trabajo % (responsable actual: %)',
       p_usuario, p_work_order_id, v_responsable_accion_id
@@ -2217,8 +2226,8 @@ BEGIN
   IF v_rol IS NULL THEN
     RAISE EXCEPTION 'El usuario % no existe', p_usuario USING ERRCODE = 'SV059';
   END IF;
-  IF v_rol <> 'inspector' THEN
-    RAISE EXCEPTION 'El usuario % no tiene el rol Inspector (rol actual: %)', p_usuario, v_rol USING ERRCODE = 'SV059';
+  IF v_rol <> v_rol_esperado THEN
+    RAISE EXCEPTION 'El usuario % no tiene el rol % (rol actual: %)', p_usuario, v_rol_esperado, v_rol USING ERRCODE = 'SV059';
   END IF;
   IF NOT v_activo THEN
     RAISE EXCEPTION 'El usuario % no está activo', p_usuario USING ERRCODE = 'SV059';
@@ -4421,6 +4430,384 @@ CREATE TRIGGER trg_maintenance_records_ot
   BEFORE INSERT OR UPDATE ON maintenance_records
   FOR EACH ROW EXECUTE FUNCTION fn_check_maintenance_record_ot();
 
+-- Mantenimiento (migración 031; #61; PR-020 v1.1). EXECUTE solo para
+-- service_role (en la migración).
+ALTER TABLE public.work_orders ADD COLUMN inspector_revisor_id UUID REFERENCES public.user_profiles(id);
+ALTER TABLE public.work_orders ADD CONSTRAINT chk_work_orders_inspector_revisor CHECK (
+  (inspector_revisor_id IS NULL OR (tipo_ot = 'mantenimiento' AND requiere_revision_inspector IS TRUE))
+  AND (tipo_ot <> 'mantenimiento' OR requiere_revision_inspector IS NOT TRUE OR inspector_revisor_id IS NOT NULL)
+);
+CREATE INDEX idx_work_orders_inspector_revisor ON public.work_orders (inspector_revisor_id) WHERE inspector_revisor_id IS NOT NULL;
+
+-- Pares acción/subtipo de Mantenimiento (D-219, D-236). NULL = la acción
+-- no tiene subtipos definidos.
+CREATE FUNCTION public.fn_subtipos_mantenimiento(p_accion text) RETURNS text[]
+LANGUAGE sql IMMUTABLE
+SET search_path = public, pg_temp
+AS $$
+  SELECT CASE p_accion
+    WHEN 'poda' THEN ARRAY['sanitaria', 'formacion', 'despeje', 'reduccion']
+    WHEN 'riego' THEN ARRAY['programado', 'emergencia']
+    WHEN 'descompactacion' THEN ARRAY['manual', 'mecanica']
+    WHEN 'manejo_fitosanitario' THEN ARRAY['preventivo', 'correctivo', 'retiro_residuos']
+    WHEN 'tala_retiro' THEN ARRAY['tala', 'retiro_tocon']
+    ELSE NULL
+  END;
+$$;
+
+-- Usuario con el rol dado, activo y miembro del proyecto; lanza el SQLSTATE dado si no.
+CREATE FUNCTION public.fn_assert_miembro_con_rol(p_usuario uuid, p_project_id uuid, p_rol text, p_que text, p_sqlstate text) RETURNS void
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_rol text;
+  v_activo boolean;
+BEGIN
+  SELECT r.nombre, up.activo INTO v_rol, v_activo
+  FROM public.user_profiles up JOIN public.roles r ON r.id = up.role_id
+  WHERE up.id = p_usuario;
+  IF v_rol IS NULL THEN
+    RAISE EXCEPTION '% %: el usuario no existe', p_que, p_usuario USING ERRCODE = p_sqlstate;
+  END IF;
+  IF v_rol <> p_rol THEN
+    RAISE EXCEPTION '% debe tener el rol % (rol actual: %)', p_que, p_rol, v_rol USING ERRCODE = p_sqlstate;
+  END IF;
+  IF NOT v_activo THEN
+    RAISE EXCEPTION '% %: el usuario no está activo', p_que, p_usuario USING ERRCODE = p_sqlstate;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.project_members WHERE project_id = p_project_id AND user_id = p_usuario) THEN
+    RAISE EXCEPTION '% %: no es miembro del proyecto', p_que, p_usuario USING ERRCODE = p_sqlstate;
+  END IF;
+END;
+$$;
+
+CREATE FUNCTION public.fn_create_work_order_mantenimiento(
+  p_project_id uuid,
+  p_tree_id uuid,
+  p_incident_id uuid,
+  p_accion_solicitada text,
+  p_subtipo_accion text,
+  p_motivo text,
+  p_prioridad text,
+  p_observaciones text,
+  p_responsable_accion_id uuid,
+  p_requiere_revision_inspector boolean,
+  p_inspector_revisor_id uuid,
+  p_creado_por uuid,
+  p_fecha_creacion_ot date
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_subtipos text[];
+  v_tree_project_id uuid;
+  v_incident_project_id uuid;
+  v_revision boolean;
+  v_wo record;
+BEGIN
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_creado_por THEN
+    RAISE EXCEPTION 'No está autorizado a ejecutar esta acción en nombre de otro usuario' USING ERRCODE = '42501';
+  END IF;
+  PERFORM public.fn_assert_miembro_con_rol(p_creado_por, p_project_id, 'usuario_municipal', 'Quien crea la OT', 'SV072');
+  -- D-244: en Mantenimiento, el responsable es un Encargado de mantención.
+  PERFORM public.fn_assert_miembro_con_rol(p_responsable_accion_id, p_project_id, 'encargado_mantencion', 'El responsable (D-244)', 'SV072');
+
+  IF p_accion_solicitada NOT IN ('poda', 'riego', 'descompactacion', 'manejo_fitosanitario', 'tala_retiro',
+                                 'reparacion_alcorque', 'soporte_tutorado', 'otra_intervencion') THEN
+    RAISE EXCEPTION 'accion_solicitada (%) no es una acción de Mantenimiento (D-235)', p_accion_solicitada USING ERRCODE = 'SV072';
+  END IF;
+  v_subtipos := public.fn_subtipos_mantenimiento(p_accion_solicitada);
+  IF v_subtipos IS NULL AND p_subtipo_accion IS NOT NULL THEN
+    RAISE EXCEPTION 'La acción % no tiene subtipos: subtipo_accion debe quedar vacío (D-236)', p_accion_solicitada USING ERRCODE = 'SV072';
+  END IF;
+  IF v_subtipos IS NOT NULL AND (p_subtipo_accion IS NULL OR NOT p_subtipo_accion = ANY (v_subtipos)) THEN
+    RAISE EXCEPTION 'subtipo_accion es obligatorio y debe ser uno de % para la acción % (D-236)', v_subtipos, p_accion_solicitada USING ERRCODE = 'SV072';
+  END IF;
+
+  IF p_tree_id IS NULL THEN
+    RAISE EXCEPTION 'tree_id es obligatorio en una OT de Mantenimiento' USING ERRCODE = 'SV072';
+  END IF;
+  SELECT project_id INTO v_tree_project_id FROM public.trees WHERE id = p_tree_id;
+  IF v_tree_project_id IS DISTINCT FROM p_project_id THEN
+    RAISE EXCEPTION 'El árbol % no existe en el proyecto de la orden de trabajo', p_tree_id USING ERRCODE = 'SV072';
+  END IF;
+  IF p_incident_id IS NOT NULL THEN
+    SELECT project_id INTO v_incident_project_id FROM public.incidents WHERE id = p_incident_id;
+    IF v_incident_project_id IS DISTINCT FROM p_project_id THEN
+      RAISE EXCEPTION 'La incidencia % no existe en el proyecto de la orden de trabajo', p_incident_id USING ERRCODE = 'SV072';
+    END IF;
+  END IF;
+  IF p_prioridad IS NULL OR p_prioridad NOT IN ('baja', 'media', 'alta', 'critica') THEN
+    RAISE EXCEPTION 'prioridad es obligatoria: baja, media, alta o critica (D-238)' USING ERRCODE = 'SV072';
+  END IF;
+  IF p_accion_solicitada = 'otra_intervencion' AND btrim(COALESCE(p_observaciones, '')) = '' THEN
+    RAISE EXCEPTION 'observaciones es obligatoria para Otra_Intervención (D-246)' USING ERRCODE = 'SV072';
+  END IF;
+
+  -- PR-020: Tala y Retiro_tocón exigen revisión; en lo demás, valor inicial No.
+  v_revision := p_subtipo_accion IN ('tala', 'retiro_tocon') OR COALESCE(p_requiere_revision_inspector, false);
+  IF v_revision THEN
+    IF p_inspector_revisor_id IS NULL THEN
+      RAISE EXCEPTION 'inspector_revisor_id es obligatorio cuando la OT requiere revisión del Inspector' USING ERRCODE = 'SV072';
+    END IF;
+    PERFORM public.fn_assert_miembro_con_rol(p_inspector_revisor_id, p_project_id, 'inspector', 'El Inspector revisor', 'SV072');
+  ELSIF p_inspector_revisor_id IS NOT NULL THEN
+    RAISE EXCEPTION 'inspector_revisor_id solo se asigna cuando la OT requiere revisión del Inspector' USING ERRCODE = 'SV072';
+  END IF;
+
+  INSERT INTO public.work_orders (
+    project_id, tree_id, incident_id, tipo_ot, accion_solicitada, subtipo_accion, motivo, prioridad, observaciones,
+    fecha_creacion_ot, ot_creado_por, responsable_accion_id, requiere_revision_inspector, inspector_revisor_id
+  ) VALUES (
+    p_project_id, p_tree_id, p_incident_id, 'mantenimiento', p_accion_solicitada, p_subtipo_accion, NULLIF(btrim(p_motivo), ''), p_prioridad,
+    NULLIF(btrim(p_observaciones), ''), p_fecha_creacion_ot, p_creado_por, p_responsable_accion_id, v_revision,
+    CASE WHEN v_revision THEN p_inspector_revisor_id END
+  )
+  RETURNING id, codigo_ot, estado_ot, requiere_revision_inspector, inspector_revisor_id INTO v_wo;
+
+  RETURN jsonb_build_object('id', v_wo.id, 'codigo_ot', v_wo.codigo_ot, 'estado_ot', v_wo.estado_ot,
+    'requiere_revision_inspector', v_wo.requiere_revision_inspector, 'inspector_revisor_id', v_wo.inspector_revisor_id);
+END;
+$$;
+
+CREATE FUNCTION public.fn_reassign_inspector_revisor(p_work_order_id uuid, p_nuevo_revisor_id uuid, p_usuario uuid) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_wo record;
+BEGIN
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_usuario THEN
+    RAISE EXCEPTION 'No está autorizado a ejecutar esta acción en nombre de otro usuario' USING ERRCODE = '42501';
+  END IF;
+  SELECT id, project_id, tipo_ot, estado_ot, requiere_revision_inspector INTO v_wo
+  FROM public.work_orders WHERE id = p_work_order_id FOR UPDATE;
+  IF v_wo.id IS NULL THEN
+    RAISE EXCEPTION 'La orden de trabajo % no existe', p_work_order_id USING ERRCODE = 'SV072';
+  END IF;
+  IF v_wo.tipo_ot <> 'mantenimiento' OR v_wo.requiere_revision_inspector IS NOT TRUE THEN
+    RAISE EXCEPTION 'Solo una OT de Mantenimiento que requiere revisión tiene Inspector revisor' USING ERRCODE = 'SV072';
+  END IF;
+  IF v_wo.estado_ot IN ('completada', 'cancelada') THEN
+    RAISE EXCEPTION 'No se cambia el revisor de una orden de trabajo % (CC-050)', v_wo.estado_ot USING ERRCODE = 'SV072';
+  END IF;
+  PERFORM public.fn_assert_miembro_con_rol(p_usuario, v_wo.project_id, 'usuario_municipal', 'Quien cambia el revisor', 'SV072');
+  PERFORM public.fn_assert_miembro_con_rol(p_nuevo_revisor_id, v_wo.project_id, 'inspector', 'El Inspector revisor', 'SV072');
+  UPDATE public.work_orders SET inspector_revisor_id = p_nuevo_revisor_id WHERE id = p_work_order_id;
+  RETURN jsonb_build_object('work_order_id', p_work_order_id, 'inspector_revisor_id', p_nuevo_revisor_id);
+END;
+$$;
+
+-- p_fotos: [{"id": uuid, "storage_path": text}, ...], al menos una (D-224);
+-- el backend las sube antes y las borra si esta función falla.
+CREATE FUNCTION public.fn_registrar_ejecucion_mantenimiento(
+  p_work_order_id uuid,
+  p_usuario uuid,
+  p_fecha_ejecucion date,
+  p_accion_ejecutada text,
+  p_subtipo_ejecutado text,
+  p_resultado text,
+  p_observaciones text,
+  p_requiere_seguimiento boolean,
+  p_fecha_seguimiento date,
+  p_fotos jsonb,
+  p_hoy date
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_wo record;
+  v_subtipos text[];
+  v_mr record;
+  v_foto jsonb;
+  v_completa boolean := false;
+BEGIN
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_usuario THEN
+    RAISE EXCEPTION 'No está autorizado a ejecutar esta acción en nombre de otro usuario' USING ERRCODE = '42501';
+  END IF;
+  SELECT id, project_id, tree_id, tipo_ot, estado_ot, accion_solicitada, responsable_accion_id, requiere_revision_inspector INTO v_wo
+  FROM public.work_orders WHERE id = p_work_order_id FOR UPDATE;
+  IF v_wo.id IS NULL THEN
+    RAISE EXCEPTION 'La orden de trabajo % no existe', p_work_order_id USING ERRCODE = 'SV073';
+  END IF;
+  IF v_wo.tipo_ot <> 'mantenimiento' THEN
+    RAISE EXCEPTION 'La orden de trabajo no es de Mantenimiento' USING ERRCODE = 'SV073';
+  END IF;
+  IF v_wo.responsable_accion_id IS DISTINCT FROM p_usuario THEN
+    RAISE EXCEPTION 'Solo el Encargado de mantención responsable registra la ejecución (D-217)' USING ERRCODE = 'SV073';
+  END IF;
+  PERFORM public.fn_assert_miembro_con_rol(p_usuario, v_wo.project_id, 'encargado_mantencion', 'Quien ejecuta (D-217)', 'SV073');
+  IF v_wo.estado_ot <> 'en_ejecucion' THEN
+    RAISE EXCEPTION 'La orden de trabajo no está En ejecución (estado actual: %)', v_wo.estado_ot USING ERRCODE = 'SV073';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.maintenance_records WHERE work_order_id = p_work_order_id AND estado_revision = 'pendiente_revision') THEN
+    RAISE EXCEPTION 'Hay una ejecución pendiente de revisión: se registra otra solo después de la revisión' USING ERRCODE = 'SV073';
+  END IF;
+
+  IF p_fecha_ejecucion IS NULL THEN
+    RAISE EXCEPTION 'fecha_ejecucion es obligatoria (D-216)' USING ERRCODE = 'SV073';
+  END IF;
+  IF p_accion_ejecutada IS DISTINCT FROM v_wo.accion_solicitada THEN
+    RAISE EXCEPTION 'accion_ejecutada debe corresponder a la acción solicitada de la OT (%) (D-218)', v_wo.accion_solicitada USING ERRCODE = 'SV073';
+  END IF;
+  v_subtipos := public.fn_subtipos_mantenimiento(p_accion_ejecutada);
+  IF v_subtipos IS NULL AND p_subtipo_ejecutado IS NOT NULL THEN
+    RAISE EXCEPTION 'La acción % no tiene subtipos: subtipo_ejecutado debe quedar vacío (D-219)', p_accion_ejecutada USING ERRCODE = 'SV073';
+  END IF;
+  IF v_subtipos IS NOT NULL AND (p_subtipo_ejecutado IS NULL OR NOT p_subtipo_ejecutado = ANY (v_subtipos)) THEN
+    RAISE EXCEPTION 'subtipo_ejecutado es obligatorio y debe ser uno de % (D-219)', v_subtipos USING ERRCODE = 'SV073';
+  END IF;
+  IF p_resultado IS NULL OR p_resultado NOT IN ('ejecutado_completamente', 'ejecutado_parcialmente', 'no_ejecutado') THEN
+    RAISE EXCEPTION 'resultado es obligatorio: ejecutado_completamente, ejecutado_parcialmente o no_ejecutado (D-220)' USING ERRCODE = 'SV073';
+  END IF;
+  IF p_accion_ejecutada = 'otra_intervencion' AND btrim(COALESCE(p_observaciones, '')) = '' THEN
+    RAISE EXCEPTION 'observaciones es obligatoria para Otra_Intervención (D-218)' USING ERRCODE = 'SV073';
+  END IF;
+  IF p_requiere_seguimiento IS NULL THEN
+    RAISE EXCEPTION 'requiere_seguimiento es obligatorio (D-222)' USING ERRCODE = 'SV073';
+  END IF;
+  IF p_requiere_seguimiento AND p_fecha_seguimiento IS NULL THEN
+    RAISE EXCEPTION 'fecha_seguimiento es obligatoria con requiere_seguimiento = Sí (D-223)' USING ERRCODE = 'SV073';
+  END IF;
+  IF NOT p_requiere_seguimiento AND p_fecha_seguimiento IS NOT NULL THEN
+    RAISE EXCEPTION 'fecha_seguimiento solo se registra con requiere_seguimiento = Sí (D-223)' USING ERRCODE = 'SV073';
+  END IF;
+  IF p_fecha_seguimiento IS NOT NULL AND p_fecha_seguimiento <= p_fecha_ejecucion THEN
+    RAISE EXCEPTION 'fecha_seguimiento debe ser posterior a fecha_ejecucion (D-223)' USING ERRCODE = 'SV073';
+  END IF;
+  IF p_fotos IS NULL OR jsonb_typeof(p_fotos) <> 'array' OR jsonb_array_length(p_fotos) = 0 THEN
+    RAISE EXCEPTION 'Debe adjuntar al menos una fotografía de la ejecución (D-224)' USING ERRCODE = 'SV073';
+  END IF;
+
+  INSERT INTO public.maintenance_records (
+    work_order_id, tree_id, fecha_ejecucion, ejecutado_por, accion_ejecutada, subtipo_ejecutado, resultado,
+    observaciones, requiere_seguimiento, fecha_seguimiento, estado_revision
+  ) VALUES (
+    p_work_order_id, v_wo.tree_id, p_fecha_ejecucion, p_usuario, p_accion_ejecutada, p_subtipo_ejecutado, p_resultado,
+    NULLIF(btrim(p_observaciones), ''), p_requiere_seguimiento, p_fecha_seguimiento,
+    CASE WHEN v_wo.requiere_revision_inspector THEN 'pendiente_revision' END
+  )
+  RETURNING id, codigo_mantenimiento, estado_revision INTO v_mr;
+
+  FOR v_foto IN SELECT value FROM jsonb_array_elements(p_fotos) LOOP
+    INSERT INTO public.photos (id, tree_id, storage_path, vista, inspection_id, maintenance_record_id, incident_id, uploaded_by)
+    VALUES ((v_foto->>'id')::uuid, v_wo.tree_id, v_foto->>'storage_path', NULL, NULL, v_mr.id, NULL, p_usuario);
+  END LOOP;
+
+  -- PR-020: sin revisión, el Sistema completa la OT con Ejecutado completamente y la evidencia.
+  IF v_wo.requiere_revision_inspector IS NOT TRUE AND p_resultado = 'ejecutado_completamente' THEN
+    UPDATE public.work_orders SET estado_ot = 'completada', fecha_completada_ot = p_hoy WHERE id = p_work_order_id;
+    v_completa := true;
+  END IF;
+
+  RETURN jsonb_build_object('id', v_mr.id, 'codigo_mantenimiento', v_mr.codigo_mantenimiento, 'estado_revision', v_mr.estado_revision,
+    'estado_ot', CASE WHEN v_completa THEN 'completada' ELSE 'en_ejecucion' END);
+END;
+$$;
+
+CREATE FUNCTION public.fn_revisar_mantenimiento(
+  p_maintenance_record_id uuid,
+  p_usuario uuid,
+  p_estado_revision text,
+  p_observaciones_revision text,
+  p_requiere_correccion boolean,
+  p_fecha_limite_correccion date,
+  p_hoy date
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_mr record;
+  v_wo record;
+  v_obs text := NULLIF(btrim(COALESCE(p_observaciones_revision, '')), '');
+  v_presencia text;
+BEGIN
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_usuario THEN
+    RAISE EXCEPTION 'No está autorizado a ejecutar esta acción en nombre de otro usuario' USING ERRCODE = '42501';
+  END IF;
+  SELECT id, work_order_id, tree_id, fecha_ejecucion, subtipo_ejecutado, resultado, estado_revision INTO v_mr
+  FROM public.maintenance_records WHERE id = p_maintenance_record_id FOR UPDATE;
+  IF v_mr.id IS NULL THEN
+    RAISE EXCEPTION 'El registro de mantenimiento % no existe', p_maintenance_record_id USING ERRCODE = 'SV074';
+  END IF;
+  SELECT id, project_id, estado_ot, requiere_revision_inspector, inspector_revisor_id INTO v_wo
+  FROM public.work_orders WHERE id = v_mr.work_order_id FOR UPDATE;
+  IF v_wo.requiere_revision_inspector IS NOT TRUE THEN
+    RAISE EXCEPTION 'La OT no requiere revisión del Inspector (D-225)' USING ERRCODE = 'SV074';
+  END IF;
+  IF v_mr.estado_revision IS DISTINCT FROM 'pendiente_revision' THEN
+    RAISE EXCEPTION 'El registro ya fue revisado (estado: %)', v_mr.estado_revision USING ERRCODE = 'SV074';
+  END IF;
+  IF v_wo.estado_ot <> 'en_ejecucion' THEN
+    RAISE EXCEPTION 'La orden de trabajo no está En ejecución (estado actual: %)', v_wo.estado_ot USING ERRCODE = 'SV074';
+  END IF;
+  IF v_wo.inspector_revisor_id IS DISTINCT FROM p_usuario THEN
+    RAISE EXCEPTION 'Solo el Inspector revisor asignado a la OT revisa la ejecución' USING ERRCODE = 'SV074';
+  END IF;
+  PERFORM public.fn_assert_miembro_con_rol(p_usuario, v_wo.project_id, 'inspector', 'Quien revisa (D-226)', 'SV074');
+
+  IF p_estado_revision NOT IN ('aprobado', 'rechazado') THEN
+    RAISE EXCEPTION 'estado_revision debe ser aprobado o rechazado (D-225)' USING ERRCODE = 'SV074';
+  END IF;
+  IF p_estado_revision = 'aprobado' AND v_mr.resultado <> 'ejecutado_completamente' THEN
+    RAISE EXCEPTION 'Solo se aprueba una ejecución con resultado Ejecutado completamente (D-220); rechácela para que se corrija' USING ERRCODE = 'SV074';
+  END IF;
+  IF p_estado_revision = 'rechazado' AND v_obs IS NULL THEN
+    RAISE EXCEPTION 'observaciones_revision es obligatoria al rechazar (D-228)' USING ERRCODE = 'SV074';
+  END IF;
+  IF p_requiere_correccion IS NULL THEN
+    RAISE EXCEPTION 'requiere_correccion es obligatorio al revisar (D-229)' USING ERRCODE = 'SV074';
+  END IF;
+  IF p_requiere_correccion AND p_fecha_limite_correccion IS NULL THEN
+    RAISE EXCEPTION 'fecha_limite_correccion es obligatoria con requiere_correccion = Sí (D-230)' USING ERRCODE = 'SV074';
+  END IF;
+  IF NOT p_requiere_correccion AND p_fecha_limite_correccion IS NOT NULL THEN
+    RAISE EXCEPTION 'fecha_limite_correccion solo se registra con requiere_correccion = Sí (D-230)' USING ERRCODE = 'SV074';
+  END IF;
+  IF p_fecha_limite_correccion IS NOT NULL AND p_fecha_limite_correccion <= p_hoy THEN
+    RAISE EXCEPTION 'fecha_limite_correccion debe ser posterior a la fecha de revisión (D-230)' USING ERRCODE = 'SV074';
+  END IF;
+  IF p_hoy < v_mr.fecha_ejecucion THEN
+    RAISE EXCEPTION 'La fecha de revisión no puede ser anterior a fecha_ejecucion (%) (D-227)', v_mr.fecha_ejecucion USING ERRCODE = 'SV074';
+  END IF;
+
+  UPDATE public.maintenance_records SET
+    estado_revision = p_estado_revision,
+    revisado_por = p_usuario,
+    fecha_revision = now(),
+    observaciones_revision = v_obs,
+    requiere_correccion = p_requiere_correccion,
+    fecha_limite_correccion = p_fecha_limite_correccion
+  WHERE id = p_maintenance_record_id;
+
+  IF p_estado_revision = 'aprobado' THEN
+    -- PR-020: con revisión, el Sistema completa la OT al aprobarse.
+    UPDATE public.work_orders SET estado_ot = 'completada', fecha_completada_ot = p_hoy WHERE id = v_wo.id;
+    -- AM-22: estado_ciclo_vida, copia de la presencia (D-28).
+    IF v_mr.subtipo_ejecutado = 'tala' THEN
+      UPDATE public.trees SET estado_ciclo_vida = 'tocon' WHERE id = v_mr.tree_id;
+      v_presencia := 'talado';
+    ELSIF v_mr.subtipo_ejecutado = 'retiro_tocon' THEN
+      UPDATE public.trees SET estado_ciclo_vida = 'retirado' WHERE id = v_mr.tree_id;
+      v_presencia := 'retirado';
+    END IF;
+  END IF;
+
+  RETURN jsonb_build_object('id', p_maintenance_record_id, 'estado_revision', p_estado_revision,
+    'estado_ot', CASE WHEN p_estado_revision = 'aprobado' THEN 'completada' ELSE 'en_ejecucion' END,
+    'estado_presencia', v_presencia);
+END;
+$$;
+
+
 -- Cierre automático de la OT (RG "Revisión de mantenimiento") y demás
 -- orquestación: backend, no trigger de base (§5.3).
 
@@ -4501,29 +4888,30 @@ CREATE TRIGGER trg_photos_tree_coherente
 -- estado_presencia y fecha_cambio_estado_presencia (D-28, D-29;
 -- PR-020 v1.1). Talado/Retirado solo con OT completada + mantenimiento
 -- aprobado de Tala o Retiro_tocón.
+-- Migración 031 (AM-22): D-28 al pie de la letra (subtipo EJECUTADO y aprobado).
 CREATE VIEW v_tree_presence WITH (security_invoker = true) AS
-WITH cierre AS (
+WITH aprobadas AS (
   SELECT
-    wo.tree_id,
-    wo.subtipo_accion,
+    mr.tree_id,
+    mr.subtipo_ejecutado,
     mr.fecha_revision,
-    ROW_NUMBER() OVER (PARTITION BY wo.tree_id ORDER BY mr.fecha_revision DESC) AS rn
-  FROM work_orders wo
-  JOIN maintenance_records mr ON mr.work_order_id = wo.id
+    ROW_NUMBER() OVER (PARTITION BY mr.tree_id ORDER BY mr.fecha_revision DESC, mr.created_at DESC) AS rn
+  FROM public.maintenance_records mr
+  JOIN public.work_orders wo ON wo.id = mr.work_order_id AND wo.tree_id = mr.tree_id
   WHERE wo.estado_ot = 'completada'
-    AND wo.subtipo_accion IN ('tala', 'retiro_tocon')
     AND mr.estado_revision = 'aprobado'
+    AND mr.subtipo_ejecutado IN ('tala', 'retiro_tocon')
 )
 SELECT
   t.id AS tree_id,
   CASE
-    WHEN c.subtipo_accion = 'tala' THEN 'talado'
-    WHEN c.subtipo_accion = 'retiro_tocon' THEN 'retirado'
+    WHEN a.subtipo_ejecutado = 'tala' THEN 'talado'
+    WHEN a.subtipo_ejecutado = 'retiro_tocon' THEN 'retirado'
     ELSE 'presente'
   END AS estado_presencia,
-  COALESCE(c.fecha_revision::date, t.fecha_registro) AS fecha_cambio_estado_presencia
-FROM trees t
-LEFT JOIN cierre c ON c.tree_id = t.id AND c.rn = 1;
+  COALESCE(a.fecha_revision::date, t.fecha_registro) AS fecha_cambio_estado_presencia
+FROM public.trees t
+LEFT JOIN aprobadas a ON a.tree_id = t.id AND a.rn = 1;
 
 -- Inspección + nivel_riesgo (riesgo efectivo: ajustado si existe, si no,
 -- calculado). D-200.

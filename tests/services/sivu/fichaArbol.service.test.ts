@@ -7,6 +7,7 @@ jest.mock("../../../src/repositories/sivu/fichaArbol.repository", () => ({
   listarVersionesMedicion: jest.fn(),
 }));
 jest.mock("../../../src/services/sivu/diagnostico.service", () => ({ diagnosticoDeArbol: jest.fn() }));
+jest.mock("../../../src/repositories/sivu/mantenimiento.repository", () => ({ obtenerPresencia: jest.fn() }));
 jest.mock("../../../src/services/sivu/incidencia.service", () => ({ listarIncidenciasDeArbol: jest.fn() }));
 jest.mock("../../../src/services/sivu/listadoOt.service", () => ({ listarOtsDeArbol: jest.fn() }));
 
@@ -16,6 +17,7 @@ import { listarVersionesMedicion, obtenerArbolFicha, obtenerRasgosEspecie } from
 import { diagnosticoDeArbol } from "../../../src/services/sivu/diagnostico.service";
 import { listarIncidenciasDeArbol } from "../../../src/services/sivu/incidencia.service";
 import { listarOtsDeArbol } from "../../../src/services/sivu/listadoOt.service";
+import { obtenerPresencia } from "../../../src/repositories/sivu/mantenimiento.repository";
 
 const user = { id: "u1", email: undefined, nombre: null, role: "inspector", activo: true };
 const P = "p1";
@@ -51,6 +53,7 @@ beforeEach(() => {
   (diagnosticoDeArbol as jest.Mock).mockResolvedValue({ ultima_finalizada: { inspection_id: "i3" }, vigente: { evento: "ot_completada" } });
   (listarOtsDeArbol as jest.Mock).mockResolvedValue([{ id: "w1" }]);
   (listarIncidenciasDeArbol as jest.Mock).mockResolvedValue([{ id: "inc1" }]);
+  (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "talado", fecha_cambio_estado_presencia: "2026-11-01" });
 });
 
 describe("obtenerFichaArbol (B2)", () => {
@@ -69,6 +72,7 @@ describe("obtenerFichaArbol (B2)", () => {
     expect(f.ultima_inspeccion_finalizada).toEqual({ inspection_id: "i3" });
     expect(f.ordenes_trabajo).toEqual([{ id: "w1" }]);
     expect(f.incidencias).toEqual([{ id: "inc1" }]);
+    expect(f.presencia).toEqual({ codigo: "talado", etiqueta: "Talado", desde: "2026-11-01" });
   });
 
   it("historial: solo el alta y las finalizadas de OT completadas, la más reciente primero, con los campos que registró cada una", async () => {

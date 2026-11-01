@@ -10,6 +10,7 @@ import {
   obtenerArbolFicha,
   obtenerRasgosEspecie,
 } from "../../repositories/sivu/fichaArbol.repository";
+import { obtenerPresencia } from "../../repositories/sivu/mantenimiento.repository";
 import { diagnosticoDeArbol } from "./diagnostico.service";
 import { listarIncidenciasDeArbol } from "./incidencia.service";
 import { listarOtsDeArbol } from "./listadoOt.service";
@@ -23,8 +24,9 @@ import { listarOtsDeArbol } from "./listadoOt.service";
  * Decisiones de la responsable (2026-10-31): el historial muestra solo
  * las versiones que fueron vigentes (el alta y las inspecciones
  * finalizadas de OT completadas, REGLAS_GENERALES fila 12); todas las OT
- * del árbol para todos los miembros; sin presencia (AM-22 abierto); sin
- * fotos (se piden aparte por inspección).
+ * del árbol para todos los miembros; sin fotos (se piden aparte por
+ * inspección). Presencia (D-28, D-29): agregada al resolverse AM-22
+ * (2026-11-01, migración 031).
  */
 
 type Valor = { codigo: string; etiqueta: string | null } | null;
@@ -96,17 +98,22 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
   const fila = await obtenerArbolFicha(token, projectId, treeId);
   if (!fila) throw new AppError("El árbol no existe en este proyecto", 404);
 
-  const [rasgos, versiones, diagnostico, ordenes, incidencias] = await Promise.all([
+  const [rasgos, versiones, diagnostico, ordenes, incidencias, presencia] = await Promise.all([
     obtenerRasgosEspecie(token, treeId),
     listarVersionesMedicion(token, treeId),
     diagnosticoDeArbol(token, projectId, treeId),
     listarOtsDeArbol(user, projectId, treeId, token),
     listarIncidenciasDeArbol(user, projectId, treeId, token),
+    obtenerPresencia(token, treeId),
   ]);
   const sinEspecie = fila.especie_cientifica === null;
 
   return {
     arbol: arbol(fila),
+    // D-28/D-29 (AM-22): Presente, Talado o Retirado, y desde cuándo.
+    presencia: presencia
+      ? { ...conEtiqueta("estado_presencia", presencia.estado_presencia)!, desde: presencia.fecha_cambio_estado_presencia }
+      : null,
     // D-260 a D-262: sin especie vigente, origen «no determinado» y sin persistencia ni tipo de hoja.
     sobre_la_especie: {
       genero: rasgos?.genero ?? null,

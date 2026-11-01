@@ -74,12 +74,12 @@ export async function crearOrdenTrabajoInspeccion(
 
 /**
  * PATCH /api/sivu/work-orders/:workOrderId/estado — transición
- * Pendiente→Programada→En ejecución (018g; CC-050). Solo el Inspector
- * responsable asignado — `fn_transition_work_order_estado` es la
- * autoridad final (verifica que `user.id` sea exactamente
- * `responsable_accion_id`); `assertProjectRole` aquí es una capa
- * adicional de defensa (rechaza pronto a quien ni siquiera tiene rol
- * Inspector en el proyecto), no la que decide.
+ * Pendiente→Programada→En ejecución (018g; CC-050). Solo el responsable
+ * asignado: el Inspector en una OT de Inspección y el Encargado de
+ * mantención en una de Mantenimiento (#61; migración 031) —
+ * `fn_transition_work_order_estado` es la autoridad final (verifica que
+ * `user.id` sea exactamente `responsable_accion_id` y su rol);
+ * `assertProjectRole` aquí es una capa adicional de defensa.
  */
 export async function transicionarOrdenTrabajo(
   user: AuthenticatedUser,
@@ -91,14 +91,8 @@ export async function transicionarOrdenTrabajo(
   if (!ot) {
     throw new AppError("La orden de trabajo no existe", 404);
   }
-  if (ot.tipo_ot !== "inspeccion") {
-    throw new AppError(
-      "Esta API todavía no transiciona OT de Mantenimiento (CC-050: se implementa en el #61)",
-      422
-    );
-  }
 
-  await assertProjectRole(user, ot.project_id, ["inspector"], accessToken);
+  await assertProjectRole(user, ot.project_id, [ot.tipo_ot === "inspeccion" ? "inspector" : "encargado_mantencion"], accessToken);
 
   try {
     return await transicionarEstadoOt({
