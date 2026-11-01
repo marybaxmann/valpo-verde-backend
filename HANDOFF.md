@@ -41,7 +41,7 @@
 - AM-22 resuelto (Valej): rige `estado_presencia` (D-28, subtipo **ejecutado** y aprobado); `estado_ciclo_vida` es su copia.
 - Decisiones de Valej: revisor asignado al crear la OT (AM-23, fuera del Excel); una ejecución nueva solo sin otra pendiente; aprobar exige resultado completo.
 - Endpoints: crear OT de Mantenimiento, transiciones del Encargado, cambiar revisor, ejecuciones (historial y registro con fotos), revisión, «Revisiones de mantenimiento»; presencia en B2. Contrato §5 bis.
-- No verificado: los endpoints contra la API publicada.
+- Verificado funcionalmente en la API publicada (2026-11-01, Valej, sesiones autenticadas; QA Fase 7, árbol A-000348, OT-M-000018, intervención simulada): creación con Encargado y revisor, transiciones, MAN-000016 rechazada, bloqueo de segunda ejecución (422), corrección MAN-000017 (201), aprobación (OT completada), historial con una foto cada una, presencia `talado` desde 2026-11-01 y `estado_ciclo_vida` `tocon`. AM-23 sigue pendiente (Excel).
 
 ## ▶ Novedad 2026-10-31 (bloque 16) — Valpo Verde Conecta (#62): migración 028 y endpoints
 
