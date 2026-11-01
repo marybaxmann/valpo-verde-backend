@@ -266,5 +266,6 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 - **B6** (OT
   «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (indicadores; depende de CC-016).
 - **CC-052:** la búsqueda de cercanos está disponible; el radio por defecto y la pantalla los define el frontend.
+- **Límites por IP de Conecta:** hoy en memoria, por instancia de Vercel (ver §8). Pendiente: contadores compartidos en PostgreSQL (opción A), con migración sujeta a autorización.
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde
   otro dominio, `CORS_ORIGIN`.
