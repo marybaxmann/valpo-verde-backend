@@ -1692,9 +1692,9 @@ motivo)
 | rule_version | 2.0 (paquete 2.0.0, publicado el 2026-10-20, tag `metodologia-v2.0.0`) |
 | Aprobado por | marybaxmann |
 | Fecha de aprobación | 2026-10-20 |
-| Fecha de implementación | — |
-| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. |
-| Observaciones | — |
+| Fecha de implementación | 2026-11-01 (base de pruebas y API publicada `release/demo`) |
+| Commits / PR asociados | Rama `docs/fase2-am07-decisiones`. Implementación (B5): `37dfdfc` en `feature/fase6-backend-api` y `release/demo` (migración 030, AM-18; `GET /api/sivu/projects/:id/upcoming-inspections`). |
+| Observaciones | **Decisiones de implementación (Valej, 2026-11-01), sobre dos puntos que este CC no define:** **(1)** Si el Inspector ajustó la fecha (D-202/D-203), el rango es la fecha ajustada sola: inicio y término iguales («la fecha ajustada reemplaza a la sugerida»; no se suma el ancho del rango de la tabla). **(2)** La lista entrega todas las fechas vigentes, con la marca `recordatorio_activo` (el inicio ya llegó, fecha de Chile), y el filtro `solo_activos=true` deja solo las que ya avisan; así la Agenda puede mostrar también las próximas. Efecto en el contrato B5: campos `termino` y `ajustada`, `recordatorio_activo` y el parámetro `solo_activos` (`docs/api/contrato-frontend.md` §6). Si la autora resuelve otra cosa, cambia solo el backend (sin migración). |
 
 **Checklist de sincronización**
 
@@ -1709,6 +1709,7 @@ motivo)
 |---|---|---|---|
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión 10 de la Fase 1. |
 | 2026-10-20 | FUENTE SINCRONIZADA | — | Incluido en el paquete 2.0.0 (VERSION, fila 5). Verificación §14.9 sin hallazgos sobre el Excel de `main` con AM-10 (AM-08). Publicación y tag pendientes de la aprobación de la autora. |
+| 2026-11-01 | IMPLEMENTADO (pruebas) | Valej | B5 con la migración 030 (AM-18, autorizada por Valej), aplicada en la base de pruebas con el ciclo completo (`pruebas_030_upcoming.sql`); endpoint publicado. Decisiones de implementación (1) y (2) en Observaciones, tomadas por Valej. Verificación en la API publicada con sesión: pendiente. |
 
 ---
 

@@ -161,8 +161,20 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
 - `inicio`: la fecha vigente. `termino`: el fin del rango de la tabla de plazos para el riesgo de esa inspección;
   igual a `inicio` cuando el plazo es un solo valor o cuando el Inspector **ajustó** la fecha (`ajustada: true`);
   `null` con `inmediato_y_continuo: true` (Extremo en monitoreo).
-- `recordatorio_activo`: el inicio ya llegó (fecha de Chile). Desde la lista, el Usuario municipal crea la OT
-  (`POST /projects/:id/work-orders`).
+- `recordatorio_activo`: el inicio ya llegó (fecha de Chile).
+- Las dos reglas de arriba (fecha ajustada sin rango; todas las fechas con la marca) son decisiones de implementación de
+  Valej (2026-11-01), registradas en CC-037 (`docs/registro-cambios.md`).
+
+**Integrar la Agenda y los recordatorios (frontend):**
+1. Agenda: `GET …/upcoming-inspections` (todas) y ubicar cada fila entre `inicio` y `termino`; `termino: null` con
+   `inmediato_y_continuo` = «inmediato y continuo», sin fecha de fin.
+2. Recordatorios / Dashboard: `GET …/upcoming-inspections?solo_activos=true` (las que ya avisan).
+3. Etiquetas: `nivel_riesgo.etiqueta`; `tipo` es `inspeccion` (próxima inspección, D-202) o `monitoreo` (próximo monitoreo, D-203);
+   el texto visible para `tipo` lo define el frontend o la responsable (no hay catálogo).
+4. «Crear OT» (solo Usuario municipal): `POST /projects/:id/work-orders` con el `tree_id` de la fila, el responsable
+   (`GET …/assignable-members?rol=inspector`) y la `accion_solicitada` que elija el Usuario municipal (el backend no la
+   deduce del recordatorio). Para ver si el árbol ya tiene una OT abierta: la ficha (`GET …/trees/:treeId`, `ordenes_trabajo`).
+5. Un recordatorio desaparece solo cuando una OT nueva se completa y deja otra fecha vigente; crear o programar la OT no lo quita.
 
 **`vigente`** (evaluación vigente, ADR-017): `null` mientras ninguna OT del árbol esté completada. Si existe:
 `{ evento, work_order_id, inspection_id, desde, requiere_revision_ajuste, resultado }`.
