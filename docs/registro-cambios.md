@@ -733,7 +733,7 @@ motivo)
 | Aprobado por / Fecha de aprobación | Valej, 2026-11-01 (filas 3 a 13). |
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
-| Observaciones | INDICES no es implementable ni normativa vigente hasta cerrar CC-016. Mientras siga en propuesta, sus cambios no modifican `rule_version`. **2026-11-01:** Valej autorizó implementar B19 antes de registrar la versión en la hoja VERSION; queda la diferencia con `docs/workflow.md` §14 (implementación desde FUENTE SINCRONIZADA). Los indicadores de especies (filas 5 a 10) dependen de cómo se agrupan e identifican las especies, que se decide aparte. |
+| Observaciones | INDICES no es implementable ni normativa vigente hasta cerrar CC-016. Mientras siga en propuesta, sus cambios no modifican `rule_version`. **2026-11-01:** Valej autorizó implementar B19 antes de registrar la versión en la hoja VERSION; queda la diferencia con `docs/workflow.md` §14 (implementación desde FUENTE SINCRONIZADA). Los indicadores de especies (filas 5 a 10) dependen de cómo se agrupan e identifican las especies, que se decide aparte. **Decidido (Valej, 2026-11-01):** identificado = nivel específico (híbridos y variedades sí; solo género, no); variedades y subespecies se agrupan en su especie para los índices de diversidad. |
 
 **Historial de estados**
 
@@ -2931,7 +2931,7 @@ motivo)
 | Fecha | 2026-11-01 |
 | Origen | B19, carbono aéreo: los modelos de volumen de la Urban Tree Database necesitan la densidad de la madera de cada especie (`docs/plan/propuestas/carbono-verificacion-modelos.md`). |
 | Tipo | 2 — campo nuevo en el modelo de datos |
-| Estado | EN REVISIÓN |
+| Estado | APROBADO METODOLÓGICAMENTE (como propuesta; sin migraciones hasta incorporarlo al Excel maestro) |
 | Regla / campo afectado | CATALOGO_ESPECIES (D-257 a D-262): campos nuevos. |
 | Versión anterior | El catálogo no registra la densidad de la madera. |
 | Versión nueva | Propuesta: `densidad_madera_kg_m3` (número > 0; masa seca sobre volumen verde, en kg/m³), `densidad_fuente` (texto con la cita), `densidad_nivel_taxon` (`especie` o `genero`: de qué taxón viene el valor) y `densidad_tipo` (texto; por ahora «masa seca / volumen verde»). Lo completa quien gestiona el catálogo, con su fuente; sin valor, `null` (nunca un valor por defecto). |
@@ -2952,6 +2952,7 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-11-01 | EN REVISIÓN | Valej | Diseño pedido por Valej (punto 8); ficha preparada, sin migración. |
+| 2026-11-01 | APROBADO METODOLÓGICAMENTE | Valej | Aceptado como propuesta. No se aplican migraciones hasta incorporarlo al Excel maestro. |
 
 ---
 
@@ -2962,7 +2963,7 @@ motivo)
 | Fecha | 2026-11-01 |
 | Origen | B19; INDICES fila 14 («Carbono almacenado», hoy «Pendiente»). |
 | Tipo | 2 — metodología (indicador nuevo) |
-| Estado | EN REVISIÓN (decisiones de método tomadas; falta cerrar la verificación de modelos y registrar en el Excel) |
+| Estado | APROBADO METODOLÓGICAMENTE (como propuesta; la activación de cada modelo exige verificar su fuente original; sin migraciones hasta incorporarlo al Excel maestro) |
 | Regla / campo afectado | INDICES fila 14; hoja nueva del Excel `MODELOS_BIOMASA` (propuesta). |
 | Versión anterior | INDICES fila 14: «Por definir tras revisar ecuaciones, componentes de biomasa, factores de conversión y rangos de aplicación.» |
 | Versión nueva | Decisiones de Valej (2026-11-01): **(1)** prioridad: ecuación local de la especie, urbana de la especie y, solo si se justifica, sustituta o genérica; **(2)** fracción de carbono 0,47 de la biomasa seca, provisional (IPCC 2006, Vol. 4, cap. 4, tabla 4.3; cita por verificar en el original); **(3)** CO₂e = C × 44/12; **(4)** v1: biomasa aérea y carbono aéreo, sin raíces ni factor urbano 0,8; **(5)** Chave 2014 no es universal; ninguna ecuación de dicotiledóneas se aplica a palmeras; **(6)** multifustales solo si el modelo admite el cálculo por fuste; nada de DAP equivalente ni sumas sin justificación; **(7)** fuera del rango de validez, `null` con explicación, sin extrapolar; **(9)** identificaciones provisionales permitidas, marcando la incertidumbre. Modelos y clasificación: `docs/plan/propuestas/carbono-verificacion-modelos.md`; módulo: `carbono-modulo-especificacion.md`. |
@@ -2983,3 +2984,4 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-11-01 | EN REVISIÓN | Valej | Decisiones de método 1 a 9; verificación de modelos y especificación preparadas; sin implementar. |
+| 2026-11-01 | APROBADO METODOLÓGICAMENTE | Valej | Aceptado como propuesta. Fracción de carbono 0,47 por defecto (IPCC 2006, Vol. 4, cap. 4, tabla 4.3), no específica de cada especie; CO₂e = C × 44/12; sin H, solo una ecuación con DAP publicada, aplicable y del mismo componente; solo modelos APTO, verificados en su fuente original; los APTO CON LIMITACIONES, justificados uno por uno; Ginkgo con la genérica de latifoliadas, no; multifustales y palmeras sin estimación; sin extrapolar. El indicador v1 es «carbono aéreo leñoso» (volumen × densidad no incluye follaje). Modelos APTO: `docs/plan/propuestas/carbono-modelos-apto-especificacion.md` (activación bloqueada hasta leer Pillsbury et al. 1998). |

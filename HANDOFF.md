@@ -16,7 +16,7 @@
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** B19: 11 indicadores publicados; carbono aéreo verificado y especificado (CC-068 y CC-069 en revisión), sin implementar.
+- **Resumen:** B19: 11 indicadores publicados; carbono aéreo leñoso especificado (CC-068/069 aprobados como propuesta); activación bloqueada hasta leer Pillsbury 1998.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -34,6 +34,12 @@
 - **`execute_sql` no queda en el historial de migraciones de Supabase (`list_migrations`); `apply_migration`, sí.** La herramienta `apply_migration` del MCP falló dos veces consecutivas con `Invalid or expired requestState` al revertir la 018f (2026-10-24, justo al cruzar la medianoche de la sesión) — se reemplazó por `execute_sql` para no bloquear el trabajo, y eso dejó el historial de migraciones desincronizado del estado real de la base durante casi un día (`fn_transition_work_order_estado` viva con la corrección de D-241, pero el historial marcándola como borrada). **Corregido el 2026-10-25:** revertida y reaplicada la 018g otra vez, esta vez solo con `apply_migration` (falló una vez más con el mismo error transitorio, el reintento funcionó) — `list_migrations` vs. estado real 018a–018h, cero diferencias. **Regla correcta: `execute_sql` es solo para pruebas y consultas de solo lectura — nunca para aplicar o revertir una migración.** Si `apply_migration` falla, **reintentar `apply_migration`**; nunca sustituirlo por `execute_sql` para que el cambio quede en el historial.
 
 ---
+
+## ▶ Novedad 2026-11-01 (bloque 23) — Modelos APTO de carbono
+
+- Decisiones de Valej (1 a 10): 0,47 por defecto (IPCC 2006), 44/12, variante solo D si es publicada y del mismo componente, solo APTO verificados, Ginkgo no, multifustales y palmeras sin estimación, sin extrapolar, CC-068/069 aprobados como propuesta (sin migraciones hasta el Excel), variedades agrupadas en su especie (confirmado).
+- `docs/plan/propuestas/carbono-modelos-apto-especificacion.md`: *Jacaranda mimosifolia* y *Liquidambar styraciflua* (UTD TS7 × TS9), componente «aérea leñosa», ejemplos E1-E8 reproducibles y pruebas P1-P18 con árboles ficticios (fixtures, no Supabase).
+- Bloqueo: el informe de Pillsbury et al. 1998 no se pudo leer (`ufei.calpoly.edu` bloqueado en la red de la sesión). Cobertura real en SIVU con los APTO: 0 (no hay Jacarandá ni Liquidámbar registrados).
 
 ## ▶ Novedad 2026-11-01 (bloque 22) — Carbono: verificación de modelos y especificación
 

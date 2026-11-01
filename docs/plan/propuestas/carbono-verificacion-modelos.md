@@ -1,5 +1,7 @@
 # Carbono aéreo: verificación de modelos antes de implementar (B19)
 
+> **Actualización 2026-11-01:** con las decisiones posteriores de Valej, la especificación definitiva de los modelos APTO está en `carbono-modelos-apto-especificacion.md`. Componentes: volumen × densidad estima **biomasa aérea leñosa**, no aérea total. Ginkgo con la genérica de latifoliadas: no autorizado. Los APTO CON LIMITACIONES se justifican uno por uno antes de activarse.
+
 > **Estado:** verificación previa a la implementación. **Sin código ni cambios en Supabase.** Complementa y **corrige** la matriz v2 (`carbono-matriz-modelos.md`): el recuento de árboles de la sección 1 reemplaza al de la v2.
 >
 > **Decisiones de Valej (2026-11-01)** que esta verificación aplica:
@@ -46,7 +48,7 @@ Otras diferencias entre el texto del informe y el Anexo 2:
   - Ejemplo: Jacarandá con D = 30 cm y H = 10 m da 0,479 m³, frente a 0,707 m³ del cilindro.
   - Si la ecuación diera dm³, cm³ o pies³, la razón sería unas 1000 veces o unas 35 veces distinta.
   - En cada especie, la versión con D y H y la versión solo con D coinciden dentro de ±10 %.
-  - **Conclusión: producen m³. Verificado.**
+  - **Conclusión (corregida el 2026-11-01, a pedido de Valej):** las unidades (m³, cm, m, kg/m³) están verificadas en la **documentación oficial del conjunto de datos** (metadatos de la UTD). La comparación con el cilindro es solo un control de plausibilidad, no una verificación. **El informe original de cada ecuación (Pillsbury et al. 1998, McHale 2007, Aguaron y McPherson 2012) no se leyó**; queda pendiente (ver `carbono-modelos-apto-especificacion.md`, §2.3).
 - **Jenkins (TS8, «cedar/larch»):** con D = 30 cm da 284 kg, plausible para biomasa aérea en kg, que es la unidad de Jenkins et al. Es un modelo **directo de biomasa**: no usa densidad.
 - **Palmeras (TS8, «General palms»):** con H = 10 da 69,7, pero el archivo no declara la unidad ni el tipo de altura. **No verificable.**
 
@@ -54,9 +56,9 @@ Otras diferencias entre el texto del informe y el Anexo 2:
 
 | Ecuación | Tipo | Componente | Verificado |
 |---|---|---|---|
-| TS7 Pillsbury et al. 1998 (Jacaranda, Liquidambar, Acacia longifolia, Fraxinus velutina 'Modesto') | Volumen × densidad | «Above ground volume» de madera (metadatos) | La unidad, sí. Si incluye ramas finas no se pudo confirmar: el informe de Pillsbury no se leyó. Da 0,54-0,70 veces el cilindro, compatible con fuste más ramas principales. |
-| TS7 McHale 2007 (Gleditsia, Acer platanoides) | Volumen × densidad | Volumen aéreo por escaneo láser terrestre (Lefsky y McHale 2008: «trees with complex architecture») | La unidad, sí. Da 1,08-1,62 veces el cilindro, compatible con un volumen que incluye ramas. |
-| TS7 Aguaron y McPherson 2012 (Urb Gen Broadleaf) | Volumen × densidad | Volumen aéreo, ecuación genérica de latifoliadas urbanas (Sacramento) | La unidad, sí. |
+| TS7 Pillsbury et al. 1998 (Jacaranda, Liquidambar, Acacia longifolia, Fraxinus velutina 'Modesto') | Volumen × densidad | **Biomasa aérea leñosa (sin follaje)**: «above ground volume» de madera (metadatos) × densidad de la madera | La unidad, sí. Si incluye ramas finas no se pudo confirmar: el informe de Pillsbury no se leyó. Da 0,54-0,70 veces el cilindro, compatible con fuste más ramas principales. |
+| TS7 McHale 2007 (Gleditsia, Acer platanoides) | Volumen × densidad | **Biomasa aérea leñosa (sin follaje)**: volumen aéreo por escaneo láser terrestre (Lefsky y McHale 2008: «trees with complex architecture») | La unidad, sí. Da 1,08-1,62 veces el cilindro, compatible con un volumen que incluye ramas. |
+| TS7 Aguaron y McPherson 2012 (Urb Gen Broadleaf) | Volumen × densidad | **Biomasa aérea leñosa (sin follaje)**: volumen aéreo, ecuación genérica de latifoliadas urbanas (Sacramento) | La unidad, sí. |
 | TS8 Jenkins et al. 2004, cedar/larch | **Directo** | Biomasa aérea **menos follaje** («minus foliage ratio») | Sí (archivo y metadatos). |
 | TS8 General palms (Frangi y Lugo 1985) | Directo | Sin confirmar | No. |
 | Dobbs et al. 2011 | Directo | **Solo copa** (ramas + hojas); no incluye el fuste | Sí (artículo leído). |
