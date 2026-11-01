@@ -97,20 +97,26 @@ export interface IncidenciaRow {
   fecha_actualizacion_estado: string | null;
   trees: { tree_code: string; especie_cientifica: string | null; nombre_comun: string | null } | null;
   incident_reporters: { nombre_reportante: string; rut_reportante: string } | null;
+  /** Conteo de fotos visibles con el JWT del usuario: [{ count }]. */
+  photos: Array<{ count: number }> | null;
+  /** OT creadas con este incident_id (CC-036). */
+  work_orders: Array<{ id: string; codigo_ot: string | null; estado_ot: string; created_at: string }> | null;
 }
 
 const INCIDENCIA_COLUMNS =
-  "id, codigo_incidencia, tree_id, project_id, tipo_incidencia, descripcion, estado_incidencia, origen_reporte, fecha_reporte, ubicacion, fecha_revision, revisado_por, resultado_revision, observaciones_revision, prioridad_municipal, fecha_actualizacion_estado, trees(tree_code, especie_cientifica, nombre_comun), incident_reporters(nombre_reportante, rut_reportante)";
+  "id, codigo_incidencia, tree_id, project_id, tipo_incidencia, descripcion, estado_incidencia, origen_reporte, fecha_reporte, ubicacion, fecha_revision, revisado_por, resultado_revision, observaciones_revision, prioridad_municipal, fecha_actualizacion_estado, trees(tree_code, especie_cientifica, nombre_comun), incident_reporters(nombre_reportante, rut_reportante), photos(count), work_orders(id, codigo_ot, estado_ot, created_at)";
 
 export async function listarIncidenciasProyecto(
   accessToken: string,
-  filtros: { projectId: string; estado?: string; treeId?: string; limit: number; offset: number }
+  filtros: { projectId: string; estado?: string; origen?: string; tipo?: string; treeId?: string; limit: number; offset: number }
 ): Promise<{ filas: IncidenciaRow[]; total: number }> {
   let query = createUserScopedClient(accessToken)
     .from("incidents")
     .select(INCIDENCIA_COLUMNS, { count: "exact" })
     .eq("project_id", filtros.projectId);
   if (filtros.estado) query = query.eq("estado_incidencia", filtros.estado);
+  if (filtros.origen) query = query.eq("origen_reporte", filtros.origen);
+  if (filtros.tipo) query = query.eq("tipo_incidencia", filtros.tipo);
   if (filtros.treeId) query = query.eq("tree_id", filtros.treeId);
   const { data, error, count } = await query
     .order("created_at", { ascending: false })

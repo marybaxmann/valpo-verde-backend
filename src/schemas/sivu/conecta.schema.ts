@@ -57,6 +57,12 @@ export const listarIncidenciasQuerySchema = z
     estado: z.enum(codigos("estado_incidencia"), {
       errorMap: () => ({ message: "estado no es un valor de la lista (D-184)" }),
     }).optional(),
+    origen: z.enum(codigos("origen_reporte"), {
+      errorMap: () => ({ message: "origen no es un valor de la lista (D-177)" }),
+    }).optional(),
+    tipo: z.enum(codigos("tipo_incidencia"), {
+      errorMap: () => ({ message: "tipo no es un valor de la lista (D-180)" }),
+    }).optional(),
     limit: z.coerce.number().int().min(1).max(200).default(50),
     offset: z.coerce.number().int().min(0).default(0),
   })

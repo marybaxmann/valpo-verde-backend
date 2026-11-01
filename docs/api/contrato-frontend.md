@@ -221,13 +221,17 @@ Resultado de la revisión: `validada`, `requiere_antecedentes`, `descartada`.
 
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|
-| `GET /api/sivu/projects/:id/incidencias` | Miembros y Administrador | `estado?`, `limit`, `offset` | 200 `{ data: [incidencia], total, limit, offset }` |
+| `GET /api/sivu/projects/:id/incidencias` | Miembros y Administrador | `estado?` (D-184), `origen?` (D-177), `tipo?` (D-180), `limit`, `offset` | 200 `{ data: [incidencia], total, limit, offset }` |
 | `GET /api/sivu/projects/:id/incidencias/:incidentId` | Miembros y Administrador | — | 200 `{ data }`: la incidencia y `fotos: [{ id, url, created_at }]` (enlaces de 10 minutos) |
 | `PATCH /api/sivu/projects/:id/incidencias/:incidentId/revision` | Usuario municipal | `{ estado_incidencia, resultado_revision?, observaciones_revision?, prioridad_municipal? }` | 200 `{ data }` (incidencia actualizada y `fotos_borradas`); 422 si la base rechaza la regla |
 
 **Incidencia:** `{ id, codigo_incidencia, arbol: { id, tree_code, especie_cientifica, nombre_comun }, tipo_incidencia, descripcion,
 ubicacion, fecha_reporte, origen_reporte, estado_incidencia, fecha_actualizacion_estado, resultado_revision,
-observaciones_revision, prioridad_municipal, fecha_revision, revisado_por, reportante }`.
+observaciones_revision, prioridad_municipal, fecha_revision, revisado_por, cantidad_fotos, ot_derivadas, reportante }`.
+- `origen_reporte`: `{ codigo, etiqueta }` (catálogo `origen_reporte`, D-177: Comunidad, Municipalidad, Bomberos, Otro organismo) o `null`.
+- `revisado_por`: `{ id, nombre }` del miembro que revisó; si ya no es miembro, `{ id, nombre: null, fuera_del_proyecto: true }`; `null` sin revisión.
+- `cantidad_fotos`: número de fotos del reporte (0 después de Descartada, que las borra).
+- `ot_derivadas`: **todas** las OT creadas con esta incidencia, `[{ id, codigo_ot, estado: { codigo, etiqueta } }]`, de la más antigua a la más reciente (fecha de creación); `[]` si no hay. Reemplaza al `ot_derivada` que pedía el frontend.
 - `reportante: { nombre, rut }` **solo para el Usuario municipal**; `null` para los demás roles y después de Validada o Descartada (se borran).
 
 **Reglas de la revisión (Excel D-185 a D-189):** fuera de `ingresada`, `resultado_revision` es obligatorio;

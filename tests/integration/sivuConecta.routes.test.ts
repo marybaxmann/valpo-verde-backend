@@ -11,6 +11,10 @@ jest.mock("../../src/repositories/auth.repository");
 jest.mock("../../src/repositories/userProfile.repository");
 jest.mock("../../src/repositories/projectMember.repository");
 jest.mock("../../src/repositories/sivu/conecta.repository");
+jest.mock("../../src/repositories/sivu/workOrder.repository", () => ({
+  ...jest.requireActual("../../src/repositories/sivu/workOrder.repository"),
+  obtenerMiembrosDeProyecto: jest.fn(),
+}));
 jest.mock("../../src/repositories/sivu/photo.repository", () => ({
   ...jest.requireActual("../../src/repositories/sivu/photo.repository"),
   subirArchivoAStorage: jest.fn(),
@@ -32,6 +36,7 @@ import {
   revisarIncidencia,
 } from "../../src/repositories/sivu/conecta.repository";
 import { eliminarArchivoDeStorage, subirArchivoAStorage } from "../../src/repositories/sivu/photo.repository";
+import { obtenerMiembrosDeProyecto } from "../../src/repositories/sivu/workOrder.repository";
 import { FAKE_TOKEN, INSPECTOR_ID, MUNICIPAL_ID, fakeAuthUser, inspectorProfileRow, municipalProfileRow } from "../helpers/authFixtures";
 
 const mAuth = getAuthUserByToken as jest.Mock;
@@ -46,6 +51,7 @@ const mObtener = obtenerIncidencia as jest.Mock;
 const mRevisar = revisarIncidencia as jest.Mock;
 const mSubir = subirArchivoAStorage as jest.Mock;
 const mBorrar = eliminarArchivoDeStorage as jest.Mock;
+const mMiembros = obtenerMiembrosDeProyecto as jest.Mock;
 
 const QR = "8b7c6d5e-4f3a-4b2c-9d1e-0f9a8b7c6d5e";
 const PROJECT_ID = "33333333-3333-4333-8333-333333333333";
@@ -232,6 +238,72 @@ describe("B9 y revisión (internas)", () => {
     expect(res.status).toBe(200);
     expect(res.body.data[0].reportante).toBeNull();
     expect(JSON.stringify(res.body)).not.toContain("12345678-5");
+  });
+
+  it("filtros origen y tipo: se pasan al repositorio", async () => {
+    como("inspector");
+    mListar.mockResolvedValue({ filas: [], total: 0 });
+    const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}/incidencias?origen=comunidad&tipo=rama_caida&estado=ingresada`).set(auth);
+    expect(res.status).toBe(200);
+    expect(mListar).toHaveBeenLastCalledWith(FAKE_TOKEN, expect.objectContaining({ projectId: PROJECT_ID, estado: "ingresada", origen: "comunidad", tipo: "rama_caida" }));
+  });
+
+  it.each([["origen=vecino", "origen no es un valor de la lista (D-177)"], ["tipo=incendio", "tipo no es un valor de la lista (D-180)"]])(
+    "filtro fuera de la lista (%s): 400",
+    async (qs, mensaje) => {
+      como("inspector");
+      mListar.mockClear();
+      const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}/incidencias?${qs}`).set(auth);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe(mensaje);
+      expect(mListar).not.toHaveBeenCalled();
+    }
+  );
+
+  it("campos nuevos: origen con etiqueta, cantidad_fotos, ot_derivadas ordenadas y revisor con nombre", async () => {
+    como("inspector");
+    const REVISOR = "44444444-4444-4444-8444-444444444444";
+    mListar.mockResolvedValue({
+      filas: [
+        {
+          ...fila,
+          estado_incidencia: "derivada",
+          resultado_revision: "requiere_antecedentes",
+          revisado_por: REVISOR,
+          photos: [{ count: 2 }],
+          work_orders: [
+            { id: "ot2", codigo_ot: "OT-I-000020", estado_ot: "pendiente", created_at: "2026-11-01T10:00:00Z" },
+            { id: "ot1", codigo_ot: "OT-I-000010", estado_ot: "completada", created_at: "2026-10-31T10:00:00Z" },
+          ],
+        },
+        { ...fila, id: "otra", revisado_por: "55555555-5555-4555-8555-555555555555", photos: [{ count: 0 }], work_orders: [] },
+      ],
+      total: 2,
+    });
+    mMiembros.mockResolvedValue([{ id: REVISOR, nombre: "Ana Municipal", rol: "usuario_municipal" }]);
+    const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}/incidencias`).set(auth);
+    expect(res.status).toBe(200);
+    const [a, b] = res.body.data;
+    expect(a.origen_reporte).toEqual({ codigo: "comunidad", etiqueta: "Comunidad" });
+    expect(a.cantidad_fotos).toBe(2);
+    expect(a.revisado_por).toEqual({ id: REVISOR, nombre: "Ana Municipal" });
+    expect(a.ot_derivadas).toEqual([
+      { id: "ot1", codigo_ot: "OT-I-000010", estado: { codigo: "completada", etiqueta: expect.any(String) } },
+      { id: "ot2", codigo_ot: "OT-I-000020", estado: { codigo: "pendiente", etiqueta: "Pendiente" } },
+    ]);
+    expect(b.revisado_por).toEqual({ id: "55555555-5555-4555-8555-555555555555", nombre: null, fuera_del_proyecto: true });
+    expect(b.cantidad_fotos).toBe(0);
+    expect(b.ot_derivadas).toEqual([]);
+    expect(mMiembros).toHaveBeenCalledTimes(1);
+  });
+
+  it("sin revisor no consulta los miembros; sin datos de fotos ni OT: 0 y []", async () => {
+    como("inspector");
+    mMiembros.mockClear();
+    mListar.mockResolvedValue({ filas: [fila], total: 1 });
+    const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}/incidencias`).set(auth);
+    expect(res.body.data[0]).toEqual(expect.objectContaining({ revisado_por: null, cantidad_fotos: 0, ot_derivadas: [] }));
+    expect(mMiembros).not.toHaveBeenCalled();
   });
 
   it("revisión: solo el Usuario municipal", async () => {

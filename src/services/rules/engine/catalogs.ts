@@ -324,6 +324,12 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "tipo_incidencia", codigo: "problema_fitosanitario", etiqueta: "Problema fitosanitario", orden: 6, estado: "vigente", cc: "CC-062" },
   { catalogo: "tipo_incidencia", codigo: "obstruccion", etiqueta: "Obstrucción", orden: 7, estado: "vigente", cc: "CC-062" },
   { catalogo: "tipo_incidencia", codigo: "otro", etiqueta: "Otro", orden: 8, estado: "vigente", cc: "CC-062" },
+  // origen_reporte: D-177 («Comunidad / Municipalidad / Bomberos / Otro organismo»; CHECK de la 015).
+  // El Sistema asigna Comunidad; los otros tres quedan reservados (D-177, observaciones).
+  { catalogo: "origen_reporte", codigo: "comunidad", etiqueta: "Comunidad", orden: 0, estado: "vigente", cc: "CC-062" },
+  { catalogo: "origen_reporte", codigo: "municipalidad", etiqueta: "Municipalidad", orden: 1, estado: "vigente", cc: "CC-062" },
+  { catalogo: "origen_reporte", codigo: "bomberos", etiqueta: "Bomberos", orden: 2, estado: "vigente", cc: "CC-062" },
+  { catalogo: "origen_reporte", codigo: "otro_organismo", etiqueta: "Otro organismo", orden: 3, estado: "vigente", cc: "CC-062" },
   // estado_incidencia: D-184 (CHECK de la 015).
   { catalogo: "estado_incidencia", codigo: "ingresada", etiqueta: "Ingresada", orden: 0, estado: "vigente", cc: "CC-062" },
   { catalogo: "estado_incidencia", codigo: "en_revision", etiqueta: "En revisión", orden: 1, estado: "vigente", cc: "CC-062" },
