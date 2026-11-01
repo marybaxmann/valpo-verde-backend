@@ -156,7 +156,7 @@ Estados (`estado_registro`): `preguardado` (borrador) → `finalizado`; o `anula
 | `GET /api/sivu/projects/:id/upcoming-inspections` (B5) | Miembros y Administrador | `solo_activos?` (`true`/`false`; por defecto todos) | 200 `{ data: [{ arbol: { id, tree_code, especie_cientifica, nombre_comun, ubicacion_descriptiva }, tipo: "inspeccion" \| "monitoreo", inicio, termino, inmediato_y_continuo, ajustada, nivel_riesgo: { codigo, etiqueta }, inspection_id, recordatorio_activo }] }`, ordenado por `inicio`. Detalle abajo. |
 | `GET /api/sivu/projects/:id/resumen` (B7) | Miembros y Administrador | — | 200 `{ data: { arboles_total, por_ciclo_vida, georreferenciados, sin_georreferenciar, con_diagnostico, sin_evaluacion, por_riesgo, especies_distintas, especies_top, ot_por_estado, incidencias_por_estado } }`; los conteos por catálogo como `[{ codigo, etiqueta, total }]` |
 
-**Próximas inspecciones y monitoreos (B5; CC-037):** SIVU no agenda: avisa. Cada árbol con fecha vigente trae
+**Próximas inspecciones y monitoreos (B5; CC-037)** — verificado en la API publicada el 2026-11-01; los intervalos quedan sujetos a la auditoría metodológica general: SIVU no agenda: avisa. Cada árbol con fecha vigente trae
 una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones finalizadas de OT completadas.
 - `inicio`: la fecha vigente. `termino`: el fin del rango de la tabla de plazos para el riesgo de esa inspección;
   igual a `inicio` cuando el plazo es un solo valor o cuando el Inspector **ajustó** la fecha (`ajustada: true`);

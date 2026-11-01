@@ -1710,6 +1710,7 @@ motivo)
 | 2026-10-20 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión 10 de la Fase 1. |
 | 2026-10-20 | FUENTE SINCRONIZADA | — | Incluido en el paquete 2.0.0 (VERSION, fila 5). Verificación §14.9 sin hallazgos sobre el Excel de `main` con AM-10 (AM-08). Publicación y tag pendientes de la aprobación de la autora. |
 | 2026-11-01 | IMPLEMENTADO (pruebas) | Valej | B5 con la migración 030 (AM-18, autorizada por Valej), aplicada en la base de pruebas con el ciclo completo (`pruebas_030_upcoming.sql`); endpoint publicado. Decisiones de implementación (1) y (2) en Observaciones, tomadas por Valej. Verificación en la API publicada con sesión: pendiente. |
+| 2026-11-01 | VERIFICADO EN API PUBLICADA | Valej | `GET /api/sivu/projects/:id/upcoming-inspections` probado en `sivu-api.vercel.app` con una sesión autenticada: QA Fase 7, 2 registros (A-000346); Piloto Valparaíso, 8 registros (A-000423, A-000419, A-000422, A-000426) con tipos, fechas, riesgo y orden esperados; `solo_activos=true`, 0. Sin errores de autenticación, autorización ni consulta. **Pendiente:** la validación metodológica de los intervalos de inspección y monitoreo (tabla de plazos D-202/D-203), en la auditoría general de SIVU. |
 
 ---
 
