@@ -16,7 +16,7 @@
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** Conecta verificado en la API; B19 bloque 1 (5 indicadores de INDICES) publicado, sin verificar en la API; bloque 2 y carbono esperan decisión.
+- **Resumen:** B19: los 11 indicadores de INDICES publicados (sin verificar en la API); 032 (provisional/confirmada) y carbono en propuesta.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -34,6 +34,15 @@
 - **`execute_sql` no queda en el historial de migraciones de Supabase (`list_migrations`); `apply_migration`, sí.** La herramienta `apply_migration` del MCP falló dos veces consecutivas con `Invalid or expired requestState` al revertir la 018f (2026-10-24, justo al cruzar la medianoche de la sesión) — se reemplazó por `execute_sql` para no bloquear el trabajo, y eso dejó el historial de migraciones desincronizado del estado real de la base durante casi un día (`fn_transition_work_order_estado` viva con la corrección de D-241, pero el historial marcándola como borrada). **Corregido el 2026-10-25:** revertida y reaplicada la 018g otra vez, esta vez solo con `apply_migration` (falló una vez más con el mismo error transitorio, el reintento funcionó) — `list_migrations` vs. estado real 018a–018h, cero diferencias. **Regla correcta: `execute_sql` es solo para pruebas y consultas de solo lectura — nunca para aplicar o revertir una migración.** Si `apply_migration` falla, **reintentar `apply_migration`**; nunca sustituirlo por `execute_sql` para que el cambio quede en el historial.
 
 ---
+
+## ▶ Novedad 2026-11-01 (bloque 20) — B19 bloque 2, copa en B2 y propuestas
+
+- Decisiones de Valej: identificado = nivel específico (híbridos y variedades sí; «Quercus sp.» no); provisional/confirmada por ejemplar (con migración a autorizar); datos faltantes ≠ 0; en B2, «No presenta copa» = 0 m² y sin medición = null; no tocar las identificaciones actuales en Supabase.
+- `3eb31f9`: riqueza, abundancia, Shannon, 10-20-30, nativos e introducidos y `cobertura_taxonomica` en B19. Interpretación a confirmar: variedades, subespecies y cultivares se agrupan en su especie.
+- `eb23de4`: `arbol.area_proyectada_copa_m2` en B2.
+- `d1d9db1`: propuesta de la migración 032 en `docs/plan/propuestas/` (no aplicada; fn_refresh_tree_current viva = 025, md5 2065ab81…; columnas aún no existen) y matriz de carbono desde la UTD (TS6–TS9).
+- Pruebas: Jest focalizado (indicadores, ficha) en verde; tsc limpio; suite completa no corrida.
+- Bloqueos: CC del campo nuevo (no está en DICCIONARIO_CAMPOS) antes de la 032; `www.scielo.cl` bloqueado (Dobbs et al. 2011); lista de especies de Riquelme no está en el repositorio.
 
 ## ▶ Novedad 2026-11-01 (bloque 19) — B19, indicadores del inventario (CC-016)
 
