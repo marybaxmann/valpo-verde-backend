@@ -153,6 +153,29 @@ describe("GET /api/sivu/projects/:id/trees (B1 — inventario arbóreo; CC-064)"
   });
 
   // ------------------------------------------------------------------ filtros pasados al repositorio
+  // ------------------------------------------------------------------ qr_token (PR-022 v2.0)
+  it("Usuario municipal: pide qr_token y lo recibe en cada árbol", async () => {
+    auth(MUNICIPAL_ID, municipalProfileRow());
+    const QR = "8b7c6d5e-4f3a-4b2c-9d1e-0f9a8b7c6d5e";
+    (listarArbolesInventario as jest.Mock).mockResolvedValue({ filas: [{ ...arbolFila, qr_token: QR }], total: 1 });
+    const res = await request(app).get(RUTA).set(authHeader);
+    expect(res.status).toBe(200);
+    expect((listarArbolesInventario as jest.Mock).mock.calls[0][1]).toMatchObject({ incluirQrToken: true });
+    expect(res.body.data[0]).toEqual({ ...arbolDto, qr_token: QR });
+  });
+
+  it.each([
+    ["admin", ADMIN_ID, adminProfileRow()],
+    ["inspector", INSPECTOR_ID, inspectorProfileRow()],
+  ])("rol '%s': no pide qr_token y el campo no viene", async (_, id, perfil) => {
+    auth(id, perfil);
+    (listarArbolesInventario as jest.Mock).mockResolvedValue({ filas: [arbolFila], total: 1 });
+    const res = await request(app).get(RUTA).set(authHeader);
+    expect(res.status).toBe(200);
+    expect((listarArbolesInventario as jest.Mock).mock.calls[0][1]).toMatchObject({ incluirQrToken: false });
+    expect(res.body.data[0]).not.toHaveProperty("qr_token");
+  });
+
   it("pasa limit y offset al repositorio", async () => {
     auth(MUNICIPAL_ID, municipalProfileRow());
     await request(app)

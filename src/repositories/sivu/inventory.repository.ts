@@ -34,6 +34,8 @@ export interface ArbolInventarioRow {
   altura_total_m: number | null;            // D-19
   /** Inspección que aportó el último valor vigente (fn_refresh_tree_current, 025). */
   vigente_desde_inspection_id: string | null;
+  /** Solo si se pidió con `incluirQrToken` (Usuario municipal; PR-022 v2.0). */
+  qr_token?: string;
 }
 
 /** Columnas seleccionadas del inventario — lista constante para reutilizar. */
@@ -48,6 +50,8 @@ export interface FiltrosInventario {
   estadoCicloVida?: string;
   /** Búsqueda parcial por especie_cientifica o nombre_comun, sin tildes ni mayúsculas (B-5). */
   busqueda?: string;
+  /** Agrega `qr_token` a la consulta. Solo para el Usuario municipal (PR-022 v2.0, decisión de Valej 2026-11-01). */
+  incluirQrToken?: boolean;
   limit: number;
   offset: number;
 }
@@ -69,7 +73,7 @@ export async function listarArbolesInventario(
 ): Promise<{ filas: ArbolInventarioRow[]; total: number }> {
   let query = createUserScopedClient(accessToken)
     .from("trees")
-    .select(INVENTARIO_COLUMNS, { count: "exact" })
+    .select(filtros.incluirQrToken ? `${INVENTARIO_COLUMNS}, qr_token` : INVENTARIO_COLUMNS, { count: "exact" })
     .eq("project_id", filtros.projectId);
 
   if (filtros.sectorId) {

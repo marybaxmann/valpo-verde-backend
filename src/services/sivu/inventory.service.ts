@@ -42,6 +42,11 @@ export interface ArbolInventario {
   riesgo: { codigo: string; etiqueta: string; ajustada: boolean } | null;
   /** `fecha_completada_ot` de la OT que aportó los datos vigentes; `null` si solo hay datos del alta. */
   vigente_desde: string | null;
+  /**
+   * Token de la placa QR (PR-022 v2.0). Solo para el Usuario municipal,
+   * que genera las placas; para los demás roles el campo no viene.
+   */
+  qr_token?: string;
 }
 
 export interface ListadoInventario {
@@ -85,6 +90,7 @@ export async function listarInventario(
     sectorId: query.sector_id,
     estadoCicloVida: query.estado_ciclo_vida,
     busqueda: query.busqueda,
+    incluirQrToken: user.role === "usuario_municipal",
   };
 
   // Capa 2 (RLS): la consulta usa el JWT del usuario → la RLS filtra por
@@ -150,5 +156,6 @@ function aArbolInventario(fila: ArbolInventarioRow, riesgo: RiesgoVigenteRow | u
     altura_total_m: fila.altura_total_m === null ? null : Number(fila.altura_total_m),
     riesgo: riesgoEfectivo(riesgo),
     vigente_desde: vigenteDesde,
+    ...(fila.qr_token !== undefined ? { qr_token: fila.qr_token } : {}),
   };
 }
