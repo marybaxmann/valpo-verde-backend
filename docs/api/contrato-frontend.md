@@ -246,11 +246,14 @@ registrar Validada o Descartada.
 
 | Método y ruta | Límite por IP | Entrada | Respuesta |
 |---|---|---|---|
+| `GET /api/sivu/conecta/catalogos` | 60 por hora | — | 200 `{ data: { tipo_incidencia: [{ codigo, etiqueta, orden, padre }] } }` (D-180; misma forma que `GET /api/sivu/catalogs`). Solo ese catálogo: el resto sigue en `/api/sivu/catalogs`, con sesión. Para el selector del formulario ciudadano. |
 | `GET /api/sivu/conecta/arboles/:qrToken` | 60 por hora | `qrToken` de la placa | 200 `{ data: { especie_cientifica, nombre_comun, ubicacion_descriptiva, sobre_la_especie: { especie_cientifica, genero, familia, origen_biogeografico, persistencia_follaje, tipo_hoja } } }` (los tres últimos como `{ codigo, etiqueta }` o `null`). 404 «No encontramos este árbol.» si no existe o está mal formado. |
 | `POST /api/sivu/conecta/arboles/:qrToken/incidencias` | 10 por hora | `multipart/form-data`: `nombre_reportante` (letras, espacios y tildes; hasta 100), `rut_reportante` (con o sin puntos; se valida el dígito verificador), `tipo_incidencia` (catálogo `tipo_incidencia`), `descripcion` (obligatoria; hasta 2000), `fotos` (1 a 3 JPG/PNG, hasta 10 MB cada una) | 201 `{ data: { codigo_seguimiento, fecha_reporte } }`. **El código se muestra una sola vez**: no se puede recuperar. 400 con el motivo; 404 si el QR no existe; 409 si el proyecto está cerrado. |
 | `POST /api/sivu/conecta/seguimiento` | 30 por hora | `{ "codigo": string }` en el cuerpo (nunca en la URL) | 200 `{ data: { estado_incidencia: { codigo, etiqueta } } }`. 404 «No encontramos un reporte con ese código.» si no existe, venció (90 días después de Resuelta o Descartada) o está mal formado. |
 
 La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. Las fotos ciudadanas se guardan sin metadatos.
+
+**Límites por IP:** se cuentan en memoria, **por instancia** de Vercel, y se reinician cuando la instancia arranca de cero. No son una protección global garantizada: con varias instancias, una misma IP puede superar el número indicado. Aceptado para la demo (Valej, 2026-11-01); pendiente: contadores compartidos en PostgreSQL, con migración sujeta a autorización.
 
 ---
 

@@ -77,6 +77,22 @@ function reportar(campos: Record<string, string>, fotos = 1) {
 
 const REPORTE = { nombre_reportante: "María Pérez", rut_reportante: "12.345.678-5", tipo_incidencia: "rama_caida", descripcion: "Rama sobre la vereda" };
 
+describe("GET /api/sivu/conecta/catalogos (público)", () => {
+  it("sin sesión entrega solo tipo_incidencia con código y etiqueta (D-180)", async () => {
+    const res = await request(app).get("/api/sivu/conecta/catalogos");
+    expect(res.status).toBe(200);
+    expect(Object.keys(res.body.data)).toEqual(["tipo_incidencia"]);
+    expect(res.body.data.tipo_incidencia).toHaveLength(9);
+    expect(res.body.data.tipo_incidencia[0]).toEqual({ codigo: "rama_caida", etiqueta: "Rama caída", orden: 0, padre: null });
+    expect(mAuth).not.toHaveBeenCalled();
+  });
+
+  it("/api/sivu/catalogs sigue exigiendo sesión", async () => {
+    const res = await request(app).get("/api/sivu/catalogs");
+    expect(res.status).toBe(401);
+  });
+});
+
 describe("GET /api/sivu/conecta/arboles/:qrToken (ficha pública)", () => {
   it("sin sesión, entrega solo especie, nombre común, ubicación y «Sobre esta especie» con etiquetas", async () => {
     mFicha.mockResolvedValue(FICHA);

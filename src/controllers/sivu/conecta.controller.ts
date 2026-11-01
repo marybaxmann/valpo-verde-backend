@@ -12,6 +12,7 @@ import { proyectoIdParamSchema } from "../../schemas/sivu/proyectos.schema";
 import { ARBOL_NO_ENCONTRADO, consultarSeguimiento, crearReporteCiudadano, fichaPublica } from "../../services/sivu/conecta.service";
 import { detalleIncidencia, listarIncidencias, revisar } from "../../services/sivu/incidencia.service";
 import { generarPlacasQr } from "../../services/sivu/placasQr.service";
+import { catalogosVigentes } from "../../services/sivu/diagnostico.service";
 
 const primerMensaje = (r: { error: { issues: Array<{ message: string }> } }) => r.error.issues[0]?.message ?? "Datos inválidos";
 
@@ -20,6 +21,15 @@ function qrToken(req: Request): string {
   const p = qrTokenParamSchema.safeParse(req.params);
   if (!p.success) throw new AppError(ARBOL_NO_ENCONTRADO, 404);
   return p.data.qrToken;
+}
+
+/**
+ * GET /api/sivu/conecta/catalogos — público. Solo `tipo_incidencia`
+ * (D-180), con la misma forma que B15; el resto de los catálogos sigue
+ * detrás de la sesión (GET /api/sivu/catalogs).
+ */
+export function catalogosPublicosController(_req: Request, res: Response): void {
+  res.status(200).json({ data: { tipo_incidencia: catalogosVigentes().tipo_incidencia ?? [] } });
 }
 
 /** GET /api/sivu/conecta/arboles/:qrToken — público. */
