@@ -1,6 +1,15 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
-import { listarArbolesIndicadores, listarPresencia, obtenerSuperficieProyecto } from "../../repositories/sivu/indicadores.repository";
+import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, obtenerSuperficieProyecto } from "../../repositories/sivu/indicadores.repository";
+import {
+  ArbolEspecie,
+  abundanciaRelativa,
+  coberturaTaxonomica,
+  diversidadShannon,
+  diversidadTaxonomica102030,
+  proporcionOrigen,
+  riquezaEspecies,
+} from "../rules/indicadores/especies";
 import {
   ArbolIndicador,
   areaProyectadaCopa,
@@ -28,6 +37,20 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     barrio === undefined ? obtenerSuperficieProyecto(token, projectId) : Promise.resolve(null),
   ]);
   const presentesIds = new Set(presencias.filter((p) => p.estado_presencia === "presente").map((p) => p.tree_id));
+  const rasgos = await listarRasgosEspecie(token, [...presentesIds]);
+  const rasgoPorArbol = new Map(rasgos.map((r) => [r.tree_id, r]));
+  const especies: ArbolEspecie[] = delAmbito
+    .filter((f) => presentesIds.has(f.id))
+    .map((f) => {
+      const r = rasgoPorArbol.get(f.id);
+      return {
+        id: f.id,
+        especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
+        genero: r?.genero ?? null,
+        familia: r?.familia ?? null,
+        origen_biogeografico: r?.origen_biogeografico ?? "no_determinado",
+      };
+    });
 
   const presentes: ArbolIndicador[] = delAmbito
     .filter((f) => presentesIds.has(f.id))
@@ -52,5 +75,11 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     clases_diametricas: distribucionClaseDiametrica(presentes),
     diametro_medio_copa: diametroMedioCopa(presentes),
     area_proyectada_copa: areaProyectadaCopa(presentes),
+    cobertura_taxonomica: coberturaTaxonomica(especies),
+    riqueza_especies: riquezaEspecies(especies),
+    abundancia_relativa: abundanciaRelativa(especies),
+    diversidad_shannon: diversidadShannon(especies),
+    diversidad_taxonomica_10_20_30: diversidadTaxonomica102030(especies),
+    proporcion_origen: proporcionOrigen(especies),
   };
 }

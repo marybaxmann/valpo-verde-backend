@@ -17,6 +17,8 @@ export interface ArbolIndicadorRow {
   sector: string | null;
   especie_cientifica: string | null;
   species_id: string | null;
+  /** Nombre en el catálogo cuando el árbol está vinculado por species_id (CC-053). */
+  especie_catalogo: string | null;
   dap_cm: number | null;
   diametro_copa_ns_m: number | null;
   diametro_copa_eo_m: number | null;
@@ -30,7 +32,7 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
   for (let desde = 0; ; desde += 1000) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("trees")
-      .select("id, sector, especie_cientifica, species_id, dap_cm, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta")
+      .select("id, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta")
       .eq("project_id", projectId)
       .order("id", { ascending: true })
       .range(desde, desde + 999);
@@ -42,6 +44,7 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
         sector: (f.sector as string | null) ?? null,
         especie_cientifica: (f.especie_cientifica as string | null) ?? null,
         species_id: (f.species_id as string | null) ?? null,
+        especie_catalogo: ((f.species as { especie_cientifica?: string } | null)?.especie_cientifica as string | undefined) ?? null,
         dap_cm: aNumero(f.dap_cm),
         diametro_copa_ns_m: aNumero(f.diametro_copa_ns_m),
         diametro_copa_eo_m: aNumero(f.diametro_copa_eo_m),
@@ -63,6 +66,23 @@ export async function listarPresencia(accessToken: string, treeIds: string[]): P
       .in("tree_id", treeIds.slice(i, i + 150));
     if (error) lanzar(error);
     salida.push(...((data ?? []) as Array<{ tree_id: string; estado_presencia: string }>));
+  }
+  return salida;
+}
+
+/** Rasgos de la especie por árbol (v_species_traits; CC-053: species_id o nombre), en lotes. */
+export async function listarRasgosEspecie(
+  accessToken: string,
+  treeIds: string[]
+): Promise<Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string }>> {
+  const salida: Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string }> = [];
+  for (let i = 0; i < treeIds.length; i += 150) {
+    const { data, error } = await createUserScopedClient(accessToken)
+      .from("v_species_traits")
+      .select("tree_id, genero, familia, origen_biogeografico")
+      .in("tree_id", treeIds.slice(i, i + 150));
+    if (error) lanzar(error);
+    salida.push(...((data ?? []) as typeof salida));
   }
   return salida;
 }

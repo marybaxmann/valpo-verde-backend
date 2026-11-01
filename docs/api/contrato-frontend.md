@@ -220,7 +220,7 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
 |---|---|---|---|
 | `GET /api/sivu/projects/:id/indicadores` | Miembros y Administrador | `barrio?` (valor de `ARBOLES.sector`, D-7, tal como viene en `barrios`) | 200 `{ data }` (abajo). 400 con una query desconocida. |
 
-`data`: `{ fecha_consulta, ambito: { tipo: "proyecto" | "barrio", barrio }, barrios: [string], cobertura: { arboles_registrados, arboles_presentes }, numero_total_arboles, densidad_arborea, clases_diametricas, diametro_medio_copa, area_proyectada_copa }`.
+`data`: `{ fecha_consulta, ambito: { tipo: "proyecto" | "barrio", barrio }, barrios: [string], cobertura: { arboles_registrados, arboles_presentes }, numero_total_arboles, densidad_arborea, clases_diametricas, diametro_medio_copa, area_proyectada_copa, cobertura_taxonomica, riqueza_especies, abundancia_relativa, diversidad_shannon, diversidad_taxonomica_10_20_30, proporcion_origen }`.
 
 - Solo cuentan los árboles **presentes** (D-28): los talados o retirados con OT completada y revisión aprobada quedan fuera. La fecha de referencia es la de la consulta.
 - `numero_total_arboles`: `{ valor, unidad: "arboles" }`.
@@ -229,7 +229,14 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
 - `diametro_medio_copa`: `{ valor, unidad: "m", n_validos, n_con_medicion, n_no_presenta_copa, n_sin_medicion, denominador_presentes }`. «No presenta copa» cuenta como 0 m; un árbol sin medición (o con un solo diámetro) queda fuera y se cuenta en `n_sin_medicion`. `valor: null` sin datos válidos.
 - `area_proyectada_copa`: `{ total_m2, unidad: "m2", n_con_area, n_no_presenta_copa, n_sin_medicion, denominador_presentes }`. Suma de π × (NS/2) × (EO/2) de cada árbol con los dos diámetros (D-20, D-21). `total_m2: null` si ninguno los tiene.
 - Valores sin redondear: el frontend los formatea. Nunca se reemplaza un dato faltante; se informa en los contadores.
-- **Pendiente (bloque 2):** riqueza, abundancia relativa, Shannon, 10-20-30 y proporciones de nativos e introducidos (esperan la regla de agrupación e identificación de especies). Los indicadores ecosistémicos (carbono y otros) siguen fuera: el Excel los marca «Pendiente».
+- **Especies (bloque 2).** Identificado a nivel de especie = taxón determinado a nivel específico, incluidos híbridos («Platanus × hispanica» o «x») y variedades; **no** cuenta solo el género («Quercus sp.», «spp.», «cf.»). Se agrupa sin distinguir mayúsculas ni espacios, y las variedades, subespecies y cultivares en su especie. Si el árbol está vinculado al catálogo (`species_id`), manda el nombre del catálogo. Género, familia y origen salen del catálogo de especies (CC-053).
+- `cobertura_taxonomica`: `{ presentes, identificados_especie, no_identificados_especie, porcentaje_identificados, con_genero_catalogo, con_familia_catalogo, con_origen_catalogo, identificaciones_provisionales, identificaciones_confirmadas, motivo_provisionales }`. Provisionales y confirmadas vienen `null` hasta que la base registre ese dato (migración pendiente).
+- `riqueza_especies`: `{ valor, unidad: "especies", n_identificados, n_no_identificados }`.
+- `abundancia_relativa`: `{ denominador, especies: [{ especie, arboles, porcentaje }], no_identificados: { arboles, porcentaje } }`, de mayor a menor. Denominador: todos los presentes.
+- `diversidad_shannon`: `{ valor, riqueza, n_identificados, cobertura_identificacion }`. H′ con logaritmo natural sobre los identificados; `null` sin identificados.
+- `diversidad_taxonomica_10_20_30`: `{ denominador, especie, genero, familia }`; cada nivel `{ umbral_porcentaje, taxones: [{ taxon, arboles, porcentaje, supera_umbral }], sin_dato: { arboles, porcentaje }, cumple }`. `cumple: null` si no hay ningún taxón con dato.
+- `proporcion_origen`: `{ denominador, nativos, introducidos, origen_no_determinado }`, cada uno `{ arboles, porcentaje }`. Nativos = Nativa o Endémica. Si ningún presente tiene origen en el catálogo, los porcentajes de nativos e introducidos son `null` (no 0 %).
+- Los indicadores ecosistémicos (carbono y otros) siguen fuera: el Excel los marca «Pendiente».
 
 ## 7. Incidencias (interno, B9)
 
@@ -281,7 +288,7 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 ## 9. Pendiente o en revisión
 
 - **B6** (OT
-  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (bloque 1 publicado en §6 bis; los indicadores de especies esperan una decisión y los ecosistémicos siguen «Pendiente» en el Excel).
+  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (los 11 indicadores en §6 bis; falta registrar provisional/confirmada, con migración pendiente de autorización; los ecosistémicos siguen «Pendiente» en el Excel).
 - **CC-052:** la búsqueda de cercanos está disponible; el radio por defecto y la pantalla los define el frontend.
 - **Límites por IP de Conecta:** hoy en memoria, por instancia de Vercel (ver §8). Pendiente: contadores compartidos en PostgreSQL (opción A), con migración sujeta a autorización.
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde
