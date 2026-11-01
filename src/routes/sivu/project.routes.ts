@@ -15,7 +15,7 @@ import {
   removeMiembro,
 } from "../../controllers/sivu/projectMember.controller";
 import { altaMunicipalArbolController } from "../../controllers/sivu/tree.controller";
-import { fichaArbolController, listarInventarioController } from "../../controllers/sivu/inventory.controller";
+import { arbolesCercanosController, fichaArbolController, listarInventarioController } from "../../controllers/sivu/inventory.controller";
 import { crearOrdenTrabajoInspeccionController, listarOtsProyectoController } from "../../controllers/sivu/workOrder.controller";
 import {
   buscarEspeciesController,
@@ -61,6 +61,8 @@ router.post("/:id/trees", authMiddleware, altaMunicipalArbolController);
 router.get("/:id/trees", authMiddleware, listarInventarioController);
 // Ficha del árbol (B2): todos los miembros activos y el Administrador.
 router.get("/:id/trees/:treeId", authMiddleware, fichaArbolController);
+// Árboles cercanos a una coordenada UTM, para no duplicar en un Levantamiento (CC-052).
+router.get("/:id/nearby-trees", authMiddleware, arbolesCercanosController);
 // Crear una OT de Inspección (#58; D-238, D-244, CC-036). Solo usuario_municipal.
 router.post("/:id/work-orders", authMiddleware, crearOrdenTrabajoInspeccionController);
 // OT del proyecto (B3; CC-061, CC-065): visibilidad por rol y tipo de OT.

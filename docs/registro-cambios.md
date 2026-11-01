@@ -2337,6 +2337,7 @@ motivo)
 |---|---|---|---|
 | 2026-10-23 | APROBADO METODOLÓGICAMENTE | marybaxmann | Registro inicial. La propuesta original de la sesión (sin fila de alta) fue rechazada por la responsable por las dos razones técnicas de "Origen". Implementación (018f) pendiente de mostrar y aplicar. |
 | 2026-10-23 | IMPLEMENTADO (pruebas) | marybaxmann | Aprobada con el script de pruebas pedido (L1–L7). Aplicada 018f en `valpo-verde-conecta-pruebas`: L1–L7 (14/14, dos rondas: aplicar → probar → revertir → reaplicar → probar), cero usuarios de prueba remanentes, asesor de seguridad sin hallazgos nuevos. Búsqueda de árboles cercanos (backend/API/UX) queda pendiente para el #58/Fase 7. |
+| 2026-11-01 | IMPLEMENTADO (pruebas) | Valej | Búsqueda de árboles cercanos: `GET /api/sivu/projects/:id/nearby-trees` (UTM 19S, radio elegido por el frontend), sin migración: cuadrado en la base y distancia exacta en el backend. Pruebas Jest; pendiente verificar en la API publicada. |
 
 ---
 
