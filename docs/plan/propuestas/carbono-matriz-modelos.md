@@ -1,5 +1,7 @@
 # Carbono y beneficios ecosistémicos: matriz de modelos (investigación v2; NO implementado)
 
+> **Corregido por `carbono-verificacion-modelos.md` (2026-11-01):** el Anexo 2 tiene 308 árboles en pie (331 registros únicos, menos 17 tocones y 6 retirados); los 320 de esta versión incluían 6 filas repetidas y los retirados. La cobertura y la clasificación vigentes están en ese documento.
+
 > **Estado:** investigación para decidir. No es metodología vigente. En la hoja INDICES, «Carbono almacenado» (fila 14), «Secuestro anual» (fila 15) y el resto de indicadores ecosistémicos siguen «Pendiente», y CC-016 no los adopta. Nada de esto se calcula en SIVU hasta que Valej apruebe un método, se registre en el Excel y en un CC.
 >
 > **Fecha:** 2026-11-01 (v2, reemplaza la v1 del mismo día). **No se inventó ningún coeficiente:** todo coeficiente de este documento está copiado de una fuente leída en esta sesión (sección 1). Lo que viene de memoria y no se pudo contrastar con la fuente original se marca **«(verificar)»** y no tiene coeficientes propios.

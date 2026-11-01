@@ -2921,3 +2921,65 @@ motivo)
 |---|---|---|---|
 | 2026-10-29 | APROBADO METODOLÓGICAMENTE | marybaxmann | Decisión en el chat (rol y solicitud fuera del sistema). |
 | 2026-10-29 | IMPLEMENTADO (pruebas) | Valej | 027 aplicada con el ciclo completo; `pruebas_027` A0–A5 (OT sin completar: Preguardado, evaluación no permitida, motivo vacío o NULL, Inspector, Administrador, no miembro, éxito sin `tree_assessments`, segunda anulación) y B1–B5 (OT completada: sin evaluación, composición alterada y sin excluir → SV068, éxito con vigente recalculada e `inspeccion_anulada`, segunda anulación), 14/14 en dos rondas. Jest del endpoint sin correr en esta sesión. |
+
+---
+
+### CC-068 — Densidad de la madera en el catálogo de especies
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-01 |
+| Origen | B19, carbono aéreo: los modelos de volumen de la Urban Tree Database necesitan la densidad de la madera de cada especie (`docs/plan/propuestas/carbono-verificacion-modelos.md`). |
+| Tipo | 2 — campo nuevo en el modelo de datos |
+| Estado | EN REVISIÓN |
+| Regla / campo afectado | CATALOGO_ESPECIES (D-257 a D-262): campos nuevos. |
+| Versión anterior | El catálogo no registra la densidad de la madera. |
+| Versión nueva | Propuesta: `densidad_madera_kg_m3` (número > 0; masa seca sobre volumen verde, en kg/m³), `densidad_fuente` (texto con la cita), `densidad_nivel_taxon` (`especie` o `genero`: de qué taxón viene el valor) y `densidad_tipo` (texto; por ahora «masa seca / volumen verde»). Lo completa quien gestiona el catálogo, con su fuente; sin valor, `null` (nunca un valor por defecto). |
+| Motivo | Decisión de Valej (2026-11-01, punto 8): incorporar la densidad al diseño del catálogo, con unidad, fuente y nivel taxonómico. |
+| Fundamento / fuente | Urban Tree Database, TS9 («DW Density», kg/m³; McPherson, van Doorn y Peper 2016, RDS-2016-0005). |
+| Archivos afectados | Excel (DICCIONARIO_CAMPOS, CATALOGO_ESPECIES); migración nueva en `species` (no escrita todavía); `fn_complete_species` (018i) si se completa desde la API; B19. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Diagramas: ninguno. Excel: 4 filas nuevas en DICCIONARIO_CAMPOS. BD: 4 columnas en `species` (migración a autorizar; no aplicada). Backend y API: completar especie y lectura en el módulo de carbono. Frontend: mostrar y completar la densidad con su fuente. |
+| Pruebas necesarias | CHECK de rango y de nivel; densidad sin fuente rechazada; especie sin densidad → el carbono devuelve `null` con el motivo `falta_densidad`. |
+| Dependencias | CC-053 (catálogo de especies), CC-069. |
+| rule_version | sin cambio mientras esté en revisión |
+| Aprobado por / Fecha de aprobación | — |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | No se aplicó ninguna migración. La densidad de TS9 se carga por especie solo si la identificación está confirmada o marcada provisional (CC de la 032). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-01 | EN REVISIÓN | Valej | Diseño pedido por Valej (punto 8); ficha preparada, sin migración. |
+
+---
+
+### CC-069 — Carbono aéreo y CO₂ equivalente en B19 (versión 1)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-01 |
+| Origen | B19; INDICES fila 14 («Carbono almacenado», hoy «Pendiente»). |
+| Tipo | 2 — metodología (indicador nuevo) |
+| Estado | EN REVISIÓN (decisiones de método tomadas; falta cerrar la verificación de modelos y registrar en el Excel) |
+| Regla / campo afectado | INDICES fila 14; hoja nueva del Excel `MODELOS_BIOMASA` (propuesta). |
+| Versión anterior | INDICES fila 14: «Por definir tras revisar ecuaciones, componentes de biomasa, factores de conversión y rangos de aplicación.» |
+| Versión nueva | Decisiones de Valej (2026-11-01): **(1)** prioridad: ecuación local de la especie, urbana de la especie y, solo si se justifica, sustituta o genérica; **(2)** fracción de carbono 0,47 de la biomasa seca, provisional (IPCC 2006, Vol. 4, cap. 4, tabla 4.3; cita por verificar en el original); **(3)** CO₂e = C × 44/12; **(4)** v1: biomasa aérea y carbono aéreo, sin raíces ni factor urbano 0,8; **(5)** Chave 2014 no es universal; ninguna ecuación de dicotiledóneas se aplica a palmeras; **(6)** multifustales solo si el modelo admite el cálculo por fuste; nada de DAP equivalente ni sumas sin justificación; **(7)** fuera del rango de validez, `null` con explicación, sin extrapolar; **(9)** identificaciones provisionales permitidas, marcando la incertidumbre. Modelos y clasificación: `docs/plan/propuestas/carbono-verificacion-modelos.md`; módulo: `carbono-modulo-especificacion.md`. |
+| Motivo | Incorporar a B19 el primer indicador ecosistémico con método documentado. |
+| Fundamento / fuente | Urban Tree Database (RDS-2016-0005: TS7, TS8, TS9 y metadatos); Dobbs, Hernández y Escobedo 2011 (Bosque 32(3): 287-296) para descartar su uso como biomasa aérea (solo copa); IPCC 2006 (por verificar). |
+| Archivos afectados | Excel (INDICES fila 14; hoja `MODELOS_BIOMASA`); `src/services/rules/carbono/` (nuevo); `indicadores.service.ts`; ficha B2; contrato §6 bis. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Diagramas: ninguno. Excel: fila 14 y hoja nueva. BD: ninguno en v1 (cálculo al consultar), salvo CC-068. Backend y API: campo `carbono_aereo` en B19 y B2. Frontend: mostrar valores, cobertura, motivos e incertidumbre. |
+| Pruebas necesarias | Una por modelo con valor de referencia calculado a mano; bordes de rango; cada motivo de `null`; multifustal, palmera, especie solo de género, provisional; sincronía catálogo ↔ Excel; los indicadores existentes no cambian. |
+| Dependencias | CC-016, CC-053, CC-068; migración 032 (identificación provisional). |
+| rule_version | por definir al publicar el paquete con la hoja nueva |
+| Aprobado por / Fecha de aprobación | — (decisiones de método: Valej, 2026-11-01) |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | Cobertura real hoy en SIVU: 0 árboles con resultado (sin D y H, fuera de rango o especie sin modelo). Pendiente de decidir: variante solo con D cuando falta H; aprobación de los modelos APTO CON LIMITACIONES; *Ginkgo biloba* con la ecuación genérica de latifoliadas. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-01 | EN REVISIÓN | Valej | Decisiones de método 1 a 9; verificación de modelos y especificación preparadas; sin implementar. |
