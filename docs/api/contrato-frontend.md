@@ -214,6 +214,23 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
 
 ---
 
+## 6 bis. Indicadores del inventario (B19; hoja INDICES; CC-016)
+
+| Método y ruta | Quién | Entrada | Respuesta |
+|---|---|---|---|
+| `GET /api/sivu/projects/:id/indicadores` | Miembros y Administrador | `barrio?` (valor de `ARBOLES.sector`, D-7, tal como viene en `barrios`) | 200 `{ data }` (abajo). 400 con una query desconocida. |
+
+`data`: `{ fecha_consulta, ambito: { tipo: "proyecto" | "barrio", barrio }, barrios: [string], cobertura: { arboles_registrados, arboles_presentes }, numero_total_arboles, densidad_arborea, clases_diametricas, diametro_medio_copa, area_proyectada_copa }`.
+
+- Solo cuentan los árboles **presentes** (D-28): los talados o retirados con OT completada y revisión aprobada quedan fuera. La fecha de referencia es la de la consulta.
+- `numero_total_arboles`: `{ valor, unidad: "arboles" }`.
+- `densidad_arborea`: `{ valor, unidad: "arboles_por_ha", numerador, superficie_m2, motivo }`. Solo por proyecto (superficie del sector, D-256); por barrio, o sin delimitación, `valor: null` y `motivo` con la razón.
+- `clases_diametricas`: `{ denominador, clases: [{ codigo, etiqueta, desde_cm, hasta_cm, arboles, porcentaje }], sin_dap: { arboles, porcentaje } }`. Once clases de INDICES (">0 a <10 cm" … "≥100 cm"; `hasta_cm` exclusivo, `null` en la última). El denominador son todos los presentes; los que no tienen DAP van en «Sin DAP», así todo suma 100 %. `porcentaje: null` si no hay árboles presentes.
+- `diametro_medio_copa`: `{ valor, unidad: "m", n_validos, n_con_medicion, n_no_presenta_copa, n_sin_medicion, denominador_presentes }`. «No presenta copa» cuenta como 0 m; un árbol sin medición (o con un solo diámetro) queda fuera y se cuenta en `n_sin_medicion`. `valor: null` sin datos válidos.
+- `area_proyectada_copa`: `{ total_m2, unidad: "m2", n_con_area, n_no_presenta_copa, n_sin_medicion, denominador_presentes }`. Suma de π × (NS/2) × (EO/2) de cada árbol con los dos diámetros (D-20, D-21). `total_m2: null` si ninguno los tiene.
+- Valores sin redondear: el frontend los formatea. Nunca se reemplaza un dato faltante; se informa en los contadores.
+- **Pendiente (bloque 2):** riqueza, abundancia relativa, Shannon, 10-20-30 y proporciones de nativos e introducidos (esperan la regla de agrupación e identificación de especies). Los indicadores ecosistémicos (carbono y otros) siguen fuera: el Excel los marca «Pendiente».
+
 ## 7. Incidencias (interno, B9)
 
 Estados (`estado_incidencia`): `ingresada`, `en_revision`, `derivada`, `resuelta`, `descartada`.
@@ -264,7 +281,7 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 ## 9. Pendiente o en revisión
 
 - **B6** (OT
-  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (indicadores; depende de CC-016).
+  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (bloque 1 publicado en §6 bis; los indicadores de especies esperan una decisión y los ecosistémicos siguen «Pendiente» en el Excel).
 - **CC-052:** la búsqueda de cercanos está disponible; el radio por defecto y la pantalla los define el frontend.
 - **Límites por IP de Conecta:** hoy en memoria, por instancia de Vercel (ver §8). Pendiente: contadores compartidos en PostgreSQL (opción A), con migración sujeta a autorización.
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde

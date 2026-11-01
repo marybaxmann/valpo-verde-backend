@@ -42,7 +42,7 @@ hoja VERSION del Excel maestro.
 | CC-013 | Cobertura de DICCIONARIO_CAMPOS para entidades operativas y normalización de nombres | 3 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-014 | Eliminar la duplicación de R01–R04 y M01–M05 en DICCIONARIO_CAMPOS | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | Sincronización del paquete 2.0.0 | 2026-10-04 |
 | CC-015 | Consolidación de roles (PR-003, PR-004, PR-009, USUARIOS, "¿Quién lo ingresa?") | 2 | EN REVISIÓN (modelo de roles decidido en CC-026) | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
-| CC-016 | Auditoría y eventual adopción de INDICES | 2 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
+| CC-016 | Auditoría y eventual adopción de INDICES | 2 | APROBADO METODOLÓGICAMENTE (filas 3 a 13; FUENTE SINCRONIZADA pendiente) | Auditoría de hojas del Excel maestro (CC-003) | Valej | B19 | 2026-10-04 |
 | CC-017 | Ubicación de `cumplimiento_distancia_seguridad_bt_mt` | 1 | DETECTADO | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-018 | Normalización y saneamiento de datos de ejemplo | 5 | DETECTADO (ejemplos eliminados en el Excel auditado, CC-026) | Auditoría de hojas del Excel maestro (CC-003) | — | — | 2026-10-04 |
 | CC-019 | Arquitectura SIG con ArcGIS (ADR-015; ADR-010 v2.0; PR-015 v2.0; PR-006 v6.0) | 5 | CERRADO (sin implementación) | Decisión SIG-0 (auditoría SIG de backend y frontend) | — (fuera del paquete) | — | 2026-10-04 |
@@ -719,21 +719,28 @@ motivo)
 | Fecha | 2026-10-04 |
 | Origen | Auditoría de hojas del Excel maestro (CC-003). |
 | Tipo | 2 |
-| Estado | DETECTADO |
+| Estado | APROBADO METODOLÓGICAMENTE para las filas 3 a 13 de INDICES (FUENTE SINCRONIZADA pendiente: registrar la versión en la hoja VERSION). Filas 14 a 31: sin cambio, siguen «Pendiente» en el Excel. |
 | Regla / campo afectado | Hoja INDICES (11 indicadores con fórmula y fuente técnica). |
-| Versión anterior | Módulo metodológico en propuesta (PR-002 v2.1). Dependencias no consolidadas: "Diámetro medio de copa" usa dos diámetros perpendiculares (D₁, D₂) que no existen como campos en DICCIONARIO_CAMPOS. |
-| Versión nueva | Por definir. |
-| Motivo | Adoptar o descartar los indicadores mediante auditoría. |
-| Fundamento / fuente | — |
-| Archivos afectados | Excel maestro. |
-| Impacto en diagramas · Excel · BD · backend · API · frontend | Por definir en revisión. |
-| Pruebas necesarias | Por definir. |
+| Versión anterior | Módulo metodológico en propuesta (PR-002 v2.1). Dependencias no consolidadas: "Diámetro medio de copa" usa dos diámetros perpendiculares (D₁, D₂) que no existen como campos en DICCIONARIO_CAMPOS. **Superado (2026-11-01):** hoy existen como D-20 `diametro_copa_ns_m` y D-21 `diametro_copa_eo_m`, con D-22 `diametro_copa_m` como su promedio. |
+| Versión nueva | **Se adoptan los 11 indicadores del inventario que la hoja INDICES marca «Resuelto» (filas 3 a 13), con su fórmula, entradas y fecha de referencia tal como están en el Excel:** número total de árboles, densidad arbórea, riqueza de especies, abundancia relativa por especie, índice de Shannon (H′), diversidad taxonómica 10-20-30, proporción de nativos, proporción de introducidos, distribución por clase diamétrica, diámetro medio de copa y área proyectada de copa. **No se adoptan** los indicadores marcados «Pendiente» (filas 14 a 31: carbono almacenado y secuestro, área y biomasa foliar, remoción de contaminantes, escorrentía, transpiración, VOC, energía, valor compensatorio, hábitat de aves, radiación UV): siguen en el Excel, sin eliminarse, a la espera de método y datos. Decisiones de aplicación (Valej, 2026-11-01): los árboles presentes sin DAP se muestran en una clase «Sin DAP», para que la distribución diamétrica sume el 100 % del denominador de INDICES; «No presenta copa» se distingue de la copa no medida. Estos indicadores no tienen relación con las clasificaciones de riesgo, infraestructura y prioridad (R01 a R03, M04, M05, IN-*; CC-060 punto 3). |
+| Motivo | Adoptar o descartar los indicadores mediante auditoría. Se adoptan los que tienen fórmula cerrada para implementar B19. |
+| Fundamento / fuente | Hoja INDICES del Excel maestro, filas 3 a 13 (Estado metodológico «Resuelto»); D-7, D-13, D-18, D-20 a D-22, D-28, D-256 a D-260. Decisión de Valej, 2026-11-01. |
+| Archivos afectados | Excel maestro (hoja VERSION, pendiente); `src/services/rules/indicadores/inventario.ts`; `src/services/sivu/indicadores.service.ts`; `src/repositories/sivu/indicadores.repository.ts`; `GET /api/sivu/projects/:id/indicadores` (B19). |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Diagramas: ninguno. Excel: registrar la versión en VERSION. BD: ninguno (sin migración; usa `trees`, `v_tree_presence`, `v_species_traits`/`species` y `sectors`). Backend y API: B19. Frontend: módulo de indicadores y Dashboard. |
+| Pruebas necesarias | Una prueba por fórmula, con límites de clase, denominadores, cobertura y casos sin datos (valor `null`, nunca un valor supuesto); solo árboles presentes (D-28); densidad solo por proyecto. |
 | Dependencias | CC-003. |
 | rule_version | sin cambio mientras esté en propuesta |
-| Aprobado por / Fecha de aprobación | — |
+| Aprobado por / Fecha de aprobación | Valej, 2026-11-01 (filas 3 a 13). |
 | Fecha de implementación | — |
 | Commits / PR asociados | — |
-| Observaciones | INDICES no es implementable ni normativa vigente hasta cerrar CC-016. Mientras siga en propuesta, sus cambios no modifican `rule_version`. |
+| Observaciones | INDICES no es implementable ni normativa vigente hasta cerrar CC-016. Mientras siga en propuesta, sus cambios no modifican `rule_version`. **2026-11-01:** Valej autorizó implementar B19 antes de registrar la versión en la hoja VERSION; queda la diferencia con `docs/workflow.md` §14 (implementación desde FUENTE SINCRONIZADA). Los indicadores de especies (filas 5 a 10) dependen de cómo se agrupan e identifican las especies, que se decide aparte. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-10-04 | DETECTADO | — | Auditoría de hojas (CC-003). |
+| 2026-11-01 | APROBADO METODOLÓGICAMENTE | Valej | Filas 3 a 13 de INDICES; filas 14 a 31 siguen pendientes. Implementación de B19 autorizada antes de FUENTE SINCRONIZADA. |
 
 ---
 
