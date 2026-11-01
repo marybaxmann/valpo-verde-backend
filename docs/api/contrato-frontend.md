@@ -97,6 +97,7 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
   `altura_total_m`, `diametro_copa_ns_m`, `diametro_copa_eo_m`, `diametro_copa_m`, `copa_no_presenta`,
   `altura_primera_rama_m`, `altura_primera_rama_no_presenta`, `altura_base_copa_viva_m`,
   `altura_base_copa_viva_no_presenta`, `clase_edad` y `rango_edad_estimada_anios` (estos dos como `{ codigo, etiqueta }`).
+- `arbol.area_proyectada_copa_m2` (INDICES fila 13; CC-016): π × (NS/2) × (EO/2) en m². «No presenta copa» (`copa_no_presenta: true`) = `0`; sin los dos diámetros, `null` (no medido).
 - `sobre_la_especie`: `genero`, `familia`, `origen_biogeografico`, `persistencia_follaje`, `tipo_hoja` (los tres
   últimos como `{ codigo, etiqueta }`; sin especie vigente: «Origen no determinado» y los otros dos `null`).
 - `evaluacion_vigente`: igual que `vigente` de B18 (§6), o `null`.

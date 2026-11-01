@@ -14,6 +14,7 @@ import { obtenerPresencia } from "../../repositories/sivu/mantenimiento.reposito
 import { diagnosticoDeArbol } from "./diagnostico.service";
 import { listarIncidenciasDeArbol } from "./incidencia.service";
 import { listarOtsDeArbol } from "./listadoOt.service";
+import { areaCopaArbol } from "../rules/indicadores/inventario";
 
 /**
  * B2 — GET /api/sivu/projects/:id/trees/:treeId: ficha del árbol
@@ -55,6 +56,8 @@ function valorDeCampo(campo: string, v: unknown): unknown {
 
 function arbol(f: ArbolFichaRow) {
   const coordenadas = f.ubicacion?.coordinates;
+  const ns = numero(f.diametro_copa_ns_m);
+  const eo = numero(f.diametro_copa_eo_m);
   return {
     id: f.id,
     tree_code: f.tree_code,
@@ -64,6 +67,8 @@ function arbol(f: ArbolFichaRow) {
     fecha_registro: f.fecha_registro,
     // Valores vigentes de medición e identificación (D-7 a D-29).
     ...Object.fromEntries(CAMPOS_MEDICION.map((c) => [c, valorDeCampo(c, (f as unknown as Record<string, unknown>)[c])])),
+    // INDICES fila 13 (CC-016): área proyectada de copa del árbol, en m². «No presenta copa» = 0; sin medición, null.
+    area_proyectada_copa_m2: areaCopaArbol(ns, eo, f.copa_no_presenta),
   };
 }
 

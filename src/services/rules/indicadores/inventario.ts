@@ -117,6 +117,16 @@ export function diametroMedioCopa(presentes: ArbolIndicador[]) {
 }
 
 /**
+ * Fila 13, por árbol (ficha, B2): Ac_i = π × (NS/2) × (EO/2). «No
+ * presenta copa» = 0 m² (Valej, 2026-11-01); sin los dos diámetros, null.
+ */
+export function areaCopaArbol(ns: number | null, eo: number | null, noPresenta: boolean | null): number | null {
+  if (noPresenta === true) return 0;
+  if (ns === null || eo === null) return null;
+  return Math.PI * (ns / 2) * (eo / 2);
+}
+
+/**
  * Fila 13: Ac_i = π × (NS/2) × (EO/2) por árbol; Ac_total = Σ Ac_i. Solo
  * árboles con los dos diámetros. «No presenta» y sin medición se informan
  * aparte (no aportan área). Sin ningún árbol con área: total null.

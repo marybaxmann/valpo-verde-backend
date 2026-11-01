@@ -93,6 +93,18 @@ describe("obtenerFichaArbol (B2)", () => {
     expect(f.sobre_la_especie.tipo_hoja).toBeNull();
   });
 
+  it.each([
+    ["con los dos diámetros (texto de PostgREST)", { diametro_copa_ns_m: "4", diametro_copa_eo_m: "6", copa_no_presenta: null }, Math.PI * 6],
+    ["«No presenta copa»: 0 m²", { copa_no_presenta: true }, 0],
+    ["con un solo diámetro: null", { diametro_copa_ns_m: 4 }, null],
+    ["sin medición: null", {}, null],
+  ])("área proyectada de copa del árbol (INDICES fila 13) %s", async (_d, extra, esperado) => {
+    (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, ...extra });
+    const f = await obtenerFichaArbol(user, P, T, "token");
+    if (esperado === null) expect(f.arbol.area_proyectada_copa_m2).toBeNull();
+    else expect(f.arbol.area_proyectada_copa_m2).toBeCloseTo(esperado);
+  });
+
   it("árbol de otro proyecto o inexistente: 404", async () => {
     (obtenerArbolFicha as jest.Mock).mockResolvedValue(null);
     await expect(obtenerFichaArbol(user, P, T, "token")).rejects.toMatchObject({ statusCode: 404 });
