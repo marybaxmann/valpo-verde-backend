@@ -266,9 +266,16 @@ if ($ConNoMiembro) { [void](Abrir-Sesion 'ajeno' $null) }
 # V-3: el backend valida tokens del proyecto de pruebas y lee el proyecto QA,
 # que solo existe en esa base. Si el backend apuntara a otra base, fallaria.
 $r = Caso 'V-3' 'Entorno' 'Backend acepta tokens de pruebas y lee el proyecto QA' municipal GET "/projects/$P" -Esperado 200 -Comprobar {
-  param($r) if ((Valor $r.body 'data.id') -ne $P) { 'el proyecto devuelto no es el de QA' }
+  param($r)
+  # Contrato de GET /projects/:id: { data: { proyecto: { id, ... }, sector } } (project.service.ts).
+  $idDevuelto = [string](Valor $r.body 'data.proyecto.id')
+  if ($idDevuelto -ne $P) { "el proyecto devuelto no es el de QA (data.proyecto.id = '$idDevuelto')" }
 }
-if ($null -eq $r -or $r.status -ne 200) { throw 'V-3 fallo: el backend no esta conectado al proyecto de pruebas. Se detiene.' }
+# Cualquier resultado distinto de PASS en V-3 detiene el script, aunque el HTTP sea 200.
+$v3 = @($script:Resultados | Where-Object caso -eq 'V-3') | Select-Object -Last 1
+if ($null -eq $r -or $r.status -ne 200 -or $null -eq $v3 -or $v3.resultado -ne 'PASS') {
+  throw 'V-3 fallo: el backend no esta conectado al proyecto de pruebas o no devolvio el proyecto QA. Se detiene.'
+}
 $r = Caso 'V-4' 'Entorno' 'Tabla de avisos disponible (033)' municipal GET '/notificaciones?limit=1' -Esperado 200
 if ($null -eq $r -or $r.status -ne 200) { throw 'V-4 fallo: /notificaciones no responde. Se detiene.' }
 
