@@ -325,7 +325,7 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 
 ---
 
-## 8 bis. Avisos y recordatorios (CC-051, #63) — **requieren la migración 033, todavía sin aplicar**
+## 8 bis. Avisos y recordatorios (CC-051, #63) — **requieren la migración 033 (aplicada en la base de pruebas el 2026-11-02)**
 
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|

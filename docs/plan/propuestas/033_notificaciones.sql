@@ -1,3 +1,5 @@
+-- NOTA (2026-11-02): versión de trabajo. La migración aplicada es
+-- database/migrations/033_notificaciones.sql (sin BEGIN/COMMIT, md5 ec1032440230f504113b01f6176deee7).
 -- =====================================================================
 -- Migración 033 — Notificaciones internas de SIVU (CC-051) y
 -- recordatorios de inspección (#63)
