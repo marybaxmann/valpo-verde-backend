@@ -1,6 +1,8 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { AppError } from "../../utils/AppError";
 import { hoyEnChile } from "../../utils/fechaChile";
+import { mensajeAltaFueraDeSector, mensajeCheck } from "../../utils/mensajesBase";
+import { SQLSTATE_ARBOL_FUERA_SECTOR } from "../../repositories/sivu/project.repository";
 import { assertProjectRole } from "../authorization.service";
 import { RULE_VERSION } from "../rules/engine/version";
 import { calcularDapEquivalenteCm } from "../rules/engine/variables-calculo";
@@ -22,10 +24,10 @@ import { CrearBorradorInspeccionBody, GuardarBorradorInspeccionBody } from "../.
  * autoridad final; `assertProjectRole` aquí es defensa adicional, no
  * la que decide.
  *
- * Árbol nuevo en Levantamiento (CC-052/018f) fuera de alcance: si la
- * OT es de Levantamiento, exige `tree_id` de un árbol YA existente del
- * mismo proyecto (D-193) en el body — el endpoint para crear uno nuevo
- * queda pendiente de la búsqueda de árboles cercanos.
+ * Levantamiento (D-193) sin árbol en la OT: el body trae `tree_id` de un
+ * árbol existente del mismo proyecto, o `nuevo_arbol` (CC-052): la
+ * función 018f crea el árbol y su alta en la misma transacción. La
+ * respuesta trae `tree_id` y `arbol_nuevo`.
  */
 export async function crearBorradorInspeccion(
   user: AuthenticatedUser,
@@ -43,7 +45,7 @@ export async function crearBorradorInspeccion(
 
   await assertProjectRole(user, ot.project_id, ["inspector"], accessToken);
 
-  const treeId = resolverTreeId(ot.tree_id, ot.accion_solicitada, body.tree_id);
+  const treeId = resolverTreeId(ot.tree_id, ot.accion_solicitada, body.tree_id, body.nuevo_arbol !== undefined);
   const fecha = hoyEnChile();
 
   try {
@@ -51,6 +53,7 @@ export async function crearBorradorInspeccion(
       inspectionId: null,
       workOrderId,
       treeId,
+      ...(treeId === null ? { nuevoArbol: body.nuevo_arbol! } : {}),
       inspector: user.id,
       fechaInspeccion: fecha,
       fechaRegistro: fecha,
@@ -163,12 +166,15 @@ function redondearA2(valor: number): number {
 
 /**
  * Resuelve el árbol de la inspección: el de la OT, salvo Levantamiento
- * (D-193), donde el body debe traer un árbol EXISTENTE del mismo
- * proyecto (la función SQL valida la coherencia de proyecto; crear uno
- * nuevo, CC-052/018f, queda fuera de este endpoint).
+ * (D-193), donde el body trae un árbol EXISTENTE del mismo proyecto (la
+ * función SQL valida la coherencia de proyecto) o `nuevo_arbol` (CC-052):
+ * entonces devuelve null y la función 018f crea el árbol.
  */
-function resolverTreeId(otTreeId: string | null, accionSolicitada: string, bodyTreeId: string | undefined): string {
+function resolverTreeId(otTreeId: string | null, accionSolicitada: string, bodyTreeId: string | undefined, conNuevoArbol: boolean): string | null {
   if (otTreeId !== null) {
+    if (conNuevoArbol) {
+      throw new AppError("nuevo_arbol solo se admite en una orden de trabajo de Levantamiento sin árbol asignado (CC-052)", 422);
+    }
     if (bodyTreeId !== undefined && bodyTreeId !== otTreeId) {
       throw new AppError("tree_id no coincide con el árbol de la orden de trabajo", 422);
     }
@@ -177,11 +183,9 @@ function resolverTreeId(otTreeId: string | null, accionSolicitada: string, bodyT
   if (accionSolicitada !== "levantamiento") {
     throw new AppError("La orden de trabajo no tiene un árbol asignado", 422);
   }
+  if (conNuevoArbol) return null;
   if (!bodyTreeId) {
-    throw new AppError(
-      "tree_id es obligatorio: seleccione un árbol existente del proyecto (crear uno nuevo durante un Levantamiento todavía no está disponible)",
-      422
-    );
+    throw new AppError("tree_id o nuevo_arbol es obligatorio: seleccione un árbol existente del proyecto o registre uno nuevo (CC-052)", 422);
   }
   return bodyTreeId;
 }
@@ -196,8 +200,12 @@ function traducirErrorBorrador(err: unknown): Error {
   if (cause === SQLSTATE_BORRADOR_INSPECCION || cause === SQLSTATE_ALTA_ARBOL) {
     return new AppError(error.message, 422);
   }
+  // Árbol nuevo de Levantamiento fuera del sector (CC-046/CC-052): mismo mensaje que el alta municipal.
+  if (cause === SQLSTATE_ARBOL_FUERA_SECTOR) {
+    return new AppError(mensajeAltaFueraDeSector(error.message), 422);
+  }
   if (cause === "23514") {
-    return new AppError(error.message, 400);
+    return new AppError(mensajeCheck(error.message), 400);
   }
   return error;
 }

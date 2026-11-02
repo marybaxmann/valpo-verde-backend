@@ -46,7 +46,7 @@ describe("B19 bloque 1 — indicadores del inventario (hoja INDICES, filas 3, 4,
     expect(n).toEqual(expect.objectContaining({ "0_10": 1, "10_20": 1, "90_100": 1, "100_mas": 1 }));
     expect(r.clases).toHaveLength(11);
     expect(r.sin_dap).toEqual({ arboles: 1, porcentaje: 20 });
-    expect(r.denominador).toBe(5);
+    expect(r.denominador_evaluados).toBe(5);
     const suma = r.clases.reduce((s, c) => s + (c.porcentaje ?? 0), 0) + (r.sin_dap.porcentaje ?? 0);
     expect(suma).toBeCloseTo(100);
   });
@@ -66,7 +66,7 @@ describe("B19 bloque 1 — indicadores del inventario (hoja INDICES, filas 3, 4,
       arbol(),
     ]);
     expect(r.valor).toBeCloseTo(10 / 3);
-    expect(r).toEqual(expect.objectContaining({ n_validos: 3, n_con_medicion: 2, n_no_presenta_copa: 1, n_sin_medicion: 2, denominador_presentes: 5 }));
+    expect(r).toEqual(expect.objectContaining({ n_validos: 3, n_con_medicion: 2, n_no_presenta_copa: 1, n_sin_medicion: 2, denominador_evaluados: 5 }));
   });
 
   it("fila 12: sin ningún dato válido, valor null", () => {
@@ -81,7 +81,7 @@ describe("B19 bloque 1 — indicadores del inventario (hoja INDICES, filas 3, 4,
       arbol({ diametro_copa_eo_m: 3 }),
     ]);
     expect(r.total_m2).toBeCloseTo(Math.PI * 2 * 3 + Math.PI * 1 * 1);
-    expect(r).toEqual(expect.objectContaining({ n_con_area: 2, n_no_presenta_copa: 1, n_sin_medicion: 1, denominador_presentes: 4 }));
+    expect(r).toEqual(expect.objectContaining({ n_con_area: 2, n_no_presenta_copa: 1, n_sin_medicion: 1, denominador_evaluados: 4 }));
   });
 
   it("fila 13: sin árboles con los dos diámetros, total null", () => {

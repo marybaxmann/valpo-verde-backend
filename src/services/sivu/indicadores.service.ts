@@ -1,6 +1,8 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
 import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, obtenerSuperficieProyecto } from "../../repositories/sivu/indicadores.repository";
+import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
+import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
 import {
   ArbolEspecie,
   abundanciaRelativa,
@@ -37,7 +39,10 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     barrio === undefined ? obtenerSuperficieProyecto(token, projectId) : Promise.resolve(null),
   ]);
   const presentesIds = new Set(presencias.filter((p) => p.estado_presencia === "presente").map((p) => p.tree_id));
-  const rasgos = await listarRasgosEspecie(token, [...presentesIds]);
+  const [rasgos, evaluadosIds] = await Promise.all([
+    listarRasgosEspecie(token, [...presentesIds]),
+    arbolesConEvaluacionCompletaVigente(token, projectId, [...presentesIds]),
+  ]);
   const rasgoPorArbol = new Map(rasgos.map((r) => [r.tree_id, r]));
   const especies: ArbolEspecie[] = delAmbito
     .filter((f) => presentesIds.has(f.id))
@@ -65,21 +70,45 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
       copa_no_presenta: f.copa_no_presenta,
     }));
 
+  const evaluados = presentes.filter((a) => evaluadosIds.has(a.id));
+
+  // Carbono (CC-069 v1): presentes del ámbito; el módulo deja fuera del universo a los no evaluados.
+  const arbolesCarbono: ArbolCarbono[] = delAmbito
+    .filter((f) => presentesIds.has(f.id))
+    .map((f) => ({
+      id: f.id,
+      presente: true,
+      evaluacion_completa_vigente: evaluadosIds.has(f.id),
+      especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
+      tipo_hoja: rasgoPorArbol.get(f.id)?.tipo_hoja ?? null,
+      multifustal: f.multifustal,
+      dap_cm: f.dap_cm,
+      altura_total_m: f.altura_total_m,
+    }));
+
   return {
     fecha_consulta: fechaConsulta,
     ambito: { tipo: barrio === undefined ? ("proyecto" as const) : ("barrio" as const), barrio: barrio ?? null },
     barrios,
-    cobertura: { arboles_registrados: delAmbito.length, arboles_presentes: presentes.length },
+    cobertura: {
+      arboles_registrados: delAmbito.length,
+      arboles_presentes: presentes.length,
+      // Universo biométrico (filas 11 a 13): presentes con evaluación completa válida y vigente.
+      arboles_con_evaluacion_valida: evaluados.length,
+      arboles_sin_evaluacion_valida: presentes.length - evaluados.length,
+    },
     numero_total_arboles: numeroTotalArboles(presentes),
     densidad_arborea: densidadArborea(presentes.length, superficie, barrio !== undefined),
-    clases_diametricas: distribucionClaseDiametrica(presentes),
-    diametro_medio_copa: diametroMedioCopa(presentes),
-    area_proyectada_copa: areaProyectadaCopa(presentes),
+    clases_diametricas: distribucionClaseDiametrica(evaluados),
+    diametro_medio_copa: diametroMedioCopa(evaluados),
+    area_proyectada_copa: areaProyectadaCopa(evaluados),
     cobertura_taxonomica: coberturaTaxonomica(especies),
     riqueza_especies: riquezaEspecies(especies),
     abundancia_relativa: abundanciaRelativa(especies),
     diversidad_shannon: diversidadShannon(especies),
     diversidad_taxonomica_10_20_30: diversidadTaxonomica102030(especies),
     proporcion_origen: proporcionOrigen(especies),
+    // Separados: biomasa aérea leñosa, carbono aéreo leñoso y CO₂ equivalente (total en t), con cobertura y motivos.
+    estimacion_carbono_aereo_lenoso: agregarCarbono(arbolesCarbono),
   };
 }

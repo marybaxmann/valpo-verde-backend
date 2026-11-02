@@ -111,6 +111,21 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "categoria_infraestructura", codigo: "severa", etiqueta: "Severa", orden: 4, estado: "vigente", cc: "PR-021" },
   { catalogo: "categoria_infraestructura", codigo: "no_determinado", etiqueta: "No determinado", orden: 5, estado: "vigente", cc: "PR-021" },
 
+  // --- tipo_notificacion: avisos dentro de SIVU (CC-051) y recordatorios (#63); migración 033 (propuesta). ---
+  { catalogo: "tipo_notificacion", codigo: "ot_cancelada", etiqueta: "Orden de trabajo cancelada", orden: 0, estado: "vigente", cc: "CC-051" },
+  { catalogo: "tipo_notificacion", codigo: "ot_reasignada_nuevo", etiqueta: "Orden de trabajo asignada", orden: 1, estado: "vigente", cc: "CC-051" },
+  { catalogo: "tipo_notificacion", codigo: "ot_reasignada_anterior", etiqueta: "Orden de trabajo reasignada a otro responsable", orden: 2, estado: "vigente", cc: "CC-051" },
+  { catalogo: "tipo_notificacion", codigo: "recordatorio_inspeccion", etiqueta: "Recordatorio de inspección", orden: 3, estado: "vigente", cc: "#63" },
+
+  // --- componente_infraestructura: componentes de M04 (códigos snake_case, PR-021; etiquetas de la columna
+  //     «Indicador» de REGLAS_INDICADORES, IN-VER/CAL/ALC/VRT/RAE/RSU). Para B8. ---
+  { catalogo: "componente_infraestructura", codigo: "vereda", etiqueta: "Vereda", orden: 0, estado: "vigente", cc: "REGLAS_INDICADORES" },
+  { catalogo: "componente_infraestructura", codigo: "calzada", etiqueta: "Calzada", orden: 1, estado: "vigente", cc: "REGLAS_INDICADORES" },
+  { catalogo: "componente_infraestructura", codigo: "alcorque", etiqueta: "Alcorque y superficie permeable", orden: 2, estado: "vigente", cc: "REGLAS_INDICADORES" },
+  { catalogo: "componente_infraestructura", codigo: "infraestructura_vertical", etiqueta: "Infraestructura vertical", orden: 3, estado: "vigente", cc: "REGLAS_INDICADORES" },
+  { catalogo: "componente_infraestructura", codigo: "red_aerea", etiqueta: "Red aérea", orden: 4, estado: "vigente", cc: "REGLAS_INDICADORES" },
+  { catalogo: "componente_infraestructura", codigo: "red_subterranea", etiqueta: "Red subterránea", orden: 5, estado: "vigente", cc: "REGLAS_INDICADORES" },
+
   // --- clasificacion_infraestructura: D-170 (salida de M04) ---
   { catalogo: "clasificacion_infraestructura", codigo: "bajo", etiqueta: "Bajo", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "clasificacion_infraestructura", codigo: "moderado", etiqueta: "Moderado", orden: 1, estado: "vigente", cc: "PR-021" },

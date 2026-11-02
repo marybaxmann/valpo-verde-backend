@@ -178,6 +178,15 @@ describe("POST /api/sivu/work-orders/:id/cancelar (CC-050)", () => {
     mCancelar.mockRejectedValue(errorDb("SV066"));
     expect((await cancelar({ motivo_cancelacion: "x" })).status).toBe(422);
   });
+
+  it("falla el aviso del trigger (SV075, migración 033): 503 con mensaje claro; la cancelación se revirtió", async () => {
+    mCancelar.mockRejectedValue(errorDb("SV075"));
+    const err = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const res = await cancelar({ motivo_cancelacion: "x" });
+    expect(res.status).toBe(503);
+    expect(res.body.error).toMatch(/no se aplicó/);
+    err.mockRestore();
+  });
 });
 
 describe("PATCH /api/sivu/work-orders/:id/responsable (CC-050; D-244)", () => {
@@ -191,6 +200,13 @@ describe("PATCH /api/sivu/work-orders/:id/responsable (CC-050; D-244)", () => {
     mReasignar.mockResolvedValue({ work_order_id: OT_ID, responsable_accion_id: INSPECTOR_ID });
     expect((await reasignar({ responsable_accion_id: INSPECTOR_ID })).status).toBe(200);
     expect(mReasignar).toHaveBeenCalledWith(OT_ID, INSPECTOR_ID, MUNICIPAL_ID);
+  });
+
+  it("falla el aviso del trigger (SV075): 503", async () => {
+    mReasignar.mockRejectedValue(errorDb("SV075"));
+    const err = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    expect((await reasignar({ responsable_accion_id: INSPECTOR_ID })).status).toBe(503);
+    err.mockRestore();
   });
 
   it("responsable que no corresponde (SV067): 422", async () => {

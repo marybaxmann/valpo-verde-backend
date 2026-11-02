@@ -30,10 +30,23 @@ export interface CamposArbol {
   rango_edad_estimada_anios?: string | null;
 }
 
+/** Datos mínimos del alta de un árbol nuevo en Levantamiento (CC-052; D-7 a D-10, D-13/D-14). */
+export interface NuevoArbolLevantamiento {
+  sector: string;
+  ubicacion_descriptiva: string;
+  utm_este: number;
+  utm_norte: number;
+  especie_cientifica?: string;
+  nombre_comun?: string;
+}
+
 export interface GuardarBorradorInspeccionInput {
   inspectionId: string | null;
   workOrderId: string;
-  treeId: string;
+  /** null solo en el primer guardado de un Levantamiento con árbol nuevo (CC-052). */
+  treeId: string | null;
+  /** Solo junto con treeId null: la función crea el árbol y su fila de alta (018f). */
+  nuevoArbol?: NuevoArbolLevantamiento;
   inspector: string;
   fechaInspeccion: string;
   fechaRegistro: string;
@@ -54,17 +67,19 @@ export interface BorradorInspeccionResultado {
   inspection_id: string;
   evaluation_id: string;
   tree_data_version_id: string | null;
+  /** Árbol de la inspección; el recién creado si `arbol_nuevo` (018f). */
+  tree_id: string;
+  /** true si este guardado creó el árbol (CC-052). */
+  arbol_nuevo: boolean;
   estado_registro: string;
 }
 
 /**
  * Invoca `fn_save_inspection_draft` (018e/018f; #58) con `service_role`.
- * Solo la rama de árbol existente: los parámetros `p_nuevo_arbol_*`
- * (018f, CC-052 — árbol nuevo en Levantamiento) no se exponen todavía
- * desde este repositorio; ese endpoint queda para cuando la responsable
- * decida la propuesta de búsqueda de árboles cercanos. `camposArbol`
- * siempre lleva el estado COMPLETO del borrador en ese guardado, nunca
- * un delta (mismo criterio que la función).
+ * Con `treeId` null y `nuevoArbol`, la función crea el árbol y su fila
+ * de alta en la misma transacción (CC-052, 018f; solo Levantamiento y
+ * solo en el primer guardado). `camposArbol` siempre lleva el estado
+ * COMPLETO del borrador en ese guardado, nunca un delta.
  */
 export async function guardarBorradorInspeccion(
   input: GuardarBorradorInspeccionInput
@@ -87,6 +102,12 @@ export async function guardarBorradorInspeccion(
     p_variables: input.variables,
     p_campos_arbol: input.camposArbol,
     p_campos_registrados_arbol: input.camposRegistradosArbol,
+    p_nuevo_arbol_sector: input.nuevoArbol?.sector ?? null,
+    p_nuevo_arbol_ubicacion_descriptiva: input.nuevoArbol?.ubicacion_descriptiva ?? null,
+    p_nuevo_arbol_utm_este: input.nuevoArbol?.utm_este ?? null,
+    p_nuevo_arbol_utm_norte: input.nuevoArbol?.utm_norte ?? null,
+    p_nuevo_arbol_especie_cientifica: input.nuevoArbol?.especie_cientifica ?? null,
+    p_nuevo_arbol_nombre_comun: input.nuevoArbol?.nombre_comun ?? null,
   });
 
   if (error) {

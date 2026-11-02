@@ -7,6 +7,12 @@
  * Bloque 1: número total de árboles (fila 3), densidad arbórea (fila 4),
  * distribución por clase diamétrica (fila 11), diámetro medio de copa
  * (fila 12) y área proyectada de copa (fila 13).
+ *
+ * Universos (Valej, 2026-11-02; CC-016): las filas 3 y 4 usan los árboles
+ * PRESENTES; las filas 11 a 13 (biométricas) usan solo los presentes con
+ * evaluación completa válida y vigente (habilitacionBiometrica.ts). Quien
+ * llama entrega a cada función su universo. Un árbol nunca evaluado no es
+ * «Sin DAP» ni «sin medición»: está fuera del universo biométrico.
  */
 
 export interface ArbolIndicador {
@@ -64,12 +70,13 @@ export const CLASES_DIAMETRICAS: ReadonlyArray<{ codigo: string; etiqueta: strin
 ];
 
 /**
- * Fila 11: porcentaje por clase = árboles de la clase / Número total de
- * árboles presentes × 100. Los presentes sin DAP van en «Sin DAP» (Valej,
- * 2026-11-01), así las clases más «Sin DAP» suman el 100 %.
+ * Fila 11: porcentaje por clase = árboles de la clase / árboles evaluados ×
+ * 100 (universo biométrico). Los evaluados sin DAP (dato inconsistente)
+ * van en «Sin DAP», así las clases más «Sin DAP» suman el 100 %.
  */
-export function distribucionClaseDiametrica(presentes: ArbolIndicador[]) {
-  const total = presentes.length;
+export function distribucionClaseDiametrica(evaluados: ArbolIndicador[]) {
+  const presentes = evaluados;
+  const total = evaluados.length;
   const conteo = CLASES_DIAMETRICAS.map(() => 0);
   let sinDap = 0;
   for (const a of presentes) {
@@ -82,7 +89,7 @@ export function distribucionClaseDiametrica(presentes: ArbolIndicador[]) {
     conteo[i]++;
   }
   return {
-    denominador: total,
+    denominador_evaluados: total,
     clases: CLASES_DIAMETRICAS.map((c, i) => ({ ...c, arboles: conteo[i], porcentaje: porcentaje(conteo[i], total) })),
     sin_dap: { arboles: sinDap, porcentaje: porcentaje(sinDap, total) },
   };
@@ -93,7 +100,8 @@ export function distribucionClaseDiametrica(presentes: ArbolIndicador[]) {
  * con diámetro de copa numérico (D-22) o con copa «No presenta» (0 m). Los
  * que no tienen ninguno de los dos quedan fuera y se informan aparte.
  */
-export function diametroMedioCopa(presentes: ArbolIndicador[]) {
+export function diametroMedioCopa(evaluados: ArbolIndicador[]) {
+  const presentes = evaluados;
   let suma = 0;
   let medidos = 0;
   let noPresenta = 0;
@@ -112,7 +120,7 @@ export function diametroMedioCopa(presentes: ArbolIndicador[]) {
     n_con_medicion: medidos,
     n_no_presenta_copa: noPresenta,
     n_sin_medicion: presentes.length - validos,
-    denominador_presentes: presentes.length,
+    denominador_evaluados: presentes.length,
   };
 }
 
@@ -131,7 +139,8 @@ export function areaCopaArbol(ns: number | null, eo: number | null, noPresenta: 
  * árboles con los dos diámetros. «No presenta» y sin medición se informan
  * aparte (no aportan área). Sin ningún árbol con área: total null.
  */
-export function areaProyectadaCopa(presentes: ArbolIndicador[]) {
+export function areaProyectadaCopa(evaluados: ArbolIndicador[]) {
+  const presentes = evaluados;
   let total = 0;
   let conArea = 0;
   let noPresenta = 0;
@@ -148,6 +157,6 @@ export function areaProyectadaCopa(presentes: ArbolIndicador[]) {
     n_con_area: conArea,
     n_no_presenta_copa: noPresenta,
     n_sin_medicion: presentes.length - conArea - noPresenta,
-    denominador_presentes: presentes.length,
+    denominador_evaluados: presentes.length,
   };
 }

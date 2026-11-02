@@ -22,6 +22,11 @@ const estadoSchema = z
 const comunes = {
   estado: estadoSchema.optional(),
   tipo_ot: z.enum(["inspeccion", "mantenimiento"]).optional(),
+  /** B6: `true` = solo las OT vencidas (Programada con fecha programada anterior a hoy en Chile). */
+  solo_vencidas: z
+    .enum(["true", "false"], { errorMap: () => ({ message: "solo_vencidas debe ser true o false" }) })
+    .transform((v) => v === "true")
+    .optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 };

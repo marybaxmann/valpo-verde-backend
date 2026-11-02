@@ -241,6 +241,13 @@ export interface FiltrosListadoOt {
   treeId?: string;
   /** Solo las OT de Mantenimiento con este Inspector revisor (031). */
   inspectorRevisorId?: string;
+  /**
+   * B6: solo las vencidas — estado Programada y fecha_accion_programada
+   * anterior a esta fecha (hoy en Chile, AAAA-MM-DD). Misma condición que
+   * esOtVencida (services/sivu/otVencida.ts), aplicada en la consulta para
+   * que la paginación y el total sean correctos.
+   */
+  vencidasAntesDe?: string;
   estados: readonly string[];
   limit: number;
   offset: number;
@@ -264,6 +271,7 @@ export async function listarOrdenesTrabajo(
   if (filtros.tipoOt) query = query.eq("tipo_ot", filtros.tipoOt);
   if (filtros.treeId) query = query.eq("tree_id", filtros.treeId);
   if (filtros.inspectorRevisorId) query = query.eq("inspector_revisor_id", filtros.inspectorRevisorId);
+  if (filtros.vencidasAntesDe) query = query.eq("estado_ot", "programada").lt("fecha_accion_programada", filtros.vencidasAntesDe);
   if (filtros.mantenimientoOInspeccionDe) {
     query = query.or(
       `tipo_ot.eq.mantenimiento,and(tipo_ot.eq.inspeccion,responsable_accion_id.eq.${filtros.mantenimientoOInspeccionDe})`

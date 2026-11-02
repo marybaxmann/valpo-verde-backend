@@ -43,15 +43,13 @@ export const altaMunicipalArbolSchema = z
 export type AltaMunicipalArbolBody = z.infer<typeof altaMunicipalArbolSchema>;
 
 /**
- * Body de POST /api/sivu/work-orders/:id/trees — alta durante una OT
- * de Levantamiento, por el Inspector, sin alta municipal previa
- * (PR-019 v1.2: "registrar árboles nuevos durante una OT de
- * Levantamiento, sin alta municipal previa"; PR-006 v10.0).
+ * Campo `nuevo_arbol` del primer guardado de una inspección de
+ * Levantamiento (POST /api/sivu/work-orders/:workOrderId/inspections;
+ * CC-052, 018f) — alta por el Inspector sin alta municipal previa
+ * (PR-019 v1.2; REGLAS_GENERALES fila 17; D-2).
  *
  * Mismos campos mínimos que el alta municipal — el Inspector completa
- * los datos técnicos después, en la misma inspección de Levantamiento,
- * con los esquemas de REGISTRO_EVALUACION (fuera del alcance de este
- * bloque; ver #58).
+ * los datos técnicos en la misma inspección de Levantamiento.
  */
 export const altaPorLevantamientoSchema = altaMunicipalArbolSchema;
 

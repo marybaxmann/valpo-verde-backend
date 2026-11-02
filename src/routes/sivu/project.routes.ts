@@ -24,6 +24,7 @@ import {
 } from "../../controllers/sivu/species.controller";
 
 import { indicadoresController } from "../../controllers/sivu/indicadores.controller";
+import { infraestructuraController } from "../../controllers/sivu/infraestructura.controller";
 import { inspectionFormSchemaController } from "../../controllers/sivu/inspectionFormSchema.controller";
 import { crearOtMantenimientoController } from "../../controllers/sivu/mantenimiento.controller";
 import { listarDiagnosticosController, listarMiembrosAsignablesController, proximasInspeccionesController, resumenProyectoController } from "../../controllers/sivu/diagnostico.controller";
@@ -79,6 +80,8 @@ router.get("/:id/diagnosticos", authMiddleware, listarDiagnosticosController);
 router.get("/:id/resumen", authMiddleware, resumenProyectoController);
 // B19: indicadores del inventario (hoja INDICES; CC-016). Miembros y Administrador.
 router.get("/:id/indicadores", authMiddleware, indicadoresController);
+// B8: infraestructura (M04 de la evaluación vigente; solo lectura). Miembros y Administrador.
+router.get("/:id/infraestructura", authMiddleware, infraestructuraController);
 // Próximas inspecciones y monitoreos (B5; CC-037): recordatorios, no agenda.
 router.get("/:id/upcoming-inspections", authMiddleware, proximasInspeccionesController);
 

@@ -16,7 +16,7 @@
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** B19: 11 indicadores publicados; carbono aéreo leñoso especificado (CC-068/069 aprobados como propuesta); activación bloqueada hasta leer Pillsbury 1998.
+- **Resumen:** 033 aplicada en pruebas (N1–N9 OK, ciclo completo). CC-052, B8, B6, avisos y recordatorios publicados en feature y wip (8e0c3ee); release/demo sin cambios (3d717ce).
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -34,6 +34,41 @@
 - **`execute_sql` no queda en el historial de migraciones de Supabase (`list_migrations`); `apply_migration`, sí.** La herramienta `apply_migration` del MCP falló dos veces consecutivas con `Invalid or expired requestState` al revertir la 018f (2026-10-24, justo al cruzar la medianoche de la sesión) — se reemplazó por `execute_sql` para no bloquear el trabajo, y eso dejó el historial de migraciones desincronizado del estado real de la base durante casi un día (`fn_transition_work_order_estado` viva con la corrección de D-241, pero el historial marcándola como borrada). **Corregido el 2026-10-25:** revertida y reaplicada la 018g otra vez, esta vez solo con `apply_migration` (falló una vez más con el mismo error transitorio, el reintento funcionó) — `list_migrations` vs. estado real 018a–018h, cero diferencias. **Regla correcta: `execute_sql` es solo para pruebas y consultas de solo lectura — nunca para aplicar o revertir una migración.** Si `apply_migration` falla, **reintentar `apply_migration`**; nunca sustituirlo por `execute_sql` para que el cambio quede en el historial.
 
 ---
+
+## ▶ Novedad 2026-11-02 (bloque 27) — Validación: bloqueo de credenciales y migración 034
+
+- **Validación por API bloqueada en la nube** (sin `.env` ni sesiones). Decisión de Valej: la ejecuta en su computador con PowerShell. Guía: `docs/plan/validacion-local-powershell.md`. Resultados por SQL y valores esperados: `docs/plan/plan-validacion-bloques-2026-11-02.md` §5.
+- **Defecto de CC-050:** cancelar una OT Pendiente fallaba (`chk_work_orders_fecha_programada`). Corregido con la **034**, aplicada en `gmlbmyreoxgoqrolhyxo` con el ciclo completo: `pruebas_034` R1–R13 y regresión `pruebas_033` N1–N9 en las dos rondas; reversión exacta; md5 up `8395abb51c6aacda19e59fb63e2923cf` / down `7e92c5fba6c59ff698b84850275891ff` = archivos; sin consumo de numeración; asesor sin hallazgos nuevos. **No** en la base real. `schema.sql` revisión 28.
+- **Numeración:** OT-I-000359 quedó consumida sin fila por un ensayo revertido; la próxima OT de Inspección será OT-I-000360.
+- **Publicado** (push normal autorizado por Valej) en `feature/fase6-backend-api` = `aaaaeb7` (`84aaea8`, `791c050`, `e53d74c`, `1a7dcb3`, `aaaaeb7`), incluido el script `scripts/validacion/validar-bloques.ps1` (instrucciones `docs/plan/validacion-api-script.md`; no ejecutado todavía). `wip/bloque1-completar-ot` (`8e0c3ee`), `release/demo` y `main` sin cambios.
+- **Instrucción para el siguiente agente:** esperar los resultados de la validación local de Valej y registrarlos en el plan §5 y en `docs/registro-pendientes.md`; no publicar ni avanzar a otros bloques sin autorización.
+
+## ▶ Novedad 2026-11-02 (bloque 26) — 033 aplicada en pruebas y publicación
+
+- **033 aplicada en `gmlbmyreoxgoqrolhyxo`** (entorno verificado: «valpo-verde-conecta-pruebas», no `ytcxswbulsmboucardxa`) con el ciclo completo: aplicar → `pruebas_033` (`PRUEBAS_033_OK: N7 N3 N2 N1 N4 N5 N6 N9 N8`) → revertir (triggers y datos de `work_orders` iguales a la línea base) → reaplicar → N1–N9 OK. md5 up `ec1032440230f504113b01f6176deee7` y down `5619734742849e50baf441ac7aeaa43f` = archivos en LF. `list_migrations` termina en 033, 033_down, 033. Asesor de seguridad sin hallazgos nuevos.
+- **Publicado** (push normal) en `feature/fase6-backend-api` y `wip/bloque1-completar-ot` = `8e0c3ee`: `bf2dd9b`, `cbd1e25`, `a730784`, `791aa2a`, `23b4194`, `3b8b90c`, `5402698`, `4907d72`, `8e0c3ee`. `release/demo` = `3d717ce` y `main` = `a87292a`, sin cambios.
+- **Pruebas:** tsc limpio; Jest 1628/1628.
+- **AM-19:** verificado resuelto en la base de pruebas (025/030); estado actualizado en el roadmap.
+- **Pendientes:** `docs/registro-pendientes.md` (actualizado con este corte).
+
+## ▶ Novedad 2026-11-02 (bloque 25) — CC-052, B8, B6, CC-051 y #63 (locales, sin publicar)
+
+- **Registro maestro de pendientes:** `docs/registro-pendientes.md` (regla de Valej: actualizarlo en cada bloque, sin borrar postergados; estados implementado / probado / publicado / desplegado / validado). Referenciado desde `docs/roadmap.md`.
+- **Excel postergado (Valej, 2026-11-02):** las decisiones aprobadas en CC son modificaciones provisionales controladas; CC-016, CC-068 y CC-069 quedan pendientes de sincronización; no se pide la sincronización como requisito.
+- **Commits locales** (autor Valej, sin push) sobre `6323da7`: `bf2dd9b` CC-052 (`nuevo_arbol` en el primer guardado; 018f ya aplicada); `cbd1e25` y `23b4194` propuesta 033; `a730784` B8 (`GET /projects/:id/infraestructura`, solo lectura de M04 de la evaluación vigente); `791aa2a` B6 (`vencida` y `solo_vencidas`: Programada con fecha programada anterior a hoy en Chile); `3b8b90c` avisos y recordatorios (backend; requiere la 033); `5402698` correcciones de la auditoría de la 033; y este relevo.
+- **Migración 033 sin aplicar:** tabla `notifications`, trigger transaccional en `work_orders` (sin modificar la 025 ni la 031), RLS de lectura propia, `REVOKE` a anon y de escritura a authenticated, SV075 si falla el aviso (el backend responde 503). Pruebas `database/fase6/pruebas_033_notificaciones.sql` (N1-N9) listas para correr tras aplicarla. **No publicar `3b8b90c` antes de aplicar la 033.**
+- **Pruebas:** tsc limpio; suite completa en verde (último corte en este bloque).
+- **Instrucción para el siguiente agente:** con la autorización de Valej, aplicar la 033 en `gmlbmyreoxgoqrolhyxo` con el ciclo completo (aplicar → `pruebas_033` → revertir → verificar → reaplicar → `pruebas_033` → md5 contra el archivo en LF), copiarla a `database/migrations/033_notificaciones.sql` y su `.down`, y solo después publicar el conjunto en `feature` y `wip` (nunca `release/demo` sin autorización).
+
+## ▶ Novedad 2026-11-02 (bloque 24) — Universos de B19, carbono integrado (sin publicar)
+
+- **Publicado** (push normal) en `feature/fase6-backend-api` y `wip/bloque1-completar-ot`: `2401497` (universo biométrico de B19 = evaluación completa —inicial, reevaluación o levantamiento— finalizada, con OT completada, no anulada y vigente; `denominador_evaluados`; cobertura de evaluación; B2 `evaluacion_completa_vigente`) y `637f757` (nota de cambios incompatibles en el contrato §6 bis). **`release/demo` sin tocar (`3d717ce`)**, congelada para la presentación del 2026-11-03: la API publicada sigue con el contrato del 2026-11-01.
+- **Local, sin publicar** (rama `carbono/integracion-b19`, en el worktree `../valpo-verde-backend-pub`): `b6dbc43` y `2e09fb1` (módulo puro de carbono, rebase sin cambios de `be8ea1b` y `15af063`), `e57d8fd` (integración en B19 y B2: campo `estimacion_carbono_aereo_lenoso`), `b5ee325` (trazabilidad completa por estimación y pruebas de auditoría) y este relevo.
+- **CC-069:** APROBADO METODOLÓGICAMENTE como propuesta; integración en desarrollo como excepción documentada; **pendiente de sincronización con el Excel maestro** (no pasa a FUENTE SINCRONIZADA). CC-068 (densidad en el catálogo): propuesta, sin migración; la densidad vive en el catálogo de modelos. CC-016: filas 11 a 13 corregidas como propuesta (`docs/plan/propuestas/excel-indices-filas-11-13.md`); el Excel no se modificó.
+- **Modelos activos:** solo *Jacaranda mimosifolia* y *Liquidambar styraciflua* (Pillsbury, Reimer y Thompson 1998; coeficientes métricos UTD). Cobertura real en SIVU hoy: 0 árboles (ninguno evaluado de esas especies).
+- **Pruebas:** suite completa en verde; tsc limpio; solo árboles ficticios; sin cambios en Supabase ni migraciones.
+- **Respaldos:** rama `respaldo/b19-carbono-2026-11-02` (`15af063`) y bundle en el scratchpad de la sesión. La rama local `feature/fase6-backend-api` del clon principal sigue en `15af063` (commits viejos, ya representados en lo publicado y en `carbono/integracion-b19`): alinearla antes de seguir trabajando ahí.
+- **Pendiente:** revisión final de Valej y push de `carbono/integracion-b19` a `feature` y `wip` (no a `release/demo`); adaptar el frontend a los renombres; sincronizar CC-016, CC-068 y CC-069 en el Excel; la etiqueta `presentacion-2026-11-03` y el PR a `main`.
 
 ## ▶ Novedad 2026-11-01 (bloque 23) — Modelos APTO de carbono
 

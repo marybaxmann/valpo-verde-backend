@@ -70,6 +70,8 @@ function aplicarFiltros(filtros: FiltrosListadoOt): { filas: OtListadoRow[]; tot
       (!filtros.projectId || o.project_id === filtros.projectId) &&
       (!filtros.responsableId || o.responsable_accion_id === filtros.responsableId) &&
       (!filtros.tipoOt || o.tipo_ot === filtros.tipoOt) &&
+      (!filtros.vencidasAntesDe ||
+        (o.estado_ot === "programada" && o.fecha_accion_programada !== null && o.fecha_accion_programada < filtros.vencidasAntesDe)) &&
       (!filtros.mantenimientoOInspeccionDe ||
         o.tipo_ot === "mantenimiento" ||
         (o.tipo_ot === "inspeccion" && o.responsable_accion_id === filtros.mantenimientoOInspeccionDe))
@@ -272,5 +274,52 @@ describe("respuesta de cada OT (CC-065 punto 5)", () => {
     const lev = r.data.find((o) => o.codigo_ot === "OT-I-000005")!;
     expect(lev.arbol).toBeNull();
     expect(lev.accion).toEqual({ codigo: "levantamiento", etiqueta: "Levantamiento" });
+  });
+});
+
+describe("B6 — OT vencidas (Programada con fecha programada anterior a hoy en Chile)", () => {
+  const AYER = "2000-01-01";
+  const MANANA = "2999-12-31";
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAccess.mockResolvedValue(undefined);
+    mockArboles.mockResolvedValue([]);
+    mockProyectos.mockResolvedValue([{ id: P1, nombre_proyecto: "P1" }]);
+    mockMiembros.mockResolvedValue([]);
+    ots = [
+      ot({ id: "a", codigo_ot: "OT-I-000001", estado_ot: "programada", fecha_accion_programada: AYER }),
+      ot({ id: "b", codigo_ot: "OT-I-000002", estado_ot: "programada", fecha_accion_programada: MANANA }),
+      ot({ id: "c", codigo_ot: "OT-I-000003", estado_ot: "en_ejecucion", fecha_accion_programada: AYER }),
+      ot({ id: "d", codigo_ot: "OT-I-000004", estado_ot: "pendiente" }),
+    ];
+    mockListar.mockImplementation(async (_t: string, f: FiltrosListadoOt) => aplicarFiltros(f));
+  });
+
+  it("campo calculado: solo la Programada con fecha pasada está vencida (En ejecución no)", async () => {
+    const r = await listarOtsDeProyecto(MUNICIPAL, P1, { limit: 50, offset: 0 }, TOKEN);
+    expect(Object.fromEntries(r.data.map((o) => [o.codigo_ot, o.vencida]))).toEqual({
+      "OT-I-000001": true,
+      "OT-I-000002": false,
+      "OT-I-000003": false,
+      "OT-I-000004": false,
+    });
+  });
+
+  it("solo_vencidas en B3: filtra en la consulta con la fecha de hoy en Chile", async () => {
+    const r = await listarOtsDeProyecto(MUNICIPAL, P1, { limit: 50, offset: 0, solo_vencidas: true }, TOKEN);
+    expect(codigos(r)).toEqual(["OT-I-000001"]);
+    expect(r.total).toBe(1);
+    expect(mockListar.mock.calls[0][1].vencidasAntesDe).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("solo_vencidas en B4 (mis OT)", async () => {
+    const r = await listarMisOts(INSPECTOR, { limit: 50, offset: 0, solo_vencidas: true }, TOKEN);
+    expect(codigos(r)).toEqual(["OT-I-000001"]);
+  });
+
+  it("sin solo_vencidas no filtra", async () => {
+    await listarOtsDeProyecto(MUNICIPAL, P1, { limit: 50, offset: 0, solo_vencidas: false }, TOKEN);
+    expect(mockListar.mock.calls[0][1].vencidasAntesDe).toBeUndefined();
   });
 });

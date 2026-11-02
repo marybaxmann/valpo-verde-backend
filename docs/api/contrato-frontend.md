@@ -97,7 +97,9 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
   `altura_total_m`, `diametro_copa_ns_m`, `diametro_copa_eo_m`, `diametro_copa_m`, `copa_no_presenta`,
   `altura_primera_rama_m`, `altura_primera_rama_no_presenta`, `altura_base_copa_viva_m`,
   `altura_base_copa_viva_no_presenta`, `clase_edad` y `rango_edad_estimada_anios` (estos dos como `{ codigo, etiqueta }`).
-- `arbol.area_proyectada_copa_m2` (INDICES fila 13; CC-016): π × (NS/2) × (EO/2) en m². «No presenta copa» (`copa_no_presenta: true`) = `0`; sin los dos diámetros, `null` (no medido).
+- `arbol.area_proyectada_copa_m2` (INDICES fila 13; CC-016): π × (NS/2) × (EO/2) en m². «No presenta copa» (`copa_no_presenta: true`) = `0`; sin los dos diámetros, `null` (no medido). Solo si `evaluacion_completa_vigente` es `true`; si no, `null`.
+- `estimacion_carbono_aereo_lenoso` (en desarrollo, **no publicado**; CC-069 v1): `{ valor, categoria, motivo, detalle, metodo, limitaciones }`. Con resultado, `valor` = `{ volumen_m3, biomasa_aerea_lenosa_kg, carbono_kg, co2e_kg, modelo: { id, version, variante, componente, fuente, ecuacion: { forma, a, b, c, unidad_volumen: "m3", unidad_dap: "cm", unidad_altura: "m" }, rango: { dap_min_cm, dap_max_cm, altura_min_m, altura_max_m }, densidad: { valor, unidad: "kg/m3", tipo, fuente, version }, n_muestra }, entradas: { dap_cm, altura_total_m, densidad_kg_m3, fraccion_carbono } }` (en la variante solo con DAP, `rango.altura_min_m` y `altura_max_m` son `null`: no se controla la altura) y `categoria`/`motivo`/`detalle` son `null`. Sin resultado, `valor: null` con la categoría, el motivo y el detalle (mismos códigos que B19). Mostrar `restriccion_modelo` como «No estimable» y `sin_modelo` como «No estimable: sin modelo científico aplicable».
+- `evaluacion_completa_vigente` (nuevo, 2026-11-02): `true` si el árbol tiene una evaluación completa (inicial, reevaluación o levantamiento) finalizada, con OT completada, no anulada y vigente. `false` = árbol sin evaluación válida: el frontend debe mostrar «sin evaluación», no «sin medición».
 - `sobre_la_especie`: `genero`, `familia`, `origen_biogeografico`, `persistencia_follaje`, `tipo_hoja` (los tres
   últimos como `{ codigo, etiqueta }`; sin especie vigente: «Origen no determinado» y los otros dos `null`).
 - `evaluacion_vigente`: igual que `vigente` de B18 (§6), o `null`.
@@ -118,11 +120,13 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
 
 Estados (`estado_ot`): `pendiente` → `programada` → `en_ejecucion` → `completada`; o `cancelada`.
 
+**OT vencida (B6; decisión de Valej, 2026-11-02):** no es un estado, es una condición calculada. `vencida: true` cuando el estado es `programada` y `fecha_accion_programada` es anterior a hoy (fecha de Chile). Una OT En ejecución, Pendiente, Completada o Cancelada nunca está vencida en esta versión. `solo_vencidas=true` lista solo esas (el filtro se aplica en la consulta: `total` y la paginación son correctos). El campo `vencida` también viene en las OT de la ficha del árbol (B2).
+
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|
 | `POST /api/sivu/projects/:id/work-orders` | Usuario municipal | `{ tree_id (salvo levantamiento), accion_solicitada, subtipo_accion?, motivo?, prioridad?, observaciones? (obligatoria en levantamiento), responsable_accion_id, incident_id? }` | 201 `{ data }` |
-| `GET /api/sivu/projects/:id/work-orders` (B3) | Miembros y Administrador. El Inspector ve solo las de Inspección donde es responsable; el Encargado, ninguna de Inspección (403 si las pide) | `estado?` (lista separada por coma; por defecto pendiente, programada y en ejecución), `tipo_ot?`, `limit`, `offset` | 200 `{ data: [OT], total, limit, offset }`; cada OT con `estado`, `accion`, `prioridad` en `{ codigo, etiqueta }`, `arbol`, `proyecto`, `responsable`, `inspector_revisor` (Mantenimiento con revisión; si no, `null`) y `acciones` del usuario: `programar`, `iniciar`, `trabajar` (Inspector) o `registrar_ejecucion` (Encargado) |
-| `GET /api/sivu/work-orders/mine` (B4) | Cualquier miembro | `project_id?`, `estado?`, `tipo_ot?`, `limit`, `offset` | Igual que B3, solo las OT donde el usuario es el responsable |
+| `GET /api/sivu/projects/:id/work-orders` (B3) | Miembros y Administrador. El Inspector ve solo las de Inspección donde es responsable; el Encargado, ninguna de Inspección (403 si las pide) | `estado?` (lista separada por coma; por defecto pendiente, programada y en ejecución), `tipo_ot?`, `solo_vencidas?` (`true`/`false`), `limit`, `offset` | 200 `{ data: [OT], total, limit, offset }`; cada OT con `vencida` (boolean), `estado`, `accion`, `prioridad` en `{ codigo, etiqueta }`, `arbol`, `proyecto`, `responsable`, `inspector_revisor` (Mantenimiento con revisión; si no, `null`) y `acciones` del usuario: `programar`, `iniciar`, `trabajar` (Inspector) o `registrar_ejecucion` (Encargado) |
+| `GET /api/sivu/work-orders/mine` (B4) | Cualquier miembro | `project_id?`, `estado?`, `tipo_ot?`, `solo_vencidas?`, `limit`, `offset` | Igual que B3, solo las OT donde el usuario es el responsable |
 | `PATCH /api/sivu/work-orders/:id/estado` | Responsable asignado: Inspector (Inspección) o Encargado de mantención (Mantenimiento) | `{ estado: "programada" \| "en_ejecucion", fecha_accion_programada? }` (fecha obligatoria al programar) | 200 `{ data }` |
 | `POST /api/sivu/work-orders/:id/completar` | Usuario municipal | `{}` (la fecha la pone el Sistema) | 200 `{ data }`; 422 sin inspección finalizada o con un borrador; 409 si los datos cambiaron dos veces (reintentar) |
 | `POST /api/sivu/work-orders/:id/cancelar` | Usuario municipal | `{ motivo_cancelacion }` (obligatorio) | 200 `{ data }`. Solo desde pendiente, programada o en ejecución. |
@@ -164,7 +168,7 @@ Estados (`estado_registro`): `preguardado` (borrador) → `finalizado`; o `anula
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|
 | `GET /api/sivu/projects/:id/inspection-form-schema?tipo=` (B16) | Miembros y Administrador | `tipo` | 200 esquema del formulario (campos, tipo, unidad, opciones, obligatoriedad, condición, etiquetas y secciones) |
-| `POST /api/sivu/work-orders/:id/inspections` | Inspector responsable, OT en ejecución | `{ tipo_inspeccion_realizada, subtipo_inspeccion?, metodo_instrumental?, resultado_general?, requiere_mantenimiento?, observaciones?, variables, campos_arbol?, tree_id? }` | 201 `{ data }` con `inspection_id` |
+| `POST /api/sivu/work-orders/:id/inspections` | Inspector responsable, OT en ejecución | `{ tipo_inspeccion_realizada, subtipo_inspeccion?, metodo_instrumental?, resultado_general?, requiere_mantenimiento?, observaciones?, variables, campos_arbol?, tree_id?, nuevo_arbol? }` | 201 `{ data }` con `inspection_id`, `evaluation_id`, `tree_id` y `arbol_nuevo` |
 | `PATCH /api/sivu/inspections/:id` | Inspector responsable | Mismo cuerpo, sin `tree_id` | 200 `{ data }` (actualiza el borrador; no duplica) |
 | `POST /api/sivu/inspections/:id/photos` | Inspector responsable | `multipart/form-data`: `foto` (JPG/PNG, hasta 10 MB) y `vista` (`arbol_completo`, `base`, `tronco`, `copa`; opcional solo en Monitoreo) | 201 `{ data }` |
 | `GET /api/sivu/inspections/:id/photos` | Miembros y Administrador | — | 200 `{ data }` con enlaces firmados de 10 minutos |
@@ -172,6 +176,12 @@ Estados (`estado_registro`): `preguardado` (borrador) → `finalizado`; o `anula
 | `POST /api/sivu/inspections/:id/calcular` | Inspector responsable | `{ ajustes? }` | 200 `{ data }` con el resultado del motor, `puede_finalizar`, lo que falta y la `huella` |
 | `POST /api/sivu/inspections/:id/finalizar` | Inspector responsable | `{ huella, ajustes?, fecha_proxima_inspeccion?, fecha_proximo_monitoreo?, justificacion_ajuste_fecha? }` | 200 `{ data }`. Exige las 4 fotos en Evaluación inicial, Reevaluación y Levantamiento. |
 | `POST /api/sivu/inspections/:id/anular` | Usuario municipal | `{ motivo_anulacion }` | 200 `{ data }`. Solo finalizadas; si la OT está completada, recalcula la evaluación vigente. |
+
+**Árbol en un Levantamiento (D-193; CC-052):** si la OT de Levantamiento no tiene árbol, el primer guardado trae **uno** de los dos:
+- `tree_id`: un árbol existente del proyecto;
+- `nuevo_arbol`: `{ sector, ubicacion_descriptiva, utm_este, utm_norte, especie_cientifica?, nombre_comun? }` (los mismos datos mínimos que el alta municipal, al menos especie o nombre común). En la misma operación se crean el árbol, su alta y el borrador; la respuesta trae el `tree_id` nuevo y `arbol_nuevo: true`. Los datos del alta rigen de inmediato; los técnicos de la inspección, al completar la OT. Los guardados siguientes (`PATCH`) ya no llevan `tree_id` ni `nuevo_arbol`.
+- Antes de crear uno nuevo, el frontend ofrece la búsqueda de cercanos (`GET /projects/:id/nearby-trees`) para no duplicar un árbol registrado; el radio lo define el frontend.
+- Errores: 400 si llegan los dos, o si faltan datos del alta; 422 si la OT no es de Levantamiento sin árbol, si la ubicación queda fuera del sector («El árbol no se registró: …») o si el proyecto no tiene sector.
 
 `ajustes`: `{ clasificacion_riesgo?, clasificacion_infraestructura?, clasificacion_prioridad? }`, cada uno
 `{ valor_ajustado, justificacion_ajuste_clasificacion }` (justificación obligatoria).
@@ -221,14 +231,23 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
 |---|---|---|---|
 | `GET /api/sivu/projects/:id/indicadores` | Miembros y Administrador | `barrio?` (valor de `ARBOLES.sector`, D-7, tal como viene en `barrios`) | 200 `{ data }` (abajo). 400 con una query desconocida. |
 
-`data`: `{ fecha_consulta, ambito: { tipo: "proyecto" | "barrio", barrio }, barrios: [string], cobertura: { arboles_registrados, arboles_presentes }, numero_total_arboles, densidad_arborea, clases_diametricas, diametro_medio_copa, area_proyectada_copa, cobertura_taxonomica, riqueza_especies, abundancia_relativa, diversidad_shannon, diversidad_taxonomica_10_20_30, proporcion_origen }`.
+`data`: `{ fecha_consulta, ambito: { tipo: "proyecto" | "barrio", barrio }, barrios: [string], cobertura: { arboles_registrados, arboles_presentes, arboles_con_evaluacion_valida, arboles_sin_evaluacion_valida }, numero_total_arboles, densidad_arborea, clases_diametricas, diametro_medio_copa, area_proyectada_copa, cobertura_taxonomica, riqueza_especies, abundancia_relativa, diversidad_shannon, diversidad_taxonomica_10_20_30, proporcion_origen }`.
 
-- Solo cuentan los árboles **presentes** (D-28): los talados o retirados con OT completada y revisión aprobada quedan fuera. La fecha de referencia es la de la consulta.
+- **Cambios incompatibles (2026-11-02)** respecto de lo publicado el 2026-11-01:
+  - **Renombrados:** `clases_diametricas.denominador` → `denominador_evaluados`; `diametro_medio_copa.denominador_presentes` → `denominador_evaluados`; `area_proyectada_copa.denominador_presentes` → `denominador_evaluados`. Los nombres anteriores ya no vienen.
+  - **Cambio de universo:** los tres indicadores biométricos se calculan solo con árboles evaluados (abajo); antes usaban todos los presentes.
+  - **Cambio de significado sin cambio de nombre:** `clases_diametricas.sin_dap` y `n_sin_medicion` ya no cuentan árboles nunca evaluados (se informan en `cobertura.arboles_sin_evaluacion_valida`).
+  - **Nuevos:** `cobertura.arboles_con_evaluacion_valida` y `cobertura.arboles_sin_evaluacion_valida`; en la ficha (B2, §3), `evaluacion_completa_vigente`, y `arbol.area_proyectada_copa_m2` es `null` cuando es `false`.
+  - Sin cambios: `numero_total_arboles`, `densidad_arborea` y los indicadores de especies.
+- **Universos (cambio del 2026-11-02, CC-016):**
+  - **Inventario** (`numero_total_arboles`, `densidad_arborea`) y **diversidad** (bloque 2): árboles **presentes** (D-28). Los talados o retirados con OT completada y revisión aprobada quedan fuera.
+  - **Biométricos** (`clases_diametricas`, `diametro_medio_copa`, `area_proyectada_copa`): solo los presentes con **evaluación completa válida y vigente**: evaluación inicial, reevaluación o levantamiento, finalizada, con OT completada (aprobada), no anulada, y con evaluación vigente del árbol (la de B18). Un árbol nunca evaluado **no** es «Sin DAP» ni «sin medición»: se cuenta en `cobertura.arboles_sin_evaluacion_valida`.
+  - La fecha de referencia es la de la consulta.
 - `numero_total_arboles`: `{ valor, unidad: "arboles" }`.
 - `densidad_arborea`: `{ valor, unidad: "arboles_por_ha", numerador, superficie_m2, motivo }`. Solo por proyecto (superficie del sector, D-256); por barrio, o sin delimitación, `valor: null` y `motivo` con la razón.
-- `clases_diametricas`: `{ denominador, clases: [{ codigo, etiqueta, desde_cm, hasta_cm, arboles, porcentaje }], sin_dap: { arboles, porcentaje } }`. Once clases de INDICES (">0 a <10 cm" … "≥100 cm"; `hasta_cm` exclusivo, `null` en la última). El denominador son todos los presentes; los que no tienen DAP van en «Sin DAP», así todo suma 100 %. `porcentaje: null` si no hay árboles presentes.
-- `diametro_medio_copa`: `{ valor, unidad: "m", n_validos, n_con_medicion, n_no_presenta_copa, n_sin_medicion, denominador_presentes }`. «No presenta copa» cuenta como 0 m; un árbol sin medición (o con un solo diámetro) queda fuera y se cuenta en `n_sin_medicion`. `valor: null` sin datos válidos.
-- `area_proyectada_copa`: `{ total_m2, unidad: "m2", n_con_area, n_no_presenta_copa, n_sin_medicion, denominador_presentes }`. Suma de π × (NS/2) × (EO/2) de cada árbol con los dos diámetros (D-20, D-21). `total_m2: null` si ninguno los tiene.
+- `clases_diametricas`: `{ denominador_evaluados, clases: [{ codigo, etiqueta, desde_cm, hasta_cm, arboles, porcentaje }], sin_dap: { arboles, porcentaje } }`. Once clases de INDICES (">0 a <10 cm" … "≥100 cm"; `hasta_cm` exclusivo, `null` en la última). El denominador son los evaluados; un evaluado sin DAP (dato inconsistente) va en «Sin DAP», así todo suma 100 %. `porcentaje: null` si no hay árboles evaluados.
+- `diametro_medio_copa`: `{ valor, unidad: "m", n_validos, n_con_medicion, n_no_presenta_copa, n_sin_medicion, denominador_evaluados }`. «No presenta copa» cuenta como 0 m; un árbol evaluado sin medición (o con un solo diámetro) queda fuera y se cuenta en `n_sin_medicion`. `valor: null` sin datos válidos.
+- `area_proyectada_copa`: `{ total_m2, unidad: "m2", n_con_area, n_no_presenta_copa, n_sin_medicion, denominador_evaluados }`. Suma de π × (NS/2) × (EO/2) de cada árbol con los dos diámetros (D-20, D-21). `total_m2: null` si ninguno los tiene.
 - Valores sin redondear: el frontend los formatea. Nunca se reemplaza un dato faltante; se informa en los contadores.
 - **Especies (bloque 2).** Identificado a nivel de especie = taxón determinado a nivel específico, incluidos híbridos («Platanus × hispanica» o «x») y variedades; **no** cuenta solo el género («Quercus sp.», «spp.», «cf.»). Se agrupa sin distinguir mayúsculas ni espacios, y las variedades, subespecies y cultivares en su especie. Si el árbol está vinculado al catálogo (`species_id`), manda el nombre del catálogo. Género, familia y origen salen del catálogo de especies (CC-053).
 - `cobertura_taxonomica`: `{ presentes, identificados_especie, no_identificados_especie, porcentaje_identificados, con_genero_catalogo, con_familia_catalogo, con_origen_catalogo, identificaciones_provisionales, identificaciones_confirmadas, motivo_provisionales }`. Provisionales y confirmadas vienen `null` hasta que la base registre ese dato (migración pendiente).
@@ -237,7 +256,27 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
 - `diversidad_shannon`: `{ valor, riqueza, n_identificados, cobertura_identificacion }`. H′ con logaritmo natural sobre los identificados; `null` sin identificados.
 - `diversidad_taxonomica_10_20_30`: `{ denominador, especie, genero, familia }`; cada nivel `{ umbral_porcentaje, taxones: [{ taxon, arboles, porcentaje, supera_umbral }], sin_dato: { arboles, porcentaje }, cumple }`. `cumple: null` si no hay ningún taxón con dato.
 - `proporcion_origen`: `{ denominador, nativos, introducidos, origen_no_determinado }`, cada uno `{ arboles, porcentaje }`. Nativos = Nativa o Endémica. Si ningún presente tiene origen en el catálogo, los porcentajes de nativos e introducidos son `null` (no 0 %).
-- Los indicadores ecosistémicos (carbono y otros) siguen fuera: el Excel los marca «Pendiente».
+- **`estimacion_carbono_aereo_lenoso`** (en desarrollo, **no publicado**; CC-069 v1, pendiente de sincronización con el Excel):
+  - `metodo` (versión, estado del CC, fracción de carbono 0,47 con su fuente, `factor_co2: "44/12"`, sin raíces, sin follaje, sin factor urbano) y `limitaciones` (textos).
+  - `cobertura`: `presentes`, `universo_calculo` (presentes con evaluación completa válida y vigente), `con_resultado`, `por_categoria` (`fuera_del_universo`, `restriccion_modelo`, `dato_faltante_o_inconsistente`, `error_calculo`) y `motivos` (`no_presente`, `sin_evaluacion_valida`, `sin_modelo`, `palmera_sin_modelo`, `multifustal_no_admitido`, `fuera_de_rango`, `fuera_de_rango_altura`, `falta_dap`, `configuracion_fuste_no_determinada`, `resultado_invalido`).
+  - `total`: `biomasa_aerea_lenosa_t`, `carbono_t` y `co2e_t`, por separado; `null` si ningún árbol tiene resultado (no 0).
+  - Solo dos modelos aprobados (*Jacaranda mimosifolia* y *Liquidambar styraciflua*; Pillsbury et al. 1998). No es carbono total ni secuestro anual.
+- Los demás indicadores ecosistémicos siguen fuera: el Excel los marca «Pendiente».
+
+## 6 ter. Infraestructura (B8; módulo Infraestructura, CC-059/CC-060)
+
+| Método y ruta | Quién | Entrada | Respuesta |
+|---|---|---|---|
+| `GET /api/sivu/projects/:id/infraestructura` | Miembros y Administrador | `barrio?` (`ARBOLES.sector`); `clasificacion?` (D-170); `componente?` y `categoria?` (van juntos) | 200 `{ data }` (abajo). 400 con un valor fuera de la lista o una query desconocida. |
+
+Solo lectura: representa lo que ya calculó el motor (M04, REGLAS_INDICADORES IN-*) en la **evaluación vigente** del árbol, con el ajuste del Inspector si existe. No calcula nada.
+
+`data`: `{ fecha_consulta, ambito, barrios, cobertura: { arboles_presentes, arboles_con_evaluacion_valida, arboles_sin_evaluacion_valida }, resumen: { por_clasificacion: [{ codigo, etiqueta, arboles }], por_componente: [{ componente: { codigo, etiqueta }, categorias: [{ codigo, etiqueta, arboles }], sin_dato }] }, filtros, total_listados, arboles: [...] }`.
+
+- **Universo:** árboles presentes con evaluación completa válida y vigente (el mismo de los biométricos de B19). Los demás se cuentan en `cobertura`, no como «sin afectación».
+- Cada elemento de `arboles`: `{ arbol: { id, tree_code, especie_cientifica, nombre_comun, sector, ubicacion: { lng, lat } | null }, infraestructura: { clasificacion: { codigo, etiqueta }, ajustada, puntaje, porcentaje }, prioridad, prioridad_ajustada, componentes: [{ componente: { codigo, etiqueta }, categoria: { codigo, etiqueta } | null, puntaje, regla_id, motivo }], evaluacion_vigente: { evento, work_order_id, desde, rule_version } }`.
+- `componentes`: los seis de M04, en este orden: `vereda`, `calzada`, `alcorque` («Alcorque y superficie permeable»), `infraestructura_vertical`, `red_aerea`, `red_subterranea` (catálogo `componente_infraestructura`, etiquetas de REGLAS_INDICADORES). `categoria` del catálogo `categoria_infraestructura`; con `no_determinado`, `motivo` explica por qué.
+- El `resumen` cuenta todos los evaluados del ámbito; los filtros `clasificacion` y `componente`+`categoria` solo filtran `arboles`.
 
 ## 7. Incidencias (interno, B9)
 
@@ -286,10 +325,25 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 
 ---
 
+## 8 bis. Avisos y recordatorios (CC-051, #63) — **requieren la migración 033 (aplicada en la base de pruebas el 2026-11-02)**
+
+| Método y ruta | Quién | Entrada | Respuesta |
+|---|---|---|---|
+| `GET /api/sivu/notificaciones` | Cualquier usuario con sesión (solo ve sus avisos) | `solo_no_leidas?` (`true`/`false`), `limit` (hasta 100, por defecto 50), `offset` | 200 `{ data: [aviso], total, no_leidas, limit, offset, recordatorios_generados }` |
+| `PATCH /api/sivu/notificaciones/:id/leida` | El dueño del aviso | — | 200 `{ data: aviso }`; 404 si no existe o es de otro usuario |
+
+**Aviso:** `{ id, tipo: { codigo, etiqueta }, work_order_id, tree_id, mensaje, leida, leido_at, created_at }`. Tipos (catálogo `tipo_notificacion`):
+- `ot_cancelada`: al responsable de la OT cancelada, con el motivo.
+- `ot_reasignada_nuevo` y `ot_reasignada_anterior`: al nuevo y al anterior responsable.
+- `recordatorio_inspeccion`: a los Usuarios municipales del proyecto (#63).
+
+- Los avisos de OT los crea la base en la misma transacción que la cancelación o la reasignación: si el aviso no se crea, la operación tampoco. Sin correo en esta etapa (CC-051, falta el dominio remitente).
+- **Recordatorios, solución provisional:** se generan al consultar `GET /notificaciones`, solo para un Usuario municipal, a partir de `recordatorio_activo` de B5 (sin plazos nuevos). Uno por árbol, tipo e inicio del rango: aunque haya consultas simultáneas, no se duplican. `recordatorios_generados` dice cuántos se crearon en esa consulta (`null` si la generación falló; los avisos igual se listan).
+- Marcar como leído es el único cambio que puede pedir el cliente; se hace siempre a través del backend.
+
 ## 9. Pendiente o en revisión
 
-- **B6** (OT
-  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (los 11 indicadores en §6 bis; falta registrar provisional/confirmada, con migración pendiente de autorización; los ecosistémicos siguen «Pendiente» en el Excel).
+- **B19** (los 11 indicadores en §6 bis; falta registrar provisional/confirmada, con migración pendiente de autorización; los ecosistémicos siguen «Pendiente» en el Excel).
 - **CC-052:** la búsqueda de cercanos está disponible; el radio por defecto y la pantalla los define el frontend.
 - **Límites por IP de Conecta:** hoy en memoria, por instancia de Vercel (ver §8). Pendiente: contadores compartidos en PostgreSQL (opción A), con migración sujeta a autorización.
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde

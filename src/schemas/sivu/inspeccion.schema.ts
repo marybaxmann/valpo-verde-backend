@@ -7,6 +7,7 @@ import {
   tipoSubtipoValido,
 } from "./alcanceInspeccion";
 import { esCodigoVigente } from "../../services/rules/engine/catalogs";
+import { altaPorLevantamientoSchema } from "./arboles.schema";
 
 /**
  * Subconjunto de ARBOLES que el Inspector puede corregir desde una
@@ -232,22 +233,29 @@ function validarAlcanceVariables(
 
 /**
  * Body de POST /api/sivu/work-orders/:workOrderId/inspections — primer
- * guardado (crea la inspección en Preguardado). `tree_id` solo es
- * obligatorio cuando la OT es de Levantamiento con un árbol EXISTENTE
- * (D-193: el árbol debe ser del mismo proyecto; lo valida la función
- * SQL) — el service lo rechaza si la OT no es de Levantamiento y el
- * body lo incluye igual, y si es de Levantamiento y falta.
- *
- * Fuera de alcance de este esquema (y de este endpoint, por ahora):
- * crear un árbol NUEVO durante un Levantamiento (CC-052/018f) — ese
- * endpoint va después (pendiente de la búsqueda de árboles cercanos).
+ * guardado (crea la inspección en Preguardado). En una OT de
+ * Levantamiento sin árbol (D-193), el body trae UNO de los dos:
+ * - `tree_id`: un árbol EXISTENTE del mismo proyecto (lo valida la
+ *   función SQL);
+ * - `nuevo_arbol`: los datos mínimos del alta de un árbol nuevo (CC-052;
+ *   mismo esquema que el alta municipal: D-7 a D-10 y D-13 o D-14). La
+ *   función 018f crea el árbol y su fila de alta en la misma transacción
+ *   que el borrador. Antes, el frontend ofrece la búsqueda de árboles
+ *   cercanos (GET /projects/:id/nearby-trees) para no duplicar uno ya
+ *   registrado; el radio lo define el frontend (CC-052).
  */
 export const crearBorradorInspeccionSchema = z
   .object({
     ...camposComunesInspeccion,
     tree_id: z.string().uuid("tree_id inválido").optional(),
+    nuevo_arbol: altaPorLevantamientoSchema.optional(),
   })
   .strict()
+  .superRefine((body, ctx) => {
+    if (body.tree_id !== undefined && body.nuevo_arbol !== undefined) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["nuevo_arbol"], message: "envíe tree_id o nuevo_arbol, no los dos" });
+    }
+  })
   .superRefine(validarAlcanceVariables);
 
 export type CrearBorradorInspeccionBody = z.infer<typeof crearBorradorInspeccionSchema>;
