@@ -1,5 +1,7 @@
 # Roadmap — Pendientes consolidados
 
+> **Registro maestro de pendientes (2026-11-02):** `docs/registro-pendientes.md` reúne TODOS los pendientes abiertos (metodología y Excel, migraciones, backend, frontend, validación, despliegue, seguridad y datos), con su estado implementado / probado / publicado / desplegado / validado. Las tablas PA-* y AM-* de este archivo siguen siendo el detalle de esos ítems; no se eliminan.
+
 ## Propósito
 
 Este archivo es un índice de tareas pendientes. No es una fuente de reglas
