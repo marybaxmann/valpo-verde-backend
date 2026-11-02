@@ -2991,3 +2991,40 @@ motivo)
 | 2026-11-01 | EN REVISIÓN | Valej | Decisiones de método 1 a 9; verificación de modelos y especificación preparadas; sin implementar. |
 | 2026-11-01 | APROBADO METODOLÓGICAMENTE | Valej | Aceptado como propuesta. Fracción de carbono 0,47 por defecto (IPCC 2006, Vol. 4, cap. 4, tabla 4.3), no específica de cada especie; CO₂e = C × 44/12; sin H, solo una ecuación con DAP publicada, aplicable y del mismo componente; solo modelos APTO, verificados en su fuente original; los APTO CON LIMITACIONES, justificados uno por uno; Ginkgo con la genérica de latifoliadas, no; multifustales y palmeras sin estimación; sin extrapolar. El indicador v1 es «carbono aéreo leñoso» (volumen × densidad no incluye follaje). Modelos APTO: `docs/plan/propuestas/carbono-modelos-apto-especificacion.md` (activación bloqueada hasta leer Pillsbury et al. 1998). |
 | 2026-11-02 | APROBADO METODOLÓGICAMENTE (excepción de integración) | Valej | Integración del módulo con B19 y B2 **en desarrollo, antes de la sincronización con el Excel**, como excepción documentada. Sigue **pendiente de sincronización con el Excel** (no pasa a FUENTE SINCRONIZADA). Solo los dos modelos APTO; sin migraciones ni cambios en Supabase; los 11 indicadores existentes no cambian. Universo: presentes con evaluación completa válida y vigente; motivos por categoría (fuera del universo, restricción del modelo, dato faltante o inconsistente, error de cálculo). Sin publicar hasta la revisión de Valej. |
+
+---
+
+### CC-070 — Modelos de carbono aéreo leñoso para las especies del piloto (*Acer negundo*, *Lagerstroemia indica*, *Acer pseudoplatanus*)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-02 |
+| Origen | Pregunta de la responsable al ver B19: «¿qué falta para que se calcule?». Con la API publicada (`release/demo` `44b00b0`), el carbono del Piloto Valparaíso da 0 árboles con estimación: 7 sin evaluación completa vigente y 4 «especie sin modelo aprobado». CC-069 v1 solo activó modelos para *Jacaranda mimosifolia* y *Liquidambar styraciflua*; ninguna especie del piloto los tiene. |
+| Tipo | 1 — metodología (activa modelos de cálculo) |
+| Estado | EN REVISIÓN — propuesta con opciones; decide la responsable |
+| Regla / campo afectado | CC-069 (decisiones 1, 6 y 7; observación «aprobación de los modelos APTO CON LIMITACIONES»); CC-068 (densidad en el catálogo); hoja INDICES fila 14 (carbono almacenado); `src/services/rules/carbono/modelos.ts`. |
+| Versión anterior | CC-069 v1: activos solo los modelos APTO de *Jacaranda mimosifolia* y *Liquidambar styraciflua* (UTD TS7, Pillsbury et al. 1998). Los APTO CON LIMITACIONES quedaron sin decidir. Clasificación de cada modelo en `docs/plan/propuestas/carbono-verificacion-modelos.md`, sección 3. |
+| Versión nueva | **Opciones por especie, para decidir una a una:** **(A) *Acer negundo*** — modelo 6 de la verificación: UTD TS7 *Acer platanoides*, McHale 2007 (`V = 0.001011·D^1.533·H^0.657`; solo D: `V = 0.0019421·D^1.785`), ρ = 420 kg/m³, rango D 10-102 cm; **APTO CON LIMITACIONES** (sustituta del mismo género). Opciones: A1 activarlo marcado «sustituta»; A2 no activarlo. **(B) *Lagerstroemia indica*** — modelo 7: UTD TS7 Urb Gen Broadleaf, Aguaron y McPherson 2012 (`V = 0.0001967·D^1.951853·H^0.664255`; solo D: `V = 0.0002835·D^2.310647`), ρ = 571 kg/m³ (TS9, de la especie), rango D 6-135 cm; **APTO CON LIMITACIONES** (genérica de latifoliadas urbanas). Opciones: B1 activarlo marcado «genérica»; B2 no activarlo. **(C) *Acer pseudoplatanus*** — **NO APTO** en la verificación: la UTD no tiene ecuación ni densidad de la especie. Opciones: C1 seguir sin modelo; C2 usar la ecuación del modelo 6 (*Acer platanoides*, mismo género) con la densidad de *A. pseudoplatanus* tomada de una fuente publicada y cargada en el catálogo según CC-068 (`densidad_nivel_taxon = especie`); C3 usar la genérica del modelo 7 con esa misma densidad. C2 y C3 **requieren** primero la densidad con su cita: este CC no propone ningún valor. **En todas las opciones se mantiene CC-069:** fracción de carbono 0,47; CO₂e = C × 44/12; sin raíces ni factor urbano; multifustales en `null` (decisión 6); fuera de rango, `null` sin extrapolar (decisión 7); cada resultado guarda el modelo y su nivel de confianza («propia», «sustituta», «genérica»). |
+| Motivo | Sin un modelo para las especies del piloto, el indicador de carbono no muestra ningún valor aunque se evalúen todos sus árboles. |
+| Fundamento / fuente | CC-069; `carbono-matriz-modelos.md` (secciones 2 y 3.2); `carbono-verificacion-modelos.md` (sección 3, modelos 6, 7 y 13; sección 4.2). Fuentes primarias: McPherson, van Doorn y Peper 2016, Urban Tree Database (RDS-2016-0005), TS7 y TS9; McHale 2007; Aguaron y McPherson 2012. |
+| Archivos afectados | Esta ficha. Si se aprueba: `src/services/rules/carbono/modelos.ts` (modelos nuevos con su nivel de confianza), sus pruebas, `docs/plan/propuestas/carbono-modelos-apto-especificacion.md`; para C2 o C3, además la densidad en el catálogo (CC-068, requiere migración). |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Sí: los modelos activos van a la hoja de modelos que proponga CC-069 (`MODELOS_BIOMASA`) al publicar el paquete; mientras tanto, este CC. |
+| Impacto en BD | A y B: ninguno. C2 y C3: la columna de densidad de CC-068 (migración pendiente). |
+| Impacto en backend | Modelos nuevos en el selector de CC-069; cada resultado con su nivel de confianza. |
+| Impacto en API | B19 y B2 sin cambio de forma; más árboles con `valor`. |
+| Impacto en frontend | Ninguno obligatorio; conviene mostrar el nivel de confianza del modelo en la ficha. |
+| Pruebas necesarias | Por modelo: un árbol dentro del rango (valor esperado calculado a mano con la fórmula), uno bajo el mínimo y uno sobre el máximo de D (y de H en la variante con altura) en `null` con motivo; multifustal en `null`; especie con modelo y sin D en `null`. |
+| Dependencias | CC-068, CC-069. **Antes de activar cada modelo (CC-069):** verificar en la fuente original los coeficientes, las unidades y el rango de D y de H (la verificación registró el rango de D; el de H queda por confirmar). |
+| rule_version | por definir al aprobar (cambia el resultado de B19) |
+| Aprobado por | — |
+| Fecha de aprobación | Pendiente |
+| Fecha de implementación | — |
+| Commits / PR asociados | `wip/cc070-modelos-carbono`, sin PR. |
+| Observaciones | **Efecto real hoy en el Piloto Valparaíso** (base de pruebas, 2026-11-02, solo lectura): los 4 árboles con evaluación vigente son A-000419 (*A. pseudoplatanus*, un fuste, DAP 13,4 cm, H 7,1 m), A-000422 (*A. negundo*, un fuste, DAP 8,6 cm, H 5,0 m), A-000423 (*A. pseudoplatanus*, 3 fustes) y A-000426 (*A. pseudoplatanus*, 5 fustes). Con A1: A-000422 sigue en `null` (DAP 8,6 < 10 cm del modelo). Con B1: ningún cambio (los 2 crespones no tienen evaluación vigente). Con C2 o C3: solo A-000419 tendría valor, si su altura está dentro del rango del modelo; A-000423 y A-000426 siguen en `null` por ser multifustales (CC-069 decisión 6). **Para que el piloto muestre más árboles** hace falta, además, evaluar los 7 árboles que faltan y, si se quiere incluir a los multifustales, una decisión aparte sobre el cálculo por fuste (CC-069 decisión 6). **Recomendación:** A1 y B1 (ya clasificados como aptos con limitaciones, marcados por su nivel de confianza), y C2 solo cuando haya una densidad publicada de *A. pseudoplatanus* con su cita; mientras tanto, C1. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-02 | EN REVISIÓN | marybaxmann | Propuesta con opciones A, B y C; pendiente de decisión. |
