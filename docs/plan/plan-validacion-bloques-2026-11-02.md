@@ -1,6 +1,7 @@
 # Plan de validación funcional — CC-052, B6, CC-051, #63 y B8
 
-> **Estado:** plan, sin ejecutar. No implementa nada. Preparado el 2026-11-02 sobre `feature/fase6-backend-api` = `2174243`.
+> **Estado (2026-11-02, tarde):** ejecución parcial. Los casos por API quedaron **bloqueados** (sin credenciales en el entorno; §5.1). Se hicieron los casos independientes por SQL de solo lectura y un ensayo revertido de funciones, que encontró un defecto en la cancelación desde Pendiente (§5.3). No implementa nada.
+> **Plan original:** sin ejecutar. No implementa nada. Preparado el 2026-11-02 sobre `feature/fase6-backend-api` = `2174243`.
 > Los resultados se registran en `docs/registro-pendientes.md` (§1 y §5) a medida que se ejecuten.
 
 ## 0. Qué está probado y qué no
@@ -131,3 +132,59 @@ Requiere integración con el frontend para la experiencia completa: búsqueda de
 ## 4. Criterio de cierre
 
 Un bloque pasa a **Validado** en el registro cuando Valej ejecuta sus casos de prioridad 1 y 2 con resultado esperado, o anota la diferencia. Los datos creados se registran como simulados de QA (código de OT, de árbol y de inspección).
+
+## 5. Resultados de la ejecución (2026-11-02)
+
+Entorno: rama local `feature/fase6-backend-api` (`2174243` + este registro). Proyecto Supabase de pruebas `gmlbmyreoxgoqrolhyxo` (verificado antes de cada consulta). La base real y el proyecto Piloto no se modificaron. No se aplicaron migraciones ni se hizo push.
+
+### 5.1 Bloqueo real: no se pudo levantar el backend contra la base de pruebas
+
+- En este entorno no hay `.env`, ni `SUPABASE_SERVICE_ROLE_KEY`, ni sesiones (JWT) de los usuarios de QA. Sin eso el backend no arranca y no se puede llamar a ningún endpoint.
+- No se pidieron secretos en el chat ni se usaron credenciales de Valej.
+- **Salidas posibles (decide Valej):** (a) configurar los secretos en los ajustes del entorno de la sesión (variables de entorno), o (b) ejecutar los casos §2 en su máquina con PowerShell.
+- **Consecuencia:** ningún bloque pasa a «Validado». No se crearon OT ni árboles de QA para CC-051, CC-052 ni B6.
+
+### 5.2 Casos independientes (SQL de solo lectura en la base de pruebas)
+
+| Bloque | Qué se comprobó | Resultado esperado de la API |
+|---|---|---|
+| B8 | Lectura de M04 en `tree_assessments` | QA A-000346: crítico, 100 %. Piloto: A-000419 bajo 13,33; A-000426 bajo 8,33; A-000423 bajo 8,33; A-000422 moderado 16,67. |
+| B6 | `estado_ot = programada` y fecha < hoy (Chile) | Solo **OT-M-000020** (Piloto) vencida. OT-I-000355 está En ejecución con fecha pasada → **no** vencida (opción A). |
+| #63 | `recordatorio_activo` de B5 | Ningún recordatorio activo hasta el **2026-11-13**: la prueba positiva queda pendiente para esa fecha. No se alteraron fechas. |
+| CC-051 | Tabla `notifications` | 0 avisos. |
+
+Estos valores son lo que la API **debería** devolver; no prueban la API.
+
+### 5.3 Ensayo revertido de funciones reales (proyecto QA) — hallazgo
+
+- Bloque `DO` que llamó, en orden: `fn_create_work_order_inspeccion` (QA, árbol A-000346, reevaluación/seguimiento, responsable inspector1, creada por el Usuario municipal), `fn_reassign_work_order` (a inspector2) y `fn_cancel_work_order`. Terminaba con una excepción para revertir todo.
+- Crear y reasignar: sin error. Cancelar: **falló** con `new row for relation "work_orders" violates check constraint "chk_work_orders_fecha_programada"`.
+- **Causa (verificada):** el CHECK de la 014 exige `estado_ot = 'pendiente' OR fecha_accion_programada IS NOT NULL`. `fn_cancel_work_order` (025) acepta cancelar desde Pendiente (CC-050) y deja `estado_ot = 'cancelada'` sin fecha programada. Resultado: **una OT Pendiente no se puede cancelar**; desde Programada o En ejecución sí (tienen fecha).
+- Es un defecto **preexistente** de la 014/025, no de la 033. Afecta también a la API publicada (`release/demo`), que usa la misma base.
+- **No se corrigió:** requiere migración y autorización. Opciones: (A) ampliar el CHECK a `estado_ot IN ('pendiente','cancelada') OR fecha_accion_programada IS NOT NULL`; (B) revisar D-241 en el Excel. Recomendación: A, coherente con CC-050.
+- **Efecto residual:** todo se revirtió salvo la secuencia del código de OT: **OT-I-000359 quedó consumido** y no existe. La próxima OT de inspección saldrá con OT-I-000360. No se modificaron árboles ni OT preexistentes.
+- La reasignación no dejó evidencia persistente (todo revertido): el aviso de reasignación sigue sin probar por API.
+
+### 5.4 Identificadores de QA
+
+| Dato | Valor |
+|---|---|
+| Proyecto QA | `cddf7c71-6879-4c17-8498-a91d7baaa9b2` |
+| Proyecto Piloto (solo lectura) | `18b647e8-7b5e-44a4-ac02-a5a6a2b4f7d8` |
+| Usuario municipal | `395decaf-08d4-46d8-9299-d4be55ab8719` |
+| Inspector 1 / Inspector 2 | `141f83df-f609-4399-bf52-5d8721826097` / `defe22d7-3aab-48fc-a9de-a2e206f60174` |
+| Encargado de mantención | `689c6e09-97e3-4d3a-a76d-19c9f4eb3054` |
+| Árbol QA A-000346 | `2d991022-cd7e-4aa5-a90f-2313ed26254c` |
+| OT preexistente QA (no tocar) | OT-I-000358 |
+| Datos de QA creados y persistidos | **Ninguno** |
+| Código consumido sin fila | OT-I-000359 |
+
+### 5.5 Estado por bloque tras esta ejecución
+
+| Bloque | Implementado | Probado | Publicado | Desplegado | Validado |
+|---|---|---|---|---|---|
+| B8 | Sí | Jest; valores esperados por SQL | Sí | No | No (bloqueo §5.1) |
+| B6 | Sí | Jest; valores esperados por SQL | Sí | No | No (bloqueo §5.1) |
+| CC-051 | Sí | Jest; 033 N1–N9 | Sí | No | No (bloqueo §5.1; cancelar desde Pendiente falla, §5.3) |
+| CC-052 | Sí | Jest; 018f L1–L7 | Sí | No | No (bloqueo §5.1) |
+| #63 | Sí | Jest; N4 | Sí | No | No (positivo pendiente al 2026-11-13) |

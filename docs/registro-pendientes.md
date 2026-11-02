@@ -151,3 +151,7 @@ El Excel sigue siendo la fuente original; las decisiones aprobadas en CC son mod
 | md5 de la 033: la primera comparación difirió solo por un salto de línea final de más en el archivo (al quitar `BEGIN/COMMIT`); corregido el archivo; contenido idéntico | Resuelto |
 | SV074 ya lo usaba la 031; la 033 usa SV075 | Resuelto |
 | Rama local `respaldo/b19-carbono-2026-11-02`, bundle del scratchpad y worktree `../valpo-verde-backend-pub` | Conservados hasta que Valej indique limpiarlos |
+| Validación por API de B8, B6, CC-051, CC-052 y #63: **bloqueada** en la sesión en la nube (sin `.env`, `SUPABASE_SERVICE_ROLE_KEY` ni sesiones de QA). Casos independientes por SQL hechos; resultados en `plan-validacion-bloques-2026-11-02.md` §5 | Bloqueado: Valej configura secretos del entorno o ejecuta en su máquina |
+| **Defecto preexistente:** cancelar una OT **Pendiente** falla (`chk_work_orders_fecha_programada`, 014, exige fecha programada salvo en Pendiente; `fn_cancel_work_order`, 025, deja Cancelada sin fecha). Contradice CC-050. Afecta también a `release/demo` | Detectado, sin corregir. Requiere migración autorizada (propuesta: admitir `cancelada` en el CHECK) |
+| Ensayo revertido en QA consumió el código **OT-I-000359** (salto en la secuencia; no hay fila) | Documentado; sin efecto en datos |
+| #63: prueba positiva de recordatorios | Pendiente para el 2026-11-13 (sin recordatorios activos antes) |
