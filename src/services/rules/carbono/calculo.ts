@@ -135,6 +135,23 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
   };
 }
 
+/**
+ * Descriptor del método, para la trazabilidad de cada respuesta. CC-069
+ * está aprobado como propuesta y PENDIENTE de sincronización con el Excel
+ * maestro: su integración en desarrollo es una excepción documentada
+ * (Valej, 2026-11-02).
+ */
+export const METODO_CARBONO = {
+  version: "CC-069 v1",
+  estado_cc: "aprobado como propuesta; pendiente de sincronización con el Excel maestro",
+  fraccion_carbono: FRACCION_CARBONO.valor,
+  fuente_fraccion_carbono: FRACCION_CARBONO.fuente,
+  factor_co2: "44/12",
+  incluye_raices: false,
+  incluye_follaje: false,
+  factor_urbano: null,
+} as const;
+
 const MOTIVOS = Object.keys(CATEGORIA_DE_MOTIVO) as MotivoSinCarbono[];
 const CATEGORIAS: readonly CategoriaSinCarbono[] = ["fuera_del_universo", "restriccion_modelo", "dato_faltante_o_inconsistente", "error_calculo"];
 
@@ -167,7 +184,7 @@ export function agregarCarbono(arboles: ArbolCarbono[]) {
   const hay = conResultado > 0;
   return {
     indicador: "estimacion_carbono_aereo_lenoso" as const,
-    metodo: { version: "CC-069 v1", fraccion_carbono: FRACCION_CARBONO.valor, factor_co2: "44/12", incluye_raices: false, incluye_follaje: false, factor_urbano: null },
+    metodo: METODO_CARBONO,
     limitaciones: [...LIMITACIONES],
     cobertura: {
       presentes: presentes.length,

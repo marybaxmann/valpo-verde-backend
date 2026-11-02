@@ -16,6 +16,8 @@ import { listarIncidenciasDeArbol } from "./incidencia.service";
 import { listarOtsDeArbol } from "./listadoOt.service";
 import { areaCopaArbol } from "../rules/indicadores/inventario";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
+import { calcularCarbonoArbol, METODO_CARBONO } from "../rules/carbono/calculo";
+import { LIMITACIONES } from "../rules/carbono/modelos";
 
 /**
  * B2 — GET /api/sivu/projects/:id/trees/:treeId: ficha del árbol
@@ -115,6 +117,16 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     arbolesConEvaluacionCompletaVigente(token, projectId, [treeId]),
   ]);
   const evaluacionCompletaVigente = evaluados.has(treeId);
+  const carbono = calcularCarbonoArbol({
+    id: treeId,
+    presente: presencia?.estado_presencia === "presente",
+    evaluacion_completa_vigente: evaluacionCompletaVigente,
+    especie_cientifica: fila.especie_cientifica,
+    tipo_hoja: rasgos?.tipo_hoja ?? null,
+    multifustal: fila.multifustal ?? null,
+    dap_cm: numero(fila.dap_cm),
+    altura_total_m: numero(fila.altura_total_m),
+  });
   const sinEspecie = fila.especie_cientifica === null;
 
   return {
@@ -122,6 +134,9 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     // Universo biométrico de B19: evaluación completa (inicial, reevaluación o levantamiento) finalizada,
     // con OT completada, no anulada y vigente. false = árbol sin evaluación válida (no «sin medición»).
     evaluacion_completa_vigente: evaluacionCompletaVigente,
+    // CC-069 v1 (pendiente de sincronización con el Excel): valor (biomasa, carbono y CO₂e por separado, con el modelo)
+    // o null con categoría, motivo y detalle.
+    estimacion_carbono_aereo_lenoso: { ...carbono, metodo: METODO_CARBONO, limitaciones: [...LIMITACIONES] },
     // D-28/D-29 (AM-22): Presente, Talado o Retirado, y desde cuándo.
     presencia: presencia
       ? { ...conEtiqueta("estado_presencia", presencia.estado_presencia)!, desde: presencia.fecha_cambio_estado_presencia }

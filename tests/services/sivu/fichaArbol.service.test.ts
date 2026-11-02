@@ -117,6 +117,43 @@ describe("obtenerFichaArbol (B2)", () => {
     expect(arbolesConEvaluacionCompletaVigente).toHaveBeenCalledWith("token", P, [T]);
   });
 
+  describe("estimacion_carbono_aereo_lenoso (CC-069 v1; árboles ficticios, sin Supabase)", () => {
+    const JAC = { ...fila, especie_cientifica: "Jacaranda mimosifolia", multifustal: false, dap_cm: "30.00", altura_total_m: "10.00" };
+
+    it("presente, evaluado y con modelo: biomasa, carbono y CO₂e por separado, con el modelo y el método", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue(JAC);
+      (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" });
+      const c = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_lenoso;
+      expect(c.categoria).toBeNull();
+      expect(c.valor!.biomasa_aerea_lenosa_kg).toBeCloseTo(234.7122, 4);
+      expect(c.valor!.carbono_kg).toBeCloseTo(110.3147, 4);
+      expect(c.valor!.co2e_kg).toBeCloseTo(404.4874, 4);
+      expect(c.valor!.modelo.id).toBe("UTD-TS7-JAME-DH");
+      expect(c.metodo.estado_cc).toMatch(/pendiente de sincronización con el Excel/);
+      expect(c.limitaciones.length).toBeGreaterThan(0);
+    });
+
+    it("talado: fuera del universo (no_presente)", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue(JAC);
+      const c = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_lenoso;
+      expect(c).toEqual(expect.objectContaining({ valor: null, categoria: "fuera_del_universo", motivo: "no_presente" }));
+    });
+
+    it("sin evaluación completa vigente: fuera del universo (sin_evaluacion_valida)", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue(JAC);
+      (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" });
+      (arbolesConEvaluacionCompletaVigente as jest.Mock).mockResolvedValue(new Set());
+      const c = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_lenoso;
+      expect(c).toEqual(expect.objectContaining({ valor: null, categoria: "fuera_del_universo", motivo: "sin_evaluacion_valida" }));
+    });
+
+    it("especie sin modelo aprobado: no estimable (restriccion_modelo, sin_modelo)", async () => {
+      (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" });
+      const c = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_lenoso;
+      expect(c).toEqual(expect.objectContaining({ valor: null, categoria: "restriccion_modelo", motivo: "sin_modelo" }));
+    });
+  });
+
   it("árbol de otro proyecto o inexistente: 404", async () => {
     (obtenerArbolFicha as jest.Mock).mockResolvedValue(null);
     await expect(obtenerFichaArbol(user, P, T, "token")).rejects.toMatchObject({ statusCode: 404 });

@@ -98,6 +98,7 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
   `altura_primera_rama_m`, `altura_primera_rama_no_presenta`, `altura_base_copa_viva_m`,
   `altura_base_copa_viva_no_presenta`, `clase_edad` y `rango_edad_estimada_anios` (estos dos como `{ codigo, etiqueta }`).
 - `arbol.area_proyectada_copa_m2` (INDICES fila 13; CC-016): π × (NS/2) × (EO/2) en m². «No presenta copa» (`copa_no_presenta: true`) = `0`; sin los dos diámetros, `null` (no medido). Solo si `evaluacion_completa_vigente` es `true`; si no, `null`.
+- `estimacion_carbono_aereo_lenoso` (en desarrollo, **no publicado**; CC-069 v1): `{ valor, categoria, motivo, detalle, metodo, limitaciones }`. Con resultado, `valor` = `{ volumen_m3, biomasa_aerea_lenosa_kg, carbono_kg, co2e_kg, modelo: { id, version, variante, componente, fuente }, entradas: { dap_cm, altura_total_m, densidad_kg_m3, fraccion_carbono } }` y `categoria`/`motivo`/`detalle` son `null`. Sin resultado, `valor: null` con la categoría, el motivo y el detalle (mismos códigos que B19). Mostrar `restriccion_modelo` como «No estimable» y `sin_modelo` como «No estimable: sin modelo científico aplicable».
 - `evaluacion_completa_vigente` (nuevo, 2026-11-02): `true` si el árbol tiene una evaluación completa (inicial, reevaluación o levantamiento) finalizada, con OT completada, no anulada y vigente. `false` = árbol sin evaluación válida: el frontend debe mostrar «sin evaluación», no «sin medición».
 - `sobre_la_especie`: `genero`, `familia`, `origen_biogeografico`, `persistencia_follaje`, `tipo_hoja` (los tres
   últimos como `{ codigo, etiqueta }`; sin especie vigente: «Origen no determinado» y los otros dos `null`).
@@ -247,7 +248,12 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
 - `diversidad_shannon`: `{ valor, riqueza, n_identificados, cobertura_identificacion }`. H′ con logaritmo natural sobre los identificados; `null` sin identificados.
 - `diversidad_taxonomica_10_20_30`: `{ denominador, especie, genero, familia }`; cada nivel `{ umbral_porcentaje, taxones: [{ taxon, arboles, porcentaje, supera_umbral }], sin_dato: { arboles, porcentaje }, cumple }`. `cumple: null` si no hay ningún taxón con dato.
 - `proporcion_origen`: `{ denominador, nativos, introducidos, origen_no_determinado }`, cada uno `{ arboles, porcentaje }`. Nativos = Nativa o Endémica. Si ningún presente tiene origen en el catálogo, los porcentajes de nativos e introducidos son `null` (no 0 %).
-- Los indicadores ecosistémicos (carbono y otros) siguen fuera: el Excel los marca «Pendiente».
+- **`estimacion_carbono_aereo_lenoso`** (en desarrollo, **no publicado**; CC-069 v1, pendiente de sincronización con el Excel):
+  - `metodo` (versión, estado del CC, fracción de carbono 0,47 con su fuente, `factor_co2: "44/12"`, sin raíces, sin follaje, sin factor urbano) y `limitaciones` (textos).
+  - `cobertura`: `presentes`, `universo_calculo` (presentes con evaluación completa válida y vigente), `con_resultado`, `por_categoria` (`fuera_del_universo`, `restriccion_modelo`, `dato_faltante_o_inconsistente`, `error_calculo`) y `motivos` (`no_presente`, `sin_evaluacion_valida`, `sin_modelo`, `palmera_sin_modelo`, `multifustal_no_admitido`, `fuera_de_rango`, `fuera_de_rango_altura`, `falta_dap`, `configuracion_fuste_no_determinada`, `resultado_invalido`).
+  - `total`: `biomasa_aerea_lenosa_t`, `carbono_t` y `co2e_t`, por separado; `null` si ningún árbol tiene resultado (no 0).
+  - Solo dos modelos aprobados (*Jacaranda mimosifolia* y *Liquidambar styraciflua*; Pillsbury et al. 1998). No es carbono total ni secuestro anual.
+- Los demás indicadores ecosistémicos siguen fuera: el Excel los marca «Pendiente».
 
 ## 7. Incidencias (interno, B9)
 
