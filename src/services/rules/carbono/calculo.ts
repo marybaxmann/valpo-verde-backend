@@ -71,7 +71,13 @@ export interface CarbonoArbol {
     /** Rango de validez aplicado: la altura solo en la variante con altura. Límites incluidos. */
     rango: { dap_min_cm: number; dap_max_cm: number; altura_min_m: number | null; altura_max_m: number | null };
     densidad: ModeloVolumen["densidad"];
-    n_muestra: number;
+    n_muestra: number | null;
+    /** CC-070: «propia_urbana» o «sustituta_mismo_genero» (estimación indirecta). */
+    confianza: ModeloVolumen["confianza"];
+    /** Especie con la que se ajustó la ecuación. */
+    especie_ecuacion: string;
+    fuente_rango: string;
+    limitaciones_modelo: string[];
   };
   entradas: { dap_cm: number; altura_total_m: number | null; densidad_kg_m3: number; fraccion_carbono: number };
 }
@@ -113,20 +119,23 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
   if (a.dap_cm === null) return sinResultado("falta_dap", "Falta el DAP.");
 
   const conAltura = a.altura_total_m !== null;
-  const modelo = modelos.find((m) => m.variante === (conAltura ? "dap_altura" : "dap"));
+  // Con altura se usa la variante con altura si la especie la tiene; un modelo
+  // que solo tiene variante con DAP (CC-070) se usa aunque el árbol tenga altura.
+  const tieneVarianteAltura = modelos.some((m) => m.variante === "dap_altura");
+  const modelo = modelos.find((m) => m.variante === (conAltura && tieneVarianteAltura ? "dap_altura" : "dap"));
   if (!modelo) return sinResultado("sin_modelo", "No hay una variante del modelo para los datos disponibles.");
 
   if (!dentro(a.dap_cm, modelo.dap_min_cm, modelo.dap_max_cm)) {
     return sinResultado("fuera_de_rango", `DAP ${fmt(a.dap_cm)} cm fuera del rango del modelo (${fmt(modelo.dap_min_cm)}-${fmt(modelo.dap_max_cm)} cm).`);
   }
-  if (conAltura && !dentro(a.altura_total_m!, modelo.altura_min_m, modelo.altura_max_m)) {
+  if (modelo.variante === "dap_altura" && !dentro(a.altura_total_m!, modelo.altura_min_m!, modelo.altura_max_m!)) {
     return sinResultado(
       "fuera_de_rango_altura",
-      `Altura ${fmt(a.altura_total_m!)} m fuera del rango del modelo (${fmt(modelo.altura_min_m)}-${fmt(modelo.altura_max_m)} m).`
+      `Altura ${fmt(a.altura_total_m!)} m fuera del rango del modelo (${fmt(modelo.altura_min_m!)}-${fmt(modelo.altura_max_m!)} m).`
     );
   }
 
-  const volumen = modelo.a * a.dap_cm ** modelo.b * (conAltura ? a.altura_total_m! ** modelo.c : 1);
+  const volumen = modelo.a * a.dap_cm ** modelo.b * (modelo.variante === "dap_altura" ? a.altura_total_m! ** modelo.c : 1);
   const biomasa = volumen * modelo.densidad.valor;
   const carbono = biomasa * FRACCION_CARBONO.valor;
   const co2e = carbono * FACTOR_CO2_POR_C;
@@ -162,8 +171,12 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
         },
         densidad: { ...modelo.densidad },
         n_muestra: modelo.n_muestra,
+        confianza: modelo.confianza,
+        especie_ecuacion: modelo.especie_ecuacion,
+        fuente_rango: modelo.fuente_rango,
+        limitaciones_modelo: [...modelo.limitaciones_modelo],
       },
-      entradas: { dap_cm: a.dap_cm, altura_total_m: conAltura ? a.altura_total_m : null, densidad_kg_m3: modelo.densidad.valor, fraccion_carbono: FRACCION_CARBONO.valor },
+      entradas: { dap_cm: a.dap_cm, altura_total_m: modelo.variante === "dap_altura" ? a.altura_total_m : null, densidad_kg_m3: modelo.densidad.valor, fraccion_carbono: FRACCION_CARBONO.valor },
     },
     categoria: null,
     motivo: null,
