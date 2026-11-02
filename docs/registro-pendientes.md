@@ -95,7 +95,8 @@ El Excel sigue siendo la fuente original; las decisiones aprobadas en CC son mod
 |---|---|
 | Verificados: B1 (búsqueda), B3, B5, B13, B17, B18, Conecta público, B9, catálogo público, `qr_token` en B1, Mantenimiento #61 con AM-22 | Validado |
 | Sin validar: B1 ampliado, B2, B7, B11, árboles cercanos (CC-052), placas QR (escanear una impresa) | Pendiente |
-| Sin validar por no estar desplegados: universos de B19, carbono, CC-052, B8, B6, avisos y recordatorios | Pendiente (requieren despliegue) |
+| Sin validar por no estar desplegados: universos de B19, carbono, CC-052, B8, B6, avisos y recordatorios | Pendiente. **Plan de validación:** `docs/plan/plan-validacion-bloques-2026-11-02.md` (casos por rol y prioridad). Requiere un backend con `2174243` contra la base de pruebas (local o vista previa; la API publicada corre `3d717ce`) |
+| Requisitos de datos para validar (2026-11-02, lectura): no hay ninguna OT de Levantamiento abierta (crear una de QA); en QA Fase 7 no hay OT vencidas (el Piloto tiene 1); **ningún** `recordatorio_activo` hasta el 2026-11-13 (A-000423, Piloto); B8 tiene 1 árbol evaluado en QA y 4 en el Piloto; `notifications` vacía | Pendiente de preparar (los datos de QA creados por la API quedan permanentes y se registran como simulados) |
 | Varias OT por incidencia, otros roles en B9 y B1, revisor fuera del proyecto | Pendiente |
 
 ## 6. Despliegue y configuración
@@ -103,6 +104,7 @@ El Excel sigue siendo la fuente original; las decisiones aprobadas en CC son mod
 | Ítem | Estado |
 |---|---|
 | `release/demo` congelada en `3d717ce` hasta después de la presentación del 2026-11-03 | Vigente |
+| **Efecto de la 033 en la API publicada:** `release/demo` usa la misma base de pruebas; desde el 2026-11-02, cancelar o reasignar una OT desde esa API ya guarda avisos en `notifications` (el código viejo no los muestra). Si el trigger fallara, esa API respondería 500 genérico (el 503 claro está solo en el código nuevo) | Riesgo bajo (N1–N9 OK); vigilar durante la presentación |
 | Llevar a `release/demo` lo publicado en `feature` (universos, carbono, CC-052, B8, B6, avisos) | Pendiente; después de la presentación y con autorización. La 033 ya está en la base de pruebas, que es la que usa la API publicada |
 | `CONECTA_URL_BASE` (placas QR) y `CORS_ORIGIN` en Vercel | Pendiente (lo configura Valej) |
 | Etiqueta `presentacion-2026-11-03` | Pendiente |
