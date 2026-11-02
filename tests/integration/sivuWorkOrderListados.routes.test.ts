@@ -98,6 +98,8 @@ describe("rutas de los listados de OT (B3, B4; CC-065)", () => {
     ["B3", `/api/sivu/projects/${PROJECT_ID}/work-orders`, { project_id: PROJECT_ID }],
     ["B4", "/api/sivu/work-orders/mine", { project_id: "no-es-uuid" }],
     ["B4", "/api/sivu/work-orders/mine", { orden: "fecha" }],
+    ["B3", `/api/sivu/projects/${PROJECT_ID}/work-orders`, { solo_vencidas: "si" }],
+    ["B4", "/api/sivu/work-orders/mine", { solo_vencidas: "1" }],
   ])("%s %s con %j: 400 (Zod)", async (_b, ruta, query) => {
     auth(MUNICIPAL_ID, municipalProfileRow());
     const res = await request(app).get(ruta).query(query).set(authHeader);

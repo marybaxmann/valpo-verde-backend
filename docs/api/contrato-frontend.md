@@ -120,11 +120,13 @@ además las lecturas pasan por la RLS de la base con el JWT del usuario (segunda
 
 Estados (`estado_ot`): `pendiente` → `programada` → `en_ejecucion` → `completada`; o `cancelada`.
 
+**OT vencida (B6; decisión de Valej, 2026-11-02):** no es un estado, es una condición calculada. `vencida: true` cuando el estado es `programada` y `fecha_accion_programada` es anterior a hoy (fecha de Chile). Una OT En ejecución, Pendiente, Completada o Cancelada nunca está vencida en esta versión. `solo_vencidas=true` lista solo esas (el filtro se aplica en la consulta: `total` y la paginación son correctos). El campo `vencida` también viene en las OT de la ficha del árbol (B2).
+
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|
 | `POST /api/sivu/projects/:id/work-orders` | Usuario municipal | `{ tree_id (salvo levantamiento), accion_solicitada, subtipo_accion?, motivo?, prioridad?, observaciones? (obligatoria en levantamiento), responsable_accion_id, incident_id? }` | 201 `{ data }` |
-| `GET /api/sivu/projects/:id/work-orders` (B3) | Miembros y Administrador. El Inspector ve solo las de Inspección donde es responsable; el Encargado, ninguna de Inspección (403 si las pide) | `estado?` (lista separada por coma; por defecto pendiente, programada y en ejecución), `tipo_ot?`, `limit`, `offset` | 200 `{ data: [OT], total, limit, offset }`; cada OT con `estado`, `accion`, `prioridad` en `{ codigo, etiqueta }`, `arbol`, `proyecto`, `responsable`, `inspector_revisor` (Mantenimiento con revisión; si no, `null`) y `acciones` del usuario: `programar`, `iniciar`, `trabajar` (Inspector) o `registrar_ejecucion` (Encargado) |
-| `GET /api/sivu/work-orders/mine` (B4) | Cualquier miembro | `project_id?`, `estado?`, `tipo_ot?`, `limit`, `offset` | Igual que B3, solo las OT donde el usuario es el responsable |
+| `GET /api/sivu/projects/:id/work-orders` (B3) | Miembros y Administrador. El Inspector ve solo las de Inspección donde es responsable; el Encargado, ninguna de Inspección (403 si las pide) | `estado?` (lista separada por coma; por defecto pendiente, programada y en ejecución), `tipo_ot?`, `solo_vencidas?` (`true`/`false`), `limit`, `offset` | 200 `{ data: [OT], total, limit, offset }`; cada OT con `vencida` (boolean), `estado`, `accion`, `prioridad` en `{ codigo, etiqueta }`, `arbol`, `proyecto`, `responsable`, `inspector_revisor` (Mantenimiento con revisión; si no, `null`) y `acciones` del usuario: `programar`, `iniciar`, `trabajar` (Inspector) o `registrar_ejecucion` (Encargado) |
+| `GET /api/sivu/work-orders/mine` (B4) | Cualquier miembro | `project_id?`, `estado?`, `tipo_ot?`, `solo_vencidas?`, `limit`, `offset` | Igual que B3, solo las OT donde el usuario es el responsable |
 | `PATCH /api/sivu/work-orders/:id/estado` | Responsable asignado: Inspector (Inspección) o Encargado de mantención (Mantenimiento) | `{ estado: "programada" \| "en_ejecucion", fecha_accion_programada? }` (fecha obligatoria al programar) | 200 `{ data }` |
 | `POST /api/sivu/work-orders/:id/completar` | Usuario municipal | `{}` (la fecha la pone el Sistema) | 200 `{ data }`; 422 sin inspección finalizada o con un borrador; 409 si los datos cambiaron dos veces (reintentar) |
 | `POST /api/sivu/work-orders/:id/cancelar` | Usuario municipal | `{ motivo_cancelacion }` (obligatorio) | 200 `{ data }`. Solo desde pendiente, programada o en ejecución. |
@@ -325,8 +327,7 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 
 ## 9. Pendiente o en revisión
 
-- **B6** (OT
-  «vencida»: sin definición), **B19** (los 11 indicadores en §6 bis; falta registrar provisional/confirmada, con migración pendiente de autorización; los ecosistémicos siguen «Pendiente» en el Excel).
+- **B19** (los 11 indicadores en §6 bis; falta registrar provisional/confirmada, con migración pendiente de autorización; los ecosistémicos siguen «Pendiente» en el Excel).
 - **CC-052:** la búsqueda de cercanos está disponible; el radio por defecto y la pantalla los define el frontend.
 - **Límites por IP de Conecta:** hoy en memoria, por instancia de Vercel (ver §8). Pendiente: contadores compartidos en PostgreSQL (opción A), con migración sujeta a autorización.
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde

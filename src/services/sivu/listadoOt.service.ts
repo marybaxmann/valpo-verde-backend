@@ -1,5 +1,7 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { AppError } from "../../utils/AppError";
+import { hoyEnChile } from "../../utils/fechaChile";
+import { esOtVencida } from "./otVencida";
 import { assertProjectAccess } from "../authorization.service";
 import { etiquetaDe } from "../rules/engine/catalogs";
 import {
@@ -47,6 +49,8 @@ export interface OtListada {
   prioridad: CodigoEtiqueta | null;
   estado: CodigoEtiqueta;
   fecha_accion_programada: string | null;
+  /** B6: Programada con fecha programada anterior a hoy (Chile). Calculado; no es un estado. */
+  vencida: boolean;
   fecha_creacion_ot: string;
   fecha_completada_ot: string | null;
   proyecto: { id: string; nombre_proyecto: string | null };
@@ -87,6 +91,7 @@ export async function listarOtsDeProyecto(
     estados: query.estado ?? ESTADOS_OT_POR_DEFECTO,
     limit: query.limit,
     offset: query.offset,
+    ...(query.solo_vencidas ? { vencidasAntesDe: hoyEnChile() } : {}),
   };
 
   if (user.role === "encargado_mantencion") {
@@ -137,6 +142,7 @@ export async function listarMisOts(
       estados: query.estado ?? ESTADOS_OT_POR_DEFECTO,
       limit: query.limit,
       offset: query.offset,
+      ...(query.solo_vencidas ? { vencidasAntesDe: hoyEnChile() } : {}),
     },
     accessToken
   );
@@ -185,6 +191,7 @@ export async function listarOtsEnRevision(
 
 async function armarListado(user: AuthenticatedUser, filtros: FiltrosListadoOt, accessToken: string): Promise<ListadoOt> {
   const { filas, total } = await listarOrdenesTrabajo(accessToken, filtros);
+  const hoy = filtros.vencidasAntesDe ?? hoyEnChile();
 
   const treeIds = [...new Set(filas.map((f) => f.tree_id).filter((id): id is string => id !== null))];
   const projectIds = [...new Set(filas.map((f) => f.project_id))];
@@ -214,6 +221,7 @@ async function armarListado(user: AuthenticatedUser, filtros: FiltrosListadoOt, 
         nombreProyecto: proyectoPorId.get(fila.project_id)?.nombre_proyecto ?? null,
         responsable: persona(fila.responsable_accion_id),
         inspectorRevisor: persona(fila.inspector_revisor_id ?? null),
+        hoy,
       });
     }),
     total,
@@ -230,6 +238,8 @@ function aOtListada(
     nombreProyecto: string | null;
     responsable: { id: string; nombre: string | null; fuera_del_proyecto?: true } | null;
     inspectorRevisor: { id: string; nombre: string | null; fuera_del_proyecto?: true } | null;
+    /** Hoy en Chile (AAAA-MM-DD), uno solo por listado. */
+    hoy: string;
   }
 ): OtListada {
   const esInspeccion = fila.tipo_ot === "inspeccion";
@@ -246,6 +256,7 @@ function aOtListada(
     prioridad: fila.prioridad ? conEtiqueta("clasificacion_prioridad", fila.prioridad) : null,
     estado: conEtiqueta("estado_ot", fila.estado_ot),
     fecha_accion_programada: fila.fecha_accion_programada,
+    vencida: esOtVencida(fila.estado_ot, fila.fecha_accion_programada, extra.hoy),
     fecha_creacion_ot: fila.fecha_creacion_ot,
     fecha_completada_ot: fila.fecha_completada_ot,
     proyecto: { id: fila.project_id, nombre_proyecto: extra.nombreProyecto },
