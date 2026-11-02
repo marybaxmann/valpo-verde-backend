@@ -224,6 +224,12 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
 
 `data`: `{ fecha_consulta, ambito: { tipo: "proyecto" | "barrio", barrio }, barrios: [string], cobertura: { arboles_registrados, arboles_presentes, arboles_con_evaluacion_valida, arboles_sin_evaluacion_valida }, numero_total_arboles, densidad_arborea, clases_diametricas, diametro_medio_copa, area_proyectada_copa, cobertura_taxonomica, riqueza_especies, abundancia_relativa, diversidad_shannon, diversidad_taxonomica_10_20_30, proporcion_origen }`.
 
+- **Cambios incompatibles (2026-11-02)** respecto de lo publicado el 2026-11-01:
+  - **Renombrados:** `clases_diametricas.denominador` → `denominador_evaluados`; `diametro_medio_copa.denominador_presentes` → `denominador_evaluados`; `area_proyectada_copa.denominador_presentes` → `denominador_evaluados`. Los nombres anteriores ya no vienen.
+  - **Cambio de universo:** los tres indicadores biométricos se calculan solo con árboles evaluados (abajo); antes usaban todos los presentes.
+  - **Cambio de significado sin cambio de nombre:** `clases_diametricas.sin_dap` y `n_sin_medicion` ya no cuentan árboles nunca evaluados (se informan en `cobertura.arboles_sin_evaluacion_valida`).
+  - **Nuevos:** `cobertura.arboles_con_evaluacion_valida` y `cobertura.arboles_sin_evaluacion_valida`; en la ficha (B2, §3), `evaluacion_completa_vigente`, y `arbol.area_proyectada_copa_m2` es `null` cuando es `false`.
+  - Sin cambios: `numero_total_arboles`, `densidad_arborea` y los indicadores de especies.
 - **Universos (cambio del 2026-11-02, CC-016):**
   - **Inventario** (`numero_total_arboles`, `densidad_arborea`) y **diversidad** (bloque 2): árboles **presentes** (D-28). Los talados o retirados con OT completada y revisión aprobada quedan fuera.
   - **Biométricos** (`clases_diametricas`, `diametro_medio_copa`, `area_proyectada_copa`): solo los presentes con **evaluación completa válida y vigente**: evaluación inicial, reevaluación o levantamiento, finalizada, con OT completada (aprobada), no anulada, y con evaluación vigente del árbol (la de B18). Un árbol nunca evaluado **no** es «Sin DAP» ni «sin medición»: se cuenta en `cobertura.arboles_sin_evaluacion_valida`.
