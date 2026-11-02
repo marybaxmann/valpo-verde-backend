@@ -33,7 +33,7 @@
 
 1. Windows 10 u 11 con **PowerShell 7.4 o superior** (`pwsh`). Instalar: `winget install --id Microsoft.PowerShell`. Comprobar: `pwsh -v`.
 2. Node.js 20 o superior y Git.
-3. El repositorio `valpo-verde-backend` en la rama `feature/fase6-backend-api` **con el script**. Hoy el script solo existe en commits locales de la sesión (sin push). Para tenerlo hace falta tu autorización de push o copiar el archivo a mano.
+3. El repositorio `valpo-verde-backend` en la rama `feature/fase6-backend-api` **con el script** (publicado el 2026-11-02, commit `aaaaeb7`): `git pull origin feature/fase6-backend-api`.
 4. El `.env` de pruebas en la carpeta del backend (guía manual §2) y el backend corriendo con `npm run dev` en otra ventana (guía manual §4).
 5. Las contraseñas de las cuatro cuentas de QA: Usuario municipal, Inspector 1, Inspector 2 y Encargado. Opcional: un Administrador (`-ConAdmin`) y un usuario no miembro del proyecto QA (`-ConNoMiembro`). Sin ellos, B8-3 y B8-4 quedan BLOCKED.
 

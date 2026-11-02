@@ -40,7 +40,7 @@
 - **Validación por API bloqueada en la nube** (sin `.env` ni sesiones). Decisión de Valej: la ejecuta en su computador con PowerShell. Guía: `docs/plan/validacion-local-powershell.md`. Resultados por SQL y valores esperados: `docs/plan/plan-validacion-bloques-2026-11-02.md` §5.
 - **Defecto de CC-050:** cancelar una OT Pendiente fallaba (`chk_work_orders_fecha_programada`). Corregido con la **034**, aplicada en `gmlbmyreoxgoqrolhyxo` con el ciclo completo: `pruebas_034` R1–R13 y regresión `pruebas_033` N1–N9 en las dos rondas; reversión exacta; md5 up `8395abb51c6aacda19e59fb63e2923cf` / down `7e92c5fba6c59ff698b84850275891ff` = archivos; sin consumo de numeración; asesor sin hallazgos nuevos. **No** en la base real. `schema.sql` revisión 28.
 - **Numeración:** OT-I-000359 quedó consumida sin fila por un ensayo revertido; la próxima OT de Inspección será OT-I-000360.
-- **Sin push:** commits locales en `feature/fase6-backend-api` (autor Valej). `wip/bloque1-completar-ot`, `release/demo` y `main` sin cambios.
+- **Publicado** (push normal autorizado por Valej) en `feature/fase6-backend-api` = `aaaaeb7` (`84aaea8`, `791c050`, `e53d74c`, `1a7dcb3`, `aaaaeb7`), incluido el script `scripts/validacion/validar-bloques.ps1` (instrucciones `docs/plan/validacion-api-script.md`; no ejecutado todavía). `wip/bloque1-completar-ot` (`8e0c3ee`), `release/demo` y `main` sin cambios.
 - **Instrucción para el siguiente agente:** esperar los resultados de la validación local de Valej y registrarlos en el plan §5 y en `docs/registro-pendientes.md`; no publicar ni avanzar a otros bloques sin autorización.
 
 ## ▶ Novedad 2026-11-02 (bloque 26) — 033 aplicada en pruebas y publicación
