@@ -45,27 +45,36 @@
 - **Densidad:** se guarda dentro del catálogo de modelos, con unidad, tipo, fuente y versión (decisión 3). La tabla `species` no se toca.
 - **Límites:** escritos como literales decimales exactos. En coma flotante, 22,5 × 0,3048 da 6,8580000000000005 y dejaría fuera el propio límite.
 
-## 5. Cálculo y motivos de `null` (`src/services/rules/carbono/calculo.ts`)
+## 5. Cálculo, universo y motivos de `null` (`src/services/rules/carbono/calculo.ts`)
 
 `V = a·D^b·H^c` (o `a·D^b`) → `B = V·ρ` → `C = B·0,47` → `CO₂e = C·44/12`. Sin redondeos.
 
-Se evalúa en este orden; la primera condición que falla da el motivo:
+**Universo de cálculo (Valej, 2026-11-02):** árboles presentes con evaluación completa válida y vigente (`evaluacion_completa_vigente`, el mismo universo biométrico de B19: `habilitacionBiometrica.ts`). Las condiciones se evalúan en este orden; la primera que falla da el motivo. Cada motivo pertenece a una sola categoría y se conserva su código.
 
-| # | Condición | Motivo |
-|---|---|---|
-| 1 | Especie a nivel específico con modelo aprobado (variedades y cultivares, en su especie) | `sin_modelo` |
-| 2 | `tipo_hoja` distinto de `palmera` | `palmera_sin_modelo` |
-| 3 | `multifustal` distinto de `true` | `multifustal_no_admitido` |
-| 4 | `multifustal` conocido (no `null`) | `dap_medicion_no_equivalente` |
-| 5 | DAP presente | `falta_dap` |
-| 6 | Con altura: variante DAP y altura; sin altura: variante solo DAP | — |
-| 7 | DAP dentro del rango | `fuera_de_rango` |
-| 8 | Variante con altura: altura dentro del rango. **Si está fuera, no se usa la variante solo DAP**: el árbol queda fuera de la población muestreada. | `fuera_de_rango_altura` |
-| 9 | Resultado finito y > 0 | `resultado_invalido` |
+| # | Condición | Motivo | Categoría |
+|---|---|---|---|
+| 1 | Árbol presente (D-28) | `no_presente` | fuera_del_universo |
+| 2 | Evaluación completa válida y vigente | `sin_evaluacion_valida` | fuera_del_universo |
+| 3 | Especie a nivel específico con modelo aprobado (variedades y cultivares, en su especie) | `sin_modelo` | restriccion_modelo |
+| 4 | `tipo_hoja` distinto de `palmera` | `palmera_sin_modelo` | restriccion_modelo |
+| 5 | `multifustal` distinto de `true` | `multifustal_no_admitido` | restriccion_modelo |
+| 6 | `multifustal` registrado (no `null`) | `configuracion_fuste_no_determinada` | dato_faltante_o_inconsistente |
+| 7 | DAP presente | `falta_dap` | dato_faltante_o_inconsistente |
+| 8 | Con altura: variante DAP y altura; sin altura: variante solo DAP | — | — |
+| 9 | DAP dentro del rango | `fuera_de_rango` | restriccion_modelo |
+| 10 | Variante con altura: altura dentro del rango. Si está fuera, **no** se usa la variante solo DAP. | `fuera_de_rango_altura` | restriccion_modelo |
+| 11 | Resultado finito y > 0 | `resultado_invalido` | error_calculo |
 
-**`dap_medicion_no_equivalente`** (interpretación para que Valej confirme): según D-18, en un multifustal `dap_cm` es un diámetro **equivalente** calculado, no una medición directa. Si `multifustal` es `null`, no se puede saber si el DAP es directo; por eso se excluye. El DAP a 1,30 m **no** se marca con este motivo: es la limitación documentada en la sección 2 y no se transforma a 1,3716 m.
+**Presentación de las categorías:**
+- `restriccion_modelo` se muestra como «No estimable», con el motivo específico.
+- `sin_modelo` se muestra como «No estimable: sin modelo científico aplicable».
+- El DAP a 1,30 m no es un motivo: es una limitación documentada y no se transforma.
+- `dap_medicion_no_equivalente`, de la versión anterior, se reemplaza por `configuracion_fuste_no_determinada` (Valej).
 
-El agregado (`agregarCarbono`) toma solo los árboles presentes. Entrega `indicador: "estimacion_carbono_aereo_lenoso"`, el método, las limitaciones, la cobertura y los motivos, y los totales en t. Si ningún árbol tiene resultado, los totales son `null`.
+**Agregado** (`agregarCarbono`):
+- `cobertura`: `presentes`, `universo_calculo`, `con_resultado`, `por_categoria` y `motivos`.
+- Un presente sin evaluación válida cuenta en `fuera_del_universo`, no como dato faltante.
+- Los totales en t son `null` si no hay ningún resultado.
 
 ## 6. Ejemplos reproducibles (los mismos valores que usan las pruebas)
 
@@ -88,7 +97,7 @@ Todas con árboles **ficticios**: no se lee ni se escribe en Supabase.
 - **E1 a E8:** comparación a 4-6 decimales.
 - **Motivos de `null`:** DAP fuera de rango por arriba y por abajo, con y sin altura; altura fuera de rango por arriba y por abajo; altura fuera de rango sin caer a la variante solo DAP; multifustal; multifustal desconocido; sin DAP; palmera; Ginkgo; «Quercus sp.»; sin especie.
 - **Otros casos:** el DAP se usa tal cual (sin transformar); una variedad o cultivar usa el modelo de su especie.
-- **Agregado de 15 árboles ficticios de QA Fase 7 (QA-F-01 a QA-F-15):** 14 presentes, 6 con resultado, conteo por motivo y totales en t. Proyecto sin resultados: totales `null`.
+- **Agregado de 16 árboles ficticios de QA Fase 7 (QA-F-01 a QA-F-16):** 15 presentes, 14 en el universo de cálculo, 6 con resultado, conteo por categoría y por motivo, y totales en t. Proyecto sin resultados: totales `null`.
 
 ## 8. Paso 2 (no iniciado; requiere autorización)
 

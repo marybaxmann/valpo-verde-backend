@@ -10,8 +10,14 @@ import { FACTOR_CO2_POR_C, FRACCION_CARBONO, LIMITACIONES, MODELOS_VOLUMEN, Mode
 
 export interface ArbolCarbono {
   id: string;
-  /** D-28: solo los presentes entran al agregado. */
+  /** D-28. */
   presente: boolean;
+  /**
+   * Universo biométrico (habilitacionBiometrica.ts): evaluación completa
+   * finalizada, con OT completada, no anulada y vigente. Sin ella el
+   * árbol está fuera del universo de cálculo.
+   */
+  evaluacion_completa_vigente: boolean;
   /** Nombre del catálogo si hay species_id; si no, D-13. */
   especie_cientifica: string | null;
   /** D-262 (catálogo): «palmera» excluye el árbol. */
@@ -24,15 +30,29 @@ export interface ArbolCarbono {
   altura_total_m: number | null;
 }
 
-export type MotivoSinCarbono =
-  | "sin_modelo"
-  | "palmera_sin_modelo"
-  | "multifustal_no_admitido"
-  | "dap_medicion_no_equivalente"
-  | "falta_dap"
-  | "fuera_de_rango"
-  | "fuera_de_rango_altura"
-  | "resultado_invalido";
+/**
+ * Categorías (Valej, 2026-11-02): no se agrupan todos como «sin modelo».
+ * - fuera_del_universo: el árbol no se calcula (no presente o sin evaluación válida).
+ * - restriccion_modelo: «No estimable»: el modelo no se puede aplicar a este árbol.
+ * - dato_faltante_o_inconsistente: árbol evaluado al que le falta un dato que el modelo exige.
+ * - error_calculo: el cálculo no dio un número válido.
+ */
+export type CategoriaSinCarbono = "fuera_del_universo" | "restriccion_modelo" | "dato_faltante_o_inconsistente" | "error_calculo";
+
+export const CATEGORIA_DE_MOTIVO = {
+  no_presente: "fuera_del_universo",
+  sin_evaluacion_valida: "fuera_del_universo",
+  sin_modelo: "restriccion_modelo",
+  palmera_sin_modelo: "restriccion_modelo",
+  multifustal_no_admitido: "restriccion_modelo",
+  fuera_de_rango: "restriccion_modelo",
+  fuera_de_rango_altura: "restriccion_modelo",
+  falta_dap: "dato_faltante_o_inconsistente",
+  configuracion_fuste_no_determinada: "dato_faltante_o_inconsistente",
+  resultado_invalido: "error_calculo",
+} as const satisfies Record<string, CategoriaSinCarbono>;
+
+export type MotivoSinCarbono = keyof typeof CATEGORIA_DE_MOTIVO;
 
 export interface CarbonoArbol {
   volumen_m3: number;
@@ -44,15 +64,24 @@ export interface CarbonoArbol {
 }
 
 export type ResultadoArbol =
-  | { valor: CarbonoArbol; motivo: null; detalle: null }
-  | { valor: null; motivo: MotivoSinCarbono; detalle: string };
+  | { valor: CarbonoArbol; categoria: null; motivo: null; detalle: null }
+  | { valor: null; categoria: CategoriaSinCarbono; motivo: MotivoSinCarbono; detalle: string };
 
-const sinResultado = (motivo: MotivoSinCarbono, detalle: string): ResultadoArbol => ({ valor: null, motivo, detalle });
+const sinResultado = (motivo: MotivoSinCarbono, detalle: string): ResultadoArbol => ({
+  valor: null,
+  categoria: CATEGORIA_DE_MOTIVO[motivo],
+  motivo,
+  detalle,
+});
 const dentro = (x: number, min: number, max: number) => x >= min && x <= max;
 const fmt = (x: number) => x.toFixed(4).replace(/\.?0+$/, "");
 
-/** Calcula un árbol. No mira la presencia: eso lo hace quien agrega. */
+/** Calcula un árbol, empezando por su pertenencia al universo de cálculo. */
 export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
+  if (!a.presente) return sinResultado("no_presente", "El árbol no está presente (D-28).");
+  if (!a.evaluacion_completa_vigente) {
+    return sinResultado("sin_evaluacion_valida", "El árbol no tiene una evaluación completa válida y vigente: queda fuera del universo de cálculo.");
+  }
   const clave = claveEspecie(a.especie_cientifica);
   const modelos = clave === null ? [] : MODELOS_VOLUMEN.filter((m) => m.especie === clave);
   if (modelos.length === 0) {
@@ -63,7 +92,10 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
     return sinResultado("multifustal_no_admitido", "El modelo se ajustó con árboles de un fuste a la altura del DAP; los multifustales no se estiman.");
   }
   if (a.multifustal === null) {
-    return sinResultado("dap_medicion_no_equivalente", "No se sabe si el árbol es multifustal: el DAP podría ser un diámetro equivalente y no una medición directa de un fuste.");
+    return sinResultado(
+      "configuracion_fuste_no_determinada",
+      "No está registrado si el árbol es multifustal (D-15): el DAP podría ser un diámetro equivalente y no la medición directa de un fuste."
+    );
   }
   if (a.dap_cm === null) return sinResultado("falta_dap", "Falta el DAP.");
 
@@ -97,29 +129,25 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
       modelo: { id: modelo.id, version: modelo.version, variante: modelo.variante, componente: modelo.componente, fuente: modelo.fuente },
       entradas: { dap_cm: a.dap_cm, altura_total_m: conAltura ? a.altura_total_m : null, densidad_kg_m3: modelo.densidad.valor, fraccion_carbono: FRACCION_CARBONO.valor },
     },
+    categoria: null,
     motivo: null,
     detalle: null,
   };
 }
 
-const MOTIVOS: readonly MotivoSinCarbono[] = [
-  "sin_modelo",
-  "palmera_sin_modelo",
-  "multifustal_no_admitido",
-  "dap_medicion_no_equivalente",
-  "falta_dap",
-  "fuera_de_rango",
-  "fuera_de_rango_altura",
-  "resultado_invalido",
-];
+const MOTIVOS = Object.keys(CATEGORIA_DE_MOTIVO) as MotivoSinCarbono[];
+const CATEGORIAS: readonly CategoriaSinCarbono[] = ["fuera_del_universo", "restriccion_modelo", "dato_faltante_o_inconsistente", "error_calculo"];
 
 /**
- * Agregado del ámbito: solo árboles presentes; suma solo resultados
- * válidos; sin ninguno, totales null (no 0).
+ * Agregado del ámbito. Universo de cálculo = presentes con evaluación
+ * completa válida y vigente. Suma solo resultados válidos; sin ninguno,
+ * totales null (no 0). Cada árbol queda en una sola categoría y motivo.
  */
 export function agregarCarbono(arboles: ArbolCarbono[]) {
   const presentes = arboles.filter((a) => a.presente);
+  const universo = presentes.filter((a) => a.evaluacion_completa_vigente);
   const motivos = Object.fromEntries(MOTIVOS.map((m) => [m, 0])) as Record<MotivoSinCarbono, number>;
+  const porCategoria = Object.fromEntries(CATEGORIAS.map((c) => [c, 0])) as Record<CategoriaSinCarbono, number>;
   let biomasa = 0;
   let carbono = 0;
   let co2e = 0;
@@ -128,6 +156,7 @@ export function agregarCarbono(arboles: ArbolCarbono[]) {
     const r = calcularCarbonoArbol(a);
     if (r.valor === null) {
       motivos[r.motivo]++;
+      porCategoria[r.categoria]++;
       continue;
     }
     conResultado++;
@@ -140,7 +169,13 @@ export function agregarCarbono(arboles: ArbolCarbono[]) {
     indicador: "estimacion_carbono_aereo_lenoso" as const,
     metodo: { version: "CC-069 v1", fraccion_carbono: FRACCION_CARBONO.valor, factor_co2: "44/12", incluye_raices: false, incluye_follaje: false, factor_urbano: null },
     limitaciones: [...LIMITACIONES],
-    cobertura: { presentes: presentes.length, con_resultado: conResultado, motivos },
+    cobertura: {
+      presentes: presentes.length,
+      universo_calculo: universo.length,
+      con_resultado: conResultado,
+      por_categoria: porCategoria,
+      motivos,
+    },
     total: {
       biomasa_aerea_lenosa_t: hay ? biomasa / 1000 : null,
       carbono_t: hay ? carbono / 1000 : null,

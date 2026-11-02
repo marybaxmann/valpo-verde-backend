@@ -4,12 +4,13 @@
  * a mano con las fórmulas de Pillsbury et al. 1998 (coeficientes métricos
  * de la UTD), densidad de TS9, 0,47 y 44/12.
  */
-import { agregarCarbono, ArbolCarbono, calcularCarbonoArbol } from "../../../../src/services/rules/carbono/calculo";
+import { agregarCarbono, ArbolCarbono, calcularCarbonoArbol, CATEGORIA_DE_MOTIVO } from "../../../../src/services/rules/carbono/calculo";
 import { FACTOR_CO2_POR_C, FRACCION_CARBONO, MODELOS_VOLUMEN } from "../../../../src/services/rules/carbono/modelos";
 
 const arbol = (id: string, p: Partial<ArbolCarbono> = {}): ArbolCarbono => ({
   id,
   presente: true,
+  evaluacion_completa_vigente: true,
   especie_cientifica: "Jacaranda mimosifolia",
   tipo_hoja: null,
   multifustal: false,
@@ -69,17 +70,46 @@ describe("calcularCarbonoArbol — motivos de null (nunca extrapola ni rellena)"
     ["altura bajo el rango", { altura_total_m: 6.85 }, "fuera_de_rango_altura"],
     ["altura sobre el rango", { altura_total_m: 17.53 }, "fuera_de_rango_altura"],
     ["multifustal", { multifustal: true }, "multifustal_no_admitido"],
-    ["multifustal desconocido", { multifustal: null }, "dap_medicion_no_equivalente"],
+    ["multifustal desconocido", { multifustal: null }, "configuracion_fuste_no_determinada"],
     ["sin DAP", { dap_cm: null }, "falta_dap"],
     ["palmera", { especie_cientifica: "Jacaranda mimosifolia", tipo_hoja: "palmera" }, "palmera_sin_modelo"],
     ["especie sin modelo (Ginkgo)", { especie_cientifica: "Ginkgo biloba" }, "sin_modelo"],
     ["solo género", { especie_cientifica: "Quercus sp." }, "sin_modelo"],
     ["sin especie", { especie_cientifica: null }, "sin_modelo"],
+    ["no presente", { presente: false }, "no_presente"],
+    ["sin evaluación completa válida y vigente", { evaluacion_completa_vigente: false }, "sin_evaluacion_valida"],
   ] as const)("%s → %s", (_d, cambios, motivo) => {
     const r = calcularCarbonoArbol(arbol("x", cambios as Partial<ArbolCarbono>));
     expect(r.valor).toBeNull();
     expect(r.motivo).toBe(motivo);
+    expect(r.categoria).toBe(CATEGORIA_DE_MOTIVO[motivo]);
     expect(typeof r.detalle).toBe("string");
+  });
+
+  it("categorías: universo, restricción del modelo, dato faltante y error de cálculo no se mezclan", () => {
+    expect(CATEGORIA_DE_MOTIVO).toEqual({
+      no_presente: "fuera_del_universo",
+      sin_evaluacion_valida: "fuera_del_universo",
+      sin_modelo: "restriccion_modelo",
+      palmera_sin_modelo: "restriccion_modelo",
+      multifustal_no_admitido: "restriccion_modelo",
+      fuera_de_rango: "restriccion_modelo",
+      fuera_de_rango_altura: "restriccion_modelo",
+      falta_dap: "dato_faltante_o_inconsistente",
+      configuracion_fuste_no_determinada: "dato_faltante_o_inconsistente",
+      resultado_invalido: "error_calculo",
+    });
+  });
+
+  it("un árbol sin evaluación válida queda fuera del universo aunque tenga DAP y modelo", () => {
+    const r = calcularCarbonoArbol(arbol("x", { evaluacion_completa_vigente: false }));
+    expect(r).toEqual(expect.objectContaining({ valor: null, categoria: "fuera_del_universo", motivo: "sin_evaluacion_valida" }));
+  });
+
+  it("con resultado: categoría y motivo null, y modelo trazable", () => {
+    const r = calcularCarbonoArbol(arbol("x"));
+    expect(r.categoria).toBeNull();
+    expect(r.valor!.modelo).toEqual(expect.objectContaining({ id: "UTD-TS7-JAME-DH", version: 1, variante: "dap_altura", componente: "aerea_lenosa" }));
   });
 
   it("altura fuera de rango no cae a la variante solo DAP", () => {
@@ -115,23 +145,28 @@ describe("agregarCarbono — árboles ficticios de QA Fase 7 (fixtures; no se to
     arbol("QA-F-13", { especie_cientifica: "Jacaranda mimosifolia var. alba" }), // como E1
     arbol("QA-F-14", { multifustal: null }),
     arbol("QA-F-15", { presente: false }), // talado: no se considera
+    arbol("QA-F-16", { evaluacion_completa_vigente: false }), // registrado sin evaluar: fuera del universo
   ];
 
   it("cobertura, motivos y totales en toneladas solo con resultados válidos", () => {
     const r = agregarCarbono(arboles);
     expect(r.indicador).toBe("estimacion_carbono_aereo_lenoso");
-    expect(r.cobertura.presentes).toBe(14);
+    expect(r.cobertura.presentes).toBe(15);
+    expect(r.cobertura.universo_calculo).toBe(14);
     expect(r.cobertura.con_resultado).toBe(6);
     expect(r.cobertura.motivos).toEqual({
+      no_presente: 0,
+      sin_evaluacion_valida: 1,
       sin_modelo: 3,
       palmera_sin_modelo: 0,
       multifustal_no_admitido: 1,
-      dap_medicion_no_equivalente: 1,
-      falta_dap: 1,
       fuera_de_rango: 1,
       fuera_de_rango_altura: 1,
+      falta_dap: 1,
+      configuracion_fuste_no_determinada: 1,
       resultado_invalido: 0,
     });
+    expect(r.cobertura.por_categoria).toEqual({ fuera_del_universo: 1, restriccion_modelo: 6, dato_faltante_o_inconsistente: 2, error_calculo: 0 });
     const carbonoKg = 110.3147 + 108.8804 + 26.8386 + 58.7423 + 65.582 + 110.3147;
     expect(r.total.carbono_t).toBeCloseTo(carbonoKg / 1000, 6);
     expect(r.total.co2e_t).toBeCloseTo((carbonoKg * 44) / 12 / 1000, 5);
@@ -140,8 +175,8 @@ describe("agregarCarbono — árboles ficticios de QA Fase 7 (fixtures; no se to
   });
 
   it("sin ningún resultado, totales null (no 0)", () => {
-    const r = agregarCarbono([arbol("a", { dap_cm: null }), arbol("b", { presente: false })]);
-    expect(r.cobertura).toEqual(expect.objectContaining({ presentes: 1, con_resultado: 0 }));
+    const r = agregarCarbono([arbol("a", { dap_cm: null }), arbol("b", { presente: false }), arbol("c", { evaluacion_completa_vigente: false })]);
+    expect(r.cobertura).toEqual(expect.objectContaining({ presentes: 2, universo_calculo: 1, con_resultado: 0 }));
     expect(r.total).toEqual({ biomasa_aerea_lenosa_t: null, carbono_t: null, co2e_t: null });
   });
 });
