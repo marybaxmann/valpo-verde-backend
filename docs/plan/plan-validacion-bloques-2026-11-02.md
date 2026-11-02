@@ -141,7 +141,7 @@ Entorno: rama local `feature/fase6-backend-api` (`2174243` + este registro). Pro
 
 - En este entorno no hay `.env`, ni `SUPABASE_SERVICE_ROLE_KEY`, ni sesiones (JWT) de los usuarios de QA. Sin eso el backend no arranca y no se puede llamar a ningún endpoint.
 - No se pidieron secretos en el chat ni se usaron credenciales de Valej.
-- **Decisión de Valej (2026-11-02): opción B.** Ejecuta los casos en su computador con PowerShell y las credenciales locales de QA. Guía paso a paso: `docs/plan/validacion-local-powershell.md`.
+- **Decisión de Valej (2026-11-02): opción B.** Ejecuta los casos en su computador con PowerShell y las credenciales locales de QA. Guía paso a paso: `docs/plan/validacion-local-powershell.md`. Script que automatiza los casos, con PASS / FAIL / BLOCKED y evidencia: `scripts/validacion/validar-bloques.ps1` (instrucciones: `docs/plan/validacion-api-script.md`; preparado, no ejecutado).
 - **Consecuencia:** ningún bloque pasa a «Validado». No se crearon OT ni árboles de QA para CC-051, CC-052 ni B6.
 
 ### 5.2 Casos independientes (SQL de solo lectura en la base de pruebas)
