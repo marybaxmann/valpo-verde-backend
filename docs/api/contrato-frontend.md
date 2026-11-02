@@ -261,6 +261,21 @@ una fila por tipo (D-202 inspección, D-203 monitoreo), solo de inspecciones fin
   - Solo dos modelos aprobados (*Jacaranda mimosifolia* y *Liquidambar styraciflua*; Pillsbury et al. 1998). No es carbono total ni secuestro anual.
 - Los demás indicadores ecosistémicos siguen fuera: el Excel los marca «Pendiente».
 
+## 6 ter. Infraestructura (B8; módulo Infraestructura, CC-059/CC-060)
+
+| Método y ruta | Quién | Entrada | Respuesta |
+|---|---|---|---|
+| `GET /api/sivu/projects/:id/infraestructura` | Miembros y Administrador | `barrio?` (`ARBOLES.sector`); `clasificacion?` (D-170); `componente?` y `categoria?` (van juntos) | 200 `{ data }` (abajo). 400 con un valor fuera de la lista o una query desconocida. |
+
+Solo lectura: representa lo que ya calculó el motor (M04, REGLAS_INDICADORES IN-*) en la **evaluación vigente** del árbol, con el ajuste del Inspector si existe. No calcula nada.
+
+`data`: `{ fecha_consulta, ambito, barrios, cobertura: { arboles_presentes, arboles_con_evaluacion_valida, arboles_sin_evaluacion_valida }, resumen: { por_clasificacion: [{ codigo, etiqueta, arboles }], por_componente: [{ componente: { codigo, etiqueta }, categorias: [{ codigo, etiqueta, arboles }], sin_dato }] }, filtros, total_listados, arboles: [...] }`.
+
+- **Universo:** árboles presentes con evaluación completa válida y vigente (el mismo de los biométricos de B19). Los demás se cuentan en `cobertura`, no como «sin afectación».
+- Cada elemento de `arboles`: `{ arbol: { id, tree_code, especie_cientifica, nombre_comun, sector, ubicacion: { lng, lat } | null }, infraestructura: { clasificacion: { codigo, etiqueta }, ajustada, puntaje, porcentaje }, prioridad, prioridad_ajustada, componentes: [{ componente: { codigo, etiqueta }, categoria: { codigo, etiqueta } | null, puntaje, regla_id, motivo }], evaluacion_vigente: { evento, work_order_id, desde, rule_version } }`.
+- `componentes`: los seis de M04, en este orden: `vereda`, `calzada`, `alcorque` («Alcorque y superficie permeable»), `infraestructura_vertical`, `red_aerea`, `red_subterranea` (catálogo `componente_infraestructura`, etiquetas de REGLAS_INDICADORES). `categoria` del catálogo `categoria_infraestructura`; con `no_determinado`, `motivo` explica por qué.
+- El `resumen` cuenta todos los evaluados del ámbito; los filtros `clasificacion` y `componente`+`categoria` solo filtran `arboles`.
+
 ## 7. Incidencias (interno, B9)
 
 Estados (`estado_incidencia`): `ingresada`, `en_revision`, `derivada`, `resuelta`, `descartada`.
@@ -311,7 +326,7 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 ## 9. Pendiente o en revisión
 
 - **B6** (OT
-  «vencida»: sin definición), **B8** (lectura de infraestructura), **B19** (los 11 indicadores en §6 bis; falta registrar provisional/confirmada, con migración pendiente de autorización; los ecosistémicos siguen «Pendiente» en el Excel).
+  «vencida»: sin definición), **B19** (los 11 indicadores en §6 bis; falta registrar provisional/confirmada, con migración pendiente de autorización; los ecosistémicos siguen «Pendiente» en el Excel).
 - **CC-052:** la búsqueda de cercanos está disponible; el radio por defecto y la pantalla los define el frontend.
 - **Límites por IP de Conecta:** hoy en memoria, por instancia de Vercel (ver §8). Pendiente: contadores compartidos en PostgreSQL (opción A), con migración sujeta a autorización.
 - Configuración pendiente en Vercel: `CONECTA_URL_BASE` (placas) y, si las vistas públicas se sirven desde

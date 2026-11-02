@@ -31,7 +31,7 @@ function componente(prob: string | null, clas: string | null) {
 }
 
 /** Columnas de resultado (evaluations o tree_assessments) con sus etiquetas; el ajuste prevalece. */
-function resultadoConEtiquetas(ev: Omit<EvaluacionResultadoRow, "inspection_id">) {
+export function resultadoConEtiquetas(ev: Omit<EvaluacionResultadoRow, "inspection_id">) {
   return {
     clasificacion_riesgo: conEtiqueta("clasificacion_riesgo", ev.clasificacion_riesgo_ajustada ?? ev.clasificacion_riesgo_calculada),
     riesgo_ajustado: ev.clasificacion_riesgo_ajustada !== null,
