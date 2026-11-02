@@ -39,11 +39,13 @@
 
 ## 3. Comandos (PowerShell 7, en la carpeta del backend)
 
-Comprobar la sintaxis sin ejecutar nada:
+Comprobar la sintaxis sin ejecutar nada (debe decir `Cantidad de errores: 0`):
 
 ```powershell
-pwsh -NoProfile -Command '$e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path .\scripts\validacion\validar-bloques.ps1), [ref]$null, [ref]$e); if ($e) { $e } else { "Sintaxis OK" }'
+$t = $null; $e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path .\scripts\validacion\validar-bloques.ps1).Path, [ref]$t, [ref]$e); "Cantidad de errores: $($e.Count)"; $e | Select-Object -First 10 | ForEach-Object { "Linea $($_.Extent.StartLineNumber): $($_.ErrorId) - $($_.Message)" }
 ```
+
+El script es 100 % ASCII desde la corrección del 2026-11-02 (ver `docs/registro-pendientes.md` §8). Por eso se analiza igual se lea como UTF-8 o como Windows-1252. Si vuelve a aparecer texto como `Ã¡`, la copia local es anterior a esa corrección.
 
 **Paso 1 — solo lectura** (no crea datos):
 
