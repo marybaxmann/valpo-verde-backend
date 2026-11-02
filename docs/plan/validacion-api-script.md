@@ -34,7 +34,12 @@
 1. Windows 10 u 11 con **PowerShell 7.4 o superior** (`pwsh`). Instalar: `winget install --id Microsoft.PowerShell`. Comprobar: `pwsh -v`.
 2. Node.js 20 o superior y Git.
 3. El repositorio `valpo-verde-backend` en la rama `feature/fase6-backend-api` **con el script** (publicado el 2026-11-02, commit `aaaaeb7`): `git pull origin feature/fase6-backend-api`.
-4. El `.env` de pruebas en la carpeta del backend (guía manual §2) y el backend corriendo con `npm run dev` en otra ventana (guía manual §4).
+4. Un archivo de variables de pruebas en la carpeta del backend (guía manual §2): `.env` o, de forma explícita, `.env.pruebas`. Los dos están ignorados por Git (`.env.*` en `.gitignore`).
+   El backend debe correr en otra ventana con **ese mismo archivo**:
+   - con `.env`: `npm run dev`;
+   - con `.env.pruebas`: `$env:DOTENV_CONFIG_PATH = '.env.pruebas'; npm run dev` (dotenv 16 lee esa variable).
+
+   El script verifica el archivo que se le indica (V-1). Además comprueba en vivo que el backend que responde esté conectado a la base de pruebas (V-3: acepta tokens de pruebas y lee el proyecto QA).
 5. Las contraseñas de las cuatro cuentas de QA: Usuario municipal, Inspector 1, Inspector 2 y Encargado. Opcional: un Administrador (`-ConAdmin`) y un usuario no miembro del proyecto QA (`-ConNoMiembro`). Sin ellos, B8-3 y B8-4 quedan BLOCKED.
 
 ## 3. Comandos (PowerShell 7, en la carpeta del backend)
@@ -53,6 +58,12 @@ El script es 100 % ASCII desde la corrección del 2026-11-02 (ver `docs/registro
 pwsh -NoProfile -File .\scripts\validacion\validar-bloques.ps1 -Modo Lectura
 ```
 
+Con `.env.pruebas`:
+
+```powershell
+pwsh -NoProfile -File .\scripts\validacion\validar-bloques.ps1 -Modo Lectura -ArchivoEnv .env.pruebas
+```
+
 **Paso 2 — con escritura** (después de revisar el paso 1; pide escribir `CREAR`):
 
 ```powershell
@@ -61,7 +72,8 @@ pwsh -NoProfile -File .\scripts\validacion\validar-bloques.ps1 -Modo Escritura
 
 Opciones:
 - `-ConAdmin -ConNoMiembro`: casos de permisos adicionales.
-- `-Api http://localhost:3000`: si el backend corre en otro puerto.
+- `-UrlBackend http://localhost:3000` (alias `-Api`): URL **base** del backend, sin `/api/sivu`; el script agrega `/health` y `/api/sivu/...`. Solo se admite localhost.
+- `-ArchivoEnv .env.pruebas`: archivo de variables a verificar. Solo se aceptan `.env` o `.env.<nombre>`, no `.env.example`, y el archivo debe estar ignorado por Git; si no, el script se detiene.
 - `-Salida <carpeta>`: dónde se guardan los resultados.
 
 Si Windows bloquea el archivo por venir de internet: `Unblock-File .\scripts\validacion\validar-bloques.ps1`.
