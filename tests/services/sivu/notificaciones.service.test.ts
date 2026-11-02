@@ -63,6 +63,17 @@ describe("recordatorios (#63; generación al consultar, provisional)", () => {
     expect(filas.every((f: { user_id: string; tipo: string }) => f.user_id === "m1" && f.tipo === "recordatorio_inspeccion")).toBe(true);
   });
 
+  it("un proyecto que falla no impide los recordatorios de los otros", async () => {
+    (findProyectosForMember as jest.Mock).mockResolvedValue([{ id: "p1" }, { id: "p2" }]);
+    (listarProximasInspecciones as jest.Mock).mockImplementation(async (_u: unknown, pid: string) => {
+      if (pid === "p1") throw new Error("sin acceso");
+      return [proxima("t9", "inspeccion", "2026-10-20")];
+    });
+    const err = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    expect(await generarRecordatorios(MUNICIPAL, "tok")).toBe(1);
+    err.mockRestore();
+  });
+
   it("clave y mensaje: sin plazos nuevos, solo el rango de B5", () => {
     const p = proxima("t1", "inspeccion", "2026-11-01", "2026-11-30");
     expect(claveRecordatorio(p)).toBe("recordatorio:t1:inspeccion:2026-11-01");

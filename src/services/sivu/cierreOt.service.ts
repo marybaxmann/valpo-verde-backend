@@ -190,10 +190,20 @@ export async function anularInspeccionFinalizada(
 }
 
 /** Regla rechazada por la función → 422; la composición cambió de nuevo → 409; CHECK → 400. */
+/**
+ * SQLSTATE del trigger de avisos (migración 033, CC-051): no se pudo crear
+ * el aviso y la cancelación o reasignación se revirtió entera.
+ */
+export const SQLSTATE_AVISO_OT = "SV075";
+
 function traducirError(err: unknown, sqlstate: string): Error {
   if (err instanceof AppError) return err;
   const error = err as Error;
   const cause = (error as { cause?: unknown }).cause;
+  if (cause === SQLSTATE_AVISO_OT) {
+    console.error("Aviso de OT no registrado (SV075); el cambio se revirtió:", error.message);
+    return new AppError("No se pudo registrar el aviso al responsable, así que el cambio no se aplicó. Intente de nuevo.", 503);
+  }
   if (cause === sqlstate) return new AppError(error.message, 422);
   if (cause === SQLSTATE_COMPOSICION_CAMBIO) return new AppError(error.message, 409);
   if (cause === "23514") return new AppError(error.message, 400);

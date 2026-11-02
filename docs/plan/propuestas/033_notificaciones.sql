@@ -37,7 +37,13 @@
 --    CC-051.
 -- 3. RLS: cada usuario lee solo sus avisos; sin políticas de escritura
 --    (CC-033). Escriben el trigger (SECURITY DEFINER) y el backend con
---    service_role (recordatorios y marcar como leído).
+--    service_role (recordatorios y marcar como leído). Además (auditoría
+--    del 2026-11-02, defensa en profundidad): se quitan a anon todos los
+--    privilegios sobre la tabla y a authenticated los de escritura, para
+--    no depender solo de que falten políticas.
+-- 4. Si crear el aviso falla, el trigger lanza SV075 con un mensaje claro
+--    y la cancelación o reasignación se revierte entera (transaccional).
+--    El backend lo traduce a 503 con ese mensaje.
 -- =====================================================================
 
 BEGIN;
@@ -77,6 +83,8 @@ CREATE POLICY notifications_select_own
   USING (user_id = auth.uid());
 
 -- Sin políticas de INSERT, UPDATE ni DELETE (CC-033).
+REVOKE ALL ON public.notifications FROM anon;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.notifications FROM authenticated;
 
 -- ---------------------------------------------------------------------
 -- Avisos de OT (CC-051), en la misma transacción que el cambio.
@@ -111,14 +119,21 @@ BEGIN
   END IF;
 
   RETURN NULL;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE EXCEPTION 'No se pudo registrar el aviso de la orden de trabajo %: no se aplicó el cambio (%)', v_ot, SQLERRM
+      USING ERRCODE = 'SV075';
 END;
 $$;
 
 REVOKE ALL ON FUNCTION public.fn_notificar_cambio_ot() FROM PUBLIC, anon, authenticated;
 
+-- Solo se dispara si cambia de verdad el estado o el responsable (no por
+-- un UPDATE que repita el mismo valor ni por otras columnas).
 CREATE TRIGGER trg_work_orders_notificar
   AFTER UPDATE OF estado_ot, responsable_accion_id ON public.work_orders
   FOR EACH ROW
+  WHEN (NEW.estado_ot IS DISTINCT FROM OLD.estado_ot OR NEW.responsable_accion_id IS DISTINCT FROM OLD.responsable_accion_id)
   EXECUTE FUNCTION public.fn_notificar_cambio_ot();
 
 COMMIT;

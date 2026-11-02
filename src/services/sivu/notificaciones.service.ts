@@ -45,12 +45,19 @@ export async function generarRecordatorios(user: AuthenticatedUser, token: strin
   if (user.role !== "usuario_municipal") return 0;
   const proyectos = await findProyectosForMember(token, user.id);
   const filas: RecordatorioNuevo[] = [];
-  for (const proyecto of proyectos) {
-    const activos = await listarProximasInspecciones(user, proyecto.id, token, { soloActivos: true });
-    for (const p of activos) {
+  // Un proyecto que falle (p. ej. sin acceso) no impide los recordatorios de los demás.
+  const resultados = await Promise.allSettled(
+    proyectos.map((proyecto) => listarProximasInspecciones(user, proyecto.id, token, { soloActivos: true }))
+  );
+  resultados.forEach((r, i) => {
+    if (r.status === "rejected") {
+      console.error(`No se pudieron leer las próximas inspecciones del proyecto ${proyectos[i].id} (#63):`, r.reason);
+      return;
+    }
+    for (const p of r.value) {
       filas.push({ user_id: user.id, tipo: TIPO_RECORDATORIO, tree_id: p.arbol.id, mensaje: mensajeRecordatorio(p), clave_unica: claveRecordatorio(p) });
     }
-  }
+  });
   return insertarRecordatorios(filas);
 }
 
