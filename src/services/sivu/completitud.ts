@@ -53,7 +53,8 @@ export interface ResultadoCompletitud {
   campos_faltantes: CampoFaltante[];
 }
 
-const TIPOS_EVALUACION_COMPLETA = new Set(["evaluacion_inicial", "reevaluacion", "levantamiento"]);
+/** Tipos con evaluación completa (CC-056). También habilitan los indicadores biométricos de B19. */
+export const TIPOS_EVALUACION_COMPLETA: ReadonlySet<string> = new Set(["evaluacion_inicial", "reevaluacion", "levantamiento"]);
 
 /** D-27: las cuatro vistas obligatorias. */
 export const VISTAS_D27 = ["arbol_completo", "base", "tronco", "copa"] as const;

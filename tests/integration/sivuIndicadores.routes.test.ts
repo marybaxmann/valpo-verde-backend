@@ -8,12 +8,14 @@ jest.mock("../../src/repositories/auth.repository");
 jest.mock("../../src/repositories/userProfile.repository");
 jest.mock("../../src/repositories/projectMember.repository");
 jest.mock("../../src/repositories/sivu/indicadores.repository");
+jest.mock("../../src/services/sivu/habilitacionBiometrica");
 
 import app from "../../src/app";
 import { getAuthUserByToken } from "../../src/repositories/auth.repository";
 import { findUserProfileById } from "../../src/repositories/userProfile.repository";
 import { findMembership } from "../../src/repositories/projectMember.repository";
 import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, obtenerSuperficieProyecto } from "../../src/repositories/sivu/indicadores.repository";
+import { arbolesConEvaluacionCompletaVigente } from "../../src/services/sivu/habilitacionBiometrica";
 import { FAKE_TOKEN, INSPECTOR_ID, fakeAuthUser, inspectorProfileRow } from "../helpers/authFixtures";
 
 const PROJECT_ID = "33333333-3333-4333-8333-333333333333";
@@ -40,6 +42,8 @@ beforeEach(() => {
     ids.map((id) => ({ tree_id: id, estado_presencia: id === "a4" ? "talado" : "presente" }))
   );
   (obtenerSuperficieProyecto as jest.Mock).mockResolvedValue(30000);
+  // Por defecto todos los presentes tienen evaluación completa válida y vigente.
+  (arbolesConEvaluacionCompletaVigente as jest.Mock).mockImplementation(async (_t: string, _p: string, ids: string[]) => new Set(ids));
   (listarRasgosEspecie as jest.Mock).mockImplementation(async (_t: string, ids: string[]) =>
     ids.map((id) => ({ tree_id: id, genero: id === "a1" ? "Acer" : null, familia: null, origen_biogeografico: id === "a1" ? "introducida" : "no_determinado" }))
   );
@@ -61,7 +65,7 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
     const d = res.body.data;
     expect(d.ambito).toEqual({ tipo: "proyecto", barrio: null });
     expect(d.barrios).toEqual(["Barrio El Almendral", "Barrio Puerto"]);
-    expect(d.cobertura).toEqual({ arboles_registrados: 4, arboles_presentes: 3 });
+    expect(d.cobertura).toEqual({ arboles_registrados: 4, arboles_presentes: 3, arboles_con_evaluacion_valida: 3, arboles_sin_evaluacion_valida: 0 });
     expect(d.numero_total_arboles.valor).toBe(3);
     expect(d.densidad_arborea.valor).toBeCloseTo(1);
     expect(d.clases_diametricas.sin_dap.arboles).toBe(1);
@@ -86,6 +90,34 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
     expect(d.proporcion_origen.origen_no_determinado.arboles).toBe(2);
     expect(d.cobertura_taxonomica).toEqual(expect.objectContaining({ presentes: 3, con_genero_catalogo: 1, identificaciones_provisionales: null }));
     expect(listarRasgosEspecie).toHaveBeenCalledWith(FAKE_TOKEN, expect.arrayContaining(["a1", "a2", "a3"]));
+  });
+
+  it("universos: los no evaluados cuentan en inventario y diversidad, pero no en los biométricos (ni como «Sin DAP» ni «sin medición»)", async () => {
+    (listarArbolesIndicadores as jest.Mock).mockResolvedValue([
+      fila("e1", { dap_cm: 25, diametro_copa_ns_m: 4, diametro_copa_eo_m: 6, diametro_copa_m: 5 }),
+      fila("n1"),
+      fila("n2"),
+    ]);
+    (arbolesConEvaluacionCompletaVigente as jest.Mock).mockResolvedValue(new Set(["e1"]));
+    const d = (await request(app).get(RUTA).set(auth)).body.data;
+    expect(d.numero_total_arboles.valor).toBe(3);
+    expect(d.riqueza_especies.n_identificados).toBe(3);
+    expect(d.cobertura).toEqual(expect.objectContaining({ arboles_presentes: 3, arboles_con_evaluacion_valida: 1, arboles_sin_evaluacion_valida: 2 }));
+    expect(d.clases_diametricas.denominador_evaluados).toBe(1);
+    expect(d.clases_diametricas.sin_dap.arboles).toBe(0);
+    expect(d.diametro_medio_copa).toEqual(expect.objectContaining({ valor: 5, n_sin_medicion: 0, denominador_evaluados: 1 }));
+    expect(d.area_proyectada_copa).toEqual(expect.objectContaining({ n_sin_medicion: 0, denominador_evaluados: 1 }));
+    expect(arbolesConEvaluacionCompletaVigente).toHaveBeenCalledWith(FAKE_TOKEN, PROJECT_ID, ["e1", "n1", "n2"]);
+  });
+
+  it("sin ningún evaluado: biométricos vacíos (valores null), inventario intacto", async () => {
+    (arbolesConEvaluacionCompletaVigente as jest.Mock).mockResolvedValue(new Set());
+    const d = (await request(app).get(RUTA).set(auth)).body.data;
+    expect(d.numero_total_arboles.valor).toBe(3);
+    expect(d.clases_diametricas.denominador_evaluados).toBe(0);
+    expect(d.clases_diametricas.sin_dap).toEqual({ arboles: 0, porcentaje: null });
+    expect(d.diametro_medio_copa.valor).toBeNull();
+    expect(d.area_proyectada_copa.total_m2).toBeNull();
   });
 
   it("barrio: filtra por ARBOLES.sector y no calcula densidad", async () => {

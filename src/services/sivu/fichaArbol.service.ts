@@ -15,6 +15,7 @@ import { diagnosticoDeArbol } from "./diagnostico.service";
 import { listarIncidenciasDeArbol } from "./incidencia.service";
 import { listarOtsDeArbol } from "./listadoOt.service";
 import { areaCopaArbol } from "../rules/indicadores/inventario";
+import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 
 /**
  * B2 — GET /api/sivu/projects/:id/trees/:treeId: ficha del árbol
@@ -54,7 +55,7 @@ function valorDeCampo(campo: string, v: unknown): unknown {
   return v ?? null;
 }
 
-function arbol(f: ArbolFichaRow) {
+function arbol(f: ArbolFichaRow, evaluacionCompletaVigente: boolean) {
   const coordenadas = f.ubicacion?.coordinates;
   const ns = numero(f.diametro_copa_ns_m);
   const eo = numero(f.diametro_copa_eo_m);
@@ -68,7 +69,8 @@ function arbol(f: ArbolFichaRow) {
     // Valores vigentes de medición e identificación (D-7 a D-29).
     ...Object.fromEntries(CAMPOS_MEDICION.map((c) => [c, valorDeCampo(c, (f as unknown as Record<string, unknown>)[c])])),
     // INDICES fila 13 (CC-016): área proyectada de copa del árbol, en m². «No presenta copa» = 0; sin medición, null.
-    area_proyectada_copa_m2: areaCopaArbol(ns, eo, f.copa_no_presenta),
+    // Solo con evaluación completa válida y vigente (universo biométrico, Valej 2026-11-02); si no, null.
+    area_proyectada_copa_m2: evaluacionCompletaVigente ? areaCopaArbol(ns, eo, f.copa_no_presenta) : null,
   };
 }
 
@@ -103,18 +105,23 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
   const fila = await obtenerArbolFicha(token, projectId, treeId);
   if (!fila) throw new AppError("El árbol no existe en este proyecto", 404);
 
-  const [rasgos, versiones, diagnostico, ordenes, incidencias, presencia] = await Promise.all([
+  const [rasgos, versiones, diagnostico, ordenes, incidencias, presencia, evaluados] = await Promise.all([
     obtenerRasgosEspecie(token, treeId),
     listarVersionesMedicion(token, treeId),
     diagnosticoDeArbol(token, projectId, treeId),
     listarOtsDeArbol(user, projectId, treeId, token),
     listarIncidenciasDeArbol(user, projectId, treeId, token),
     obtenerPresencia(token, treeId),
+    arbolesConEvaluacionCompletaVigente(token, projectId, [treeId]),
   ]);
+  const evaluacionCompletaVigente = evaluados.has(treeId);
   const sinEspecie = fila.especie_cientifica === null;
 
   return {
-    arbol: arbol(fila),
+    arbol: arbol(fila, evaluacionCompletaVigente),
+    // Universo biométrico de B19: evaluación completa (inicial, reevaluación o levantamiento) finalizada,
+    // con OT completada, no anulada y vigente. false = árbol sin evaluación válida (no «sin medición»).
+    evaluacion_completa_vigente: evaluacionCompletaVigente,
     // D-28/D-29 (AM-22): Presente, Talado o Retirado, y desde cuándo.
     presencia: presencia
       ? { ...conEtiqueta("estado_presencia", presencia.estado_presencia)!, desde: presencia.fecha_cambio_estado_presencia }

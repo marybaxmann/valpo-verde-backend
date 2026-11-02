@@ -741,6 +741,7 @@ motivo)
 |---|---|---|---|
 | 2026-10-04 | DETECTADO | — | Auditoría de hojas (CC-003). |
 | 2026-11-01 | APROBADO METODOLÓGICAMENTE | Valej | Filas 3 a 13 de INDICES; filas 14 a 31 siguen pendientes. Implementación de B19 autorizada antes de FUENTE SINCRONIZADA. |
+| 2026-11-02 | APROBADO METODOLÓGICAMENTE (corrección) | Valej | **Universos de B19.** Inventario (filas 3 y 4): presentes. Diversidad (filas 5 a 10): presentes, según la cobertura de identificación. **Biométricos (filas 11 a 13): solo presentes con evaluación completa (inicial, reevaluación o levantamiento) finalizada, con OT completada, no anulada y vigente**; el denominador pasa a ser los evaluados. **Contradice el texto vigente de INDICES filas 11 a 13** («Número total de Árboles presentes»): las filas corregidas están en `docs/plan/propuestas/excel-indices-filas-11-13.md`, para incorporarlas al Excel maestro en la próxima versión; el Excel no se modificó. **Incompatible con el contrato publicado el 2026-11-01** (renombre a `denominador_evaluados`; ver `coordinacion.md`). |
 
 ---
 

@@ -10,6 +10,7 @@ jest.mock("../../../src/services/sivu/diagnostico.service", () => ({ diagnostico
 jest.mock("../../../src/repositories/sivu/mantenimiento.repository", () => ({ obtenerPresencia: jest.fn() }));
 jest.mock("../../../src/services/sivu/incidencia.service", () => ({ listarIncidenciasDeArbol: jest.fn() }));
 jest.mock("../../../src/services/sivu/listadoOt.service", () => ({ listarOtsDeArbol: jest.fn() }));
+jest.mock("../../../src/services/sivu/habilitacionBiometrica", () => ({ arbolesConEvaluacionCompletaVigente: jest.fn() }));
 
 import { obtenerFichaArbol } from "../../../src/services/sivu/fichaArbol.service";
 import { assertProjectAccess } from "../../../src/services/authorization.service";
@@ -18,6 +19,7 @@ import { diagnosticoDeArbol } from "../../../src/services/sivu/diagnostico.servi
 import { listarIncidenciasDeArbol } from "../../../src/services/sivu/incidencia.service";
 import { listarOtsDeArbol } from "../../../src/services/sivu/listadoOt.service";
 import { obtenerPresencia } from "../../../src/repositories/sivu/mantenimiento.repository";
+import { arbolesConEvaluacionCompletaVigente } from "../../../src/services/sivu/habilitacionBiometrica";
 
 const user = { id: "u1", email: undefined, nombre: null, role: "inspector", activo: true };
 const P = "p1";
@@ -54,6 +56,7 @@ beforeEach(() => {
   (listarOtsDeArbol as jest.Mock).mockResolvedValue([{ id: "w1" }]);
   (listarIncidenciasDeArbol as jest.Mock).mockResolvedValue([{ id: "inc1" }]);
   (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "talado", fecha_cambio_estado_presencia: "2026-11-01" });
+  (arbolesConEvaluacionCompletaVigente as jest.Mock).mockImplementation(async (_t: string, _p: string, ids: string[]) => new Set(ids));
 });
 
 describe("obtenerFichaArbol (B2)", () => {
@@ -103,6 +106,15 @@ describe("obtenerFichaArbol (B2)", () => {
     const f = await obtenerFichaArbol(user, P, T, "token");
     if (esperado === null) expect(f.arbol.area_proyectada_copa_m2).toBeNull();
     else expect(f.arbol.area_proyectada_copa_m2).toBeCloseTo(esperado);
+  });
+
+  it("sin evaluación completa válida y vigente: área null aunque haya diámetros, y evaluacion_completa_vigente false", async () => {
+    (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, diametro_copa_ns_m: 4, diametro_copa_eo_m: 6 });
+    (arbolesConEvaluacionCompletaVigente as jest.Mock).mockResolvedValue(new Set());
+    const f = await obtenerFichaArbol(user, P, T, "token");
+    expect(f.evaluacion_completa_vigente).toBe(false);
+    expect(f.arbol.area_proyectada_copa_m2).toBeNull();
+    expect(arbolesConEvaluacionCompletaVigente).toHaveBeenCalledWith("token", P, [T]);
   });
 
   it("árbol de otro proyecto o inexistente: 404", async () => {
