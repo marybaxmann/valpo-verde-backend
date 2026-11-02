@@ -1,4 +1,12 @@
 import PDFDocument from "pdfkit";
+// pdfkit carga sus fuentes estándar con `require("#standard-fonts/…")`, un
+// alias de su package.json que el empaquetado de Vercel no sigue: sin estas
+// importaciones explícitas, las fuentes quedan fuera del despliegue y el PDF
+// responde 500 (solo en Vercel; en local funciona). Son las tres que usa
+// la placa: Helvetica (por defecto), Helvetica-Bold y Helvetica-Oblique.
+import "pdfkit/standard-fonts/Helvetica";
+import "pdfkit/standard-fonts/HelveticaBold";
+import "pdfkit/standard-fonts/HelveticaOblique";
 import QRCode from "qrcode";
 import { env } from "../../config/env";
 import { AuthenticatedUser } from "../../types/auth";
