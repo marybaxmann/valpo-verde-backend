@@ -16,7 +16,7 @@
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** B19: 11 indicadores publicados; carbono aéreo leñoso especificado (CC-068/069 aprobados como propuesta); activación bloqueada hasta leer Pillsbury 1998.
+- **Resumen:** B19/B2 con universos corregidos publicados en feature y wip (637f757; no en release/demo). Carbono aéreo leñoso integrado en local (b5ee325), sin publicar; CC-069 pendiente de sincronizar con el Excel.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -34,6 +34,16 @@
 - **`execute_sql` no queda en el historial de migraciones de Supabase (`list_migrations`); `apply_migration`, sí.** La herramienta `apply_migration` del MCP falló dos veces consecutivas con `Invalid or expired requestState` al revertir la 018f (2026-10-24, justo al cruzar la medianoche de la sesión) — se reemplazó por `execute_sql` para no bloquear el trabajo, y eso dejó el historial de migraciones desincronizado del estado real de la base durante casi un día (`fn_transition_work_order_estado` viva con la corrección de D-241, pero el historial marcándola como borrada). **Corregido el 2026-10-25:** revertida y reaplicada la 018g otra vez, esta vez solo con `apply_migration` (falló una vez más con el mismo error transitorio, el reintento funcionó) — `list_migrations` vs. estado real 018a–018h, cero diferencias. **Regla correcta: `execute_sql` es solo para pruebas y consultas de solo lectura — nunca para aplicar o revertir una migración.** Si `apply_migration` falla, **reintentar `apply_migration`**; nunca sustituirlo por `execute_sql` para que el cambio quede en el historial.
 
 ---
+
+## ▶ Novedad 2026-11-02 (bloque 24) — Universos de B19, carbono integrado (sin publicar)
+
+- **Publicado** (push normal) en `feature/fase6-backend-api` y `wip/bloque1-completar-ot`: `2401497` (universo biométrico de B19 = evaluación completa —inicial, reevaluación o levantamiento— finalizada, con OT completada, no anulada y vigente; `denominador_evaluados`; cobertura de evaluación; B2 `evaluacion_completa_vigente`) y `637f757` (nota de cambios incompatibles en el contrato §6 bis). **`release/demo` sin tocar (`3d717ce`)**, congelada para la presentación del 2026-11-03: la API publicada sigue con el contrato del 2026-11-01.
+- **Local, sin publicar** (rama `carbono/integracion-b19`, en el worktree `../valpo-verde-backend-pub`): `b6dbc43` y `2e09fb1` (módulo puro de carbono, rebase sin cambios de `be8ea1b` y `15af063`), `e57d8fd` (integración en B19 y B2: campo `estimacion_carbono_aereo_lenoso`), `b5ee325` (trazabilidad completa por estimación y pruebas de auditoría) y este relevo.
+- **CC-069:** APROBADO METODOLÓGICAMENTE como propuesta; integración en desarrollo como excepción documentada; **pendiente de sincronización con el Excel maestro** (no pasa a FUENTE SINCRONIZADA). CC-068 (densidad en el catálogo): propuesta, sin migración; la densidad vive en el catálogo de modelos. CC-016: filas 11 a 13 corregidas como propuesta (`docs/plan/propuestas/excel-indices-filas-11-13.md`); el Excel no se modificó.
+- **Modelos activos:** solo *Jacaranda mimosifolia* y *Liquidambar styraciflua* (Pillsbury, Reimer y Thompson 1998; coeficientes métricos UTD). Cobertura real en SIVU hoy: 0 árboles (ninguno evaluado de esas especies).
+- **Pruebas:** suite completa en verde; tsc limpio; solo árboles ficticios; sin cambios en Supabase ni migraciones.
+- **Respaldos:** rama `respaldo/b19-carbono-2026-11-02` (`15af063`) y bundle en el scratchpad de la sesión. La rama local `feature/fase6-backend-api` del clon principal sigue en `15af063` (commits viejos, ya representados en lo publicado y en `carbono/integracion-b19`): alinearla antes de seguir trabajando ahí.
+- **Pendiente:** revisión final de Valej y push de `carbono/integracion-b19` a `feature` y `wip` (no a `release/demo`); adaptar el frontend a los renombres; sincronizar CC-016, CC-068 y CC-069 en el Excel; la etiqueta `presentacion-2026-11-03` y el PR a `main`.
 
 ## ▶ Novedad 2026-11-01 (bloque 23) — Modelos APTO de carbono
 
