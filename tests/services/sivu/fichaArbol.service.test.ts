@@ -156,6 +156,8 @@ describe("obtenerFichaArbol (B2)", () => {
     });
 
     it("especie sin modelo aprobado: no estimable (restriccion_modelo, sin_modelo)", async () => {
+      // Acer pseudoplatanus tiene modelo desde CC-070; Acer negundo no.
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, especie_cientifica: "Acer negundo" });
       (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" });
       const c = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_lenoso;
       expect(c).toEqual(expect.objectContaining({ valor: null, categoria: "restriccion_modelo", motivo: "sin_modelo" }));

@@ -3001,7 +3001,7 @@ motivo)
 | Fecha | 2026-11-02 |
 | Origen | Pregunta de la responsable al ver B19: «¿qué falta para que se calcule?». Con la API publicada (`release/demo` `44b00b0`), el carbono del Piloto Valparaíso da 0 árboles con estimación: 7 sin evaluación completa vigente y 4 «especie sin modelo aprobado». CC-069 v1 solo activó modelos para *Jacaranda mimosifolia* y *Liquidambar styraciflua*; ninguna especie del piloto los tiene. |
 | Tipo | 1 — metodología (activa modelos de cálculo) |
-| Estado | EN REVISIÓN — opción C2 aprobada **provisionalmente** por la responsable (2026-11-02), con la densidad dentro del modelo y sin migración; A y B sin decidir. No se implementa ni publica hasta cerrar las verificaciones pendientes (ver «Verificación de la opción C2») |
+| Estado | **Opción C2 APROBADA** (Valej, 2026-11-02) e **implementada** en `wip/cc070-modelos-carbono`, sin publicar todavía en `release/demo`. A y B siguen sin decidir. |
 | Regla / campo afectado | CC-069 (decisiones 1, 6 y 7; observación «aprobación de los modelos APTO CON LIMITACIONES»); CC-068 (densidad en el catálogo); hoja INDICES fila 14 (carbono almacenado); `src/services/rules/carbono/modelos.ts`. |
 | Versión anterior | CC-069 v1: activos solo los modelos APTO de *Jacaranda mimosifolia* y *Liquidambar styraciflua* (UTD TS7, Pillsbury et al. 1998). Los APTO CON LIMITACIONES quedaron sin decidir. Clasificación de cada modelo en `docs/plan/propuestas/carbono-verificacion-modelos.md`, sección 3. |
 | Versión nueva | **Opciones por especie, para decidir una a una:** **(A) *Acer negundo*** — modelo 6 de la verificación: UTD TS7 *Acer platanoides*, McHale 2007 (`V = 0.001011·D^1.533·H^0.657`; solo D: `V = 0.0019421·D^1.785`), ρ = 420 kg/m³, rango D 10-102 cm; **APTO CON LIMITACIONES** (sustituta del mismo género). Opciones: A1 activarlo marcado «sustituta»; A2 no activarlo. **(B) *Lagerstroemia indica*** — modelo 7: UTD TS7 Urb Gen Broadleaf, Aguaron y McPherson 2012 (`V = 0.0001967·D^1.951853·H^0.664255`; solo D: `V = 0.0002835·D^2.310647`), ρ = 571 kg/m³ (TS9, de la especie), rango D 6-135 cm; **APTO CON LIMITACIONES** (genérica de latifoliadas urbanas). Opciones: B1 activarlo marcado «genérica»; B2 no activarlo. **(C) *Acer pseudoplatanus*** — **NO APTO** en la verificación: la UTD no tiene ecuación ni densidad de la especie. Opciones: C1 seguir sin modelo; C2 usar la ecuación del modelo 6 (*Acer platanoides*, mismo género) con la densidad de *A. pseudoplatanus* tomada de una fuente publicada y cargada en el catálogo según CC-068 (`densidad_nivel_taxon = especie`); C3 usar la genérica del modelo 7 con esa misma densidad. C2 y C3 **requieren** primero la densidad con su cita. **Variante aprobada provisionalmente (2026-11-02): C2 con la densidad guardada dentro del modelo** (como los modelos de *Jacaranda* y *Liquidambar*), sin la columna de CC-068 ni migración. **En todas las opciones se mantiene CC-069:** fracción de carbono 0,47; CO₂e = C × 44/12; sin raíces ni factor urbano; multifustales en `null` (decisión 6); fuera de rango, `null` sin extrapolar (decisión 7); cada resultado guarda el modelo y su nivel de confianza («propia», «sustituta», «genérica»). |
@@ -3017,9 +3017,9 @@ motivo)
 | Pruebas necesarias | Por modelo: un árbol dentro del rango (valor esperado calculado a mano con la fórmula), uno bajo el mínimo y uno sobre el máximo de D (y de H en la variante con altura) en `null` con motivo; multifustal en `null`; especie con modelo y sin D en `null`. |
 | Dependencias | CC-068, CC-069. **Antes de activar cada modelo (CC-069):** verificar en la fuente original los coeficientes, las unidades y el rango de D y de H (la verificación registró el rango de D; el de H queda por confirmar). |
 | rule_version | por definir al aprobar (cambia el resultado de B19) |
-| Aprobado por | — |
-| Fecha de aprobación | Pendiente |
-| Fecha de implementación | — |
+| Aprobado por | Valej (opción C2) |
+| Fecha de aprobación | 2026-11-02 (opción C2) |
+| Fecha de implementación | 2026-11-02 (opción C2), en `wip/cc070-modelos-carbono`; sin publicar. |
 | Commits / PR asociados | `wip/cc070-modelos-carbono`, sin PR. |
 | Observaciones | Ver «Verificación de la opción C2», debajo de esta tabla. **Efecto real hoy en el Piloto Valparaíso** (base de pruebas, 2026-11-02, solo lectura): los 4 árboles con evaluación vigente son A-000419 (*A. pseudoplatanus*, un fuste, DAP 13,4 cm, H 7,1 m), A-000422 (*A. negundo*, un fuste, DAP 8,6 cm, H 5,0 m), A-000423 (*A. pseudoplatanus*, 3 fustes) y A-000426 (*A. pseudoplatanus*, 5 fustes). Con A1: A-000422 sigue en `null` (DAP 8,6 < 10 cm del modelo). Con B1: ningún cambio (los 2 crespones no tienen evaluación vigente). Con C2 o C3: solo A-000419 tendría valor, si su altura está dentro del rango del modelo; A-000423 y A-000426 siguen en `null` por ser multifustales (CC-069 decisión 6). **Para que el piloto muestre más árboles** hace falta, además, evaluar los 7 árboles que faltan y, si se quiere incluir a los multifustales, una decisión aparte sobre el cálculo por fuste (CC-069 decisión 6). **Recomendación:** A1 y B1 (ya clasificados como aptos con limitaciones, marcados por su nivel de confianza), y C2 solo cuando haya una densidad publicada de *A. pseudoplatanus* con su cita; mientras tanto, C1. |
 
@@ -3043,9 +3043,27 @@ motivo)
 
 **Cambio de código necesario (para la implementación, no ahora):** hoy el cálculo elige la variante según haya altura o no (`calculo.ts`, línea 116); con altura registrada buscaría una variante «dap_altura» que este modelo no tiene y respondería «sin modelo». Hay que permitir que un modelo solo con DAP se use aunque el árbol tenga altura, sin afectar a *Jacaranda* y *Liquidambar*.
 
+
+**Decisión aprobada (Valej, 2026-11-02) — opción C2:**
+- **Ecuación:** la de *Acer platanoides* de McHale et al. 2009 (*Urban Ecosystems* 12: 95-113, tabla 1), `Volumen (m³) = a · DAP(cm)^b`, con **a = 0,0019 y b = 1,785**, tal como los publica el artículo. Solo DAP: la altura no se usa ni se controla.
+- **Fuente alternativa registrada:** California Air Resources Board 2010, *Compliance Offset Protocol: Urban Forest Projects*, tabla B.1, publica **a = 0,0019421** con el mismo b y un **DAP admisible de 9,7 a 102,1 cm**. Se usa el **rango** de esa tabla y el **coeficiente del artículo**. Diferencia entre los dos a: 2,2 % en todo el rango (A-000419: 46,8 kg C con 0,0019; 47,8 kg C con 0,0019421).
+- **Densidad básica:** 510 kg/m³ de *Acer pseudoplatanus* (Sedlar et al. 2021), guardada dentro del modelo, sin migración.
+- **Identificación:** modelo `MCH09-T1-ACPL-D-ACPS`, confianza `sustituta_mismo_genero` (ecuación de otra especie del mismo género), con la especie de la ecuación (`acer platanoides`), la fuente del rango y sus limitaciones propias en cada resultado.
+- **Indicador:** carbono aéreo leñoso **almacenado**; no es secuestro anual.
+- Referencias y aplicación completas: `docs/metodologia/carbono-referencias.md`.
+
+**Implementación (2026-11-02):**
+- `modelos.ts`: modelo nuevo y campos `confianza`, `especie_ecuacion`, `fuente_rango` y `limitaciones_modelo` en todos los modelos (los cuatro existentes quedan como `propia_urbana`, con las limitaciones de Pillsbury que antes eran generales). `LIMITACIONES` generales reescritas para que valgan para todos los modelos.
+- `calculo.ts`: un modelo que solo tiene variante con DAP se usa aunque el árbol tenga altura; el control de altura y la altura en las entradas solo se aplican a la variante con altura.
+- Pruebas: 8 casos nuevos (coeficientes y fuentes; A-000419 calculado a mano; la altura no cambia el resultado; trazabilidad; límites del rango incluidos y fuera de rango en `null`; multifustales en `null`; *Acer negundo* sin modelo; Jacarandá y Liquidámbar con su variante con altura). Jest 1636/1636 y tsc sin errores.
+- **Regresión de Jacarandá y Liquidámbar:** se compararon 1680 combinaciones de especie, DAP, altura y multifustal antes y después del cambio. Jacarandá (336), Liquidámbar (336), *Acer negundo* (336) y especie desconocida (336): **0 cambios**. Solo cambia *Acer pseudoplatanus* (antes «sin modelo»).
+- **Cambia la forma de la API (solo se agrega):** cada `modelo` de B2 trae `confianza`, `especie_ecuacion`, `fuente_rango` y `limitaciones_modelo`; `n_muestra` puede ser `null`; el texto de `limitaciones` generales cambia. Anotar en `docs/plan/coordinacion.md` al publicar.
+
 **Historial de estados**
 
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-11-02 | EN REVISIÓN | marybaxmann | Propuesta con opciones A, B y C; pendiente de decisión. |
 | 2026-11-02 | EN REVISIÓN | marybaxmann | C2 aprobada provisionalmente (densidad dentro del modelo, sin migración). Verificación de fuentes agregada: densidad (Sedlar 2021), ecuación (McHale et al. 2009, tabla 1, solo DAP), rango de DAP, indicador. Pendiente: coeficiente a y dos fuentes secundarias bloqueadas. |
+| 2026-11-02 | APROBADO (opción C2) | Valej | a = 0,0019 y b = 1,785 del artículo; CARB 2010 (tabla B.1) registrada como fuente alternativa del rango y del coeficiente 0,0019421; densidad 510 kg/m³. |
+| 2026-11-02 | IMPLEMENTADO (opción C2, sin publicar) | Valej | `wip/cc070-modelos-carbono`; Jest 1636/1636; regresión de Jacarandá y Liquidámbar sin cambios (1680 combinaciones). |

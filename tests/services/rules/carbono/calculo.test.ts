@@ -21,9 +21,10 @@ const arbol = (id: string, p: Partial<ArbolCarbono> = {}): ArbolCarbono => ({
 const LIQ = "Liquidambar styraciflua";
 
 describe("catálogo de modelos (Pillsbury 1998 / UTD)", () => {
-  it("cuatro modelos, coeficientes métricos de la UTD y rangos de la tabla 8 convertidos", () => {
+  it("cinco modelos: los cuatro de Pillsbury/UTD (sin cambios) y el sustituto de Acer pseudoplatanus (CC-070)", () => {
     const porId = Object.fromEntries(MODELOS_VOLUMEN.map((m) => [m.id, m]));
-    expect(Object.keys(porId).sort()).toEqual(["UTD-TS7-JAME-D", "UTD-TS7-JAME-DH", "UTD-TS7-LIST-D", "UTD-TS7-LIST-DH"]);
+    expect(Object.keys(porId).sort()).toEqual(["MCH09-T1-ACPL-D-ACPS", "UTD-TS7-JAME-D", "UTD-TS7-JAME-DH", "UTD-TS7-LIST-D", "UTD-TS7-LIST-DH"]);
+    expect(MODELOS_VOLUMEN.filter((m) => m.id.startsWith("UTD-")).every((m) => m.confianza === "propia_urbana" && m.especie === m.especie_ecuacion)).toBe(true);
     expect(porId["UTD-TS7-JAME-DH"]).toEqual(expect.objectContaining({ a: 0.0000801, b: 2.18578, c: 0.548045, n_muestra: 49 }));
     expect(porId["UTD-TS7-LIST-D"]).toEqual(expect.objectContaining({ a: 0.0000799, b: 2.560469, c: 0, n_muestra: 50 }));
     expect(porId["UTD-TS7-JAME-D"].dap_min_cm).toBeCloseTo(17.272, 10);
@@ -212,5 +213,86 @@ describe("agregarCarbono — árboles ficticios de QA Fase 7 (fixtures; no se to
     const r = agregarCarbono([arbol("a", { dap_cm: null }), arbol("b", { presente: false }), arbol("c", { evaluacion_completa_vigente: false })]);
     expect(r.cobertura).toEqual(expect.objectContaining({ presentes: 2, universo_calculo: 1, con_resultado: 0 }));
     expect(r.total).toEqual({ biomasa_aerea_lenosa_t: null, carbono_t: null, co2e_t: null });
+  });
+});
+
+describe("CC-070, opción C2: Acer pseudoplatanus con la ecuación de Acer platanoides (McHale et al. 2009)", () => {
+  const ACPS = "Acer pseudoplatanus";
+  // A-000419 del piloto: un fuste, DAP 13,4 cm, altura 7,1 m.
+  const a419 = arbol("A-000419", { especie_cientifica: ACPS, dap_cm: 13.4, altura_total_m: 7.1 });
+
+  it("coeficientes del artículo (a = 0,0019; b = 1,785), solo DAP, densidad 510 y rango 9,7-102,1 cm", () => {
+    const m = MODELOS_VOLUMEN.find((x) => x.id === "MCH09-T1-ACPL-D-ACPS")!;
+    expect(m).toEqual(
+      expect.objectContaining({
+        especie: "acer pseudoplatanus",
+        especie_ecuacion: "acer platanoides",
+        variante: "dap",
+        a: 0.0019,
+        b: 1.785,
+        c: 0,
+        dap_min_cm: 9.7,
+        dap_max_cm: 102.1,
+        altura_min_m: null,
+        altura_max_m: null,
+        confianza: "sustituta_mismo_genero",
+        n_muestra: null,
+      })
+    );
+    expect(m.densidad).toEqual(expect.objectContaining({ valor: 510, unidad: "kg/m3", tipo: "masa seca / volumen verde" }));
+    expect(m.densidad.fuente).toMatch(/Sedlar/);
+    expect(m.fuente).toMatch(/McHale, Burke, Lefsky, Peper y McPherson 2009.*tabla 1/);
+    expect(m.fuente).toMatch(/0,0019421/);
+    expect(m.fuente_rango).toMatch(/California Air Resources Board 2010.*B\.1/);
+  });
+
+  it("A-000419: valor calculado a mano (V = 0,0019·13,4^1,785; ×510; ×0,47; ×44/12)", () => {
+    const v = calcularCarbonoArbol(a419).valor!;
+    const V = 0.0019 * 13.4 ** 1.785;
+    expect(v.volumen_m3).toBeCloseTo(V, 12);
+    expect(v.volumen_m3).toBeCloseTo(0.19528, 4);
+    expect(v.biomasa_aerea_lenosa_kg).toBeCloseTo(99.59, 1);
+    expect(v.carbono_kg).toBeCloseTo(46.81, 1);
+    expect(v.co2e_kg).toBeCloseTo(171.6, 1);
+    expect(v.entradas).toEqual({ dap_cm: 13.4, altura_total_m: null, densidad_kg_m3: 510, fraccion_carbono: 0.47 });
+  });
+
+  it("la altura registrada no se usa ni se controla: la ecuación es solo de DAP", () => {
+    const con = calcularCarbonoArbol(a419).valor!;
+    const sin = calcularCarbonoArbol({ ...a419, altura_total_m: null }).valor!;
+    const alta = calcularCarbonoArbol({ ...a419, altura_total_m: 40 }).valor!;
+    expect(con.co2e_kg).toBe(sin.co2e_kg);
+    expect(alta.co2e_kg).toBe(sin.co2e_kg);
+    expect(con.modelo.ecuacion.forma).toBe("V = a·D^b");
+    expect(con.modelo.rango).toEqual({ dap_min_cm: 9.7, dap_max_cm: 102.1, altura_min_m: null, altura_max_m: null });
+  });
+
+  it("trazabilidad: modelo sustituto, especie de la ecuación y limitaciones propias", () => {
+    const m = calcularCarbonoArbol(a419).valor!.modelo;
+    expect(m).toEqual(expect.objectContaining({ id: "MCH09-T1-ACPL-D-ACPS", confianza: "sustituta_mismo_genero", especie_ecuacion: "acer platanoides" }));
+    expect(m.limitaciones_modelo.join(" ")).toMatch(/Estimación indirecta/);
+    expect(m.limitaciones_modelo.join(" ")).toMatch(/Fort Collins/);
+  });
+
+  it("límites del rango incluidos; fuera del rango, null sin extrapolar", () => {
+    expect(calcularCarbonoArbol({ ...a419, dap_cm: 9.7 }).valor).not.toBeNull();
+    expect(calcularCarbonoArbol({ ...a419, dap_cm: 102.1 }).valor).not.toBeNull();
+    expect(calcularCarbonoArbol({ ...a419, dap_cm: 9.6 }).motivo).toBe("fuera_de_rango");
+    expect(calcularCarbonoArbol({ ...a419, dap_cm: 102.2 }).motivo).toBe("fuera_de_rango");
+  });
+
+  it("multifustales y sin dato de fuste siguen en null (CC-069 decisión 6)", () => {
+    expect(calcularCarbonoArbol({ ...a419, multifustal: true }).motivo).toBe("multifustal_no_admitido");
+    expect(calcularCarbonoArbol({ ...a419, multifustal: null }).motivo).toBe("configuracion_fuste_no_determinada");
+  });
+
+  it("Acer negundo sigue sin modelo: C2 no se extiende a otras especies del género", () => {
+    expect(calcularCarbonoArbol({ ...a419, especie_cientifica: "Acer negundo" }).motivo).toBe("sin_modelo");
+    expect(calcularCarbonoArbol({ ...a419, especie_cientifica: "Acer platanoides" }).motivo).toBe("sin_modelo");
+  });
+
+  it("Jacarandá y Liquidámbar con altura siguen usando su variante con altura", () => {
+    expect(calcularCarbonoArbol(arbol("j")).valor!.modelo.id).toBe("UTD-TS7-JAME-DH");
+    expect(calcularCarbonoArbol(arbol("l", { especie_cientifica: LIQ, dap_cm: 30, altura_total_m: 10 })).valor!.modelo.id).toBe("UTD-TS7-LIST-DH");
   });
 });
