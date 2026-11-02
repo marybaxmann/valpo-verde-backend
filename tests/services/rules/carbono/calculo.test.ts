@@ -106,6 +106,26 @@ describe("calcularCarbonoArbol — motivos de null (nunca extrapola ni rellena)"
     expect(r).toEqual(expect.objectContaining({ valor: null, categoria: "fuera_del_universo", motivo: "sin_evaluacion_valida" }));
   });
 
+  it("trazabilidad completa: publicación, coeficientes, densidad con fuente, rango aplicado y N", () => {
+    const dh = calcularCarbonoArbol(arbol("x")).valor!.modelo;
+    expect(dh.fuente).toMatch(/Pillsbury, Reimer y Thompson 1998, tabla 7, ec\. 29/);
+    expect(dh.ecuacion).toEqual({ forma: "V = a·D^b·H^c", a: 0.0000801, b: 2.18578, c: 0.548045, unidad_volumen: "m3", unidad_dap: "cm", unidad_altura: "m" });
+    expect(dh.rango).toEqual({ dap_min_cm: 17.272, dap_max_cm: 59.69, altura_min_m: 6.858, altura_max_m: 17.526 });
+    expect(dh.densidad).toEqual(expect.objectContaining({ valor: 490, unidad: "kg/m3", tipo: "masa seca / volumen verde", version: "2020-01-21" }));
+    expect(dh.densidad.fuente).toMatch(/TS9/);
+    expect(dh.n_muestra).toBe(49);
+    const d = calcularCarbonoArbol(arbol("y", { altura_total_m: null })).valor!.modelo;
+    expect(d.ecuacion.forma).toBe("V = a·D^b");
+    expect(d.rango).toEqual({ dap_min_cm: 17.272, dap_max_cm: 59.69, altura_min_m: null, altura_max_m: null });
+  });
+
+  it("unidades: kg por árbol encadenados (V·ρ = B; B·0,47 = C; C·44/12 = CO₂e)", () => {
+    const v = calcularCarbonoArbol(arbol("x")).valor!;
+    expect(v.biomasa_aerea_lenosa_kg).toBeCloseTo(v.volumen_m3 * v.entradas.densidad_kg_m3, 10);
+    expect(v.carbono_kg).toBeCloseTo(v.biomasa_aerea_lenosa_kg * 0.47, 10);
+    expect(v.co2e_kg).toBeCloseTo((v.carbono_kg * 44) / 12, 10);
+  });
+
   it("con resultado: categoría y motivo null, y modelo trazable", () => {
     const r = calcularCarbonoArbol(arbol("x"));
     expect(r.categoria).toBeNull();
@@ -172,6 +192,20 @@ describe("agregarCarbono — árboles ficticios de QA Fase 7 (fixtures; no se to
     expect(r.total.co2e_t).toBeCloseTo((carbonoKg * 44) / 12 / 1000, 5);
     expect(r.metodo).toEqual(expect.objectContaining({ fraccion_carbono: 0.47, incluye_raices: false, incluye_follaje: false, factor_urbano: null }));
     expect(r.limitaciones.length).toBeGreaterThan(0);
+  });
+
+  it("invariantes de cobertura: con_resultado + Σ motivos = presentes; Σ categorías = presentes − con_resultado; totales en t = Σ kg / 1000", () => {
+    const r = agregarCarbono(arboles);
+    const sumaMotivos = Object.values(r.cobertura.motivos).reduce((x, y) => x + y, 0);
+    const sumaCategorias = Object.values(r.cobertura.por_categoria).reduce((x, y) => x + y, 0);
+    expect(r.cobertura.con_resultado + sumaMotivos).toBe(r.cobertura.presentes);
+    expect(sumaCategorias).toBe(r.cobertura.presentes - r.cobertura.con_resultado);
+    expect(r.cobertura.motivos.no_presente).toBe(0); // los no presentes no entran al agregado
+    const validos = arboles.filter((a) => a.presente).map(calcularCarbonoArbol).filter((x) => x.valor !== null).map((x) => x.valor!);
+    expect(validos).toHaveLength(r.cobertura.con_resultado);
+    expect(r.total.biomasa_aerea_lenosa_t).toBeCloseTo(validos.reduce((x, v) => x + v.biomasa_aerea_lenosa_kg, 0) / 1000, 9);
+    expect(r.total.carbono_t).toBeCloseTo(validos.reduce((x, v) => x + v.carbono_kg, 0) / 1000, 9);
+    expect(r.total.co2e_t).toBeCloseTo(validos.reduce((x, v) => x + v.co2e_kg, 0) / 1000, 9);
   });
 
   it("sin ningún resultado, totales null (no 0)", () => {

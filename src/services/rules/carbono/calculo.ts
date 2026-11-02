@@ -59,7 +59,20 @@ export interface CarbonoArbol {
   biomasa_aerea_lenosa_kg: number;
   carbono_kg: number;
   co2e_kg: number;
-  modelo: { id: string; version: number; variante: ModeloVolumen["variante"]; componente: "aerea_lenosa"; fuente: string };
+  /** Trazabilidad completa del modelo aplicado (Valej, 2026-11-02). */
+  modelo: {
+    id: string;
+    version: number;
+    variante: ModeloVolumen["variante"];
+    componente: "aerea_lenosa";
+    /** Publicación científica, tabla y ecuación, y origen de los coeficientes métricos. */
+    fuente: string;
+    ecuacion: { forma: "V = a·D^b·H^c" | "V = a·D^b"; a: number; b: number; c: number; unidad_volumen: "m3"; unidad_dap: "cm"; unidad_altura: "m" };
+    /** Rango de validez aplicado: la altura solo en la variante con altura. Límites incluidos. */
+    rango: { dap_min_cm: number; dap_max_cm: number; altura_min_m: number | null; altura_max_m: number | null };
+    densidad: ModeloVolumen["densidad"];
+    n_muestra: number;
+  };
   entradas: { dap_cm: number; altura_total_m: number | null; densidad_kg_m3: number; fraccion_carbono: number };
 }
 
@@ -126,7 +139,30 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
       biomasa_aerea_lenosa_kg: biomasa,
       carbono_kg: carbono,
       co2e_kg: co2e,
-      modelo: { id: modelo.id, version: modelo.version, variante: modelo.variante, componente: modelo.componente, fuente: modelo.fuente },
+      modelo: {
+        id: modelo.id,
+        version: modelo.version,
+        variante: modelo.variante,
+        componente: modelo.componente,
+        fuente: modelo.fuente,
+        ecuacion: {
+          forma: modelo.variante === "dap_altura" ? "V = a·D^b·H^c" : "V = a·D^b",
+          a: modelo.a,
+          b: modelo.b,
+          c: modelo.c,
+          unidad_volumen: "m3",
+          unidad_dap: "cm",
+          unidad_altura: "m",
+        },
+        rango: {
+          dap_min_cm: modelo.dap_min_cm,
+          dap_max_cm: modelo.dap_max_cm,
+          altura_min_m: modelo.variante === "dap_altura" ? modelo.altura_min_m : null,
+          altura_max_m: modelo.variante === "dap_altura" ? modelo.altura_max_m : null,
+        },
+        densidad: { ...modelo.densidad },
+        n_muestra: modelo.n_muestra,
+      },
       entradas: { dap_cm: a.dap_cm, altura_total_m: conAltura ? a.altura_total_m : null, densidad_kg_m3: modelo.densidad.valor, fraccion_carbono: FRACCION_CARBONO.valor },
     },
     categoria: null,

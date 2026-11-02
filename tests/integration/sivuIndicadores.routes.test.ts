@@ -141,6 +141,19 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
     expect(c.metodo.estado_cc).toMatch(/pendiente de sincronización con el Excel/);
   });
 
+  it("compatibilidad: B19 solo agrega estimacion_carbono_aereo_lenoso; universo de carbono = universo biométrico", async () => {
+    const d = (await request(app).get(RUTA).set(auth)).body.data;
+    expect(Object.keys(d).sort()).toEqual(
+      [
+        "fecha_consulta", "ambito", "barrios", "cobertura", "numero_total_arboles", "densidad_arborea", "clases_diametricas",
+        "diametro_medio_copa", "area_proyectada_copa", "cobertura_taxonomica", "riqueza_especies", "abundancia_relativa",
+        "diversidad_shannon", "diversidad_taxonomica_10_20_30", "proporcion_origen", "estimacion_carbono_aereo_lenoso",
+      ].sort()
+    );
+    expect(d.estimacion_carbono_aereo_lenoso.cobertura.presentes).toBe(d.cobertura.arboles_presentes);
+    expect(d.estimacion_carbono_aereo_lenoso.cobertura.universo_calculo).toBe(d.cobertura.arboles_con_evaluacion_valida);
+  });
+
   it("carbono con árboles ficticios con modelo: Jacarandá evaluado calcula; no evaluado queda fuera del universo", async () => {
     (listarArbolesIndicadores as jest.Mock).mockResolvedValue([
       fila("j1", { especie_cientifica: "Jacaranda mimosifolia", dap_cm: 30, altura_total_m: 10 }),

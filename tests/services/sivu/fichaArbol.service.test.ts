@@ -133,6 +133,14 @@ describe("obtenerFichaArbol (B2)", () => {
       expect(c.limitaciones.length).toBeGreaterThan(0);
     });
 
+    it("compatibilidad: la ficha solo agrega estimacion_carbono_aereo_lenoso; arbol no cambia", async () => {
+      const f = await obtenerFichaArbol(user, P, T, "token");
+      expect(Object.keys(f).sort()).toEqual(
+        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso"].sort()
+      );
+      expect(Object.keys(f.arbol)).not.toContain("estimacion_carbono_aereo_lenoso");
+    });
+
     it("talado: fuera del universo (no_presente)", async () => {
       (obtenerArbolFicha as jest.Mock).mockResolvedValue(JAC);
       const c = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_lenoso;
