@@ -88,7 +88,7 @@ describe("crearBorradorInspeccion (#58; primer guardado)", () => {
     expect(mockGuardarBorrador).not.toHaveBeenCalled();
   });
 
-  it("Levantamiento: exige tree_id en el body (árbol existente; árbol nuevo queda fuera, CC-052)", async () => {
+  it("Levantamiento: exige tree_id o nuevo_arbol en el body", async () => {
     mockObtenerOt.mockResolvedValueOnce({
       id: WORK_ORDER_ID,
       project_id: PROJECT_ID,
@@ -120,6 +120,54 @@ describe("crearBorradorInspeccion (#58; primer guardado)", () => {
     );
 
     expect(mockGuardarBorrador).toHaveBeenCalledWith(expect.objectContaining({ treeId: TREE_ID }));
+  });
+
+  describe("árbol nuevo en Levantamiento (CC-052, 018f)", () => {
+    const NUEVO = { sector: "Plaza Victoria", ubicacion_descriptiva: "Frente a la pileta", utm_este: 256000, utm_norte: 6341000, nombre_comun: "Jacarandá" };
+    const otLevantamiento = { id: WORK_ORDER_ID, project_id: PROJECT_ID, tipo_ot: "inspeccion", tree_id: null, accion_solicitada: "levantamiento" };
+
+    it("pasa treeId null y los datos del alta; devuelve el tree_id creado", async () => {
+      mockObtenerOt.mockResolvedValueOnce(otLevantamiento);
+      mockGuardarBorrador.mockResolvedValueOnce({
+        inspection_id: "insp-1", evaluation_id: "ev-1", tree_data_version_id: null, tree_id: "nuevo-1", arbol_nuevo: true, estado_registro: "preguardado",
+      });
+      const r = await crearBorradorInspeccion(
+        usuario("inspector"), WORK_ORDER_ID, bodyValido({ tipo_inspeccion_realizada: "levantamiento", nuevo_arbol: NUEVO }), TOKEN
+      );
+      expect(mockGuardarBorrador).toHaveBeenCalledWith(expect.objectContaining({ treeId: null, nuevoArbol: NUEVO, inspectionId: null }));
+      expect(r).toEqual(expect.objectContaining({ tree_id: "nuevo-1", arbol_nuevo: true }));
+    });
+
+    it("rechaza nuevo_arbol si la OT ya tiene árbol (422) sin llamar a la base", async () => {
+      mockObtenerOt.mockResolvedValueOnce({ ...otLevantamiento, tree_id: TREE_ID, accion_solicitada: "evaluacion_inicial" });
+      await expect(
+        crearBorradorInspeccion(usuario("inspector"), WORK_ORDER_ID, bodyValido({ nuevo_arbol: NUEVO }), TOKEN)
+      ).rejects.toMatchObject({ statusCode: 422 });
+      expect(mockGuardarBorrador).not.toHaveBeenCalled();
+    });
+
+    it("sin tree_id ni nuevo_arbol: 422 con el mensaje de las dos opciones", async () => {
+      mockObtenerOt.mockResolvedValueOnce(otLevantamiento);
+      await expect(
+        crearBorradorInspeccion(usuario("inspector"), WORK_ORDER_ID, bodyValido({ tipo_inspeccion_realizada: "levantamiento" }), TOKEN)
+      ).rejects.toMatchObject({ statusCode: 422, message: expect.stringContaining("nuevo_arbol") });
+    });
+
+    it("árbol nuevo fuera del sector (SV046): 422 con el mensaje del alta, sin nombrar un código de árbol", async () => {
+      mockObtenerOt.mockResolvedValueOnce(otLevantamiento);
+      mockGuardarBorrador.mockRejectedValueOnce(new Error("El árbol A-000999 queda fuera de la delimitación del sector", { cause: "SV046" }));
+      await expect(
+        crearBorradorInspeccion(usuario("inspector"), WORK_ORDER_ID, bodyValido({ tipo_inspeccion_realizada: "levantamiento", nuevo_arbol: NUEVO }), TOKEN)
+      ).rejects.toMatchObject({ statusCode: 422, message: expect.stringContaining("fuera del sector del proyecto") });
+    });
+
+    it("datos del alta rechazados por la función (SV057): 422", async () => {
+      mockObtenerOt.mockResolvedValueOnce(otLevantamiento);
+      mockGuardarBorrador.mockRejectedValueOnce(new Error("El proyecto no tiene un sector delimitado", { cause: "SV057" }));
+      await expect(
+        crearBorradorInspeccion(usuario("inspector"), WORK_ORDER_ID, bodyValido({ tipo_inspeccion_realizada: "levantamiento", nuevo_arbol: NUEVO }), TOKEN)
+      ).rejects.toMatchObject({ statusCode: 422 });
+    });
   });
 
   it("calcula campos_registrados_arbol desde las claves de campos_arbol", async () => {

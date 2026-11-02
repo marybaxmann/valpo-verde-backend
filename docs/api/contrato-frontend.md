@@ -166,7 +166,7 @@ Estados (`estado_registro`): `preguardado` (borrador) → `finalizado`; o `anula
 | Método y ruta | Quién | Entrada | Respuesta |
 |---|---|---|---|
 | `GET /api/sivu/projects/:id/inspection-form-schema?tipo=` (B16) | Miembros y Administrador | `tipo` | 200 esquema del formulario (campos, tipo, unidad, opciones, obligatoriedad, condición, etiquetas y secciones) |
-| `POST /api/sivu/work-orders/:id/inspections` | Inspector responsable, OT en ejecución | `{ tipo_inspeccion_realizada, subtipo_inspeccion?, metodo_instrumental?, resultado_general?, requiere_mantenimiento?, observaciones?, variables, campos_arbol?, tree_id? }` | 201 `{ data }` con `inspection_id` |
+| `POST /api/sivu/work-orders/:id/inspections` | Inspector responsable, OT en ejecución | `{ tipo_inspeccion_realizada, subtipo_inspeccion?, metodo_instrumental?, resultado_general?, requiere_mantenimiento?, observaciones?, variables, campos_arbol?, tree_id?, nuevo_arbol? }` | 201 `{ data }` con `inspection_id`, `evaluation_id`, `tree_id` y `arbol_nuevo` |
 | `PATCH /api/sivu/inspections/:id` | Inspector responsable | Mismo cuerpo, sin `tree_id` | 200 `{ data }` (actualiza el borrador; no duplica) |
 | `POST /api/sivu/inspections/:id/photos` | Inspector responsable | `multipart/form-data`: `foto` (JPG/PNG, hasta 10 MB) y `vista` (`arbol_completo`, `base`, `tronco`, `copa`; opcional solo en Monitoreo) | 201 `{ data }` |
 | `GET /api/sivu/inspections/:id/photos` | Miembros y Administrador | — | 200 `{ data }` con enlaces firmados de 10 minutos |
@@ -174,6 +174,12 @@ Estados (`estado_registro`): `preguardado` (borrador) → `finalizado`; o `anula
 | `POST /api/sivu/inspections/:id/calcular` | Inspector responsable | `{ ajustes? }` | 200 `{ data }` con el resultado del motor, `puede_finalizar`, lo que falta y la `huella` |
 | `POST /api/sivu/inspections/:id/finalizar` | Inspector responsable | `{ huella, ajustes?, fecha_proxima_inspeccion?, fecha_proximo_monitoreo?, justificacion_ajuste_fecha? }` | 200 `{ data }`. Exige las 4 fotos en Evaluación inicial, Reevaluación y Levantamiento. |
 | `POST /api/sivu/inspections/:id/anular` | Usuario municipal | `{ motivo_anulacion }` | 200 `{ data }`. Solo finalizadas; si la OT está completada, recalcula la evaluación vigente. |
+
+**Árbol en un Levantamiento (D-193; CC-052):** si la OT de Levantamiento no tiene árbol, el primer guardado trae **uno** de los dos:
+- `tree_id`: un árbol existente del proyecto;
+- `nuevo_arbol`: `{ sector, ubicacion_descriptiva, utm_este, utm_norte, especie_cientifica?, nombre_comun? }` (los mismos datos mínimos que el alta municipal, al menos especie o nombre común). En la misma operación se crean el árbol, su alta y el borrador; la respuesta trae el `tree_id` nuevo y `arbol_nuevo: true`. Los datos del alta rigen de inmediato; los técnicos de la inspección, al completar la OT. Los guardados siguientes (`PATCH`) ya no llevan `tree_id` ni `nuevo_arbol`.
+- Antes de crear uno nuevo, el frontend ofrece la búsqueda de cercanos (`GET /projects/:id/nearby-trees`) para no duplicar un árbol registrado; el radio lo define el frontend.
+- Errores: 400 si llegan los dos, o si faltan datos del alta; 422 si la OT no es de Levantamiento sin árbol, si la ubicación queda fuera del sector («El árbol no se registró: …») o si el proyecto no tiene sector.
 
 `ajustes`: `{ clasificacion_riesgo?, clasificacion_infraestructura?, clasificacion_prioridad? }`, cada uno
 `{ valor_ajustado, justificacion_ajuste_clasificacion }` (justificación obligatoria).

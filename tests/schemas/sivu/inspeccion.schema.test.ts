@@ -285,3 +285,32 @@ describe("variables — Sí / No como booleano (PR-021; B16)", () => {
     expect(completa({ [campo]: 1 }).success).toBe(false);
   });
 });
+
+describe("crearBorradorInspeccionSchema — árbol nuevo en Levantamiento (CC-052)", () => {
+  const NUEVO = { sector: "Plaza Victoria", ubicacion_descriptiva: "Frente a la pileta", utm_este: 256000, utm_norte: 6341000, nombre_comun: "Jacarandá" };
+
+  it("acepta nuevo_arbol con los datos mínimos del alta", () => {
+    const r = crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "levantamiento", variables: {}, nuevo_arbol: NUEVO });
+    expect(r.success).toBe(true);
+  });
+
+  it("rechaza tree_id y nuevo_arbol juntos", () => {
+    const r = crearBorradorInspeccionSchema.safeParse({
+      tipo_inspeccion_realizada: "levantamiento",
+      variables: {},
+      tree_id: "22222222-2222-4222-8222-222222222222",
+      nuevo_arbol: NUEVO,
+    });
+    expect(r.success).toBe(false);
+    expect(r.error!.issues.some((i) => i.message === "envíe tree_id o nuevo_arbol, no los dos")).toBe(true);
+  });
+
+  it.each([
+    ["sin especie ni nombre común", { sector: "S", ubicacion_descriptiva: "U", utm_este: 256000, utm_norte: 6341000 }],
+    ["sin sector", { ubicacion_descriptiva: "U", utm_este: 256000, utm_norte: 6341000, nombre_comun: "X" }],
+    ["con un campo técnico (no es parte del alta)", { ...NUEVO, dap_cm: 30 }],
+  ])("rechaza nuevo_arbol %s", (_d, nuevo) => {
+    const r = crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "levantamiento", variables: {}, nuevo_arbol: nuevo });
+    expect(r.success).toBe(false);
+  });
+});
