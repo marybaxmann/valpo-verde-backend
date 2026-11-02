@@ -5,6 +5,7 @@ import inspectionRoutes from "./inspection.routes";
 import conectaRoutes from "./conecta.routes";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 import { listarCatalogosController } from "../../controllers/sivu/diagnostico.controller";
+import { listarNotificacionesController, marcarLeidaController } from "../../controllers/sivu/notificaciones.controller";
 
 /**
  * Montado en /api/sivu (src/routes/index.ts). Separado por completo de
@@ -20,5 +21,8 @@ router.use("/inspections", inspectionRoutes);
 router.use("/conecta", conectaRoutes);
 // Catálogos vigentes con código y etiqueta (B15; PR-021).
 router.get("/catalogs", authMiddleware, listarCatalogosController);
+// Avisos dentro de SIVU (CC-051) y recordatorios (#63). Requieren la migración 033 (propuesta, sin aplicar).
+router.get("/notificaciones", authMiddleware, listarNotificacionesController);
+router.patch("/notificaciones/:id/leida", authMiddleware, marcarLeidaController);
 
 export default router;

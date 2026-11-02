@@ -2307,6 +2307,7 @@ motivo)
 |---|---|---|---|
 | 2026-10-23 | APROBADO METODOLÓGICAMENTE (el qué) | marybaxmann | Registro inicial. Diseño técnico (el cómo) propuesto por escrito. |
 | 2026-10-23 | APROBADO | marybaxmann | Propuesta técnica aprobada para cuando se implemente: tabla `notifications`, RLS de solo lectura propia con escritura (marcar leído) únicamente por el backend, proveedor de correo anotado como tercero que trata datos personales, dominio remitente verificado pendiente (lo consigue la responsable antes de implementar). |
+| 2026-11-02 | APROBADO (primera etapa) | Valej | Solo el aviso dentro de SIVU, sin correo. Creación transaccional: trigger AFTER UPDATE en `work_orders` (propuesta 033), sin modificar las funciones de la 025. Backend: `GET /notificaciones` y `PATCH /notificaciones/:id/leida`. Recordatorios de #63 en la misma tabla: a los Usuarios municipales del proyecto, desde `recordatorio_activo` de B5, generados al consultar (provisional), sin duplicados (UNIQUE user_id + clave_unica). La 033 está escrita y probada solo en el código; **no aplicada**, pendiente de revisión y autorización. |
 
 ---
 

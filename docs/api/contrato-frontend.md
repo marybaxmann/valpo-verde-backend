@@ -325,6 +325,22 @@ La ficha no entrega `tree_code`, coordenadas, riesgo ni ningún dato técnico. L
 
 ---
 
+## 8 bis. Avisos y recordatorios (CC-051, #63) — **requieren la migración 033, todavía sin aplicar**
+
+| Método y ruta | Quién | Entrada | Respuesta |
+|---|---|---|---|
+| `GET /api/sivu/notificaciones` | Cualquier usuario con sesión (solo ve sus avisos) | `solo_no_leidas?` (`true`/`false`), `limit` (hasta 100, por defecto 50), `offset` | 200 `{ data: [aviso], total, no_leidas, limit, offset, recordatorios_generados }` |
+| `PATCH /api/sivu/notificaciones/:id/leida` | El dueño del aviso | — | 200 `{ data: aviso }`; 404 si no existe o es de otro usuario |
+
+**Aviso:** `{ id, tipo: { codigo, etiqueta }, work_order_id, tree_id, mensaje, leida, leido_at, created_at }`. Tipos (catálogo `tipo_notificacion`):
+- `ot_cancelada`: al responsable de la OT cancelada, con el motivo.
+- `ot_reasignada_nuevo` y `ot_reasignada_anterior`: al nuevo y al anterior responsable.
+- `recordatorio_inspeccion`: a los Usuarios municipales del proyecto (#63).
+
+- Los avisos de OT los crea la base en la misma transacción que la cancelación o la reasignación: si el aviso no se crea, la operación tampoco. Sin correo en esta etapa (CC-051, falta el dominio remitente).
+- **Recordatorios, solución provisional:** se generan al consultar `GET /notificaciones`, solo para un Usuario municipal, a partir de `recordatorio_activo` de B5 (sin plazos nuevos). Uno por árbol, tipo e inicio del rango: aunque haya consultas simultáneas, no se duplican. `recordatorios_generados` dice cuántos se crearon en esa consulta (`null` si la generación falló; los avisos igual se listan).
+- Marcar como leído es el único cambio que puede pedir el cliente; se hace siempre a través del backend.
+
 ## 9. Pendiente o en revisión
 
 - **B19** (los 11 indicadores en §6 bis; falta registrar provisional/confirmada, con migración pendiente de autorización; los ecosistémicos siguen «Pendiente» en el Excel).
