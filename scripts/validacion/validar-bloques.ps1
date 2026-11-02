@@ -27,7 +27,12 @@ param(
   [ValidateSet('Lectura', 'Escritura')]
   [string]$Modo = 'Lectura',
   [string]$BackendDir = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path,
-  [string]$Api = 'http://localhost:3000',
+  # URL base del backend local (sin /api/sivu). -Api se mantiene como alias.
+  [Alias('Api')]
+  [string]$UrlBackend = 'http://localhost:3000',
+  # Archivo de variables del backend: .env (por defecto) o, de forma explicita, .env.pruebas.
+  # Se le aplican las mismas verificaciones de seguridad (V-1).
+  [string]$ArchivoEnv = '.env',
   [string]$Salida = (Join-Path $HOME ("sivu-validacion\" + (Get-Date -Format 'yyyyMMdd-HHmmss'))),
   [switch]$ConAdmin,
   [switch]$ConNoMiembro
@@ -60,7 +65,10 @@ $script:Tok        = @{}
 $script:Resultados = [System.Collections.Generic.List[object]]::new()
 $script:Creados    = [System.Collections.Generic.List[object]]::new()
 $script:OtPropias  = [System.Collections.Generic.HashSet[string]]::new()
-$api = "$($Api.TrimEnd('/'))/api/sivu"
+# PowerShell no distingue mayusculas en los nombres de variable: la URL base
+# ($UrlBackend) y la de los endpoints ($UrlSivu) usan nombres distintos.
+$UrlBackend = $UrlBackend.TrimEnd('/')
+$UrlSivu    = "$UrlBackend/api/sivu"
 
 New-Item -ItemType Directory -Force -Path (Join-Path $Salida 'evidencias') | Out-Null
 
@@ -90,9 +98,9 @@ function Fecha-Iso($v) {
 }
 
 function Leer-Jwt([string]$t) {
-  $p = $t.Split('.')[1].Replace('-', '+').Replace('_', '/')
-  while ($p.Length % 4) { $p += '=' }
-  [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($p)) | ConvertFrom-Json
+  $b64 = $t.Split('.')[1].Replace('-', '+').Replace('_', '/')
+  while ($b64.Length % 4) { $b64 += '=' }
+  [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64)) | ConvertFrom-Json
 }
 
 function Registrar($id, $bloque, $desc, $estado, $esperado, $obtenido, $evidencia = $null) {
@@ -136,17 +144,17 @@ function Assert-OtPropia($otId) {
 }
 
 function Llamar($rol, $metodo, $ruta, $cuerpo = $null) {
-  $p = @{
-    Method = $metodo; Uri = "$api$ruta"; ContentType = 'application/json'
+  $solicitud = @{
+    Method = $metodo; Uri = "$UrlSivu$ruta"; ContentType = 'application/json'
     SkipHttpErrorCheck = $true; StatusCodeVariable = 'sc'; TimeoutSec = 60
   }
   if ($rol) {
     if (-not $script:Tok.ContainsKey($rol)) { return $null }
-    $p.Headers = @{ Authorization = "Bearer $($script:Tok[$rol])" }
+    $solicitud.Headers = @{ Authorization = "Bearer $($script:Tok[$rol])" }
   }
-  if ($null -ne $cuerpo) { $p.Body = ($cuerpo | ConvertTo-Json -Depth 10 -Compress) }
+  if ($null -ne $cuerpo) { $solicitud.Body = ($cuerpo | ConvertTo-Json -Depth 10 -Compress) }
   try {
-    $r = Invoke-RestMethod @p
+    $r = Invoke-RestMethod @solicitud
     return [pscustomobject]@{ status = [int]$sc; body = $r }
   } catch {
     return [pscustomobject]@{ status = 0; body = @{ error = "Sin respuesta del backend: $($_.Exception.Message)" } }
@@ -188,20 +196,31 @@ function Ids-Notificaciones($rol) {
 # 0. Verificacion del entorno (si algo falla, se detiene)
 # --------------------------------------------------------------------------
 Write-Host "`n=== 0. Verificacion del entorno ===" -ForegroundColor Cyan
-Write-Host "Modo: $Modo - Backend: $BackendDir - Salida: $Salida - Hoy (Chile): $($HOY.ToString('yyyy-MM-dd'))"
+Write-Host "Modo: $Modo - Backend: $BackendDir - URL: $UrlBackend - Variables: $ArchivoEnv - Salida: $Salida - Hoy (Chile): $($HOY.ToString('yyyy-MM-dd'))"
 
-$uriApi = [Uri]$Api
-if ($uriApi.Host -notin @('localhost', '127.0.0.1')) {
-  throw "El script solo corre contra un backend local (localhost). Recibido: $($uriApi.Host)"
+$uriBackend = [Uri]$UrlBackend
+if ($uriBackend.Host -notin @('localhost', '127.0.0.1')) {
+  throw "El script solo corre contra un backend local (localhost). Recibido: $($uriBackend.Host)"
 }
 
-$envPath = Join-Path $BackendDir '.env'
+# Archivo de variables: solo .env o .env.<nombre> (p. ej. .env.pruebas), dentro de la
+# carpeta del backend o con ruta explicita, y obligatoriamente ignorado por Git.
+$envPath = if ([IO.Path]::IsPathRooted($ArchivoEnv)) { $ArchivoEnv } else { Join-Path $BackendDir $ArchivoEnv }
+if ((Split-Path $envPath -Leaf) -notmatch '^\.env(\.[A-Za-z0-9_-]+)?$') { throw "V-1: $ArchivoEnv no es un archivo .env ni .env.<nombre>. Se detiene." }
+if ((Split-Path $envPath -Leaf) -eq '.env.example') { throw 'V-1: .env.example no tiene valores reales. Se detiene.' }
 if (-not (Test-Path $envPath)) { throw "No existe $envPath" }
+$envPath = (Resolve-Path $envPath).Path
+if (Get-Command git -ErrorAction SilentlyContinue) {
+  & git -C $BackendDir check-ignore -q -- $envPath 2>$null
+  if ($LASTEXITCODE -ne 0) { throw "V-1: $envPath no esta ignorado por Git o esta fuera del repositorio (podria versionarse con secretos). Se detiene." }
+} else {
+  Write-Host 'Aviso: Git no esta disponible; no se pudo comprobar que el archivo de variables este ignorado.' -ForegroundColor Yellow
+}
 $envVars = @{}
 Get-Content $envPath | Where-Object { $_ -match '^\s*([A-Z_]+)\s*=\s*(.*)$' } | ForEach-Object { $envVars[$Matches[1]] = $Matches[2].Trim().Trim('"') }
 $url = $envVars['SUPABASE_URL']
 if ($url -ne "https://$PRUEBAS.supabase.co") { throw 'V-1: SUPABASE_URL no es el proyecto de pruebas. Se detiene.' }
-if ((Get-Content $envPath -Raw) -match $REAL) { throw 'V-1: el .env menciona la base real. Se detiene.' }
+if ((Get-Content $envPath -Raw) -match $REAL) { throw 'V-1: el archivo de variables menciona la base real. Se detiene.' }
 foreach ($k in 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY') {
   $v = $envVars[$k]
   if (-not $v) { throw "V-1: $k esta vacia" }
@@ -210,11 +229,11 @@ foreach ($k in 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY') {
     if ($c.ref -ne $PRUEBAS) { throw "V-1: $k pertenece a otro proyecto. Se detiene." }
   }
 }
-Registrar 'V-1' 'Entorno' '.env apunta solo a Supabase de pruebas' 'PASS' $PRUEBAS 'URL y claves del proyecto de pruebas'
+Registrar 'V-1' 'Entorno' "$(Split-Path $envPath -Leaf) apunta solo a Supabase de pruebas" 'PASS' $PRUEBAS 'URL y claves del proyecto de pruebas; archivo ignorado por Git'
 $anon = $envVars['SUPABASE_ANON_KEY']
 $envVars = $null
 
-try { $h = Invoke-RestMethod "$($Api.TrimEnd('/'))/health" -TimeoutSec 10 } catch { throw 'V-2: el backend local no responde en /health. Esta corriendo npm run dev?' }
+try { $h = Invoke-RestMethod "$UrlBackend/health" -TimeoutSec 10 } catch { throw 'V-2: el backend local no responde en /health. Esta corriendo npm run dev?' }
 if ($h.status -ne 'ok') { throw 'V-2: /health no respondio ok' }
 Registrar 'V-2' 'Entorno' 'Backend local responde /health' 'PASS' 'ok' 'ok'
 
@@ -247,9 +266,16 @@ if ($ConNoMiembro) { [void](Abrir-Sesion 'ajeno' $null) }
 # V-3: el backend valida tokens del proyecto de pruebas y lee el proyecto QA,
 # que solo existe en esa base. Si el backend apuntara a otra base, fallaria.
 $r = Caso 'V-3' 'Entorno' 'Backend acepta tokens de pruebas y lee el proyecto QA' municipal GET "/projects/$P" -Esperado 200 -Comprobar {
-  param($r) if ((Valor $r.body 'data.id') -ne $P) { 'el proyecto devuelto no es el de QA' }
+  param($r)
+  # Contrato de GET /projects/:id: { data: { proyecto: { id, ... }, sector } } (project.service.ts).
+  $idDevuelto = [string](Valor $r.body 'data.proyecto.id')
+  if ($idDevuelto -ne $P) { "el proyecto devuelto no es el de QA (data.proyecto.id = '$idDevuelto')" }
 }
-if ($null -eq $r -or $r.status -ne 200) { throw 'V-3 fallo: el backend no esta conectado al proyecto de pruebas. Se detiene.' }
+# Cualquier resultado distinto de PASS en V-3 detiene el script, aunque el HTTP sea 200.
+$v3 = @($script:Resultados | Where-Object caso -eq 'V-3') | Select-Object -Last 1
+if ($null -eq $r -or $r.status -ne 200 -or $null -eq $v3 -or $v3.resultado -ne 'PASS') {
+  throw 'V-3 fallo: el backend no esta conectado al proyecto de pruebas o no devolvio el proyecto QA. Se detiene.'
+}
 $r = Caso 'V-4' 'Entorno' 'Tabla de avisos disponible (033)' municipal GET '/notificaciones?limit=1' -Esperado 200
 if ($null -eq $r -or $r.status -ne 200) { throw 'V-4 fallo: /notificaciones no responde. Se detiene.' }
 
@@ -498,7 +524,7 @@ if ($Modo -eq 'Escritura') {
       $c1 = @($r1.body.data | Where-Object { $_.tipo.codigo -eq 'recordatorio_inspeccion' }).Count
       $tokM = $script:Tok['municipal']
       $jobs = 1..2 | ForEach-Object -Parallel {
-        $u = $using:api; $t = $using:tokM
+        $u = $using:UrlSivu; $t = $using:tokM
         Invoke-RestMethod -Uri ($u + '/notificaciones?limit=100') -Headers @{ Authorization = ('Bearer ' + $t) } -SkipHttpErrorCheck
       } -ThrottleLimit 2
       $tokM = $null
