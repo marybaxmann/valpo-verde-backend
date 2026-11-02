@@ -4,7 +4,7 @@
 >
 > **Regla (Valej, 2026-11-02):** se actualiza en cada bloque de trabajo. **No se eliminan pendientes postergados**: se marcan con su estado. Los ítems `PA-*` y `AM-*` siguen detallados en `docs/roadmap.md`; aquí se listan todos los abiertos con su estado actual.
 >
-> **Corte:** 2026-11-02. Rama `feature/fase6-backend-api`; publicado en GitHub hasta `6323da7` (también en `wip/bloque1-completar-ot`); `release/demo` = `3d717ce` (API de la presentación, congelada).
+> **Corte:** 2026-11-02 (después de aplicar la 033 y publicar). `feature/fase6-backend-api` y `wip/bloque1-completar-ot` = `8e0c3ee`; `release/demo` = `3d717ce` (API de la presentación, congelada, sin cambios); `main` = `a87292a` (sin cambios).
 
 ## Cómo leer los estados
 
@@ -24,11 +24,11 @@ Valores: **Sí** · **No** · **Parcial** · **—** (no aplica).
 |---|---|---|---|---|---|---|---|---|
 | Universos de B19 (biométricos = evaluación completa vigente) y `evaluacion_completa_vigente` en B2 | CC-016 | `2401497`, `637f757` | Sí | Sí (Jest) | Sí | No | No | Desplegar después de la presentación; frontend adapta los renombres (§4). |
 | Carbono aéreo leñoso en B19 y B2 (Jacarandá y Liquidámbar) | CC-069 | `b6dbc43`, `2e09fb1`, `e57d8fd`, `b5ee325` | Sí | Sí (Jest) | Sí | No | No | Cobertura real 0 (sin árboles de esas especies medidos). Sincronizar con el Excel (§2). |
-| Árbol nuevo en Levantamiento (`nuevo_arbol`) | CC-052 | `bf2dd9b` | Sí | Sí (Jest; la 018f ya tenía L1-L7 en SQL) | No | No | No | Push; prueba en la API con una OT de Levantamiento. |
-| Infraestructura (B8) | CC-059/060 | `a730784` | Sí | Sí (Jest) | No | No | No | Push; validar con datos reales. |
-| OT vencidas (B6) | decisión Valej | `791aa2a` | Sí | Sí (Jest) | No | No | No | Push; validar. |
-| Avisos internos (CC-051) y recordatorios (#63) — backend | CC-051, #63 | `3b8b90c`, `5402698` | Sí (backend) | Sí (Jest) | No | No | No | **Depende de la 033.** No publicar antes de aplicarla (sin la tabla, `/notificaciones` daría 500). |
-| Migración 033 (tabla `notifications`, trigger, RLS) | CC-051, #63 | `cbd1e25`, `23b4194`, `5402698` | Sí (propuesta) | No (script `pruebas_033` listo) | No (commits locales) | No | No | **Autorización de Valej** y ciclo completo en la base de pruebas. |
+| Árbol nuevo en Levantamiento (`nuevo_arbol`) | CC-052 | `bf2dd9b` | Sí | Sí (Jest; la 018f ya tenía L1-L7 en SQL) | Sí | No | No | Desplegar después de la presentación; probar en la API con una OT de Levantamiento. |
+| Infraestructura (B8) | CC-059/060 | `a730784` | Sí | Sí (Jest) | Sí | No | No | Desplegar; validar con datos reales. |
+| OT vencidas (B6) | decisión Valej | `791aa2a` | Sí | Sí (Jest) | Sí | No | No | Desplegar; validar. |
+| Avisos internos (CC-051) y recordatorios (#63) — backend | CC-051, #63 | `3b8b90c`, `5402698` | Sí | Sí (Jest) | Sí | No | No | Desplegar; validar en la API (cancelar, reasignar, recordatorios con un Usuario municipal). Correo: etapa 2. |
+| Migración 033 (tabla `notifications`, trigger, RLS) | CC-051, #63 | `cbd1e25`, `23b4194`, `5402698`, `8e0c3ee` | Sí (aplicada en la base de pruebas) | Sí: `pruebas_033` N1–N9 OK en las dos rondas; reversión restaura el esquema y los datos; md5 up `ec103244…` / down `56197347…` = archivos | Sí | No (no en `release/demo` ni en la base real) | No | Aplicarla en la base real en la Fase 8; validar en la API. |
 | Migración 032 (identificación de especie provisional/confirmada) | CC-016 (decisión 2) | `d1d9db1` | Sí (propuesta) | No | Sí (como propuesta) | No | No | Autorización; decidir dónde se registra (alta, inspección o carga); CC del campo nuevo. |
 | Densidad de la madera en el catálogo de especies | CC-068 | — | No (vive en el catálogo de modelos) | — | — | — | — | Migración sujeta al Excel (Valej: no aplicar hasta incorporarlo). |
 
@@ -68,12 +68,12 @@ El Excel sigue siendo la fuente original; las decisiones aprobadas en CC son mod
 
 | Ítem | Estado | Pendiente |
 |---|---|---|
-| 033 notificaciones | Propuesta auditada (2026-11-02) | Autorización y ciclo completo en pruebas |
+| 033 notificaciones | **Aplicada en la base de pruebas** (2026-11-02, ciclo completo, N1–N9 OK dos rondas) | Base real (Fase 8) |
 | 032 identificación de especie | Propuesta | Autorización + CC |
 | Límite por IP compartido para Conecta (opción A) | No escrita | Migración sujeta a autorización (hoy en memoria, por instancia de Vercel) |
 | `chk_species_especie_cientifica_valida` («spp.» y espacios) | Pendiente de aprobación | Ver HANDOFF |
-| `database/schema.sql` desincronizado (018h, 018i, 028 a 031 y siguientes) | Pendiente | Copiar desde las migraciones aplicadas |
-| AM-19 unificar filtro de inspecciones válidas | Listado como pendiente en el roadmap; la 025 dice resolverlo («AM-19: Unificación de filtro») | Verificar y cerrar en el roadmap |
+| `database/schema.sql` desincronizado (018h, 018i, 028 a 031 y 033) | Pendiente | Copiar desde las migraciones aplicadas |
+| AM-19 unificar filtro de inspecciones válidas | **Resuelto en la base de pruebas** (verificado por lectura el 2026-11-02: `fn_refresh_tree_current` y `v_tree_current_inputs` de la 025, `v_tree_fechas_vigentes` de la 030, todas con inspección finalizada y OT completada); estado actualizado en el roadmap sin borrar el texto | Reproducirlo en la base real (Fase 8) |
 | PA-13 / PA-14 entorno de pruebas aislado y W1-W12 | Pendiente de decisión / bloqueado | — |
 | PA-34 avisos de rendimiento de Supabase (políticas, índices FK) | Pendiente | Revisar asesores también después de la 033 |
 | Base real (`ytcxswbulsmboucardxa`) — Fase 8, #45 | No se toca | Migraciones, bucket (019) y datos cuando se pase a producción |
@@ -84,8 +84,8 @@ El Excel sigue siendo la fuente original; las decisiones aprobadas en CC son mod
 |---|---|
 | Adaptar los renombres incompatibles de B19 (`denominador_evaluados`), los nuevos campos de `cobertura` y `evaluacion_completa_vigente` de B2 | Pendiente (publicado en `feature`/`wip`, no desplegado) |
 | Mostrar el carbono: «No estimable», «Fuera del universo» y motivos; nunca 0 | Pendiente |
-| CC-052: `nuevo_arbol` en el primer guardado y búsqueda de cercanos antes de crear | Pendiente (sin publicar) |
-| B6 `vencida` y `solo_vencidas`; B8 `/infraestructura`; avisos y recordatorios (`/notificaciones`) | Pendiente (sin publicar) |
+| CC-052: `nuevo_arbol` en el primer guardado y búsqueda de cercanos antes de crear | Pendiente (publicado en `feature`/`wip`, no desplegado) |
+| B6 `vencida` y `solo_vencidas`; B8 `/infraestructura`; avisos y recordatorios (`/notificaciones`) | Pendiente (publicado en `feature`/`wip`, no desplegado) |
 | Conecta: el documento del frontend usaba rutas y campos viejos (`/api/public/conecta`, `/reportes`, `nombre`/`rut`, `especie`, `estado`); adaptar a `coordinacion.md` | Pendiente |
 | PA-16, PA-18, PA-28, PA-30, PA-32, PA-36, PA-43, PA-44 | Pendientes (ver roadmap) |
 
@@ -103,7 +103,7 @@ El Excel sigue siendo la fuente original; las decisiones aprobadas en CC son mod
 | Ítem | Estado |
 |---|---|
 | `release/demo` congelada en `3d717ce` hasta después de la presentación del 2026-11-03 | Vigente |
-| Llevar a `release/demo` lo publicado en `feature` (universos, carbono) y lo local (CC-052, B8, B6, avisos) | Pendiente; requiere autorización y, para los avisos, la 033 aplicada |
+| Llevar a `release/demo` lo publicado en `feature` (universos, carbono, CC-052, B8, B6, avisos) | Pendiente; después de la presentación y con autorización. La 033 ya está en la base de pruebas, que es la que usa la API publicada |
 | `CONECTA_URL_BASE` (placas QR) y `CORS_ORIGIN` en Vercel | Pendiente (lo configura Valej) |
 | Etiqueta `presentacion-2026-11-03` | Pendiente |
 | PR de `feature/fase6-backend-api` a `main` (sin merge) | Pendiente |
@@ -116,11 +116,11 @@ El Excel sigue siendo la fuente original; las decisiones aprobadas en CC son mod
 | Ítem | Estado |
 |---|---|
 | Límites por IP de Conecta: hoy por instancia de Vercel, no globales | Riesgo aceptado para la demo; opción A pendiente |
-| 033: RLS de lectura propia, sin escritura de cliente, `REVOKE` a anon y de escritura a authenticated, trigger `SECURITY DEFINER` con `search_path` fijo | Auditada, sin aplicar |
+| 033: RLS de lectura propia, sin escritura de cliente, `REVOKE` a anon y de escritura a authenticated, trigger `SECURITY DEFINER` con `search_path` fijo | Aplicada en pruebas; N6, N8 y N9 lo comprueban; asesor de seguridad sin hallazgos nuevos |
 | Avisos de un usuario que deja el proyecto: conserva los avisos antiguos (código de OT y motivo), sin acceso a la OT | Riesgo bajo, documentado |
 | Correo de avisos (CC-051 etapa 2): proveedor externo que trata datos personales; falta dominio remitente | Postergado |
 | PA-39 (cabeceras, contraseñas filtradas), PA-25, PA-20 | Pendientes/bloqueados (ver roadmap) |
-| Asesor de seguridad de Supabase después de la 033 | Pendiente |
+| Asesor de seguridad de Supabase después de la 033 | Hecho (2026-11-02): sin hallazgos nuevos. Siguen los previos: PostGIS en `public` y `spatial_ref_sys` sin RLS, funciones `SECURITY DEFINER` de ayuda de RLS ejecutables por `authenticated`, tablas del modelo antiguo con RLS sin políticas, protección de contraseñas filtradas desactivada (PA-39) |
 
 ## 8. Robustez y calidad
 
@@ -140,3 +140,12 @@ El Excel sigue siendo la fuente original; las decisiones aprobadas en CC son mod
 | Catálogo de especies del piloto (P7: falta *Lagerstroemia indica* y otras; `species_id` vacío) | Pendiente |
 | AM-09 datos simulados en las bases de prueba | Pendiente |
 | Registros de QA (INC-000017, OT-I-000358, OT-M-000018, A-000348): simulados, no son intervenciones reales | Documentado |
+
+## 10. Bloqueos y hallazgos de este corte (2026-11-02)
+
+| Ítem | Estado |
+|---|---|
+| Respaldo de la base de pruebas: las herramientas de esta sesión no permiten verificar los respaldos de la plataforma Supabase. Se tomó una línea base (triggers de `work_orders` md5 `1d242676…`, datos de OT md5 `02a07460…`) y se comprobó que la reversión la restaura | Documentado |
+| md5 de la 033: la primera comparación difirió solo por un salto de línea final de más en el archivo (al quitar `BEGIN/COMMIT`); corregido el archivo; contenido idéntico | Resuelto |
+| SV074 ya lo usaba la 031; la 033 usa SV075 | Resuelto |
+| Rama local `respaldo/b19-carbono-2026-11-02`, bundle del scratchpad y worktree `../valpo-verde-backend-pub` | Conservados hasta que Valej indique limpiarlos |
