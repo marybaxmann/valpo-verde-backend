@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Migración 034 — Cancelar una OT Pendiente sin fecha programada (CC-050)
--- PROPUESTA: no aplicada. Requiere autorización de Valej y se aplica
--- solo en la base de pruebas (gmlbmyreoxgoqrolhyxo).
+-- Autorizada por Valej el 2026-11-02, solo para la base de pruebas
+-- (gmlbmyreoxgoqrolhyxo).
 -- (032 sigue reservada para la propuesta de identificación de especie;
 -- 033 es la de notificaciones.)
 -- =====================================================================

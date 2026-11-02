@@ -179,11 +179,10 @@ Llamar municipal PATCH "/work-orders/$OT_A/responsable" @{ responsable_accion_id
 Llamar inspector2 GET "/notificaciones" | % body                                           # A-3: ot_reasignada_nuevo
 Llamar inspector GET "/notificaciones" | % body                                            # A-4: ot_reasignada_anterior
 
-# Cancelación: mientras la 034 no esté aplicada, cancelar una OT PENDIENTE falla (defecto, §5.3).
-Llamar municipal POST "/work-orders/$OT_B/cancelar" @{ motivo_cancelacion = "QA CC-051" } | Select status, body   # hoy: 400 chk_work_orders_fecha_programada
-# Para probar el aviso hoy, el Inspector 1 la programa primero y luego se cancela:
-Llamar inspector PATCH "/work-orders/$OT_B/estado" @{ estado = "programada"; fecha_accion_programada = (Get-Date).ToString("yyyy-MM-dd") } | Select status   # A-12: 200, sin aviso
-Llamar municipal POST "/work-orders/$OT_B/cancelar" @{ motivo_cancelacion = "QA CC-051" } | Select status   # A-5: 200
+# Cancelación desde Pendiente (la 034 ya está aplicada en la base de pruebas, 2026-11-02):
+Llamar municipal POST "/work-orders/$OT_B/cancelar" @{ motivo_cancelacion = "QA CC-051" } | % { $_.status; $_.body.data }   # A-5 / 034: 200, estado cancelada
+Llamar municipal POST "/work-orders/$OT_B/cancelar" @{ motivo_cancelacion = "otra vez" } | Select status   # 422 (ya cancelada)
+Llamar inspector POST "/work-orders/$OT_A/cancelar" @{ motivo_cancelacion = "x" } | Select status          # 403 (solo Usuario municipal)
 Llamar inspector GET "/notificaciones" | % body                                            # A-6: ot_cancelada con el motivo
 Llamar encargado GET "/notificaciones" | % body                                            # A-7: sin avisos ajenos
 
@@ -193,7 +192,7 @@ Llamar inspector PATCH "/notificaciones/$n/leida" | Select status               
 Llamar inspector2 PATCH "/notificaciones/no-uuid/leida" | Select status                    # A-11: 400
 ```
 
-Después de aplicar la 034 (si se autoriza): crear otra OT Pendiente y cancelarla directo → 200 y aviso `ot_cancelada`.
+A-12 (transiciones sin aviso): programar `$OT_A` con el Inspector 2 (`PATCH /work-orders/$OT_A/estado` con `estado = "programada"` y la fecha de hoy) → 200 y ningún aviso nuevo.
 
 ### 6.4 CC-052 — crea una OT de Levantamiento y un árbol permanente en QA
 

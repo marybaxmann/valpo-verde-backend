@@ -1,7 +1,12 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 27 — migración 031 (2026-11-01; #61; AM-22):
+--   (revisión 28 — migración 034 (2026-11-02; CC-050):
+--   chk_work_orders_fecha_programada admite 'cancelada' sin fecha
+--   (copiado de lo aplicado en la base de pruebas, md5 = archivo). La 033
+--   (notifications) sigue sin consolidar aquí: ver
+--   docs/registro-pendientes.md;
+--   antes revisión 27 — migración 031 (2026-11-01; #61; AM-22):
 --   work_orders.inspector_revisor_id y su CHECK, v_tree_presence según
 --   D-28 (subtipo ejecutado), fn_transition_work_order_estado también
 --   para Mantenimiento, y las funciones de Mantenimiento
@@ -1975,9 +1980,10 @@ CREATE TABLE work_orders (
     CHECK ((tree_id IS NULL) = (accion_solicitada = 'levantamiento')),
   CONSTRAINT chk_work_orders_completada_fecha
     CHECK ((estado_ot = 'completada') = (fecha_completada_ot IS NOT NULL)),
-  -- fecha_accion_programada obligatoria desde programada (D-241).
+  -- fecha_accion_programada obligatoria desde Programada (D-241), salvo en
+  -- una OT cancelada desde Pendiente (CC-050; migración 034).
   CONSTRAINT chk_work_orders_fecha_programada
-    CHECK (estado_ot = 'pendiente' OR fecha_accion_programada IS NOT NULL),
+    CHECK (estado_ot IN ('pendiente', 'cancelada') OR fecha_accion_programada IS NOT NULL),
   -- observaciones obligatoria en Levantamiento y Otra/Otra_Intervención (D-246).
   CONSTRAINT chk_work_orders_observaciones
     CHECK (accion_solicitada NOT IN ('levantamiento', 'otra', 'otra_intervencion') OR observaciones IS NOT NULL),

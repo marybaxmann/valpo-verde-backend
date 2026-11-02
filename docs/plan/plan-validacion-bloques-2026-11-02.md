@@ -161,7 +161,7 @@ Estos valores son lo que la API **debería** devolver; no prueban la API.
 - Crear y reasignar: sin error. Cancelar: **falló** con `new row for relation "work_orders" violates check constraint "chk_work_orders_fecha_programada"`.
 - **Causa (verificada):** el CHECK de la 014 exige `estado_ot = 'pendiente' OR fecha_accion_programada IS NOT NULL`. `fn_cancel_work_order` (025) acepta cancelar desde Pendiente (CC-050) y deja `estado_ot = 'cancelada'` sin fecha programada. Resultado: **una OT Pendiente no se puede cancelar**; desde Programada o En ejecución sí (tienen fecha).
 - Es un defecto **preexistente** de la 014/025, no de la 033. Afecta también a la API publicada (`release/demo`), que usa la misma base.
-- **Corrección propuesta (Valej aprobó prepararla, 2026-11-02):** migración **034** (`database/migrations/034_cancelar_ot_pendiente.sql`, reversión y `database/fase6/pruebas_034_cancelar_ot_pendiente.sql`). El CHECK admite también `cancelada` sin fecha; los demás estados no cambian y no se borran fechas. Detalle: `docs/plan/propuestas/034-cancelar-ot-pendiente.md`. **No aplicada:** espera autorización.
+- **Corrección propuesta (Valej aprobó prepararla, 2026-11-02):** migración **034** (`database/migrations/034_cancelar_ot_pendiente.sql`, reversión y `database/fase6/pruebas_034_cancelar_ot_pendiente.sql`). El CHECK admite también `cancelada` sin fecha; los demás estados no cambian y no se borran fechas. Detalle: `docs/plan/propuestas/034-cancelar-ot-pendiente.md`. **Aplicada en la base de pruebas el 2026-11-02** (autorización de Valej), con el ciclo completo: 034 13/13 y regresión 033 N1–N9 en las dos rondas; la reversión restauró la línea base; md5 = archivos; sin consumo de numeración. Pendiente: validarla por API (guía §6.3).
 - Defecto reproducido de nuevo sin la 034 (R1) y resto de la batería comprobado (`PRE034_PARCIAL_OK: R3 R4 R5 R6 R7 R11`), sin consumir numeración y sin cambios en la base.
 - **Efecto residual:** todo se revirtió salvo la secuencia del código de OT: **OT-I-000359 quedó consumido** y no existe. La próxima OT de inspección saldrá con OT-I-000360. No se modificaron árboles ni OT preexistentes.
 - La reasignación no dejó evidencia persistente (todo revertido): el aviso de reasignación sigue sin probar por API.
@@ -186,6 +186,6 @@ Estos valores son lo que la API **debería** devolver; no prueban la API.
 |---|---|---|---|---|---|
 | B8 | Sí | Jest; valores esperados por SQL | Sí | No | No (bloqueo §5.1) |
 | B6 | Sí | Jest; valores esperados por SQL | Sí | No | No (bloqueo §5.1) |
-| CC-051 | Sí | Jest; 033 N1–N9 | Sí | No | No (bloqueo §5.1; cancelar desde Pendiente falla hasta aplicar la 034, §5.3) |
+| CC-051 | Sí | Jest; 033 N1–N9; 034 R1–R13 | Sí | No | No (bloqueo §5.1; cancelar desde Pendiente corregido por la 034 en la base de pruebas, §5.3) |
 | CC-052 | Sí | Jest; 018f L1–L7 | Sí | No | No (bloqueo §5.1) |
 | #63 | Sí | Jest; N4 | Sí | No | No (positivo pendiente al 2026-11-13) |

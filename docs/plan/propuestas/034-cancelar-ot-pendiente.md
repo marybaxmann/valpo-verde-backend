@@ -1,6 +1,6 @@
 # Propuesta: migración 034 — cancelar una OT Pendiente (CC-050)
 
-> **Estado (2026-11-02):** preparada, **no aplicada**. Espera la autorización de Valej. Solo para la base de pruebas `gmlbmyreoxgoqrolhyxo`, con el ciclo completo (aplicar, probar, revertir, reaplicar, probar, md5).
+> **Estado (2026-11-02):** **aplicada en la base de pruebas** `gmlbmyreoxgoqrolhyxo` con el ciclo completo, por autorización de Valej. No aplicada en la base real (`ytcxswbulsmboucardxa`). Resultado en §6.
 
 ## 1. Defecto
 
@@ -48,15 +48,17 @@ ALTER TABLE public.work_orders ADD CONSTRAINT chk_work_orders_fecha_programada
 
 | Archivo | md5 |
 |---|---|
-| `database/migrations/034_cancelar_ot_pendiente.sql` | `f1831659d845d1f79d53d052107d8bf4` |
+| `database/migrations/034_cancelar_ot_pendiente.sql` | `8395abb51c6aacda19e59fb63e2923cf` (encabezado actualizado al autorizarla) |
 | `database/migrations/034_cancelar_ot_pendiente.down.sql` | `7e92c5fba6c59ff698b84850275891ff` |
-| `database/fase6/pruebas_034_cancelar_ot_pendiente.sql` | `232c898cbe96346e39836508ef4b859a` |
+| `database/fase6/pruebas_034_cancelar_ot_pendiente.sql` | ver el commit (se agregaron R12 y R13) |
 
 Identificador: **034**. La 032 sigue reservada para la propuesta de especie y la 033 es la de notificaciones.
 
 ## 5. Pruebas de regresión (`pruebas_034_cancelar_ot_pendiente.sql`)
 
-R1: cancelar Inspección Pendiente (con aviso). R2: cancelar Mantenimiento Pendiente (con aviso). R3 y R4: Programada y En ejecución conservan su fecha. R5, R6 y R7: Programada, En ejecución y Completada sin fecha siguen rechazadas. R8: Cancelada sin motivo sigue rechazada. R9: cancelar una OT ya cancelada da SV066. R10: definición exacta del CHECK. R11: un Inspector no puede cancelar.
+R1: cancelar Inspección Pendiente (con aviso). R2: cancelar Mantenimiento Pendiente (con aviso). R3 y R4: Programada y En ejecución conservan su fecha. R5, R6 y R7: Programada, En ejecución y Completada sin fecha siguen rechazadas. R8: Cancelada sin motivo sigue rechazada. R9: cancelar una OT ya cancelada da SV066. R10: definición exacta del CHECK. R11: un Inspector no puede cancelar. R12: motivo vacío o NULL da SV066 y la OT sigue Pendiente. R13: cancelar una OT Completada da SV066.
+
+R3, R4, R8, R9, R11, R12 y R13 cubren los casos de cancelación de la 025 (C6–C9, C11) sin consumir numeración. La batería completa de la 025 no se volvió a correr: crea OT con la función y consumiría códigos.
 
 - Las OT de prueba usan un código propio (`OT-I-PRUEBA034-n`), así que **no consumen la numeración**. Todo se revierte.
 - **Ya ejecutado, sin aplicar la 034 (2026-11-02):**
@@ -70,3 +72,18 @@ R1: cancelar Inspección Pendiente (con aviso). R2: cancelar Mantenimiento Pendi
   4. Reaplicar. Esperado: `PRUEBAS_034_OK`.
   5. Regresión: `pruebas_025` (C6–C11) y `pruebas_033` (N1–N9).
   6. md5 de lo aplicado igual al archivo; asesor de seguridad; `schema.sql` y CC-050 actualizados.
+
+## 6. Resultado del ciclo completo (2026-11-02, base de pruebas)
+
+| Paso | Resultado |
+|---|---|
+| Línea base | CHECK de la 014; secuencias I=359, M=21; 13 OT; 0 avisos; md5 datos de `work_orders` `ab1fc6d8…`, restricciones `b06b0ad7…`, triggers `c7c3ca47…` |
+| Aplicar (v`20261102112429`) | md5 de lo aplicado `8395abb5…` = archivo |
+| Pruebas, ronda 1 | `PRUEBAS_034_OK: R1 R9 R10 R2 R3 R4 R5 R6 R7 R8 R11 R12 R13`; regresión `PRUEBAS_033_OK: N7 N3 N2 N1 N4 N5 N6 N9 N8` |
+| Revertir (v`20261102113046`) | md5 `7e92c5fb…` = archivo; CHECK, restricciones, triggers y datos iguales a la línea base; R1 vuelve a fallar con el CHECK |
+| Reaplicar (v`20261102113119`) | md5 `8395abb5…` = archivo |
+| Pruebas, ronda 2 | 034 13/13 y 033 N1–N9 OK |
+| Estado final | CHECK nuevo; secuencias I=359, M=21 (sin consumo); 13 OT; 0 avisos; md5 de datos y triggers sin cambios |
+| Asesor de seguridad | Sin hallazgos nuevos (solo los previos: PostGIS, `spatial_ref_sys`, funciones auxiliares de RLS, tablas sin políticas, contraseñas filtradas) |
+
+**Efecto activo:** `release/demo` usa la misma base. Desde ahora, cancelar una OT Pendiente también funciona en la API publicada.

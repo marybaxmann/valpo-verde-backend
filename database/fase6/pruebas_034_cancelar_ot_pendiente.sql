@@ -4,7 +4,7 @@
 --
 -- Reversibilidad: el bloque SIEMPRE termina en una excepción, así que
 -- toda la transacción se revierte. Si todo pasa, la excepción es
--- «PRUEBAS_034_OK: R1 R9 R10 R2 R3 R4 R5 R6 R7 R8 R11»; si algo falla, es el
+-- «PRUEBAS_034_OK: R1 R9 R10 R2 R3 R4 R5 R6 R7 R8 R11 R12 R13»; si algo falla, es el
 -- mensaje de esa prueba.
 --
 -- No consume la numeración de OT: las OT de prueba se insertan con un
@@ -32,6 +32,10 @@
 --   R9  cancelar una OT ya cancelada → SV066 (sin cambios).
 --   R10 definición exacta del CHECK nuevo.
 --   R11 Inspector intenta cancelar una OT Pendiente → SV066 (sin cambios).
+--   R12 motivo vacío o NULL → SV066; la OT sigue Pendiente (sin cambios).
+--   R13 cancelar una OT Completada → SV066 (sin cambios).
+--   R3, R4, R8, R9, R11, R12 y R13 cubren los casos de cancelación de la 025
+--   (C6–C9, C11) sin consumir la numeración de OT.
 -- =====================================================================
 DO $$
 DECLARE
@@ -177,6 +181,34 @@ BEGIN
     PERFORM public.fn_cancel_work_order(v_ot, 'Prueba 034 R11', c_inspector);
     RAISE EXCEPTION 'R11 falló: un Inspector canceló la OT';
   EXCEPTION WHEN SQLSTATE 'SV066' THEN v_ok := v_ok || 'R11 ';
+  END;
+
+  -- R12 motivo vacío o NULL → SV066, la OT sigue Pendiente (OT de R5)
+  BEGIN
+    PERFORM public.fn_cancel_work_order(v_ot, '   ', c_municipal);
+    RAISE EXCEPTION 'R12 falló: aceptó motivo vacío';
+  EXCEPTION WHEN SQLSTATE 'SV066' THEN NULL;
+  END;
+  BEGIN
+    PERFORM public.fn_cancel_work_order(v_ot, NULL, c_municipal);
+    RAISE EXCEPTION 'R12 falló: aceptó motivo NULL';
+  EXCEPTION WHEN SQLSTATE 'SV066' THEN NULL;
+  END;
+  IF (SELECT estado_ot FROM public.work_orders WHERE id = v_ot) <> 'pendiente' THEN
+    RAISE EXCEPTION 'R12 falló: la OT cambió de estado';
+  END IF;
+  v_ok := v_ok || 'R12 ';
+
+  -- R13 cancelar una OT Completada → SV066 (estado terminal)
+  INSERT INTO public.work_orders (codigo_ot, project_id, tree_id, tipo_ot, accion_solicitada, subtipo_accion, prioridad,
+                                  ot_creado_por, responsable_accion_id, estado_ot, fecha_accion_programada, fecha_completada_ot)
+  VALUES ('OT-I-PRUEBA034-13', c_project, c_tree, 'inspeccion', 'reevaluacion', 'seguimiento', 'baja', c_municipal, c_inspector,
+          'completada', DATE '2026-11-01', DATE '2026-11-02')
+  RETURNING id INTO v_ot;
+  BEGIN
+    PERFORM public.fn_cancel_work_order(v_ot, 'Prueba 034 R13', c_municipal);
+    RAISE EXCEPTION 'R13 falló: canceló una OT completada';
+  EXCEPTION WHEN SQLSTATE 'SV066' THEN v_ok := v_ok || 'R13 ';
   END;
 
   -- Numeración intacta

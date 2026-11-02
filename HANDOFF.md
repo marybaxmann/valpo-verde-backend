@@ -35,6 +35,14 @@
 
 ---
 
+## ▶ Novedad 2026-11-02 (bloque 27) — Validación: bloqueo de credenciales y migración 034
+
+- **Validación por API bloqueada en la nube** (sin `.env` ni sesiones). Decisión de Valej: la ejecuta en su computador con PowerShell. Guía: `docs/plan/validacion-local-powershell.md`. Resultados por SQL y valores esperados: `docs/plan/plan-validacion-bloques-2026-11-02.md` §5.
+- **Defecto de CC-050:** cancelar una OT Pendiente fallaba (`chk_work_orders_fecha_programada`). Corregido con la **034**, aplicada en `gmlbmyreoxgoqrolhyxo` con el ciclo completo: `pruebas_034` R1–R13 y regresión `pruebas_033` N1–N9 en las dos rondas; reversión exacta; md5 up `8395abb51c6aacda19e59fb63e2923cf` / down `7e92c5fba6c59ff698b84850275891ff` = archivos; sin consumo de numeración; asesor sin hallazgos nuevos. **No** en la base real. `schema.sql` revisión 28.
+- **Numeración:** OT-I-000359 quedó consumida sin fila por un ensayo revertido; la próxima OT de Inspección será OT-I-000360.
+- **Sin push:** commits locales en `feature/fase6-backend-api` (autor Valej). `wip/bloque1-completar-ot`, `release/demo` y `main` sin cambios.
+- **Instrucción para el siguiente agente:** esperar los resultados de la validación local de Valej y registrarlos en el plan §5 y en `docs/registro-pendientes.md`; no publicar ni avanzar a otros bloques sin autorización.
+
 ## ▶ Novedad 2026-11-02 (bloque 26) — 033 aplicada en pruebas y publicación
 
 - **033 aplicada en `gmlbmyreoxgoqrolhyxo`** (entorno verificado: «valpo-verde-conecta-pruebas», no `ytcxswbulsmboucardxa`) con el ciclo completo: aplicar → `pruebas_033` (`PRUEBAS_033_OK: N7 N3 N2 N1 N4 N5 N6 N9 N8`) → revertir (triggers y datos de `work_orders` iguales a la línea base) → reaplicar → N1–N9 OK. md5 up `ec1032440230f504113b01f6176deee7` y down `5619734742849e50baf441ac7aeaa43f` = archivos en LF. `list_migrations` termina en 033, 033_down, 033. Asesor de seguridad sin hallazgos nuevos.
