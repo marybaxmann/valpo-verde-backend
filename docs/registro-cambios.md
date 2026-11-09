@@ -3006,13 +3006,13 @@ motivo)
 | Motivo | Separar condición fisiológica, condición estructural, riesgo e interacción con infraestructura, y corregir reglas sin respaldo o que invertían el resultado. |
 | Fundamento / fuente | Fuentes citadas por decisión en los `DECISIONES.md` de la auditoría, con las adaptaciones SIVU declaradas. |
 | Archivos afectados | Excel maestro y export; `docs/methodology/00-index.md`; `src/services/rules/engine/` (r01, r02, r03, m04, ensamblaje, catalogs, version); alcance y campos de evaluación; validación Zod; contrato API. |
-| Impacto en diagramas · Excel · BD · backend · API · frontend | Diagramas: ilustraciones aprobadas por la autora el 2026-11-08 (no forman parte del paquete, CC-030). Excel: tres hojas normativas y VERSION. BD: por confirmar (campos nuevos y ajuste de la probabilidad de falla). Backend y API: motor y validación. Frontend: formulario, resultados y ajuste. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Diagramas: ilustraciones aprobadas por la autora el 2026-11-08 (no forman parte del paquete, CC-030). Excel: tres hojas normativas y VERSION. BD: migraciones 035 (ajuste justificado de la probabilidad de falla) y 036 (`altura_punta_viva_m`), aplicadas solo en la base de pruebas; `schema.sql` revisión 29. Backend y API: motor y validación. Frontend: formulario, resultados y ajuste. |
 | Pruebas necesarias | Por regla y por borde de intervalo; precedencia de pisos; rama suspendida con datos faltantes; alcorque en sus cinco casos; `infraestructura_inmediata` = No; evaluaciones 2.1 conservadas sin recalcular; `verificar_14_9.py`. |
 | Dependencias | — |
-| rule_version | 3.0 prevista (paquete 3.0.0: cambia la agregación de M04 y de R01 a R03, §14.10) |
+| rule_version | 3.0 declarada por el motor en la rama `metodologia/cc-070-v3` (paquete 3.0.0: cambia la agregación de M04 y de R01 a R03, §14.10). Sin efecto hasta publicar el paquete. |
 | Aprobado por / Fecha de aprobación | — (decisiones de método: Valej, 2026-11-07 y 2026-11-08) |
-| Fecha de implementación | — |
-| Commits / PR asociados | — |
+| Fecha de implementación | Backend: 2026-11-09, en rama, sin publicar. Frontend pendiente. |
+| Commits / PR asociados | Rama `metodologia/cc-070-v3`: befcf55, d822f67, c512dc8, fa4ad87, ffb1dd9, 1193771, b6ce449, 7128545, a6526cb. Sin PR. |
 | Observaciones | **M04 y No determinado (IF-21):** se mantiene D-170 (el componente se excluye y la clasificación global nunca queda No determinada), y la clasificación se marca como parcial con aviso visible cuando hubo exclusión; a diferencia de R04, un componente No determinado no bloquea el resultado. **Preliminar:** CR-29 (vitalidad según edad, sin efecto en el cálculo). **Por revisar:** protocolos de cada evaluación y uso vigente de `src/services/rules/treeRisk.ts`. |
 
 **Historial de estados**
@@ -3023,3 +3023,4 @@ motivo)
 | 2026-11-08 | APROBADO METODOLÓGICAMENTE | Valej | Decidido el tratamiento de No determinado en M04: excluir el componente y marcar el resultado como parcial (IF-21). |
 | 2026-11-08 | APROBADO METODOLÓGICAMENTE (Excel 3.0.0 en preparación) | Valej | Excel maestro y export actualizados en la rama `metodologia/cc-070-v3`, con la versión 3.0.0 sin publicar. Pasa a FUENTE SINCRONIZADA al publicarla, junto con la implementación del motor. Campos agregados en la sincronización: `lcr_pct`, `abertura_cavidad_tronco_pct`, `abertura_cavidad_basal_pct`, `existe_elemento_vertical` y `componentes_no_determinados_infraestructura`. |
 | 2026-11-08 | APROBADO METODOLÓGICAMENTE (Excel 3.0.0 en preparación) | Valej | Árboles evaluados antes de la 3.0: sin relleno de datos. Sin los campos nuevos, el componente queda No determinado hasta una evaluación completa, y se acepta que CC-045 (b) sugiera las fechas de precaución de Extremo mientras tanto. |
+| 2026-11-09 | APROBADO METODOLÓGICAMENTE (Excel 3.0.0 en preparación; backend implementado en rama) | Valej | Migraciones 035 y 036 con ciclo de aplicar, revertir y reaplicar en la base de pruebas. Motor con `rule_version` 3.0; Jest 1670/1670. Flujo de borrador, finalización, cierre, descarte y anulación probado contra las funciones de la base de pruebas, con rollback. `verificar_14_9.py` sin hallazgos. Regresión SQL 018e y 020 parcial; lecturas de la API con sesión real sin probar. Pendiente: publicar el paquete 3.0.0, aplicar las migraciones fuera de pruebas y adaptar el frontend. |
