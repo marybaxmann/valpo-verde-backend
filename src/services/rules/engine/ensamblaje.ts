@@ -263,6 +263,7 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
     SL_basal_pct: nucleo.r01.variablesCalculo.SL_basal_pct,
     R_radio_basal_cm: nucleo.r01.variablesCalculo.R_radio_basal_cm,
     t_R_basal: nucleo.r01.variablesCalculo.t_R_basal,
+    abertura_cavidad_basal_pct: nucleo.r01.variablesCalculo.abertura_cavidad_basal_pct,
     SL_tronco_pct: nucleo.r02.variablesCalculo.SL_tronco_pct,
     R_radio_tronco_cm: nucleo.r02.variablesCalculo.R_radio_tronco_cm,
     t_R_tronco: nucleo.r02.variablesCalculo.t_R_tronco,
@@ -278,8 +279,10 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
 function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas) {
   return {
     estabilidad: nucleo.r01.indicadores.estabilidad,
-    raicesExpuestas: nucleo.r01.indicadores.raicesExpuestas,
+    raices: nucleo.r01.indicadores.raices,
     cavidadBasal: nucleo.r01.indicadores.cavidadBasal,
+    anillamiento: nucleo.r01.indicadores.anillamiento,
+    hongosBase: nucleo.r01.indicadores.hongos,
     cavidadTronco: nucleo.r02.indicadores.cavidadTronco,
     heridas: nucleo.r02.indicadores.heridas,
     cortezaMuertaAusente: nucleo.r02.indicadores.cortezaMuertaAusente,

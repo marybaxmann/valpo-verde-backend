@@ -54,7 +54,7 @@ const CLAVES_NUCLEO = [
   "levantamiento_del_plato_radicular", "angulo_inclinacion", "raices_expuestas", "necrosis_radicular",
   "raices_cortadas", "cavidad_pudricion_basal", "cavidad_basal_externa", "cavidad_basal_interna",
   "D_diametro_basal_tronco_cm", "d_diametro_cavidad_basal_cm", "Cc_longitud_abertura_cavidad_cm",
-  "C_circunferencia_basal_cm", "t_pared_residual_basal_cm",
+  "C_circunferencia_basal_cm", "t_pared_residual_basal_cm", "anillamiento", "cuerpos_fructiferos_base",
   "presenta_cavidad_pudricion_tronco", "cavidad_externa_tronco", "cavidad_interna_tronco",
   "D_diametro_tronco_cm", "d_diametro_cavidad_tronco_cm", "Cc_longitud_abertura_tronco_cm",
   "C_circunferencia_tronco_cm", "t_pared_residual_tronco_cm",

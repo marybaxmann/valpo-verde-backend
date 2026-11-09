@@ -73,6 +73,9 @@ function variablesCompletas(): Record<string, unknown> {
     ...variables,
     adelgazamiento_insuficiente_tronco: false,
     cuerpos_fructiferos_tronco: false,
+    anillamiento: false,
+    cuerpos_fructiferos_base: false,
+    raices_cortadas: false,
     angulo_inclinacion: 5,
     defoliacion_estimada_pct: 0,
     clorosis_pct: 0,
@@ -522,7 +525,7 @@ describe("composición y huella", () => {
       { zona_objetivo: "bajo_la_copa", observaciones_copa: "texto" },
       30
     ) as unknown as Record<string, unknown>;
-    expect(Object.keys(v)).toHaveLength(83);
+    expect(Object.keys(v)).toHaveLength(85);
     expect(v.dap_cm).toBe(30);
     expect(v.zona_objetivo).toBe("bajo_la_copa");
     expect(v.consecuencia_tronco).toBe("menor");

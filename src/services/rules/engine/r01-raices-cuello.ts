@@ -1,61 +1,69 @@
 /**
  * R01 — Raíces y cuello (REGLAS_INDICADORES: RC-EST-01 a 08, RC-REX-01 a
- * 05, RC-CAV-01 a 10; MATRICES_CALCULO R01). Fuente: Excel maestro
- * 2.1.0. No depende de treeRisk.ts ni de docs/methodology.
+ * 05, RC-CAV-01 a 11, RC-ANI-01 a 02, RC-HON-01 a 03; MATRICES_CALCULO
+ * R01). Fuente: Excel maestro 3.0.0 (CC-070). No depende de treeRisk.ts
+ * ni de docs/methodology.
  *
- * Tres indicadores parciales (Estabilidad, Raíces expuestas, Cavidad
- * basal). Puntaje total P_RC = suma de los tres, máximo 9. Tramos:
- * 0–1 improbable; 2–4 posible; 5 probable; 6–9 inminente.
+ * Pisos, que se aplican primero: plato levantado e inclinación > 30° →
+ * Inminente; plato levantado, inclinación > 45°, inclinación ≥ 15° con
+ * raíces cortadas o cavidad basal Severa → mínimo Probable. Con un piso
+ * no se calcula puntaje y un dato faltante en otro indicador no lo
+ * bloquea.
+ *
+ * Sin piso, P_RC = suma de los cinco indicadores. Tramos: 0 improbable;
+ * 1–3 posible; 4 o más probable.
  *
  * Regla de la responsable: el motor nunca rellena, supone ni sustituye
- * un dato (nada de `?? `, `|| `, ni "si falta, asumo tal cosa"). Si un
- * campo obligatorio o condicional activado no tiene valor, si el valor
- * está fuera del rango que define el diccionario, o si la combinación
- * de campos es imposible, el indicador queda no_determinado con un
- * motivo explícito — nunca 0 (CC-024) — y se propaga: el resultado
- * completo de R01 queda no_determinado. La validación de entrada
- * (Fase 6) debe rechazar antes de guardar las combinaciones que aquí
- * solo se detectan.
+ * un dato. Sin piso, un campo obligatorio o condicional activado sin
+ * valor, fuera de rango o una combinación imposible deja el indicador
+ * no_determinado con motivo — nunca 0 (CC-024) — y se propaga.
  *
  * SL_basal_pct, R_radio_basal_cm y t_R_basal son "Calculado por
- * plataforma... No admite ingreso manual" (D-46, D-48, D-49): este
- * módulo recibe las mediciones crudas (D, d, Cc, C, t) y los calcula
+ * plataforma": este módulo recibe las mediciones crudas y los calcula
  * con variables-calculo.ts — nunca los recibe ya calculados.
  *
  * `reglaId`: el ID exacto de REGLAS_INDICADORES que produjo el
- * resultado (p. ej. "RC-EST-01"), incluidos los terminales No
- * determinado que corresponden a una regla numerada (RC-CAV-09) o a
- * una combinación (RC-CAV-10). `null` cuando el resultado es un corte
- * genérico por dato faltante, fuera de dominio o combinación inválida
- * que el diccionario prohíbe pero que REGLAS_INDICADORES no numera.
+ * resultado. `null` cuando el resultado es un corte genérico por dato
+ * faltante, fuera de dominio o combinación inválida que el diccionario
+ * prohíbe pero que REGLAS_INDICADORES no numera.
  */
 
 import { esCodigoVigente, ProbabilidadFallaCodigo, ResultadoCavidadInternaCodigo, SeveridadCodigo } from "./catalogs";
 import { esBooleanoValido, motivoFueraDominioSiNo } from "./dominio";
-import { calcularRRadioBasalCm, calcularSLBasalPct, calcularTRBasal, ResultadoCalculo } from "./variables-calculo";
+import { ALERTA_MEDIR_PUDRICION } from "./r02-tronco";
+import {
+  calcularAberturaCavidadPct,
+  calcularRRadioBasalCm,
+  calcularSLBasalPct,
+  calcularTRBasal,
+  ResultadoCalculo,
+} from "./variables-calculo";
 
 export interface R01Input {
   // --- Estabilidad (RC-EST) — ambos obligatorios ---
   levantamiento_del_plato_radicular: boolean | null;
   angulo_inclinacion: number | null; // grados, 0°–90° (D-37)
 
-  // --- Raíces expuestas (RC-REX) ---
-  raices_expuestas: boolean | null; // obligatorio
+  // --- Raíces (RC-REX) ---
+  raices_expuestas: boolean | null; // obligatorio; contexto, no puntúa por sí solo
   necrosis_radicular: boolean | null; // condicional: activado por raices_expuestas = Sí
-  raices_cortadas: boolean | null; // condicional: activado por raices_expuestas = Sí
+  raices_cortadas: boolean | null; // obligatorio (RC-04)
 
   // --- Cavidad basal (RC-CAV) ---
   cavidad_pudricion_basal: boolean | null; // obligatorio
   cavidad_basal_externa: boolean | null; // condicional: activado por cavidad_pudricion_basal = Sí
   cavidad_basal_interna: ResultadoCavidadInternaCodigo | null; // condicional: activado por cavidad_pudricion_basal = Sí
 
-  // Mediciones crudas (D-42 a D-45, D-47). SL_basal_pct, R_radio_basal_cm
-  // y t_R_basal se calculan a partir de éstas — ver variables-calculo.ts.
+  // Mediciones crudas (D-42 a D-45, D-47).
   D_diametro_basal_tronco_cm: number | null; // D-42, condicional: cavidad_pudricion_basal = Sí
   d_diametro_cavidad_basal_cm: number | null; // D-43, condicional: cavidad_basal_externa = Sí
   Cc_longitud_abertura_cavidad_cm: number | null; // D-44, condicional: cavidad_basal_externa = Sí
   C_circunferencia_basal_cm: number | null; // D-45, condicional: cavidad_basal_externa = Sí
   t_pared_residual_basal_cm: number | null; // D-47, condicional: cavidad_basal_interna = "si"
+
+  // --- Anillamiento y hongos (RC-ANI, RC-HON) ---
+  anillamiento: boolean | null; // obligatorio
+  cuerpos_fructiferos_base: boolean | null; // obligatorio
 }
 
 export interface IndicadorResultado {
@@ -64,6 +72,7 @@ export interface IndicadorResultado {
   reglaId: string | null; // el ID de REGLAS_INDICADORES que produjo el resultado; null si es un corte genérico
   noDeterminado: boolean;
   motivo?: string; // presente solo si noDeterminado = true
+  alerta?: string; // RC-HON-02: aviso para el Inspector; no modifica el puntaje
 }
 
 const PUNTAJE_SEVERIDAD: Record<SeveridadCodigo, number> = {
@@ -85,6 +94,10 @@ function noDeterminado(motivo: string, reglaId: string | null = null): Indicador
 
 function masSevera(a: SeveridadCodigo, b: SeveridadCodigo): SeveridadCodigo {
   return ORDEN_SEVERIDAD.indexOf(a) >= ORDEN_SEVERIDAD.indexOf(b) ? a : b;
+}
+
+function anguloValido(angulo: number | null): angulo is number {
+  return angulo !== null && Number.isFinite(angulo) && angulo >= 0 && angulo <= 90;
 }
 
 /** RC-EST-01 a 08. */
@@ -109,7 +122,7 @@ function evaluarEstabilidad(input: R01Input): IndicadorResultado {
   if (levantamiento) {
     if (angulo < 15) return indicador("leve", "RC-EST-01");
     if (angulo <= 30) return indicador("moderada", "RC-EST-02");
-    if (angulo <= 45) return indicador("moderada", "RC-EST-03");
+    if (angulo <= 45) return indicador("severa", "RC-EST-03");
     return indicador("severa", "RC-EST-04");
   }
   if (angulo < 15) return indicador("despreciable", "RC-EST-05");
@@ -118,15 +131,24 @@ function evaluarEstabilidad(input: R01Input): IndicadorResultado {
   return indicador("severa", "RC-EST-08");
 }
 
-/** RC-REX-01 a 05. */
-function evaluarRaicesExpuestas(input: R01Input): IndicadorResultado {
+/** RC-REX-01 a 05. Sin raíces expuestas, necrosis no se observa: no equivale a raíz sana (RC-17). */
+function evaluarRaices(input: R01Input): IndicadorResultado {
   if (input.raices_expuestas === null) {
     return noDeterminado("raices_expuestas sin valor (RC-REX, obligatorio)");
   }
   if (!esBooleanoValido(input.raices_expuestas)) {
     return noDeterminado(motivoFueraDominioSiNo("raices_expuestas", input.raices_expuestas, "D-33"));
   }
-  if (!input.raices_expuestas) return indicador("despreciable", "RC-REX-01"); // necrosis/cortadas no se activan
+  if (input.raices_cortadas === null) {
+    return noDeterminado("raices_cortadas sin valor (RC-REX, obligatorio)");
+  }
+  if (!esBooleanoValido(input.raices_cortadas)) {
+    return noDeterminado(motivoFueraDominioSiNo("raices_cortadas", input.raices_cortadas, "D-35"));
+  }
+  const cortadas = input.raices_cortadas;
+  if (!input.raices_expuestas) {
+    return cortadas ? indicador("moderada", "RC-REX-04") : indicador("despreciable", "RC-REX-01");
+  }
 
   if (input.necrosis_radicular === null) {
     return noDeterminado("necrosis_radicular sin valor (RC-REX, condicional activado por raices_expuestas = Sí)");
@@ -134,15 +156,8 @@ function evaluarRaicesExpuestas(input: R01Input): IndicadorResultado {
   if (!esBooleanoValido(input.necrosis_radicular)) {
     return noDeterminado(motivoFueraDominioSiNo("necrosis_radicular", input.necrosis_radicular, "D-34"));
   }
-  if (input.raices_cortadas === null) {
-    return noDeterminado("raices_cortadas sin valor (RC-REX, condicional activado por raices_expuestas = Sí)");
-  }
-  if (!esBooleanoValido(input.raices_cortadas)) {
-    return noDeterminado(motivoFueraDominioSiNo("raices_cortadas", input.raices_cortadas, "D-35"));
-  }
   const necrosis = input.necrosis_radicular;
-  const cortadas = input.raices_cortadas;
-  if (!necrosis && !cortadas) return indicador("leve", "RC-REX-02");
+  if (!necrosis && !cortadas) return indicador("despreciable", "RC-REX-02");
   if (necrosis && !cortadas) return indicador("moderada", "RC-REX-03");
   if (!necrosis && cortadas) return indicador("moderada", "RC-REX-04");
   return indicador("severa", "RC-REX-05");
@@ -156,10 +171,11 @@ function evaluarPorSL(sl: ResultadoCalculo): IndicadorResultado {
   return indicador("severa", "RC-CAV-04");
 }
 
-/** Rama t/R (RC-CAV-06 a 08), aplicable cuando cavidad_basal_interna = "si". */
+/** Rama t/R (RC-CAV-06, 07, 08 y 11), aplicable cuando cavidad_basal_interna = "si". */
 function evaluarPorTR(tR: ResultadoCalculo): IndicadorResultado {
   if (tR.valor === null) return noDeterminado(`t_R_basal no calculable (RC-CAV-08): ${tR.motivo}`, "RC-CAV-08");
-  if (tR.valor > 0.3) return indicador("moderada", "RC-CAV-06");
+  if (tR.valor >= 0.42) return indicador("leve", "RC-CAV-06");
+  if (tR.valor >= 0.3) return indicador("moderada", "RC-CAV-11");
   return indicador("severa", "RC-CAV-07");
 }
 
@@ -168,9 +184,10 @@ interface CavidadBasalResultado {
   SL_basal_pct?: ResultadoCalculo;
   R_radio_basal_cm?: ResultadoCalculo;
   t_R_basal?: ResultadoCalculo;
+  abertura_cavidad_basal_pct?: ResultadoCalculo;
 }
 
-/** RC-CAV-01 a 10. */
+/** RC-CAV-01 a 11. */
 function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
   if (input.cavidad_pudricion_basal === null) {
     return { indicador: noDeterminado("cavidad_pudricion_basal sin valor (RC-CAV, obligatorio)") };
@@ -189,10 +206,12 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
     // Fuera de dominio: nunca se trata como la rama "si"/"no" más cercana.
     return { indicador: noDeterminado(`cavidad_basal_interna tiene un código no reconocido ("${input.cavidad_basal_interna}")`) };
   }
-  if (input.cavidad_basal_interna === "requiere_evaluacion_instrumental") {
-    return { indicador: noDeterminado("cavidad_basal_interna = Requiere evaluación instrumental (RC-CAV-09)", "RC-CAV-09") };
-  }
+  const requiereInstrumental = input.cavidad_basal_interna === "requiere_evaluacion_instrumental";
+  const noDeterminadoInstrumental = () =>
+    noDeterminado("cavidad_basal_interna = Requiere evaluación instrumental (RC-CAV-09)", "RC-CAV-09");
+
   if (input.cavidad_basal_externa === null) {
+    if (requiereInstrumental) return { indicador: noDeterminadoInstrumental() };
     return {
       indicador: noDeterminado("cavidad_basal_externa sin valor (RC-CAV, condicional activado por cavidad_pudricion_basal = Sí)"),
     };
@@ -202,6 +221,7 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
   }
 
   let SL_basal_pct: ResultadoCalculo | undefined;
+  let abertura_cavidad_basal_pct: ResultadoCalculo | undefined;
   let porSL: IndicadorResultado | null = null;
   if (input.cavidad_basal_externa) {
     SL_basal_pct = calcularSLBasalPct({
@@ -210,7 +230,17 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
       Cc_longitud_abertura_cavidad_cm: input.Cc_longitud_abertura_cavidad_cm,
       C_circunferencia_basal_cm: input.C_circunferencia_basal_cm,
     });
+    abertura_cavidad_basal_pct = calcularAberturaCavidadPct(input.Cc_longitud_abertura_cavidad_cm, input.C_circunferencia_basal_cm);
     porSL = evaluarPorSL(SL_basal_pct);
+  }
+
+  if (requiereInstrumental) {
+    // RC-15: una cavidad externa Severa fija el piso aunque la interna esté sin resolver.
+    return {
+      indicador: porSL?.severidad === "severa" ? porSL : noDeterminadoInstrumental(),
+      SL_basal_pct,
+      abertura_cavidad_basal_pct,
+    };
   }
 
   let R_radio_basal_cm: ResultadoCalculo | undefined;
@@ -221,93 +251,124 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
     t_R_basal = calcularTRBasal(input.t_pared_residual_basal_cm, input.D_diametro_basal_tronco_cm);
     porTR = evaluarPorTR(t_R_basal);
   }
+  const variables = { SL_basal_pct, R_radio_basal_cm, t_R_basal, abertura_cavidad_basal_pct };
 
   if (porSL === null && porTR === null) {
     // D-41: con cavidad_pudricion_basal = Sí, externa e interna no pueden
-    // ser ambas No. No se inventa una categoría: queda no_determinado,
-    // con el motivo, para que la Fase 6 lo rechace antes de guardar.
+    // ser ambas No. No se inventa una categoría.
     return {
       indicador: noDeterminado(
         "Combinación inválida: cavidad_pudricion_basal = Sí con cavidad_basal_externa = No y " +
           "cavidad_basal_interna = No (D-41); la Fase 6 debe rechazar esta combinación antes de guardar.",
       ),
-      SL_basal_pct,
-      R_radio_basal_cm,
-      t_R_basal,
+      ...variables,
     };
   }
   if (porSL === null || porTR === null) {
-    // Solo una de las dos vías está activa (externa = Sí xor interna =
-    // "si"): no es una combinación, es esa regla sola — conserva su
-    // propio reglaId (RC-CAV-02/03/04/05 o RC-CAV-06/07/08), determinada
-    // o no_determinado.
-    return { indicador: (porSL ?? porTR)!, SL_basal_pct, R_radio_basal_cm, t_R_basal };
+    return { indicador: (porSL ?? porTR)!, ...variables };
   }
 
-  // Ambas vías activas (externa = Sí e interna = "si"): aplica RC-CAV-10.
-  if (porSL.noDeterminado || porTR.noDeterminado) {
-    // Si alguna de las dos vías es no_determinado, el resultado
-    // combinado es no_determinado.
-    const motivos = [porSL, porTR].filter((p) => p.noDeterminado).map((p) => p.motivo);
-    return {
-      indicador: noDeterminado(`RC-CAV-10 (combinación externa+interna): ${motivos.join("; ")}`, "RC-CAV-10"),
-      SL_basal_pct,
-      R_radio_basal_cm,
-      t_R_basal,
-    };
+  // Ambas vías activas: la más severa (RC-CAV-10). Una vía Severa fija el piso aunque la otra no se determine.
+  if (porSL.severidad === "severa" || porTR.severidad === "severa") {
+    return { indicador: indicador("severa", "RC-CAV-10"), ...variables };
   }
-  return {
-    indicador: indicador(masSevera(porSL.severidad!, porTR.severidad!), "RC-CAV-10"),
-    SL_basal_pct,
-    R_radio_basal_cm,
-    t_R_basal,
-  };
+  if (porSL.noDeterminado || porTR.noDeterminado) {
+    const motivos = [porSL, porTR].filter((p) => p.noDeterminado).map((p) => p.motivo);
+    return { indicador: noDeterminado(`RC-CAV-10 (combinación externa+interna): ${motivos.join("; ")}`, "RC-CAV-10"), ...variables };
+  }
+  return { indicador: indicador(masSevera(porSL.severidad!, porTR.severidad!), "RC-CAV-10"), ...variables };
+}
+
+/** RC-ANI-01 a 02. */
+function evaluarAnillamiento(input: R01Input): IndicadorResultado {
+  const valor = input.anillamiento;
+  if (valor === null) return noDeterminado("anillamiento sin valor (RC-ANI, obligatorio)");
+  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("anillamiento", valor, "CC-070"));
+  return valor ? indicador("leve", "RC-ANI-02") : indicador("despreciable", "RC-ANI-01");
+}
+
+/** RC-HON-01 a 03. Si ya hay cavidad registrada, la pudrición está valorada allí y no se cuenta dos veces. */
+function evaluarHongos(input: R01Input): IndicadorResultado {
+  const valor = input.cuerpos_fructiferos_base;
+  if (valor === null) return noDeterminado("cuerpos_fructiferos_base sin valor (RC-HON, obligatorio)");
+  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("cuerpos_fructiferos_base", valor, "CC-070"));
+  if (!valor) return indicador("despreciable", "RC-HON-01");
+
+  const cavidad = input.cavidad_pudricion_basal;
+  if (cavidad === null || !esBooleanoValido(cavidad)) {
+    return noDeterminado("cuerpos_fructiferos_base = Sí sin un valor válido en cavidad_pudricion_basal (RC-HON)");
+  }
+  if (cavidad) return indicador("despreciable", "RC-HON-03");
+  return { ...indicador("leve", "RC-HON-02"), alerta: ALERTA_MEDIR_PUDRICION };
 }
 
 export interface R01Resultado {
   indicadores: {
     estabilidad: IndicadorResultado;
-    raicesExpuestas: IndicadorResultado;
+    raices: IndicadorResultado;
     cavidadBasal: IndicadorResultado;
+    anillamiento: IndicadorResultado;
+    hongos: IndicadorResultado;
   };
-  /** Variables calculadas (D-46, D-48, D-49), solo cuando la rama correspondiente se activó. */
+  /** Variables calculadas, solo cuando la rama correspondiente se activó. */
   variablesCalculo: {
     SL_basal_pct?: ResultadoCalculo;
     R_radio_basal_cm?: ResultadoCalculo;
     t_R_basal?: ResultadoCalculo;
+    abertura_cavidad_basal_pct?: ResultadoCalculo;
   };
-  puntaje: number | null; // null si probabilidadFalla = no_determinado
+  /** null si probabilidadFalla = no_determinado o si aplicó un piso. */
+  puntaje: number | null;
   probabilidadFalla: ProbabilidadFallaCodigo;
   motivo?: string; // presente solo si probabilidadFalla = no_determinado
 }
 
 function clasificarPuntaje(puntaje: number): ProbabilidadFallaCodigo {
-  if (puntaje <= 1) return "improbable";
-  if (puntaje <= 4) return "posible";
-  if (puntaje === 5) return "probable";
-  return "inminente"; // 6–9
+  if (puntaje === 0) return "improbable";
+  if (puntaje <= 3) return "posible";
+  return "probable"; // 4 o más
 }
 
 export function evaluarR01(input: R01Input): R01Resultado {
   const estabilidad = evaluarEstabilidad(input);
-  const raicesExpuestas = evaluarRaicesExpuestas(input);
+  const raices = evaluarRaices(input);
   const cavidad = evaluarCavidadBasal(input);
-  const indicadores = { estabilidad, raicesExpuestas, cavidadBasal: cavidad.indicador };
+  const anillamiento = evaluarAnillamiento(input);
+  const hongos = evaluarHongos(input);
+  const indicadores = { estabilidad, raices, cavidadBasal: cavidad.indicador, anillamiento, hongos };
   const variablesCalculo = {
     SL_basal_pct: cavidad.SL_basal_pct,
     R_radio_basal_cm: cavidad.R_radio_basal_cm,
     t_R_basal: cavidad.t_R_basal,
+    abertura_cavidad_basal_pct: cavidad.abertura_cavidad_basal_pct,
   };
+
+  // Los pisos se aplican antes de propagar No determinado (RC-13, RC-15).
+  const levantado = input.levantamiento_del_plato_radicular === true;
+  const angulo = anguloValido(input.angulo_inclinacion) ? input.angulo_inclinacion : null;
+  if (levantado && angulo !== null && angulo > 30) {
+    return { indicadores, variablesCalculo, puntaje: null, probabilidadFalla: "inminente" };
+  }
+  if (
+    levantado ||
+    (angulo !== null && angulo > 45) ||
+    (angulo !== null && angulo >= 15 && input.raices_cortadas === true) ||
+    cavidad.indicador.severidad === "severa"
+  ) {
+    return { indicadores, variablesCalculo, puntaje: null, probabilidadFalla: "probable" };
+  }
 
   const motivos: string[] = [];
   if (estabilidad.noDeterminado) motivos.push(`Estabilidad: ${estabilidad.motivo}`);
-  if (raicesExpuestas.noDeterminado) motivos.push(`Raíces expuestas: ${raicesExpuestas.motivo}`);
+  if (raices.noDeterminado) motivos.push(`Raíces: ${raices.motivo}`);
   if (cavidad.indicador.noDeterminado) motivos.push(`Cavidad basal: ${cavidad.indicador.motivo}`);
+  if (anillamiento.noDeterminado) motivos.push(`Anillamiento: ${anillamiento.motivo}`);
+  if (hongos.noDeterminado) motivos.push(`Hongos: ${hongos.motivo}`);
 
   if (motivos.length > 0) {
     return { indicadores, variablesCalculo, puntaje: null, probabilidadFalla: "no_determinado", motivo: motivos.join(" | ") };
   }
 
-  const puntaje = estabilidad.puntaje! + raicesExpuestas.puntaje! + cavidad.indicador.puntaje!;
+  const puntaje = Object.values(indicadores).reduce((suma, i) => suma + i.puntaje!, 0);
   return { indicadores, variablesCalculo, puntaje, probabilidadFalla: clasificarPuntaje(puntaje) };
 }

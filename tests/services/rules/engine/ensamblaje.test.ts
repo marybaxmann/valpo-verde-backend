@@ -26,7 +26,7 @@ function arbolSano(): NucleoEntradas {
     angulo_inclinacion: 0,
     raices_expuestas: false,
     necrosis_radicular: null,
-    raices_cortadas: null,
+    raices_cortadas: false,
     cavidad_pudricion_basal: false,
     cavidad_basal_externa: null,
     cavidad_basal_interna: null,
@@ -35,6 +35,8 @@ function arbolSano(): NucleoEntradas {
     Cc_longitud_abertura_cavidad_cm: null,
     C_circunferencia_basal_cm: null,
     t_pared_residual_basal_cm: null,
+    anillamiento: false,
+    cuerpos_fructiferos_base: false,
     // R02 — todo despreciable
     presenta_cavidad_pudricion_tronco: false,
     cavidad_externa_tronco: null,
