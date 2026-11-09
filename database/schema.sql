@@ -1,7 +1,14 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 28 — migración 034 (2026-11-02; CC-050):
+--   (revisión 29 — migraciones 035 y 036 (2026-11-09; CC-070):
+--   classification_adjustments admite ajustes de probabilidad de falla y
+--   fn_finalizar_inspeccion los valida; altura_punta_viva_m en trees,
+--   tree_data_versions y tree_data_versions_arbol_input, con
+--   chk_tdv_punta_viva, fn_refresh_tree_current y fn_save_inspection_draft
+--   (aplicadas solo en `valpo-verde-conecta-pruebas`, md5 de lo aplicado =
+--   archivo de migración en LF);
+--   antes revisión 28 — migración 034 (2026-11-02; CC-050):
 --   chk_work_orders_fecha_programada admite 'cancelada' sin fecha
 --   (copiado de lo aplicado en la base de pruebas, md5 = archivo). La 033
 --   (notifications) sigue sin consolidar aquí: ver
@@ -1147,6 +1154,7 @@ CREATE TABLE trees (
   altura_primera_rama_no_presenta BOOLEAN,
   altura_base_copa_viva_m       NUMERIC(6,2),                                   -- D-24
   altura_base_copa_viva_no_presenta BOOLEAN,
+  altura_punta_viva_m           NUMERIC(6,2),                                   -- CC-070; CR-15
   clase_edad                    TEXT CHECK (clase_edad IS NULL OR clase_edad IN (  -- D-25; códigos snake_case (PR-021)
     'joven', 'semimaduro', 'tempranamente_maduro', 'maduro', 'sobremaduro'
   )),
@@ -1544,6 +1552,7 @@ CREATE TABLE tree_data_versions (
   altura_primera_rama_no_presenta     BOOLEAN,
   altura_base_copa_viva_m             NUMERIC(6,2),
   altura_base_copa_viva_no_presenta   BOOLEAN,
+  altura_punta_viva_m                 NUMERIC(6,2),
   clase_edad                          TEXT CHECK (clase_edad IS NULL OR clase_edad IN (
     'joven', 'semimaduro', 'tempranamente_maduro', 'maduro', 'sobremaduro'
   )),
@@ -1572,7 +1581,14 @@ CREATE TABLE tree_data_versions (
   CONSTRAINT chk_tdv_base_copa_viva_no_presenta
     CHECK (altura_base_copa_viva_no_presenta IS NOT TRUE OR altura_base_copa_viva_m IS NULL),
   CONSTRAINT chk_tdv_primera_rama_le_altura
-    CHECK (altura_primera_rama_m IS NULL OR altura_total_m IS NULL OR altura_primera_rama_m <= altura_total_m)
+    CHECK (altura_primera_rama_m IS NULL OR altura_total_m IS NULL OR altura_primera_rama_m <= altura_total_m),
+  CONSTRAINT chk_tdv_punta_viva CHECK (
+    altura_punta_viva_m IS NULL OR (
+      altura_punta_viva_m >= 0
+      AND (altura_total_m IS NULL OR altura_punta_viva_m <= altura_total_m)
+      AND (altura_base_copa_viva_m IS NULL OR altura_base_copa_viva_m <= altura_punta_viva_m)
+    )
+  )
 );
 
 CREATE INDEX idx_tree_data_versions_tree ON tree_data_versions (tree_id, created_at DESC);
@@ -1838,6 +1854,9 @@ BEGIN
     altura_base_copa_viva_no_presenta = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados))
       THEN (SELECT v.altura_base_copa_viva_no_presenta FROM validas v WHERE 'altura_base_copa_viva_no_presenta' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.altura_base_copa_viva_no_presenta FROM alta a) END,
+    altura_punta_viva_m = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'altura_punta_viva_m' = ANY(v.campos_registrados))
+      THEN (SELECT v.altura_punta_viva_m FROM validas v WHERE 'altura_punta_viva_m' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
+      ELSE (SELECT a.altura_punta_viva_m FROM alta a) END,
     clase_edad = CASE WHEN EXISTS (SELECT 1 FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados))
       THEN (SELECT v.clase_edad FROM validas v WHERE 'clase_edad' = ANY(v.campos_registrados) ORDER BY v.ot_fecha_completada DESC, v.insp_fecha_inspeccion DESC, v.insp_created_at DESC LIMIT 1)
       ELSE (SELECT a.clase_edad FROM alta a) END,
@@ -2557,7 +2576,8 @@ CREATE TYPE tree_data_versions_arbol_input AS (
   altura_base_copa_viva_m            numeric(6,2),
   altura_base_copa_viva_no_presenta  boolean,
   clase_edad                         text,
-  rango_edad_estimada_anios          text
+  rango_edad_estimada_anios          text,
+  altura_punta_viva_m                numeric(6,2)
 );
 
 CREATE FUNCTION fn_save_inspection_draft(
@@ -2802,7 +2822,7 @@ BEGIN
       especie_cientifica, nombre_comun, multifustal, numero_fustes,
       dap_fustes_cm, dap_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m,
       copa_no_presenta, altura_primera_rama_m, altura_primera_rama_no_presenta,
-      altura_base_copa_viva_m, altura_base_copa_viva_no_presenta,
+      altura_base_copa_viva_m, altura_base_copa_viva_no_presenta, altura_punta_viva_m,
       clase_edad, rango_edad_estimada_anios, created_by
     ) VALUES (
       p_tree_id, v_inspection_id, p_campos_registrados_arbol,
@@ -2810,7 +2830,7 @@ BEGIN
       v_arbol.especie_cientifica, v_arbol.nombre_comun, v_arbol.multifustal, v_arbol.numero_fustes,
       v_arbol.dap_fustes_cm, v_arbol.dap_cm, v_arbol.altura_total_m, v_arbol.diametro_copa_ns_m, v_arbol.diametro_copa_eo_m,
       v_arbol.copa_no_presenta, v_arbol.altura_primera_rama_m, v_arbol.altura_primera_rama_no_presenta,
-      v_arbol.altura_base_copa_viva_m, v_arbol.altura_base_copa_viva_no_presenta,
+      v_arbol.altura_base_copa_viva_m, v_arbol.altura_base_copa_viva_no_presenta, v_arbol.altura_punta_viva_m,
       v_arbol.clase_edad, v_arbol.rango_edad_estimada_anios, p_registrado_por
     )
     ON CONFLICT (inspection_id) DO UPDATE SET
@@ -2826,6 +2846,7 @@ BEGIN
       altura_primera_rama_no_presenta = EXCLUDED.altura_primera_rama_no_presenta,
       altura_base_copa_viva_m = EXCLUDED.altura_base_copa_viva_m,
       altura_base_copa_viva_no_presenta = EXCLUDED.altura_base_copa_viva_no_presenta,
+      altura_punta_viva_m = EXCLUDED.altura_punta_viva_m,
       clase_edad = EXCLUDED.clase_edad, rango_edad_estimada_anios = EXCLUDED.rango_edad_estimada_anios
     RETURNING id INTO v_tree_data_version_id;
   ELSE
@@ -2857,7 +2878,7 @@ GRANT EXECUTE ON FUNCTION fn_save_inspection_draft(
 CREATE TABLE classification_adjustments (
   id                                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   evaluation_id                       UUID NOT NULL REFERENCES evaluations(id) ON DELETE RESTRICT,
-  campo                               TEXT NOT NULL CHECK (campo IN ('clasificacion_riesgo', 'clasificacion_infraestructura', 'clasificacion_prioridad')),
+  campo                               TEXT NOT NULL CHECK (campo IN ('clasificacion_riesgo', 'clasificacion_infraestructura', 'clasificacion_prioridad', 'probabilidad_falla_raices_cuello', 'probabilidad_falla_tronco', 'probabilidad_falla_copa_ramas')),
   valor_calculado                     TEXT,
   valor_ajustado                      TEXT NOT NULL,
   justificacion_ajuste_clasificacion  TEXT NOT NULL,
@@ -3079,7 +3100,8 @@ BEGIN
   FOR v_ajuste IN SELECT * FROM jsonb_array_elements(COALESCE(p_ajustes, '[]'::jsonb))
   LOOP
     v_campo := v_ajuste->>'campo';
-    IF v_campo IS NULL OR v_campo NOT IN ('clasificacion_riesgo', 'clasificacion_infraestructura', 'clasificacion_prioridad') THEN
+    IF v_campo IS NULL OR v_campo NOT IN ('clasificacion_riesgo', 'clasificacion_infraestructura', 'clasificacion_prioridad',
+      'probabilidad_falla_raices_cuello', 'probabilidad_falla_tronco', 'probabilidad_falla_copa_ramas') THEN
       RAISE EXCEPTION 'Ajuste con un campo no ajustable: %', v_campo USING ERRCODE = 'SV064';
     END IF;
     IF v_campo = ANY(v_campos_ajustados) THEN
@@ -3097,6 +3119,9 @@ BEGIN
       WHEN 'clasificacion_riesgo' THEN v_resultado.clasificacion_riesgo_calculada
       WHEN 'clasificacion_infraestructura' THEN v_resultado.clasificacion_infraestructura_calculada
       WHEN 'clasificacion_prioridad' THEN v_resultado.clasificacion_prioridad_calculada
+      WHEN 'probabilidad_falla_raices_cuello' THEN v_resultado.probabilidad_falla_raices_cuello
+      WHEN 'probabilidad_falla_tronco' THEN v_resultado.probabilidad_falla_tronco
+      WHEN 'probabilidad_falla_copa_ramas' THEN v_resultado.probabilidad_falla_copa_ramas
     END;
     v_ajustada := CASE v_campo
       WHEN 'clasificacion_riesgo' THEN v_resultado.clasificacion_riesgo_ajustada
@@ -3109,7 +3134,13 @@ BEGIN
         v_campo, v_ajuste->>'valor_calculado', v_calculada
         USING ERRCODE = 'SV064';
     END IF;
-    IF (v_ajuste->>'valor_ajustado') IS DISTINCT FROM v_ajustada THEN
+    -- CC-070: la probabilidad ajustada no tiene columna _ajustada; se valida su dominio.
+    IF v_campo LIKE 'probabilidad_falla_%' THEN
+      IF (v_ajuste->>'valor_ajustado') NOT IN ('improbable', 'posible', 'probable', 'inminente') THEN
+        RAISE EXCEPTION 'Ajuste de %: valor_ajustado fuera del dominio (%)', v_campo, v_ajuste->>'valor_ajustado'
+          USING ERRCODE = 'SV064';
+      END IF;
+    ELSIF (v_ajuste->>'valor_ajustado') IS DISTINCT FROM v_ajustada THEN
       RAISE EXCEPTION 'Ajuste de %: valor_ajustado (%) distinto de %_ajustada en el resultado (%)',
         v_campo, v_ajuste->>'valor_ajustado', v_campo, v_ajustada
         USING ERRCODE = 'SV064';
