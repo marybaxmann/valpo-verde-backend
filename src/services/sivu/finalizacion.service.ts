@@ -45,8 +45,8 @@ import { mensajeCheck } from "../../utils/mensajesBase";
  */
 
 /**
- * Las 76 entradas del núcleo del motor (`NucleoEntradas`): R01, R02,
- * R03, M04, alcorque y M01/consecuencias. El chequeo de tipos de abajo
+ * Las entradas del núcleo del motor (`NucleoEntradas`): R01, R02, R03,
+ * condición de copa, M04, alcorque y M01/consecuencias. El chequeo de tipos de abajo
  * falla si el motor agrega o quita una entrada y esta lista no se
  * actualiza.
  */
@@ -61,7 +61,8 @@ const CLAVES_NUCLEO = [
   "presenta_heridas_tronco", "condicion_heridas_tronco", "corteza_muerta_ausente", "presenta_exudaciones",
   "presenta_fisura_grieta_tronco", "afectacion_fisura_grieta", "direccion_grieta",
   "troncos_codominantes", "grieta_union_codominante", "corteza_incluida",
-  "ramas_secas", "ramas_secas_pct_copa", "ramas_quebradas", "desequilibrio_copa", "defoliacion_estimada_pct",
+  "ramas_secas", "ramas_secas_pct_copa", "ramas_quebradas", "permanece_suspendida",
+  "desequilibrio_copa", "defoliacion_estimada_pct", "sin_follaje_estacional", "muerte_regresiva_copa_pct",
   "infraestructura_inmediata", "interferencia_redes_servicios",
   "existe_vereda", "dano_interferencia_vereda", "presenta_levantamiento_vereda", "presenta_grieta_vereda",
   "presenta_hundimiento_vereda", "desnivel_max_vereda_cm", "ancho_max_grieta_vereda_cm",
@@ -336,7 +337,7 @@ async function calcular(
 /**
  * `variables_calculo` (diseño Fase 3, §3.9): cada entrada del núcleo
  * con lo registrado en esta inspección; si no lo registró, el valor
- * vigente del árbol; si tampoco hay, null. Solo las 76 claves del
+ * vigente del árbol; si tampoco hay, null. Solo las claves del
  * núcleo: lo demás del borrador (observaciones, vitalidad, etc.) no
  * entra al cálculo.
  */

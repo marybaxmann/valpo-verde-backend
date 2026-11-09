@@ -99,6 +99,7 @@ import {
   calcularFechaProximoMonitoreo,
   FechaSugeridaResultado,
 } from "./fechas-sugeridas";
+import { calcularClaseCondicionItree, CondicionCopaInput, evaluarDefoliacion, evaluarDesequilibrio } from "./condicion-copa";
 import { calcularCumplimientoDistanciaSeguridad, evaluarM04, M04Input, M04Resultado } from "./m04-infraestructura";
 import { evaluarM01 } from "./m01-probabilidad-impacto";
 import { evaluarClasificacionComponente } from "./m02-m03-clasificacion-componente";
@@ -186,6 +187,7 @@ export interface EntradasAlcorque {
 export type NucleoEntradas = R01Input &
   R02Input &
   R03Input &
+  CondicionCopaInput &
   M04Input &
   EntradasAlcorque & {
     zona_objetivo: ZonaObjetivoCodigo | null;
@@ -268,10 +270,11 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
     // D-142, calculado desde distancia_copa_red_aerea_m (D-140) — no es
     // un ResultadoCalculo con `motivo`; es "cumple"/"no_cumple"/null.
     cumplimiento_distancia_seguridad_bt_mt: calcularCumplimientoDistanciaSeguridad(entradas.distancia_copa_red_aerea_m),
+    clase_condicion_itree: calcularClaseCondicionItree(entradas.muerte_regresiva_copa_pct),
   };
 }
 
-function calcularIndicadores(nucleo: NucleoResultado) {
+function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas) {
   return {
     estabilidad: nucleo.r01.indicadores.estabilidad,
     raicesExpuestas: nucleo.r01.indicadores.raicesExpuestas,
@@ -284,8 +287,9 @@ function calcularIndicadores(nucleo: NucleoResultado) {
     codominancia: nucleo.r02.indicadores.codominancia,
     ramasSecas: nucleo.r03.indicadores.ramasSecas,
     ramasQuebradas: nucleo.r03.indicadores.ramasQuebradas,
-    desequilibrioCopa: nucleo.r03.indicadores.desequilibrioCopa,
-    defoliacion: nucleo.r03.indicadores.defoliacion,
+    // Condición y contexto de copa (CC-070): se informan, pero no entran en R03.
+    desequilibrioCopa: evaluarDesequilibrio(entradas),
+    defoliacion: evaluarDefoliacion(entradas),
     vereda: nucleo.m04.componentes.vereda,
     calzada: nucleo.m04.componentes.calzada,
     alcorque: nucleo.m04.componentes.alcorque,
@@ -619,7 +623,7 @@ export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): Res
     variables: args.variables,
     variables_calculo: args.variablesCalculo,
     calculados: calcularCalculados(args.variablesCalculo, nucleo),
-    indicadores: calcularIndicadores(nucleo),
+    indicadores: calcularIndicadores(nucleo, args.variablesCalculo),
     puntaje_raices_cuello: nucleo.r01.puntaje,
     probabilidad_falla_raices_cuello: nucleo.r01.probabilidadFalla,
     puntaje_tronco: nucleo.r02.puntaje,
@@ -722,7 +726,7 @@ export function ensamblarResultadoVigente(args: ArgsResultadoVigente): Resultado
   return {
     entradas_vigentes: args.variablesCalculo,
     calculados: calcularCalculados(args.variablesCalculo, nucleo),
-    indicadores: calcularIndicadores(nucleo),
+    indicadores: calcularIndicadores(nucleo, args.variablesCalculo),
     puntaje_raices_cuello: nucleo.r01.puntaje,
     probabilidad_falla_raices_cuello: nucleo.r01.probabilidadFalla,
     puntaje_tronco: nucleo.r02.puntaje,

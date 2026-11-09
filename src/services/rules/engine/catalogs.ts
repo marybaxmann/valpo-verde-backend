@@ -258,6 +258,8 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_vitalidad", codigo: "2_estancamiento", etiqueta: "2 Estancamiento", orden: 2, estado: "vigente", cc: "AM-17" },
   { catalogo: "clasificacion_vitalidad", codigo: "3_resignacion", etiqueta: "3 Resignación", orden: 3, estado: "vigente", cc: "AM-17" },
   { catalogo: "clasificacion_vitalidad", codigo: "muerto", etiqueta: "Muerto", orden: 4, estado: "vigente", cc: "AM-17" },
+  { catalogo: "clasificacion_vitalidad", codigo: "no_evaluable_poda", etiqueta: "No evaluable (poda importante)", orden: 5, estado: "vigente", cc: "CC-070" },
+  { catalogo: "clasificacion_vitalidad", codigo: "no_evaluable_descabezado", etiqueta: "No evaluable (descabezado)", orden: 6, estado: "vigente", cc: "CC-070" },
 
   // --- clase_edad: D-25. Dominio literal de la columna H; códigos de camposArbolBaseSchema (inspeccion.schema.ts). Expuesto por B16. ---
   { catalogo: "clase_edad", codigo: "joven", etiqueta: "Joven", orden: 0, estado: "vigente", cc: "PR-021" },
@@ -431,7 +433,14 @@ export type SiNoNoDeterminadoCodigo = "si" | "no" | "no_determinado";
 export type CategoriaInfraestructuraCodigo = "no_aplica" | "sin_afectacion" | "leve" | "moderada" | "severa" | "no_determinado";
 export type ClasificacionInfraestructuraCodigo = "bajo" | "moderado" | "alto" | "critico" | "no_aplica";
 export type ClasificacionPrioridadCodigo = "baja" | "media" | "alta" | "critica" | "no_determinado";
-export type ClasificacionVitalidadCodigo = "0_exploracion" | "1_degeneracion" | "2_estancamiento" | "3_resignacion" | "muerto";
+export type ClasificacionVitalidadCodigo =
+  | "0_exploracion"
+  | "1_degeneracion"
+  | "2_estancamiento"
+  | "3_resignacion"
+  | "muerto"
+  | "no_evaluable_poda"
+  | "no_evaluable_descabezado";
 export type TipoRedAereaCodigo = "electrica" | "telecomunicaciones" | "alumbrado_publico" | "otra" | "funcion_no_determinada";
 export type FormaAlcorqueCodigo = "rectangular" | "circular" | "irregular";
 export type TipoInspeccionRealizadaCodigo =

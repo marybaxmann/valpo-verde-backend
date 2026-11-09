@@ -58,8 +58,11 @@ function arbolSano(): NucleoEntradas {
     ramas_secas: false,
     ramas_secas_pct_copa: null,
     ramas_quebradas: false,
+    permanece_suspendida: null,
     desequilibrio_copa: false,
     defoliacion_estimada_pct: 0,
+    sin_follaje_estacional: false,
+    muerte_regresiva_copa_pct: 0,
     // M04 — sin infraestructura inmediata (alcorque sin_afectacion, el resto no_aplica)
     infraestructura_inmediata: false,
     interferencia_redes_servicios: null,

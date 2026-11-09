@@ -514,12 +514,12 @@ describe("Monitoreo con fecha vigente (CC-055)", () => {
 });
 
 describe("composición y huella", () => {
-  it("variables_calculo: registrado sobre vigente, null si no hay, solo las 76 claves del núcleo", () => {
+  it("variables_calculo: registrado sobre vigente, null si no hay, solo las claves del núcleo", () => {
     const v = componerVariablesCalculo(
       { zona_objetivo: "rara_vez", consecuencia_tronco: "menor", clasificacion_vitalidad: "muerto" },
       { zona_objetivo: "bajo_la_copa", observaciones_copa: "texto" }
     ) as unknown as Record<string, unknown>;
-    expect(Object.keys(v)).toHaveLength(76);
+    expect(Object.keys(v)).toHaveLength(79);
     expect(v.zona_objetivo).toBe("bajo_la_copa");
     expect(v.consecuencia_tronco).toBe("menor");
     expect(v.raices_expuestas).toBeNull();
