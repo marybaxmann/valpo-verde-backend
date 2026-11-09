@@ -33,6 +33,7 @@ import {
   componerVariablesCalculo,
   finalizarInspeccion,
   huellaCalculo,
+  resolverDatosLcr,
 } from "../../../src/services/sivu/finalizacion.service";
 import { REGLAS_COMPLETITUD } from "../../../src/schemas/sivu/completitudInspeccion";
 import { MOTIVO_CONSERVA_VIGENTE } from "../../../src/services/rules/engine/fechas-sugeridas";
@@ -544,5 +545,66 @@ describe("composición y huella", () => {
     expect(huellaCalculo({ ...base, variablesCalculo: a })).not.toBe(
       huellaCalculo({ ...base, variablesCalculo: a, fechaVigente: "2027-01-01" })
     );
+  });
+});
+
+describe("ajuste de probabilidad de falla y datos de LCR (CC-070)", () => {
+  it("/finalizar envía el ajuste con su valor calculado y no agrega columnas al resultado", async () => {
+    preparar();
+    const huella = await huellaActual();
+    const { resultado: calculo } = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    const valorAjustado = calculo.probabilidad_falla_tronco === "inminente" ? "probable" : "inminente";
+    await finalizarInspeccion(
+      usuario(),
+      INSPECTION_ID,
+      { huella, ajustes: { probabilidad_falla_tronco: { valor_ajustado: valorAjustado, justificacion_ajuste_clasificacion: "Fisura activa" } } },
+      TOKEN
+    );
+    const { resultado, ajustes } = mockFinalizarRpc.mock.calls[0][0];
+    expect(ajustes).toEqual([
+      {
+        campo: "probabilidad_falla_tronco",
+        valor_calculado: calculo.probabilidad_falla_tronco,
+        valor_ajustado: valorAjustado,
+        justificacion_ajuste_clasificacion: "Fisura activa",
+      },
+    ]);
+    expect(resultado).not.toHaveProperty("probabilidad_falla_tronco_ajustada");
+  });
+
+  it("un ajuste de probabilidad igual al calculado se rechaza (422)", async () => {
+    preparar();
+    const { resultado: calculo } = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    await expect(
+      calcularInspeccion(
+        usuario(),
+        INSPECTION_ID,
+        {
+          ajustes: {
+            probabilidad_falla_tronco: {
+              valor_ajustado: calculo.probabilidad_falla_tronco as "improbable",
+              justificacion_ajuste_clasificacion: "x",
+            },
+          },
+        },
+        TOKEN
+      )
+    ).rejects.toMatchObject({ statusCode: 422 });
+  });
+
+  it("resolverDatosLcr: lo registrado gana a lo vigente; tipo_hoja viene del árbol; texto numérico se convierte", () => {
+    expect(
+      resolverDatosLcr(
+        { campos: { altura_punta_viva_m: 9 }, camposRegistrados: ["altura_punta_viva_m"] },
+        { altura_punta_viva_m: "7.5", altura_base_copa_viva_m: "3", altura_total_m: "10", tipo_hoja: "palmera" }
+      )
+    ).toEqual({ altura_punta_viva_m: 9, altura_base_copa_viva_m: 3, altura_total_m: 10, tipo_hoja: "palmera" });
+  });
+
+  it("un cambio de altura de punta viva cambia la huella", () => {
+    const base = { tipo: "evaluacion_inicial", subtipo: null, fechaInspeccion: FECHA_INSPECCION, fechaVigente: null };
+    const a = componerVariablesCalculo({}, {}, null, { altura_punta_viva_m: 9 });
+    const b = componerVariablesCalculo({}, {}, null, { altura_punta_viva_m: 8 });
+    expect(huellaCalculo({ ...base, variablesCalculo: a })).not.toBe(huellaCalculo({ ...base, variablesCalculo: b }));
   });
 });

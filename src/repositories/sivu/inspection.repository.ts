@@ -26,6 +26,7 @@ export interface CamposArbol {
   altura_primera_rama_no_presenta?: boolean | null;
   altura_base_copa_viva_m?: number | null;
   altura_base_copa_viva_no_presenta?: boolean | null;
+  altura_punta_viva_m?: number | null;
   clase_edad?: string | null;
   rango_edad_estimada_anios?: string | null;
 }
@@ -168,7 +169,7 @@ export async function obtenerInspeccionPorId(inspectionId: string): Promise<Insp
 
 /** Campos de ARBOLES que guardan `trees` y `tree_data_versions` (los 20 de `CamposArbol`). */
 const COLUMNAS_ARBOL =
-  "sector, ubicacion_descriptiva, utm_este, utm_norte, especie_cientifica, nombre_comun, multifustal, numero_fustes, dap_fustes_cm, dap_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, copa_no_presenta, altura_primera_rama_m, altura_primera_rama_no_presenta, altura_base_copa_viva_m, altura_base_copa_viva_no_presenta, clase_edad, rango_edad_estimada_anios";
+  "sector, ubicacion_descriptiva, utm_este, utm_norte, especie_cientifica, nombre_comun, multifustal, numero_fustes, dap_fustes_cm, dap_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, copa_no_presenta, altura_primera_rama_m, altura_primera_rama_no_presenta, altura_base_copa_viva_m, altura_base_copa_viva_no_presenta, altura_punta_viva_m, clase_edad, rango_edad_estimada_anios";
 
 /** `evaluations.variables` del borrador de esta inspección; null si todavía no tiene evaluación. */
 export async function obtenerVariablesBorrador(
@@ -266,7 +267,13 @@ export async function obtenerFechaProximaInspeccionVigente(accessToken: string, 
 }
 
 export interface AjusteFinalizacion {
-  campo: "clasificacion_riesgo" | "clasificacion_infraestructura" | "clasificacion_prioridad";
+  campo:
+    | "clasificacion_riesgo"
+    | "clasificacion_infraestructura"
+    | "clasificacion_prioridad"
+    | "probabilidad_falla_raices_cuello"
+    | "probabilidad_falla_tronco"
+    | "probabilidad_falla_copa_ramas";
   valor_calculado: string;
   valor_ajustado: string;
   justificacion_ajuste_clasificacion: string;

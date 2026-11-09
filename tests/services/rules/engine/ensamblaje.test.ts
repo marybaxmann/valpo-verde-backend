@@ -541,3 +541,96 @@ describe("CC-055 — fecha_proxima_inspeccion sugerida según el tipo de inspecc
     },
   );
 });
+
+describe("ajuste de la probabilidad de falla (CC-070)", () => {
+  const entradas = (): NucleoEntradas => ({
+    ...arbolSano(),
+    tasa_ocupacion_objetivo: "frecuente",
+    consecuencia_tronco: "severa",
+  });
+  const ajusteTronco = (calculado: "improbable" | "posible" = "improbable") => ({
+    valorAjustado: "inminente" as const,
+    valorCalculadoEnElAjuste: calculado,
+    adjustmentId: "adj-tronco",
+    inspectionId: "insp-1",
+  });
+
+  it("la probabilidad efectiva alimenta M02/M03, pero la calculada se conserva", () => {
+    const sin = ensamblarResultadoEvaluacion({ ...argsEvaluacionSana(), variablesCalculo: entradas() });
+    const con = ensamblarResultadoEvaluacion({
+      ...argsEvaluacionSana(),
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: ajusteTronco() },
+    });
+    expect(sin.clasificacion_tronco).toBe("bajo");
+    expect(sin.probabilidad_falla_tronco_ajustada).toBeNull();
+    expect(con.probabilidad_falla_tronco).toBe("improbable");
+    expect(con.probabilidad_falla_tronco_ajustada).toBe("inminente");
+    expect(con.clasificacion_tronco).toBe("extremo");
+    expect(con.clasificacion_riesgo_calculada).toBe("extremo");
+    expect(con.inspeccion.nivelRiesgo).toBe("extremo");
+  });
+
+  it("se descarta si la probabilidad recalculada ya no coincide y se marca revisión", () => {
+    const r = ensamblarResultadoVigente({
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: ajusteTronco("posible") },
+      motorCommit: "abc1234",
+    });
+    expect(r.clasificacion_tronco).toBe("bajo");
+    expect(r.adjustment_ids).toEqual([]);
+    expect(r.requiere_revision_ajuste).toBe(true);
+    expect(r.ajustes_descartados[0]).toMatchObject({ campo: "probabilidad_falla_tronco", adjustmentId: "adj-tronco" });
+  });
+
+  it("se mantiene en la vigente cuando coincide", () => {
+    const r = ensamblarResultadoVigente({
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: ajusteTronco() },
+      motorCommit: "abc1234",
+    });
+    expect(r.clasificacion_tronco).toBe("extremo");
+    expect(r.adjustment_ids).toEqual(["adj-tronco"]);
+    expect(r.requiere_revision_ajuste).toBe(false);
+  });
+
+  it("el ajuste de una inspección anulada se ignora por completo", () => {
+    const r = ensamblarResultadoVigente({
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: ajusteTronco() },
+      inspeccionAnuladaId: "insp-1",
+      motorCommit: "abc1234",
+    });
+    expect(r.clasificacion_tronco).toBe("bajo");
+    expect(r.adjustment_ids).toEqual([]);
+    expect(r.ajustes_descartados).toEqual([]);
+  });
+
+  it("un valor ajustado no_determinado se descarta por fuera de dominio", () => {
+    const r = ensamblarResultadoEvaluacion({
+      ...argsEvaluacionSana(),
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: { ...ajusteTronco(), valorAjustado: "no_determinado" } },
+    });
+    expect(r.clasificacion_tronco).toBe("bajo");
+    expect(r.ajustesDescartados[0].motivo).toBe("valor ajustado fuera del dominio");
+  });
+});
+
+describe("lcr_pct en calculados (CC-070)", () => {
+  const conLcr = (extra: Partial<NucleoEntradas>) =>
+    ensamblarResultadoEvaluacion({ ...argsEvaluacionSana(), variablesCalculo: { ...arbolSano(), ...extra } }).calculados;
+
+  it("calcula el porcentaje y no altera la clasificación", () => {
+    const c = conLcr({ altura_punta_viva_m: 10, altura_base_copa_viva_m: 4, altura_total_m: 10, tipo_hoja: "latifoliada" });
+    expect(c.lcr_pct).toBe(60);
+    expect(c.alerta_lcr).toBe(false);
+  });
+  it("alerta bajo 40 %", () => {
+    expect(conLcr({ altura_punta_viva_m: 8, altura_base_copa_viva_m: 6, altura_total_m: 10, tipo_hoja: "latifoliada" }).alerta_lcr).toBe(true);
+  });
+  it("no se calcula en palmeras ni sin los datos", () => {
+    expect(conLcr({ altura_punta_viva_m: 10, altura_base_copa_viva_m: 4, altura_total_m: 10, tipo_hoja: "palmera" }).lcr_pct).toBeNull();
+    expect(conLcr({}).lcr_pct).toBeNull();
+  });
+});

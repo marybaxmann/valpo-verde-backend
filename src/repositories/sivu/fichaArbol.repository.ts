@@ -38,6 +38,7 @@ export interface ArbolFichaRow {
   altura_primera_rama_no_presenta: boolean | null;
   altura_base_copa_viva_m: number | null;
   altura_base_copa_viva_no_presenta: boolean | null;
+  altura_punta_viva_m: number | null;
   clase_edad: string | null;
   rango_edad_estimada_anios: string | null;
   vigente_desde_inspection_id: string | null;
@@ -48,7 +49,7 @@ export const CAMPOS_MEDICION = [
   "sector", "ubicacion_descriptiva", "utm_este", "utm_norte", "especie_cientifica", "nombre_comun",
   "multifustal", "numero_fustes", "dap_fustes_cm", "dap_cm", "altura_total_m",
   "diametro_copa_ns_m", "diametro_copa_eo_m", "diametro_copa_m", "copa_no_presenta",
-  "altura_primera_rama_m", "altura_primera_rama_no_presenta", "altura_base_copa_viva_m", "altura_base_copa_viva_no_presenta",
+  "altura_primera_rama_m", "altura_primera_rama_no_presenta", "altura_base_copa_viva_m", "altura_base_copa_viva_no_presenta", "altura_punta_viva_m",
   "clase_edad", "rango_edad_estimada_anios",
 ] as const;
 

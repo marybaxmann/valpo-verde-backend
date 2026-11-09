@@ -23,7 +23,7 @@ import {
 import { OrdenTrabajoRow, obtenerOrdenTrabajoPorId } from "../../repositories/sivu/workOrder.repository";
 import { obtenerArbolVigente, obtenerInspeccionPorId, obtenerVersionArbolDeInspeccion } from "../../repositories/sivu/inspection.repository";
 import { AjusteVigente, AjustesEntrada, ensamblarResultadoVigente } from "../rules/engine/ensamblaje";
-import { componerVariablesCalculo, resolverDapCm } from "./finalizacion.service";
+import { componerVariablesCalculo, resolverDapCm, resolverDatosLcr } from "./finalizacion.service";
 
 /** Intentos ante SV068: la composición cambió entre la lectura y la escritura. */
 const INTENTOS_COMPLETAR = 2;
@@ -45,7 +45,14 @@ async function otDeInspeccion(workOrderId: string): Promise<OrdenTrabajoRow> {
  */
 function ajustesDeLaInspeccion(ajustes: readonly AjusteRegistradoRow[], inspectionId: string): AjustesEntrada {
   const entrada: AjustesEntrada = {};
-  const clave = { clasificacion_riesgo: "riesgo", clasificacion_infraestructura: "infraestructura", clasificacion_prioridad: "prioridad" } as const;
+  const clave = {
+    clasificacion_riesgo: "riesgo",
+    clasificacion_infraestructura: "infraestructura",
+    clasificacion_prioridad: "prioridad",
+    probabilidad_falla_raices_cuello: "probabilidadRaicesCuello",
+    probabilidad_falla_tronco: "probabilidadTronco",
+    probabilidad_falla_copa_ramas: "probabilidadCopaRamas",
+  } as const;
   const propios = ajustes
     .filter((a) => a.inspection_id === inspectionId)
     .sort((a, b) => a.fecha_ajuste.localeCompare(b.fecha_ajuste));
@@ -83,7 +90,12 @@ async function prepararEvaluaciones(workOrderId: string, accessToken: string): P
         obtenerArbolVigente(accessToken, treeId),
       ]);
       const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
-        variablesCalculo: componerVariablesCalculo(composicion.entradas_vigentes, {}, resolverDapCm(versionArbol, arbolVigente)),
+        variablesCalculo: componerVariablesCalculo(
+          composicion.entradas_vigentes,
+          {},
+          resolverDapCm(versionArbol, arbolVigente),
+          resolverDatosLcr(versionArbol, arbolVigente)
+        ),
         ajustes: ajustesDeLaInspeccion(ajustes, inspeccion.id),
         motorCommit: env.MOTOR_COMMIT,
       });
@@ -177,7 +189,12 @@ export async function anularInspeccionFinalizada(
       ]);
       const ajustes = ultimaValida ? await listarAjustesDeInspecciones([ultimaValida]) : [];
       const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
-        variablesCalculo: componerVariablesCalculo(composicion.entradas_vigentes, {}, resolverDapCm(null, arbolVigente)),
+        variablesCalculo: componerVariablesCalculo(
+          composicion.entradas_vigentes,
+          {},
+          resolverDapCm(null, arbolVigente),
+          resolverDatosLcr(null, arbolVigente)
+        ),
         ajustes: ultimaValida ? ajustesDeLaInspeccion(ajustes, ultimaValida) : {},
         inspeccionAnuladaId: inspectionId,
         motorCommit: env.MOTOR_COMMIT,

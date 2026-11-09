@@ -22,8 +22,13 @@ function ajuste<T extends readonly [string, ...string[]]>(codigos: T) {
     .strict();
 }
 
+const PROBABILIDADES = ["improbable", "posible", "probable", "inminente"] as const;
+
 export const ajustesSchema = z
   .object({
+    probabilidad_falla_raices_cuello: ajuste(PROBABILIDADES).optional(),
+    probabilidad_falla_tronco: ajuste(PROBABILIDADES).optional(),
+    probabilidad_falla_copa_ramas: ajuste(PROBABILIDADES).optional(),
     clasificacion_riesgo: ajuste(["bajo", "moderado", "alto", "extremo"] as const).optional(),
     clasificacion_infraestructura: ajuste(["bajo", "moderado", "alto", "critico"] as const).optional(),
     clasificacion_prioridad: ajuste(["baja", "media", "alta", "critica"] as const).optional(),

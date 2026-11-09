@@ -20,6 +20,7 @@ export const ETIQUETAS_FORMULARIO: Readonly<Record<string, string>> = {
   "ARBOLES:altura_primera_rama_no_presenta": "Altura primera rama no presenta",
   "ARBOLES:altura_base_copa_viva_m": "Altura base copa viva (m)",
   "ARBOLES:altura_base_copa_viva_no_presenta": "Altura base copa viva no presenta",
+  "ARBOLES:altura_punta_viva_m": "Altura punta viva (m)",
   "ARBOLES:clase_edad": "Clase edad",
   "ARBOLES:rango_edad_estimada_anios": "Rango edad estimada (años)",
   "REGISTRO_EVALUACION:raices_expuestas": "Raíces expuestas",

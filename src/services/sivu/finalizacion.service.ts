@@ -22,6 +22,7 @@ import { AjustesBody, CalcularInspeccionBody, FinalizarInspeccionBody } from "..
 import { tipoSubtipoValido } from "../../schemas/sivu/alcanceInspeccion";
 import {
   AjustesEntrada,
+  EntradasLcr,
   NucleoEntradas,
   ResultadoEvaluacion,
   ensamblarResultadoEvaluacion,
@@ -82,7 +83,8 @@ const CLAVES_NUCLEO = [
   "consecuencia_raices_cuello", "consecuencia_tronco", "consecuencia_copa_ramas",
 ] as const satisfies readonly (keyof NucleoEntradas)[];
 
-type ClaveNucleoSinListar = Exclude<keyof NucleoEntradas, (typeof CLAVES_NUCLEO)[number]>;
+// Los datos para lcr_pct salen del árbol, no del borrador (ver resolverDatosLcr).
+type ClaveNucleoSinListar = Exclude<keyof NucleoEntradas, (typeof CLAVES_NUCLEO)[number] | keyof EntradasLcr>;
 const nucleoCompleto: [ClaveNucleoSinListar] extends [never] ? true : ClaveNucleoSinListar = true;
 void nucleoCompleto;
 
@@ -279,7 +281,12 @@ async function calcular(
     throw new AppError("El árbol de la inspección no existe", 404);
   }
 
-  const variablesCalculo = componerVariablesCalculo(variablesVigentes, variablesRegistradas, resolverDapCm(versionArbol, arbolVigente));
+  const variablesCalculo = componerVariablesCalculo(
+    variablesVigentes,
+    variablesRegistradas,
+    resolverDapCm(versionArbol, arbolVigente),
+    resolverDatosLcr(versionArbol, arbolVigente)
+  );
   const huella = huellaCalculo({
     variablesCalculo,
     tipo,
@@ -347,7 +354,8 @@ async function calcular(
 export function componerVariablesCalculo(
   vigentes: Readonly<Record<string, unknown>>,
   registradas: Readonly<Record<string, unknown>>,
-  dapCm: number | null
+  dapCm: number | null,
+  datosLcr?: EntradasLcr
 ): NucleoEntradas {
   const entradas: Record<string, unknown> = {};
   for (const clave of CLAVES_NUCLEO) {
@@ -356,6 +364,7 @@ export function componerVariablesCalculo(
     else entradas[clave] = null;
   }
   entradas.dap_cm = dapCm; // dato del árbol (ARBOLES), no de la evaluación
+  if (datosLcr) Object.assign(entradas, datosLcr);
   return entradas as unknown as NucleoEntradas;
 }
 
@@ -363,14 +372,30 @@ export function componerVariablesCalculo(
  * dap_cm para el cálculo: el que registró la inspección, si lo registró;
  * si no, el vigente del árbol. null si no hay un número válido.
  */
-export function resolverDapCm(
-  versionArbol: { campos: Record<string, unknown>; camposRegistrados: string[] } | null,
-  arbolVigente: Record<string, unknown> | null
-): number | null {
-  const crudo = versionArbol?.camposRegistrados.includes("dap_cm") ? versionArbol.campos.dap_cm : arbolVigente?.dap_cm;
+export function resolverDapCm(versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): number | null {
+  return numeroDelArbol("dap_cm", versionArbol, arbolVigente);
+}
+
+type VersionArbol = { campos: Record<string, unknown>; camposRegistrados: string[] };
+
+function numeroDelArbol(campo: string, versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): number | null {
+  const crudo = versionArbol?.camposRegistrados.includes(campo) ? versionArbol.campos[campo] : arbolVigente?.[campo];
   if (crudo === null || crudo === undefined || crudo === "") return null;
   const valor = Number(crudo);
   return Number.isFinite(valor) ? valor : null;
+}
+
+/**
+ * Datos para lcr_pct (CC-070), con el mismo criterio que dap_cm. tipo_hoja
+ * viene del catálogo de especies del árbol vigente.
+ */
+export function resolverDatosLcr(versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): EntradasLcr {
+  return {
+    altura_punta_viva_m: numeroDelArbol("altura_punta_viva_m", versionArbol, arbolVigente),
+    altura_base_copa_viva_m: numeroDelArbol("altura_base_copa_viva_m", versionArbol, arbolVigente),
+    altura_total_m: numeroDelArbol("altura_total_m", versionArbol, arbolVigente),
+    tipo_hoja: (arbolVigente?.tipo_hoja as string | null | undefined) ?? null,
+  };
 }
 
 /**
@@ -411,8 +436,8 @@ function jsonCanonico(valor: unknown): string {
  * Corre el motor con los ajustes del Inspector como `AjustesEntrada`,
  * con `valorCalculadoEnElAjuste` = el valor calculado ahora (CC-044):
  * así el ajuste siempre se mantiene. La prioridad calculada depende del
- * riesgo y la infraestructura efectivos (M05), por eso se calcula en
- * tres pasos. Un ajuste igual al valor calculado se rechaza (D-173:
+ * riesgo y la infraestructura efectivos (M05), y estos de la probabilidad
+ * de falla efectiva (CC-070), por eso se calcula por pasos. Un ajuste igual al valor calculado se rechaza (D-173:
  * solo se ajusta lo que difiere).
  */
 function ensamblarConAjustes(
@@ -425,12 +450,29 @@ function ensamblarConAjustes(
   }
 
   const ajustes: AjustesEntrada = {};
+  const probabilidades = [
+    ["probabilidad_falla_raices_cuello", "probabilidadRaicesCuello"],
+    ["probabilidad_falla_tronco", "probabilidadTronco"],
+    ["probabilidad_falla_copa_ramas", "probabilidadCopaRamas"],
+  ] as const;
+  for (const [campo, clave] of probabilidades) {
+    const probabilidad = ajustesBody[campo];
+    if (!probabilidad) continue;
+    rechazarSiIgual(campo, probabilidad.valor_ajustado, sinAjustes[campo]);
+    ajustes[clave] = {
+      valorAjustado: probabilidad.valor_ajustado,
+      valorCalculadoEnElAjuste: sinAjustes[campo],
+      adjustmentId: `nuevo:${campo}`,
+    };
+  }
+  const conProbabilidad = ensamblarResultadoEvaluacion({ ...args, ajustes });
+
   const riesgo = ajustesBody.clasificacion_riesgo;
   if (riesgo) {
-    rechazarSiIgual("clasificacion_riesgo", riesgo.valor_ajustado, sinAjustes.clasificacion_riesgo_calculada);
+    rechazarSiIgual("clasificacion_riesgo", riesgo.valor_ajustado, conProbabilidad.clasificacion_riesgo_calculada);
     ajustes.riesgo = {
       valorAjustado: riesgo.valor_ajustado,
-      valorCalculadoEnElAjuste: sinAjustes.clasificacion_riesgo_calculada,
+      valorCalculadoEnElAjuste: conProbabilidad.clasificacion_riesgo_calculada,
       adjustmentId: "nuevo:clasificacion_riesgo",
     };
   }
@@ -439,11 +481,11 @@ function ensamblarConAjustes(
     rechazarSiIgual(
       "clasificacion_infraestructura",
       infraestructura.valor_ajustado,
-      sinAjustes.clasificacion_infraestructura_calculada
+      conProbabilidad.clasificacion_infraestructura_calculada
     );
     ajustes.infraestructura = {
       valorAjustado: infraestructura.valor_ajustado,
-      valorCalculadoEnElAjuste: sinAjustes.clasificacion_infraestructura_calculada,
+      valorCalculadoEnElAjuste: conProbabilidad.clasificacion_infraestructura_calculada,
       adjustmentId: "nuevo:clasificacion_infraestructura",
     };
   }
@@ -534,6 +576,9 @@ function resultadoParaFuncion(r: ResultadoEvaluacion): Record<string, unknown> {
 /** `p_ajustes`: un objeto por clasificación ajustada que el motor mantuvo (CC-044). */
 function ajustesParaFuncion(r: ResultadoEvaluacion, ajustesBody: AjustesBody | undefined): AjusteFinalizacion[] {
   const pares: Array<[CampoAjuste, string | null, string]> = [
+    ["probabilidad_falla_raices_cuello", r.probabilidad_falla_raices_cuello_ajustada, r.probabilidad_falla_raices_cuello],
+    ["probabilidad_falla_tronco", r.probabilidad_falla_tronco_ajustada, r.probabilidad_falla_tronco],
+    ["probabilidad_falla_copa_ramas", r.probabilidad_falla_copa_ramas_ajustada, r.probabilidad_falla_copa_ramas],
     ["clasificacion_riesgo", r.clasificacion_riesgo_ajustada, r.clasificacion_riesgo_calculada],
     ["clasificacion_infraestructura", r.clasificacion_infraestructura_ajustada, r.clasificacion_infraestructura_calculada],
     ["clasificacion_prioridad", r.clasificacion_prioridad_ajustada, r.clasificacion_prioridad_calculada],
