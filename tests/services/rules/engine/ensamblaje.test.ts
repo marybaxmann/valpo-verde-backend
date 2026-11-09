@@ -51,9 +51,13 @@ function arbolSano(): NucleoEntradas {
     presenta_fisura_grieta_tronco: false,
     afectacion_fisura_grieta: null,
     direccion_grieta: null,
+    longitud_max_grieta_cm: null,
+    dap_cm: 30,
     troncos_codominantes: false,
     grieta_union_codominante: null,
     corteza_incluida: null,
+    adelgazamiento_insuficiente_tronco: false,
+    cuerpos_fructiferos_tronco: false,
     // R03 — todo despreciable
     ramas_secas: false,
     ramas_secas_pct_copa: null,

@@ -105,7 +105,7 @@ import { evaluarM01 } from "./m01-probabilidad-impacto";
 import { evaluarClasificacionComponente } from "./m02-m03-clasificacion-componente";
 import { evaluarM05 } from "./m05-prioridad";
 import { evaluarR01, R01Input, R01Resultado } from "./r01-raices-cuello";
-import { evaluarR02, R02Input, R02Resultado } from "./r02-tronco";
+import { evaluarExudaciones, evaluarR02, R02Input, R02Resultado } from "./r02-tronco";
 import { evaluarR03, R03Input, R03Resultado } from "./r03-copa-ramas";
 import { evaluarR04 } from "./r04-clasificacion-riesgo";
 import { calcularSuperficieAlcorqueM2, ResultadoCalculo } from "./variables-calculo";
@@ -266,6 +266,7 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
     SL_tronco_pct: nucleo.r02.variablesCalculo.SL_tronco_pct,
     R_radio_tronco_cm: nucleo.r02.variablesCalculo.R_radio_tronco_cm,
     t_R_tronco: nucleo.r02.variablesCalculo.t_R_tronco,
+    abertura_cavidad_tronco_pct: nucleo.r02.variablesCalculo.abertura_cavidad_tronco_pct,
     superficie_alcorque_m2: calcularSuperficieAlcorqueM2(entradas),
     // D-142, calculado desde distancia_copa_red_aerea_m (D-140) — no es
     // un ResultadoCalculo con `motivo`; es "cumple"/"no_cumple"/null.
@@ -282,9 +283,11 @@ function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas) 
     cavidadTronco: nucleo.r02.indicadores.cavidadTronco,
     heridas: nucleo.r02.indicadores.heridas,
     cortezaMuertaAusente: nucleo.r02.indicadores.cortezaMuertaAusente,
-    exudaciones: nucleo.r02.indicadores.exudaciones,
+    exudaciones: evaluarExudaciones(entradas), // contexto, sin puntaje (CC-070)
     fisurasGrietas: nucleo.r02.indicadores.fisurasGrietas,
     codominancia: nucleo.r02.indicadores.codominancia,
+    adelgazamiento: nucleo.r02.indicadores.adelgazamiento,
+    hongosTronco: nucleo.r02.indicadores.hongos,
     ramasSecas: nucleo.r03.indicadores.ramasSecas,
     ramasQuebradas: nucleo.r03.indicadores.ramasQuebradas,
     // Condición y contexto de copa (CC-070): se informan, pero no entran en R03.

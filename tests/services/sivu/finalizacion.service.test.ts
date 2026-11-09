@@ -71,6 +71,8 @@ function variablesCompletas(): Record<string, unknown> {
   }
   return {
     ...variables,
+    adelgazamiento_insuficiente_tronco: false,
+    cuerpos_fructiferos_tronco: false,
     angulo_inclinacion: 5,
     defoliacion_estimada_pct: 0,
     clorosis_pct: 0,
@@ -517,9 +519,11 @@ describe("composición y huella", () => {
   it("variables_calculo: registrado sobre vigente, null si no hay, solo las claves del núcleo", () => {
     const v = componerVariablesCalculo(
       { zona_objetivo: "rara_vez", consecuencia_tronco: "menor", clasificacion_vitalidad: "muerto" },
-      { zona_objetivo: "bajo_la_copa", observaciones_copa: "texto" }
+      { zona_objetivo: "bajo_la_copa", observaciones_copa: "texto" },
+      30
     ) as unknown as Record<string, unknown>;
-    expect(Object.keys(v)).toHaveLength(79);
+    expect(Object.keys(v)).toHaveLength(83);
+    expect(v.dap_cm).toBe(30);
     expect(v.zona_objetivo).toBe("bajo_la_copa");
     expect(v.consecuencia_tronco).toBe("menor");
     expect(v.raices_expuestas).toBeNull();
@@ -529,8 +533,8 @@ describe("composición y huella", () => {
 
   it("la huella no depende del orden de las claves y sí de cada dato", () => {
     const base = { tipo: "evaluacion_inicial", subtipo: null, fechaInspeccion: FECHA_INSPECCION, fechaVigente: null };
-    const a = componerVariablesCalculo({}, { zona_objetivo: "bajo_la_copa", tasa_ocupacion_objetivo: "rara" });
-    const b = componerVariablesCalculo({}, { tasa_ocupacion_objetivo: "rara", zona_objetivo: "bajo_la_copa" });
+    const a = componerVariablesCalculo({}, { zona_objetivo: "bajo_la_copa", tasa_ocupacion_objetivo: "rara" }, null);
+    const b = componerVariablesCalculo({}, { tasa_ocupacion_objetivo: "rara", zona_objetivo: "bajo_la_copa" }, null);
     expect(huellaCalculo({ ...base, variablesCalculo: a })).toBe(huellaCalculo({ ...base, variablesCalculo: b }));
     expect(huellaCalculo({ ...base, variablesCalculo: a })).not.toBe(
       huellaCalculo({ ...base, variablesCalculo: a, fechaVigente: "2027-01-01" })

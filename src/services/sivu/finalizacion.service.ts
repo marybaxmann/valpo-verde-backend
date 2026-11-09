@@ -59,8 +59,9 @@ const CLAVES_NUCLEO = [
   "D_diametro_tronco_cm", "d_diametro_cavidad_tronco_cm", "Cc_longitud_abertura_tronco_cm",
   "C_circunferencia_tronco_cm", "t_pared_residual_tronco_cm",
   "presenta_heridas_tronco", "condicion_heridas_tronco", "corteza_muerta_ausente", "presenta_exudaciones",
-  "presenta_fisura_grieta_tronco", "afectacion_fisura_grieta", "direccion_grieta",
+  "presenta_fisura_grieta_tronco", "afectacion_fisura_grieta", "direccion_grieta", "longitud_max_grieta_cm", "dap_cm",
   "troncos_codominantes", "grieta_union_codominante", "corteza_incluida",
+  "adelgazamiento_insuficiente_tronco", "cuerpos_fructiferos_tronco",
   "ramas_secas", "ramas_secas_pct_copa", "ramas_quebradas", "permanece_suspendida",
   "desequilibrio_copa", "defoliacion_estimada_pct", "sin_follaje_estacional", "muerte_regresiva_copa_pct",
   "infraestructura_inmediata", "interferencia_redes_servicios",
@@ -276,7 +277,7 @@ async function calcular(
     throw new AppError("El árbol de la inspección no existe", 404);
   }
 
-  const variablesCalculo = componerVariablesCalculo(variablesVigentes, variablesRegistradas);
+  const variablesCalculo = componerVariablesCalculo(variablesVigentes, variablesRegistradas, resolverDapCm(versionArbol, arbolVigente));
   const huella = huellaCalculo({
     variablesCalculo,
     tipo,
@@ -343,7 +344,8 @@ async function calcular(
  */
 export function componerVariablesCalculo(
   vigentes: Readonly<Record<string, unknown>>,
-  registradas: Readonly<Record<string, unknown>>
+  registradas: Readonly<Record<string, unknown>>,
+  dapCm: number | null
 ): NucleoEntradas {
   const entradas: Record<string, unknown> = {};
   for (const clave of CLAVES_NUCLEO) {
@@ -351,7 +353,22 @@ export function componerVariablesCalculo(
     else if (Object.prototype.hasOwnProperty.call(vigentes, clave)) entradas[clave] = vigentes[clave] ?? null;
     else entradas[clave] = null;
   }
+  entradas.dap_cm = dapCm; // dato del árbol (ARBOLES), no de la evaluación
   return entradas as unknown as NucleoEntradas;
+}
+
+/**
+ * dap_cm para el cálculo: el que registró la inspección, si lo registró;
+ * si no, el vigente del árbol. null si no hay un número válido.
+ */
+export function resolverDapCm(
+  versionArbol: { campos: Record<string, unknown>; camposRegistrados: string[] } | null,
+  arbolVigente: Record<string, unknown> | null
+): number | null {
+  const crudo = versionArbol?.camposRegistrados.includes("dap_cm") ? versionArbol.campos.dap_cm : arbolVigente?.dap_cm;
+  if (crudo === null || crudo === undefined || crudo === "") return null;
+  const valor = Number(crudo);
+  return Number.isFinite(valor) ? valor : null;
 }
 
 /**
