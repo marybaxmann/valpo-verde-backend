@@ -321,7 +321,7 @@ describe("ensamblarResultadoEvaluacion", () => {
     expect(r.clasificacion_infraestructura_calculada).toBe("no_aplica"); // sin infraestructura inmediata (IF-18)
     expect(r.clasificacion_prioridad_calculada).toBe("baja");
     expect(r.clasificacion_riesgo_ajustada).toBeNull();
-    expect(r.rule_version).toBe("2.1");
+    expect(r.rule_version).toBe("3.0");
     expect(r.motor_commit).toBe("abc1234");
     expect(r.ajustesDescartados).toEqual([]);
   });
