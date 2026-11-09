@@ -525,7 +525,7 @@ describe("composición y huella", () => {
       { zona_objetivo: "bajo_la_copa", observaciones_copa: "texto" },
       30
     ) as unknown as Record<string, unknown>;
-    expect(Object.keys(v)).toHaveLength(85);
+    expect(Object.keys(v)).toHaveLength(91);
     expect(v.dap_cm).toBe(30);
     expect(v.zona_objetivo).toBe("bajo_la_copa");
     expect(v.consecuencia_tronco).toBe("menor");

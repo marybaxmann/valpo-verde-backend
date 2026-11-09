@@ -154,12 +154,12 @@ describe("catálogo si_no_no_determinado vs DICCIONARIO_CAMPOS (fila red_subterr
 describe("catálogo categoria_infraestructura vs la columna Categoría parcial de las reglas IN-* en REGLAS_INDICADORES", () => {
   it("las etiquetas vigentes son exactamente las categorías parciales usadas por las reglas IN-*", () => {
     const filas = leerExportCsv("REGLAS_INDICADORES.csv").slice(1);
-    // IN-ALC-04 ("la categoría más severa...") e IN-CAL-06 ("Mínimo
-    // Moderada...") describen una regla de combinación, no asignan una
-    // categoría propia — se excluyen de la comparación por su ID.
+    // IN-CAL-06 e IN-VER-10 ("Mínimo Moderada...") describen una regla de
+    // combinación, y las IN-SIT clasifican la condición del sitio con su
+    // propia escala: no asignan una categoría de infraestructura.
     const etiquetasEnExcel = new Set(
       filas
-        .filter((f) => f[0]?.startsWith("IN-") && f[0] !== "IN-ALC-04" && f[0] !== "IN-CAL-06")
+        .filter((f) => f[0]?.startsWith("IN-") && !f[0].startsWith("IN-SIT-") && f[0] !== "IN-VER-10" && f[0] !== "IN-CAL-06")
         .map((f) => f[5]?.trim()),
     );
     const etiquetasCatalogo = entradasVigentesDe("categoria_infraestructura").map((c) => c.etiqueta);

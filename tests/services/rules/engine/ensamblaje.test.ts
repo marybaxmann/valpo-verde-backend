@@ -79,6 +79,12 @@ function arbolSano(): NucleoEntradas {
     presenta_hundimiento_vereda: null,
     desnivel_max_vereda_cm: null,
     ancho_max_grieta_vereda_cm: null,
+    numero_grietas_vereda: null,
+    longitud_max_grieta_vereda_cm: null,
+    ancho_libre_remanente_m: null,
+    existe_alcorque: null,
+    dano_interferencia_alcorque: null,
+    existe_elemento_vertical: null,
     reduce_circulacion_peatonal: null,
     impide_paso_seguro: null,
     existe_calzada: null,
@@ -310,7 +316,7 @@ describe("ensamblarResultadoEvaluacion", () => {
   it("árbol sano: Bajo/Bajo/Baja de punta a punta, sin ajustes", () => {
     const r = ensamblarResultadoEvaluacion(argsEvaluacionSana());
     expect(r.clasificacion_riesgo_calculada).toBe("bajo");
-    expect(r.clasificacion_infraestructura_calculada).toBe("bajo");
+    expect(r.clasificacion_infraestructura_calculada).toBe("no_aplica"); // sin infraestructura inmediata (IF-18)
     expect(r.clasificacion_prioridad_calculada).toBe("baja");
     expect(r.clasificacion_riesgo_ajustada).toBeNull();
     expect(r.rule_version).toBe("2.1");

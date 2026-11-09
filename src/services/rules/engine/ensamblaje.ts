@@ -273,6 +273,8 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
     // un ResultadoCalculo con `motivo`; es "cumple"/"no_cumple"/null.
     cumplimiento_distancia_seguridad_bt_mt: calcularCumplimientoDistanciaSeguridad(entradas.distancia_copa_red_aerea_m),
     clase_condicion_itree: calcularClaseCondicionItree(entradas.muerte_regresiva_copa_pct),
+    clasificacion_condicion_sitio: nucleo.m04.condicionSitio,
+    componentes_no_determinados_infraestructura: nucleo.m04.componentesNoDeterminados,
   };
 }
 

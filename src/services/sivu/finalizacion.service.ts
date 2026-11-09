@@ -67,6 +67,8 @@ const CLAVES_NUCLEO = [
   "infraestructura_inmediata", "interferencia_redes_servicios",
   "existe_vereda", "dano_interferencia_vereda", "presenta_levantamiento_vereda", "presenta_grieta_vereda",
   "presenta_hundimiento_vereda", "desnivel_max_vereda_cm", "ancho_max_grieta_vereda_cm",
+  "numero_grietas_vereda", "longitud_max_grieta_vereda_cm", "ancho_libre_remanente_m",
+  "existe_alcorque", "dano_interferencia_alcorque", "existe_elemento_vertical",
   "reduce_circulacion_peatonal", "impide_paso_seguro",
   "existe_calzada", "dano_interferencia_calzada", "levantamiento_calzada", "hundimiento_calzada",
   "desnivel_max_calzada_cm", "afecta_circulacion_vehicular",
