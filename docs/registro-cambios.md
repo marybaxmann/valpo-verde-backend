@@ -2991,3 +2991,34 @@ motivo)
 | 2026-11-01 | EN REVISIÓN | Valej | Decisiones de método 1 a 9; verificación de modelos y especificación preparadas; sin implementar. |
 | 2026-11-01 | APROBADO METODOLÓGICAMENTE | Valej | Aceptado como propuesta. Fracción de carbono 0,47 por defecto (IPCC 2006, Vol. 4, cap. 4, tabla 4.3), no específica de cada especie; CO₂e = C × 44/12; sin H, solo una ecuación con DAP publicada, aplicable y del mismo componente; solo modelos APTO, verificados en su fuente original; los APTO CON LIMITACIONES, justificados uno por uno; Ginkgo con la genérica de latifoliadas, no; multifustales y palmeras sin estimación; sin extrapolar. El indicador v1 es «carbono aéreo leñoso» (volumen × densidad no incluye follaje). Modelos APTO: `docs/plan/propuestas/carbono-modelos-apto-especificacion.md` (activación bloqueada hasta leer Pillsbury et al. 1998). |
 | 2026-11-02 | APROBADO METODOLÓGICAMENTE (excepción de integración) | Valej | Integración del módulo con B19 y B2 **en desarrollo, antes de la sincronización con el Excel**, como excepción documentada. Sigue **pendiente de sincronización con el Excel** (no pasa a FUENTE SINCRONIZADA). Solo los dos modelos APTO; sin migraciones ni cambios en Supabase; los 11 indicadores existentes no cambian. Universo: presentes con evaluación completa válida y vigente; motivos por categoría (fuera del universo, restricción del modelo, dato faltante o inconsistente, error de cálculo). Sin publicar hasta la revisión de Valej. |
+
+### CC-070 — Metodología auditada de las evaluaciones técnicas (R01, R02, R03 y M04)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-08 |
+| Origen | Auditoría metodológica y revisión final de la autora (2026-11-07 y 2026-11-08), registrada fuera del repositorio en `docs/auditoria-metodologica/` de la carpeta de tesis (`DECISIONES.md` de cada evaluación). |
+| Tipo | 2 — metodología (+3 modelo de datos, +4 implementación) |
+| Estado | APROBADO METODOLÓGICAMENTE (falta sincronizar el Excel) |
+| Regla / campo afectado | DICCIONARIO_CAMPOS, REGLAS_INDICADORES y MATRICES_CALCULO: R01 (D-R01 a D-R08), R02 (D-T01 a D-T12, sin D-T07), R03 (D-01 a D-14, sin D-05), M04 e IN-* (D-I02 a D-I09). 40 discrepancias activas. |
+| Versión anterior | Paquete 2.1.0: R01 suma 3 indicadores (0–9); R02 suma 6 (0–14); R03 suma 4, con defoliación y desequilibrio (0–8); M04 normaliza P_I%; alcorque clasificado solo por sellado, compactación y obstáculos. |
+| Versión nueva | **R01 y R02:** defectos graves como piso, suma estructural con tramos 0 / 1–3 / ≥ 4; hongos, anillamiento y adelgazamiento incorporados; exudaciones fuera de R02. **R03:** rama suspendida = Inminente, antes de propagar No determinado; suma de ramas secas y quebradas (0–4) con tramos 0 / 1–2 / 3–4; defoliación y desequilibrio fuera de la suma. **Salida fisiológica de copa** separada del riesgo. **Probabilidad de falla** editable por el Inspector con justificación, conservando el valor calculado. **M04:** peor componente (Sin afectación o Leve: Bajo; Moderada: Moderado; Severa: Alto; dos o más Severas: Crítico; sin componentes: No aplica); grietas de vereda por número, largo y ancho; `infraestructura_inmediata` incluye el alcorque; senderos pavimentados evaluados como vereda; alcorque según daño y condición del sitio (IF-19); `clasificacion_condicion_sitio` calculada. **Definición (IF-20):** afectación o conflicto físico y funcional entre el individuo arbóreo y cada componente evaluado. |
+| Motivo | Separar condición fisiológica, condición estructural, riesgo e interacción con infraestructura, y corregir reglas sin respaldo o que invertían el resultado. |
+| Fundamento / fuente | Fuentes citadas por decisión en los `DECISIONES.md` de la auditoría, con las adaptaciones SIVU declaradas. |
+| Archivos afectados | Excel maestro y export; `docs/methodology/00-index.md`; `src/services/rules/engine/` (r01, r02, r03, m04, ensamblaje, catalogs, version); alcance y campos de evaluación; validación Zod; contrato API. |
+| Impacto en diagramas · Excel · BD · backend · API · frontend | Diagramas: ilustraciones aprobadas por la autora el 2026-11-08 (no forman parte del paquete, CC-030). Excel: tres hojas normativas y VERSION. BD: por confirmar (campos nuevos y ajuste de la probabilidad de falla). Backend y API: motor y validación. Frontend: formulario, resultados y ajuste. |
+| Pruebas necesarias | Por regla y por borde de intervalo; precedencia de pisos; rama suspendida con datos faltantes; alcorque en sus cinco casos; `infraestructura_inmediata` = No; evaluaciones 2.1 conservadas sin recalcular; `verificar_14_9.py`. |
+| Dependencias | — |
+| rule_version | 3.0 prevista (paquete 3.0.0: cambia la agregación de M04 y de R01 a R03, §14.10) |
+| Aprobado por / Fecha de aprobación | — (decisiones de método: Valej, 2026-11-07 y 2026-11-08) |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | **M04 y No determinado (IF-21):** se mantiene D-170 (el componente se excluye y la clasificación global nunca queda No determinada), y la clasificación se marca como parcial con aviso visible cuando hubo exclusión; a diferencia de R04, un componente No determinado no bloquea el resultado. **Preliminar:** CR-29 (vitalidad según edad, sin efecto en el cálculo). **Por revisar:** protocolos de cada evaluación y uso vigente de `src/services/rules/treeRisk.ts`. |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-08 | PENDIENTE DE DECISIÓN | Valej | Se elige actualizar el Excel y publicar una versión nueva antes de implementar. Sin cambios todavía en el Excel, la base de datos ni el código. |
+| 2026-11-08 | APROBADO METODOLÓGICAMENTE | Valej | Decidido el tratamiento de No determinado en M04: excluir el componente y marcar el resultado como parcial (IF-21). |
+| 2026-11-08 | APROBADO METODOLÓGICAMENTE (Excel 3.0.0 en preparación) | Valej | Excel maestro y export actualizados en la rama `metodologia/cc-070-v3`, con la versión 3.0.0 sin publicar. Pasa a FUENTE SINCRONIZADA al publicarla, junto con la implementación del motor. Campos agregados en la sincronización: `lcr_pct`, `abertura_cavidad_tronco_pct`, `abertura_cavidad_basal_pct`, `existe_elemento_vertical` y `componentes_no_determinados_infraestructura`. |

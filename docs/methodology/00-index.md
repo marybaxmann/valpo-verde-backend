@@ -21,6 +21,8 @@ No inferir ni completar metodología faltante.
 
 Versión vigente del paquete metodológico: **2.1.0** (`rule_version` **2.1**), publicada el 2026-10-21, tag `metodologia-v2.1.0` (CC-040, CC-042). Versión anterior: 2.0.0, publicada el 2026-10-20, tag `metodologia-v2.0.0` (CC-030).
 
+**En preparación: 3.0.0** (`rule_version` **3.0**, CC-070), en la rama `metodologia/cc-070-v3`. No está publicada: en esa rama el Excel maestro ya contiene la 3.0.0 (128 reglas) y el motor sigue implementando la 2.1 hasta completar CC-070.
+
 - **Fuente única:** el Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (PR-002 v3.0). Su export de texto está en `docs/excel/export/`.
 - **Reglas vigentes:** todas las de REGLAS_INDICADORES (98), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0). 2.1.0 cambia REGLAS_GENERALES (alcance de la evaluación por tipo de inspección, evaluación vigente compuesta por campo; CC-040) y agrega `estado_proyecto` (CC-042); no agrega ni quita reglas de REGLAS_INDICADORES.
 - **INDICES** sigue en propuesta y no es implementable (CC-016; DM-09). Los índices de proporción de árboles nativos e introducidos no se adoptan en 2.0.0 (CC-039).
