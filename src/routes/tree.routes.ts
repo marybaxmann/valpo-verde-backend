@@ -6,7 +6,6 @@ import {
   updateTree,
 } from "../controllers/tree.controller";
 import {
-  createRiskAssessment,
   getLatestRiskAssessment,
   listRiskAssessments,
 } from "../controllers/treeRiskAssessment.controller";
@@ -26,8 +25,8 @@ router.patch("/:treeId", authMiddleware, updateTree);
 // GET /api/trees/:treeId/measurements (o :id/measurements)
 router.get("/:treeId/measurements", authMiddleware, listTreeMeasurements);
 
-// Evaluación técnica y riesgo (R01–R04/M01–M03; corte vertical mínimo)
-router.post("/:treeId/risk-assessments", authMiddleware, createRiskAssessment);
+// Evaluación técnica y riesgo de la demo: solo lectura del historial. El POST
+// se retiró en CC-070 porque calculaba con reglas anteriores a la 3.0.
 router.get("/:treeId/risk-assessments", authMiddleware, listRiskAssessments);
 router.get("/:treeId/risk-assessments/latest", authMiddleware, getLatestRiskAssessment);
 
