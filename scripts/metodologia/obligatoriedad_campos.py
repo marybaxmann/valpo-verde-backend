@@ -82,6 +82,10 @@ def leer_secciones(wb):
         campos.append({"hoja": "ARBOLES", "campo": c, "seccion": "arbol", "orden": i})
     cabecera = [texto(c) for c in next(wb["REGISTRO_EVALUACION"].iter_rows(max_row=1, values_only=True)) if c]
     cabecera = [c for c in cabecera if c not in ("id_evaluacion", "id_inspeccion", "id_arbol")]
+    # CC-070: las columnas nuevas están al final de la hoja; se presentan en su sección.
+    for campo, antes_de in COLOCACION_CC070:
+        cabecera.remove(campo)
+        cabecera.insert(cabecera.index(antes_de), campo)
     bloque = 0
     for i, c in enumerate(cabecera):
         campos.append({"hoja": "REGISTRO_EVALUACION", "campo": c, "seccion": SECCIONES_EVALUACION[bloque][1], "orden": i})
@@ -91,6 +95,15 @@ def leer_secciones(wb):
         sys.exit("REGISTRO_EVALUACION ya no tiene los cortes observaciones_* esperados: revisar SECCIONES_EVALUACION")
     return secciones, campos
 
+# (campo nuevo, campo ante el cual se presenta en el formulario).
+COLOCACION_CC070 = [
+    ("anillamiento", "observaciones_radicular"),
+    ("cuerpos_fructiferos_base", "observaciones_radicular"),
+    ("adelgazamiento_insuficiente_tronco", "observaciones_tronco"),
+    ("cuerpos_fructiferos_tronco", "observaciones_tronco"),
+    ("sin_follaje_estacional", "defoliacion_estimada_pct"),
+]
+
 D_SOLO_SISTEMA = {"Sistema", "Sistema / Administrador Plataforma", "Sistema / usuario autorizado"}
 
 # Campo que activa una condición -> catálogo de catalogs.ts cuando su
@@ -99,6 +112,7 @@ CATALOGO_DE_CAMPO = {
     "cavidad_basal_interna": "resultado_cavidad_interna",
     "cavidad_interna_tronco": "resultado_cavidad_interna",
     "afectacion_fisura_grieta": "afectacion_grieta",
+    "direccion_grieta": "direccion_grieta",
     "forma_alcorque": "forma_alcorque",
     "red_subterranea_presente": "si_no_no_determinado",
     "compromete_funcionalidad_red_subterranea": "si_no_no_determinado",
@@ -108,7 +122,7 @@ CATALOGO_DE_CAMPO = {
 
 # Columnas de la BD (trees / tree_data_versions) que no son campos del
 # diccionario pero que usan las traducciones de copa y de "responder".
-MARCAS_BD = ("copa_no_presenta", "altura_primera_rama_no_presenta", "altura_base_copa_viva_no_presenta")
+MARCAS_BD = ("copa_no_presenta", "altura_primera_rama_no_presenta", "altura_base_copa_viva_no_presenta", "tipo_hoja")
 
 SIEMPRE = {"op": "siempre"}
 
@@ -194,12 +208,21 @@ TRADUCCIONES_CC056 = {
         "nota": "D-27: las cuatro vistas (árbol completo, base, tronco y copa), fotos nuevas de esta inspección."},
     # --- REGISTRO_EVALUACION ---
     ("REGISTRO_EVALUACION", "direccion_inclinacion"): {
-        "i": "Condicional", "k": "angulo_inclinacion > 15°", "exigido": True,
-        "activacion": {"op": "mayor_que", "campo": "angulo_inclinacion", "valor": 15},
+        "i": "Condicional", "k": "angulo_inclinacion ≥ 15°", "exigido": True,
+        "activacion": {"op": "mayor_o_igual", "campo": "angulo_inclinacion", "valor": 15},
         "nota": "angulo_inclinacion es decimal, en grados."},
-    ("REGISTRO_EVALUACION", "profundidad_grieta_cm"): {
-        "i": "Condicional / Opcional", "k": "afectacion_fisura_grieta = Penetra en madera", "exigido": False,
-        "motivo": "«Condicional / Opcional» se trata como Opcional (CC-056)."},
+    ("REGISTRO_EVALUACION", "longitud_max_grieta_cm"): {
+        "i": "Condicional", "k": "afectacion_fisura_grieta = Penetra en madera y direccion_grieta = Longitudinal",
+        "exigido": True,
+        "activacion": y(("ETIQUETA", "afectacion_fisura_grieta", "Penetra en madera"), ("ETIQUETA", "direccion_grieta", "Longitudinal")),
+        "nota": "CC-070: reemplaza a profundidad_grieta_cm."},
+    ("REGISTRO_EVALUACION", "sin_follaje_estacional"): {
+        "i": "Obligatorio cuando existe copa evaluable", "k": "Cuando existe copa evaluable.",
+        "exigido": True, "activacion": EXISTE_COPA,
+        "nota": "«Existe copa evaluable» = copa_no_presenta distinto de verdadero (CC-070)."},
+    ("ARBOLES", "altura_punta_viva_m"): {
+        "i": "Obligatorio cuando existe copa evaluable", "k": "Cuando existe copa evaluable.", "exigido": False,
+        "motivo": "Se precarga con altura_total_m: el Inspector solo la corrige si la punta está muerta (CC-070)."},
     ("REGISTRO_EVALUACION", "ancho_apertura_cm"): {
         "i": "Condicional / Opcional", "k": "afectacion_fisura_grieta = Penetra en madera", "exigido": False,
         "motivo": "«Condicional / Opcional» se trata como Opcional (CC-056)."},
@@ -236,10 +259,9 @@ TRADUCCIONES_CC056 = {
         "nota": "Con el dap_cm que quede (en un multifustal, el DAP equivalente calculado, D-18). "
                 "Sin dap_cm no se activa."},
     ("REGISTRO_EVALUACION", "clasificacion_vitalidad"): {
-        "i": "Obligatorio en los casos con metodología aplicable", "k": "En cada evaluación de vitalidad.",
-        "exigido": True, "activacion": SIEMPRE,
-        "nota": "Se exige en EI/R/L y en Monitoreo Vitalidad, también en palmeras (CC-056); la nota "
-                "de D-169 sobre palmeras queda como revisión futura, sin efecto en la completitud."},
+        "i": "Condicional", "k": "tipo_hoja ≠ Palmera (derivado de CATALOGO_ESPECIES), en cada evaluación de vitalidad.",
+        "exigido": True, "activacion": {"op": "distinto", "campo": "tipo_hoja", "valor": "palmera"},
+        "nota": "No aplica a palmeras, porque el método observa la ramificación (CC-070)."},
     ("REGISTRO_EVALUACION", "clasificacion_infraestructura"): {
         "i": "Obligatorio", "k": "", "exigido": False,
         "motivo": "Salida calculada; el ajuste del Inspector se valida en /finalizar (D-173)."},
@@ -251,8 +273,8 @@ TRADUCCIONES_CC056 = {
         "motivo": "Salida calculada; el ajuste del Inspector se valida en /finalizar (D-173)."},
     ("REGISTRO_EVALUACION", "justificacion_ajuste_clasificacion"): {
         "i": "Condicional",
-        "k": "Cuando clasificacion_riesgo, clasificacion_infraestructura o clasificacion_prioridad "
-             "difiere del valor calculado por la plataforma.",
+        "k": "Cuando alguna probabilidad de falla, clasificacion_riesgo, clasificacion_infraestructura o "
+             "clasificacion_prioridad difiere del valor calculado por la plataforma.",
         "exigido": False,
         "motivo": "Parte de los ajustes de /finalizar (D-173), no del borrador."},
 }
@@ -466,7 +488,9 @@ def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion):
         '  | { op: "siempre" }',
         '  | { op: "igual"; campo: string; valor: boolean | string }',
         '  | { op: "no_verdadero"; campo: string }',
+        '  | { op: "distinto"; campo: string; valor: boolean | string }',
         '  | { op: "mayor_que"; campo: string; valor: number }',
+        '  | { op: "mayor_o_igual"; campo: string; valor: number }',
         '  | { op: "menor_que"; campo: string; valor: number }',
         '  | { op: "mas_de_un_valor"; campo: string }',
         '  | { op: "y" | "o"; condiciones: CondicionActivacion[] };',

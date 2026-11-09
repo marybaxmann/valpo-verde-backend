@@ -19,6 +19,7 @@ function variablesCompletas(): Record<string, unknown> {
   return {
     ...variables,
     angulo_inclinacion: 5,
+    sin_follaje_estacional: false,
     defoliacion_estimada_pct: 0,
     clorosis_pct: 0,
     necrosis_pct: 0,
@@ -90,7 +91,6 @@ describe("evaluación completa (Evaluación inicial, Reevaluación, Levantamient
   it("un Condicional activado sin valor es faltante; desactivado, no", () => {
     expect(faltantesDe(evaluacionCompleta({ variablesRegistradas: { ...variablesCompletas(), raices_expuestas: true } }))).toEqual([
       "necrosis_radicular",
-      "raices_cortadas",
     ]);
   });
 
@@ -214,6 +214,8 @@ describe("evaluación completa (Evaluación inicial, Reevaluación, Levantamient
       existe_vereda: false,
       existe_calzada: false,
       interferencia_redes_servicios: false,
+      existe_alcorque: false,
+      existe_elemento_vertical: true,
       contacto_interferencia_infraestructura_vertical: true,
       tipo_infraestructura_vertical: ["poste", "luminaria"],
       dano_fisico_observable_infraestructura_vertical: false,
@@ -267,8 +269,18 @@ describe("inspecciones parciales (CC-040; CC-056 punto 2)", () => {
     expect(parcial("monitoreo", "vitalidad", { clasificacion_vitalidad: "0_exploracion" }).completa).toBe(true);
   });
 
+  it("Monitoreo Vitalidad: no se exige en palmeras (CC-070)", () => {
+    expect(parcial("monitoreo", "vitalidad", {}, { arbolVigente: { tipo_hoja: "palmera" } }).completa).toBe(true);
+    expect(parcial("monitoreo", "vitalidad", {}, { arbolVigente: { tipo_hoja: "latifoliada" } }).completa).toBe(false);
+  });
+
+  it("sin follaje estacional: defoliación, clorosis y necrosis no se exigen (CC-070)", () => {
+    const faltantes = parcial("monitoreo", "fitosanitario", { sin_follaje_estacional: true, muerte_regresiva_copa_pct: 0, presenta_exudaciones: false }).campos_faltantes;
+    expect(faltantes.map((f) => f.campo)).toEqual([]);
+  });
+
   it("Monitoreo Fitosanitario: muerte_regresiva_copa_pct se activa con la copa vigente del árbol", () => {
-    const base = { defoliacion_estimada_pct: 10, clorosis_pct: 0, necrosis_pct: 0, presenta_exudaciones: false };
+    const base = { sin_follaje_estacional: false, defoliacion_estimada_pct: 10, clorosis_pct: 0, necrosis_pct: 0, presenta_exudaciones: false };
     expect(parcial("monitoreo", "fitosanitario", base).campos_faltantes.map((f) => f.campo)).toEqual([
       "muerte_regresiva_copa_pct",
     ]);

@@ -83,7 +83,6 @@ export const CATALOGO_SELECCION_UNICA: Readonly<Record<string, string>> = {
   materialidad_vereda: "materialidad_vereda",
   materialidad_calzada: "materialidad_calzada",
   forma_alcorque: "forma_alcorque",
-  condicion_radicular_entorno: "condicion_radicular_entorno",
   red_subterranea_presente: "si_no_no_determinado",
   compromete_funcionalidad_red_subterranea: "si_no_no_determinado",
   tipo_tutorado: "tipo_tutorado",

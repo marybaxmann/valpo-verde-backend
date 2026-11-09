@@ -217,15 +217,18 @@ export async function obtenerVersionArbolDeInspeccion(
 export async function obtenerArbolVigente(accessToken: string, treeId: string): Promise<Record<string, unknown> | null> {
   const { data, error } = await createUserScopedClient(accessToken)
     .from("trees")
-    .select(COLUMNAS_ARBOL)
+    .select(`${COLUMNAS_ARBOL}, species(tipo_hoja)`)
     .eq("id", treeId)
     .maybeSingle();
 
   if (error) {
     throw new Error(error.message, { cause: error.code });
   }
+  if (!data) return null;
 
-  return (data as Record<string, unknown> | null) ?? null;
+  // tipo_hoja viene del catálogo de especies (D-169: la vitalidad no aplica a palmeras).
+  const { species, ...arbol } = data as unknown as Record<string, unknown> & { species: { tipo_hoja: string | null } | null };
+  return { ...arbol, tipo_hoja: species?.tipo_hoja ?? null };
 }
 
 /**

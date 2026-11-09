@@ -77,6 +77,7 @@ function variablesCompletas(): Record<string, unknown> {
     cuerpos_fructiferos_base: false,
     raices_cortadas: false,
     angulo_inclinacion: 5,
+    sin_follaje_estacional: false,
     defoliacion_estimada_pct: 0,
     clorosis_pct: 0,
     necrosis_pct: 0,
@@ -488,6 +489,7 @@ describe("POST /finalizar (#59/#72; CC-054, CC-055, CC-056)", () => {
 
 describe("Monitoreo con fecha vigente (CC-055)", () => {
   const fitosanitario = {
+    sin_follaje_estacional: false,
     defoliacion_estimada_pct: 5,
     clorosis_pct: 0,
     necrosis_pct: 0,

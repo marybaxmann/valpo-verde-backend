@@ -247,7 +247,9 @@ describe("resolverValorEfectivo", () => {
 
 describe("validarAlcance (CC-040 a, b)", () => {
   it("Evaluación inicial: ningún campo queda fuera de alcance, aunque estén todos presentes", () => {
-    const r = validarAlcance("evaluacion_inicial", null, arbolSano() as unknown as Record<string, unknown>);
+    // dap_cm es un dato del árbol (ARBOLES), no de REGISTRO_EVALUACION.
+    const { dap_cm: _dap, ...variables } = arbolSano();
+    const r = validarAlcance("evaluacion_inicial", null, variables as unknown as Record<string, unknown>);
     expect(r.camposFueraDeAlcance).toEqual([]);
     expect(r.valoresNoPermitidosEnAlcance).toEqual([]);
   });
@@ -277,7 +279,7 @@ describe("validarAlcance (CC-040 a, b)", () => {
       observaciones_radicular: "x",
       observaciones_tronco: "x",
       crecimiento_de_respuesta: false,
-      profundidad_grieta_cm: 3,
+      longitud_max_grieta_cm: 3,
       ancho_apertura_cm: 1,
       diametro_max_ramas_secas_cm: 5,
       numero_ramas_quebradas: 1,
