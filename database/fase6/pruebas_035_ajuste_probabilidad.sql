@@ -1,5 +1,5 @@
 -- =====================================================================
--- Pruebas de la migración 035 (CC-070). Base de PRUEBAS.
+-- Pruebas de la migración 035 (CC-071). Base de PRUEBAS.
 -- El bloque termina siempre en una excepción: nada se guarda. Si todo
 -- pasa, el mensaje es PRUEBAS_035_OK. Antes de aplicar y tras revertir
 -- debe fallar en A1. Regresión obligatoria: pruebas_020_finalizar_inspeccion.

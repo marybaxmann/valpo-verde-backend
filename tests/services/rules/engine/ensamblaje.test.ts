@@ -542,7 +542,7 @@ describe("CC-055 — fecha_proxima_inspeccion sugerida según el tipo de inspecc
   );
 });
 
-describe("ajuste de la probabilidad de falla (CC-070)", () => {
+describe("ajuste de la probabilidad de falla (CC-071)", () => {
   const entradas = (): NucleoEntradas => ({
     ...arbolSano(),
     tasa_ocupacion_objetivo: "frecuente",
@@ -617,7 +617,7 @@ describe("ajuste de la probabilidad de falla (CC-070)", () => {
   });
 });
 
-describe("lcr_pct en calculados (CC-070)", () => {
+describe("lcr_pct en calculados (CC-071)", () => {
   const conLcr = (extra: Partial<NucleoEntradas>) =>
     ensamblarResultadoEvaluacion({ ...argsEvaluacionSana(), variablesCalculo: { ...arbolSano(), ...extra } }).calculados;
 

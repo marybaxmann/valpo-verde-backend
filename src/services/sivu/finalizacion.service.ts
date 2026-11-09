@@ -386,7 +386,7 @@ function numeroDelArbol(campo: string, versionArbol: VersionArbol | null, arbolV
 }
 
 /**
- * Datos para lcr_pct (CC-070), con el mismo criterio que dap_cm. tipo_hoja
+ * Datos para lcr_pct (CC-071), con el mismo criterio que dap_cm. tipo_hoja
  * viene del catálogo de especies del árbol vigente.
  */
 export function resolverDatosLcr(versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): EntradasLcr {
@@ -437,7 +437,7 @@ function jsonCanonico(valor: unknown): string {
  * con `valorCalculadoEnElAjuste` = el valor calculado ahora (CC-044):
  * así el ajuste siempre se mantiene. La prioridad calculada depende del
  * riesgo y la infraestructura efectivos (M05), y estos de la probabilidad
- * de falla efectiva (CC-070), por eso se calcula por pasos. Un ajuste igual al valor calculado se rechaza (D-173:
+ * de falla efectiva (CC-071), por eso se calcula por pasos. Un ajuste igual al valor calculado se rechaza (D-173:
  * solo se ajusta lo que difiere).
  */
 function ensamblarConAjustes(

@@ -640,7 +640,7 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "y", "condiciones": [{"op": "igual", "campo": "afectacion_fisura_grieta", "valor": "penetra_en_madera"}, {"op": "igual", "campo": "direccion_grieta", "valor": "longitudinal"}]},
     traduccion: "cc056",
-    nota: "CC-070: reemplaza a profundidad_grieta_cm.",
+    nota: "CC-071: reemplaza a profundidad_grieta_cm.",
   },
   {
     fila: 72,
@@ -1642,7 +1642,7 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "distinto", "campo": "tipo_hoja", "valor": "palmera"},
     traduccion: "cc056",
-    nota: "No aplica a palmeras, porque el método observa la ramificación (CC-070).",
+    nota: "No aplica a palmeras, porque el método observa la ramificación (CC-071).",
   },
   {
     fila: 268,
@@ -1655,7 +1655,7 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "no_verdadero", "campo": "copa_no_presenta"},
     traduccion: "cc056",
-    nota: "«Existe copa evaluable» = copa_no_presenta distinto de verdadero (CC-070).",
+    nota: "«Existe copa evaluable» = copa_no_presenta distinto de verdadero (CC-071).",
   },
   {
     fila: 272,
@@ -2061,7 +2061,7 @@ export const CAMPOS_NO_EXIGIDOS: readonly CampoNoExigido[] = [
     quienIngresa: "Inspector",
     obligatoriedadExcel: "Obligatorio cuando existe copa evaluable",
     condicionExcel: "Cuando existe copa evaluable.",
-    motivo: "Se precarga con altura_total_m: el Inspector solo la corrige si la punta está muerta (CC-070).",
+    motivo: "Se precarga con altura_total_m: el Inspector solo la corrige si la punta está muerta (CC-071).",
   },
   {
     fila: 270,

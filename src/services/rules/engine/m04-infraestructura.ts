@@ -2,7 +2,7 @@
  * M04 — Clasificación global de infraestructura (REGLAS_INDICADORES:
  * IN-GEN-01, IN-VER-01 a 11, IN-CAL-01 a 06, IN-ALC-01 a 06, IN-VRT-01 a
  * 06, IN-RAE-01 a 06, IN-RSU-01 a 07, IN-SIT-01 a 05; MATRICES_CALCULO
- * M04). Fuente: Excel maestro 3.0.0 (CC-070).
+ * M04). Fuente: Excel maestro 3.0.0 (CC-071).
  *
  * Seis componentes: vereda, calzada, alcorque, infraestructura vertical,
  * red aérea y red subterránea. Cada uno devuelve una categoría parcial

@@ -1,7 +1,7 @@
 -- =====================================================================
 -- VALPO VERDE — Gestión del Arbolado Urbano de Valparaíso
 -- schema.sql — Estado consolidado del modelo de datos
---   (revisión 29 — migraciones 035 y 036 (2026-11-09; CC-070):
+--   (revisión 29 — migraciones 035 y 036 (2026-11-09; CC-071):
 --   classification_adjustments admite ajustes de probabilidad de falla y
 --   fn_finalizar_inspeccion los valida; altura_punta_viva_m en trees,
 --   tree_data_versions y tree_data_versions_arbol_input, con
@@ -1154,7 +1154,7 @@ CREATE TABLE trees (
   altura_primera_rama_no_presenta BOOLEAN,
   altura_base_copa_viva_m       NUMERIC(6,2),                                   -- D-24
   altura_base_copa_viva_no_presenta BOOLEAN,
-  altura_punta_viva_m           NUMERIC(6,2),                                   -- CC-070; CR-15
+  altura_punta_viva_m           NUMERIC(6,2),                                   -- CC-071; CR-15
   clase_edad                    TEXT CHECK (clase_edad IS NULL OR clase_edad IN (  -- D-25; códigos snake_case (PR-021)
     'joven', 'semimaduro', 'tempranamente_maduro', 'maduro', 'sobremaduro'
   )),

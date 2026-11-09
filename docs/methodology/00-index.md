@@ -19,12 +19,12 @@ No inferir ni completar metodología faltante.
 
 ## Versión vigente
 
-Versión vigente del paquete metodológico: **3.0.0** (`rule_version` **3.0**), publicada el 2026-11-09, tag `metodologia-v3.0.0` (CC-070). Versión anterior: 2.1.0, publicada el 2026-10-21, tag `metodologia-v2.1.0` (CC-040, CC-042).
+Versión vigente del paquete metodológico: **3.0.0** (`rule_version` **3.0**), publicada el 2026-11-09, tag `metodologia-v3.0.0` (CC-071). Versión anterior: 2.1.0, publicada el 2026-10-21, tag `metodologia-v2.1.0` (CC-040, CC-042).
 
 **Antes de desplegar:** el backend de la 3.0 exige las migraciones 035 y 036, aplicadas por ahora solo en la base de pruebas. Las evaluaciones anteriores conservan su `rule_version` y no se recalculan.
 
 - **Fuente única:** el Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (PR-002 v3.0). Su export de texto está en `docs/excel/export/`.
-- **Reglas vigentes:** todas las de REGLAS_INDICADORES (128), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0). 3.0.0 cambia la agregación de R01 a R03 (pisos y suma estructural) y de M04 (peor componente), y separa la condición fisiológica de copa y la condición del sitio (CC-070).
+- **Reglas vigentes:** todas las de REGLAS_INDICADORES (128), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0). 3.0.0 cambia la agregación de R01 a R03 (pisos y suma estructural) y de M04 (peor componente), y separa la condición fisiológica de copa y la condición del sitio (CC-071).
 - **INDICES** sigue en propuesta y no es implementable (CC-016; DM-09). Los índices de proporción de árboles nativos e introducidos no se adoptan en 2.0.0 (CC-039).
 - **Diagramas:** no forman parte del paquete (CC-030); son ilustraciones en `docs/excel/diagramas/` (imágenes, el `.drawio` de consolidación y `docs/excel/Diagrama actualizados.json`). Si difieren del Excel, manda el Excel.
 - **Documentos `01-roots-base.md` a `05-infrastructure.md` (v1.1)** y las secciones de este índice marcadas como reemplazadas son historial de la metodología textual previa; no se usan para implementar.

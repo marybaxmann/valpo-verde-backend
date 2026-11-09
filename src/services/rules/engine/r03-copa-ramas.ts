@@ -1,6 +1,6 @@
 /**
  * R03 — Copa y ramas (REGLAS_INDICADORES: CR-RSE-01 a 05, CR-RQU-01 a
- * 04; MATRICES_CALCULO R03). Fuente: Excel maestro 3.0.0 (CC-070). No
+ * 04; MATRICES_CALCULO R03). Fuente: Excel maestro 3.0.0 (CC-071). No
  * depende de treeRisk.ts ni de docs/methodology.
  *
  * Regla de prioridad: si hay una rama quebrada o cortada que permanece

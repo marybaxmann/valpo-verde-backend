@@ -195,7 +195,7 @@ describe("tabla de completitud vs DICCIONARIO_CAMPOS (CC-056)", () => {
 describe("traducciones aprobadas en CC-056", () => {
   const sinCopa = { op: "no_verdadero", campo: "copa_no_presenta" };
 
-  it("clasificacion_vitalidad (D-169): no se exige en palmeras (CC-070)", () => {
+  it("clasificacion_vitalidad (D-169): no se exige en palmeras (CC-071)", () => {
     expect(reglaDe("clasificacion_vitalidad")?.activacion).toEqual({ op: "distinto", campo: "tipo_hoja", valor: "palmera" });
   });
 

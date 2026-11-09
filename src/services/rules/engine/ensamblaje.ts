@@ -186,7 +186,7 @@ export interface EntradasAlcorque {
 }
 
 /**
- * Datos del árbol para lcr_pct (CC-070). Van en variables_calculo para
+ * Datos del árbol para lcr_pct (CC-071). Van en variables_calculo para
  * que un cambio de altura o de especie cambie la huella del cálculo. No
  * entran en ninguna clasificación.
  */
@@ -216,7 +216,7 @@ export interface NucleoResultado {
   r02: R02Resultado;
   r03: R03Resultado;
   m04: M04Resultado;
-  /** Probabilidad de falla efectiva de cada componente: alimenta M02/M03 (CC-070). */
+  /** Probabilidad de falla efectiva de cada componente: alimenta M02/M03 (CC-071). */
   probabilidades: {
     raicesCuello: ResolucionValorEfectivo<ProbabilidadFallaCodigo>;
     tronco: ResolucionValorEfectivo<ProbabilidadFallaCodigo>;
@@ -242,7 +242,7 @@ function calcularNucleo(
   const r03 = evaluarR03(entradas);
   const m01 = evaluarM01(entradas.zona_objetivo, entradas.tasa_ocupacion_objetivo);
 
-  // CC-070: R01–R03 guardan la probabilidad calculada; a M02/M03 entra la efectiva.
+  // CC-071: R01–R03 guardan la probabilidad calculada; a M02/M03 entra la efectiva.
   const probabilidades = {
     raicesCuello: resolverValorEfectivo(
       "probabilidad_falla_raices_cuello",
@@ -340,14 +340,14 @@ function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas) 
     cavidadTronco: nucleo.r02.indicadores.cavidadTronco,
     heridas: nucleo.r02.indicadores.heridas,
     cortezaMuertaAusente: nucleo.r02.indicadores.cortezaMuertaAusente,
-    exudaciones: evaluarExudaciones(entradas), // contexto, sin puntaje (CC-070)
+    exudaciones: evaluarExudaciones(entradas), // contexto, sin puntaje (CC-071)
     fisurasGrietas: nucleo.r02.indicadores.fisurasGrietas,
     codominancia: nucleo.r02.indicadores.codominancia,
     adelgazamiento: nucleo.r02.indicadores.adelgazamiento,
     hongosTronco: nucleo.r02.indicadores.hongos,
     ramasSecas: nucleo.r03.indicadores.ramasSecas,
     ramasQuebradas: nucleo.r03.indicadores.ramasQuebradas,
-    // Condición y contexto de copa (CC-070): se informan, pero no entran en R03.
+    // Condición y contexto de copa (CC-071): se informan, pero no entran en R03.
     desequilibrioCopa: evaluarDesequilibrio(entradas),
     defoliacion: evaluarDefoliacion(entradas),
     vereda: nucleo.m04.componentes.vereda,
@@ -649,7 +649,7 @@ export interface ResultadoEvaluacion {
   probabilidad_falla_tronco: R02Resultado["probabilidadFalla"];
   puntaje_copa_ramas: number | null;
   probabilidad_falla_copa_ramas: R03Resultado["probabilidadFalla"];
-  /** CC-070: sin columna en `evaluations`; el valor ajustado vive en `classification_adjustments`. */
+  /** CC-071: sin columna en `evaluations`; el valor ajustado vive en `classification_adjustments`. */
   probabilidad_falla_raices_cuello_ajustada: ProbabilidadFallaCodigo | null;
   probabilidad_falla_tronco_ajustada: ProbabilidadFallaCodigo | null;
   probabilidad_falla_copa_ramas_ajustada: ProbabilidadFallaCodigo | null;

@@ -2992,7 +2992,7 @@ motivo)
 | 2026-11-01 | APROBADO METODOLÓGICAMENTE | Valej | Aceptado como propuesta. Fracción de carbono 0,47 por defecto (IPCC 2006, Vol. 4, cap. 4, tabla 4.3), no específica de cada especie; CO₂e = C × 44/12; sin H, solo una ecuación con DAP publicada, aplicable y del mismo componente; solo modelos APTO, verificados en su fuente original; los APTO CON LIMITACIONES, justificados uno por uno; Ginkgo con la genérica de latifoliadas, no; multifustales y palmeras sin estimación; sin extrapolar. El indicador v1 es «carbono aéreo leñoso» (volumen × densidad no incluye follaje). Modelos APTO: `docs/plan/propuestas/carbono-modelos-apto-especificacion.md` (activación bloqueada hasta leer Pillsbury et al. 1998). |
 | 2026-11-02 | APROBADO METODOLÓGICAMENTE (excepción de integración) | Valej | Integración del módulo con B19 y B2 **en desarrollo, antes de la sincronización con el Excel**, como excepción documentada. Sigue **pendiente de sincronización con el Excel** (no pasa a FUENTE SINCRONIZADA). Solo los dos modelos APTO; sin migraciones ni cambios en Supabase; los 11 indicadores existentes no cambian. Universo: presentes con evaluación completa válida y vigente; motivos por categoría (fuera del universo, restricción del modelo, dato faltante o inconsistente, error de cálculo). Sin publicar hasta la revisión de Valej. |
 
-### CC-070 — Metodología auditada de las evaluaciones técnicas (R01, R02, R03 y M04)
+### CC-071 — Metodología auditada de las evaluaciones técnicas (R01, R02, R03 y M04)
 
 | Campo | Valor |
 |---|---|
@@ -3013,7 +3013,7 @@ motivo)
 | Aprobado por / Fecha de aprobación | — (decisiones de método: Valej, 2026-11-07 y 2026-11-08) |
 | Fecha de implementación | Backend: 2026-11-09, en rama, sin publicar. Frontend pendiente. |
 | Commits / PR asociados | Rama `metodologia/cc-070-v3`: befcf55, d822f67, c512dc8, fa4ad87, ffb1dd9, 1193771, b6ce449, 7128545, a6526cb. Sin PR. |
-| Observaciones | **M04 y No determinado (IF-21):** se mantiene D-170 (el componente se excluye y la clasificación global nunca queda No determinada), y la clasificación se marca como parcial con aviso visible cuando hubo exclusión; a diferencia de R04, un componente No determinado no bloquea el resultado. **Preliminar:** CR-29 (vitalidad según edad, sin efecto en el cálculo). **Por revisar:** protocolos de cada evaluación. **`src/services/rules/treeRisk.ts`:** el `POST /api/trees/:treeId/risk-assessments` se retiró (Valej, 2026-11-09); siguen los tres `GET` y la tabla `tree_risk_assessments` como historial, y su retiro queda sujeto a confirmar el frontend desplegado. |
+| Observaciones | **Numeración:** esta ficha se trabajó como CC-070 hasta el 2026-11-09 y se renumeró a CC-071 porque ese número ya estaba asignado a los modelos de carbono. Los mensajes de sus commits previos y los comentarios de las migraciones 035 y 036 conservan CC-070. **M04 y No determinado (IF-21):** se mantiene D-170 (el componente se excluye y la clasificación global nunca queda No determinada), y la clasificación se marca como parcial con aviso visible cuando hubo exclusión; a diferencia de R04, un componente No determinado no bloquea el resultado. **Preliminar:** CR-29 (vitalidad según edad, sin efecto en el cálculo). **Por revisar:** protocolos de cada evaluación. **`src/services/rules/treeRisk.ts`:** el `POST /api/trees/:treeId/risk-assessments` se retiró (Valej, 2026-11-09); siguen los tres `GET` y la tabla `tree_risk_assessments` como historial, y su retiro queda sujeto a confirmar el frontend desplegado. |
 
 **Historial de estados**
 

@@ -1,7 +1,7 @@
 /**
  * R01 — Raíces y cuello (REGLAS_INDICADORES: RC-EST-01 a 08, RC-REX-01 a
  * 05, RC-CAV-01 a 11, RC-ANI-01 a 02, RC-HON-01 a 03; MATRICES_CALCULO
- * R01). Fuente: Excel maestro 3.0.0 (CC-070). No depende de treeRisk.ts
+ * R01). Fuente: Excel maestro 3.0.0 (CC-071). No depende de treeRisk.ts
  * ni de docs/methodology.
  *
  * Pisos, que se aplican primero: plato levantado e inclinación > 30° →
@@ -283,7 +283,7 @@ function evaluarCavidadBasal(input: R01Input): CavidadBasalResultado {
 function evaluarAnillamiento(input: R01Input): IndicadorResultado {
   const valor = input.anillamiento;
   if (valor === null) return noDeterminado("anillamiento sin valor (RC-ANI, obligatorio)");
-  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("anillamiento", valor, "CC-070"));
+  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("anillamiento", valor, "CC-071"));
   return valor ? indicador("leve", "RC-ANI-02") : indicador("despreciable", "RC-ANI-01");
 }
 
@@ -291,7 +291,7 @@ function evaluarAnillamiento(input: R01Input): IndicadorResultado {
 function evaluarHongos(input: R01Input): IndicadorResultado {
   const valor = input.cuerpos_fructiferos_base;
   if (valor === null) return noDeterminado("cuerpos_fructiferos_base sin valor (RC-HON, obligatorio)");
-  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("cuerpos_fructiferos_base", valor, "CC-070"));
+  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("cuerpos_fructiferos_base", valor, "CC-071"));
   if (!valor) return indicador("despreciable", "RC-HON-01");
 
   const cavidad = input.cavidad_pudricion_basal;

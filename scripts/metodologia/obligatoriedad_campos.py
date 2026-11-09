@@ -82,7 +82,7 @@ def leer_secciones(wb):
         campos.append({"hoja": "ARBOLES", "campo": c, "seccion": "arbol", "orden": i})
     cabecera = [texto(c) for c in next(wb["REGISTRO_EVALUACION"].iter_rows(max_row=1, values_only=True)) if c]
     cabecera = [c for c in cabecera if c not in ("id_evaluacion", "id_inspeccion", "id_arbol")]
-    # CC-070: las columnas nuevas están al final de la hoja; se presentan en su sección.
+    # CC-071: las columnas nuevas están al final de la hoja; se presentan en su sección.
     for campo, antes_de in COLOCACION_CC070:
         cabecera.remove(campo)
         cabecera.insert(cabecera.index(antes_de), campo)
@@ -215,14 +215,14 @@ TRADUCCIONES_CC056 = {
         "i": "Condicional", "k": "afectacion_fisura_grieta = Penetra en madera y direccion_grieta = Longitudinal",
         "exigido": True,
         "activacion": y(("ETIQUETA", "afectacion_fisura_grieta", "Penetra en madera"), ("ETIQUETA", "direccion_grieta", "Longitudinal")),
-        "nota": "CC-070: reemplaza a profundidad_grieta_cm."},
+        "nota": "CC-071: reemplaza a profundidad_grieta_cm."},
     ("REGISTRO_EVALUACION", "sin_follaje_estacional"): {
         "i": "Obligatorio cuando existe copa evaluable", "k": "Cuando existe copa evaluable.",
         "exigido": True, "activacion": EXISTE_COPA,
-        "nota": "«Existe copa evaluable» = copa_no_presenta distinto de verdadero (CC-070)."},
+        "nota": "«Existe copa evaluable» = copa_no_presenta distinto de verdadero (CC-071)."},
     ("ARBOLES", "altura_punta_viva_m"): {
         "i": "Obligatorio cuando existe copa evaluable", "k": "Cuando existe copa evaluable.", "exigido": False,
-        "motivo": "Se precarga con altura_total_m: el Inspector solo la corrige si la punta está muerta (CC-070)."},
+        "motivo": "Se precarga con altura_total_m: el Inspector solo la corrige si la punta está muerta (CC-071)."},
     ("REGISTRO_EVALUACION", "ancho_apertura_cm"): {
         "i": "Condicional / Opcional", "k": "afectacion_fisura_grieta = Penetra en madera", "exigido": False,
         "motivo": "«Condicional / Opcional» se trata como Opcional (CC-056)."},
@@ -261,7 +261,7 @@ TRADUCCIONES_CC056 = {
     ("REGISTRO_EVALUACION", "clasificacion_vitalidad"): {
         "i": "Condicional", "k": "tipo_hoja ≠ Palmera (derivado de CATALOGO_ESPECIES), en cada evaluación de vitalidad.",
         "exigido": True, "activacion": {"op": "distinto", "campo": "tipo_hoja", "valor": "palmera"},
-        "nota": "No aplica a palmeras, porque el método observa la ramificación (CC-070)."},
+        "nota": "No aplica a palmeras, porque el método observa la ramificación (CC-071)."},
     ("REGISTRO_EVALUACION", "clasificacion_infraestructura"): {
         "i": "Obligatorio", "k": "", "exigido": False,
         "motivo": "Salida calculada; el ajuste del Inspector se valida en /finalizar (D-173)."},

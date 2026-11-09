@@ -548,7 +548,7 @@ describe("composición y huella", () => {
   });
 });
 
-describe("ajuste de probabilidad de falla y datos de LCR (CC-070)", () => {
+describe("ajuste de probabilidad de falla y datos de LCR (CC-071)", () => {
   it("/finalizar envía el ajuste con su valor calculado y no agrega columnas al resultado", async () => {
     preparar();
     const huella = await huellaActual();

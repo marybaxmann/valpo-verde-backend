@@ -258,8 +258,8 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "clasificacion_vitalidad", codigo: "2_estancamiento", etiqueta: "2 Estancamiento", orden: 2, estado: "vigente", cc: "AM-17" },
   { catalogo: "clasificacion_vitalidad", codigo: "3_resignacion", etiqueta: "3 Resignación", orden: 3, estado: "vigente", cc: "AM-17" },
   { catalogo: "clasificacion_vitalidad", codigo: "muerto", etiqueta: "Muerto", orden: 4, estado: "vigente", cc: "AM-17" },
-  { catalogo: "clasificacion_vitalidad", codigo: "no_evaluable_poda", etiqueta: "No evaluable (poda importante)", orden: 5, estado: "vigente", cc: "CC-070" },
-  { catalogo: "clasificacion_vitalidad", codigo: "no_evaluable_descabezado", etiqueta: "No evaluable (descabezado)", orden: 6, estado: "vigente", cc: "CC-070" },
+  { catalogo: "clasificacion_vitalidad", codigo: "no_evaluable_poda", etiqueta: "No evaluable (poda importante)", orden: 5, estado: "vigente", cc: "CC-071" },
+  { catalogo: "clasificacion_vitalidad", codigo: "no_evaluable_descabezado", etiqueta: "No evaluable (descabezado)", orden: 6, estado: "vigente", cc: "CC-071" },
 
   // --- clase_edad: D-25. Dominio literal de la columna H; códigos de camposArbolBaseSchema (inspeccion.schema.ts). Expuesto por B16. ---
   { catalogo: "clase_edad", codigo: "joven", etiqueta: "Joven", orden: 0, estado: "vigente", cc: "PR-021" },

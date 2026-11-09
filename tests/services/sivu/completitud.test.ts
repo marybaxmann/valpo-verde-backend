@@ -269,12 +269,12 @@ describe("inspecciones parciales (CC-040; CC-056 punto 2)", () => {
     expect(parcial("monitoreo", "vitalidad", { clasificacion_vitalidad: "0_exploracion" }).completa).toBe(true);
   });
 
-  it("Monitoreo Vitalidad: no se exige en palmeras (CC-070)", () => {
+  it("Monitoreo Vitalidad: no se exige en palmeras (CC-071)", () => {
     expect(parcial("monitoreo", "vitalidad", {}, { arbolVigente: { tipo_hoja: "palmera" } }).completa).toBe(true);
     expect(parcial("monitoreo", "vitalidad", {}, { arbolVigente: { tipo_hoja: "latifoliada" } }).completa).toBe(false);
   });
 
-  it("sin follaje estacional: defoliación, clorosis y necrosis no se exigen (CC-070)", () => {
+  it("sin follaje estacional: defoliación, clorosis y necrosis no se exigen (CC-071)", () => {
     const faltantes = parcial("monitoreo", "fitosanitario", { sin_follaje_estacional: true, muerte_regresiva_copa_pct: 0, presenta_exudaciones: false }).campos_faltantes;
     expect(faltantes.map((f) => f.campo)).toEqual([]);
   });

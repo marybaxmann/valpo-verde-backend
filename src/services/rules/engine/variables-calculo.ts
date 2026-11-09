@@ -96,13 +96,13 @@ function calcularEspesorSobreRadio(t: number | null, R: ResultadoCalculo): Resul
   if (error) return { valor: null, motivo: error };
   const tv = t as number;
   if (tv <= 0) return { valor: null, motivo: "t debe ser > 0" };
-  if (tv > R.valor) return { valor: null, motivo: "t debe ser ≤ R (CC-070)" };
+  if (tv > R.valor) return { valor: null, motivo: "t debe ser ≤ R (CC-071)" };
   const valor = tv / R.valor;
   if (!Number.isFinite(valor) || valor < 0) return { valor: null, motivo: `resultado fuera de rango (≥ 0) (${valor})` };
   return { valor };
 }
 
-/** Abertura de la cavidad como % de la circunferencia: Cc / C × 100 (CC-070). */
+/** Abertura de la cavidad como % de la circunferencia: Cc / C × 100 (CC-071). */
 export function calcularAberturaCavidadPct(Cc: number | null, C: number | null): ResultadoCalculo {
   for (const [nombre, valor] of [["Cc", Cc], ["C", C]] as const) {
     const error = campoFaltanteOInvalido(valor, nombre);

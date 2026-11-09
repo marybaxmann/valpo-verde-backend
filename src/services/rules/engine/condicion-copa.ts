@@ -1,7 +1,7 @@
 /**
  * Condición fisiológica y contexto de copa (REGLAS_INDICADORES: CR-DEF-01
  * a 06, CR-DES-01 a 02; DICCIONARIO_CAMPOS: clase_condicion_itree y
- * lcr_pct). Fuente: Excel maestro 3.0.0 (CC-070).
+ * lcr_pct). Fuente: Excel maestro 3.0.0 (CC-071).
  *
  * Nada de este módulo entra en R03: describe la salud de la copa y
  * orienta al Inspector, sin puntaje. Por eso un dato faltante aquí nunca
@@ -38,7 +38,7 @@ function sinDeterminar<T extends string>(motivo: string): IndicadorCondicion<T> 
 export function evaluarDefoliacion(input: CondicionCopaInput): IndicadorCondicion<CategoriaDefoliacion> {
   if (input.sin_follaje_estacional !== null) {
     if (!esBooleanoValido(input.sin_follaje_estacional)) {
-      return sinDeterminar(motivoFueraDominioSiNo("sin_follaje_estacional", input.sin_follaje_estacional, "CC-070"));
+      return sinDeterminar(motivoFueraDominioSiNo("sin_follaje_estacional", input.sin_follaje_estacional, "CC-071"));
     }
     if (input.sin_follaje_estacional) return resultado("no_aplica", "CR-DEF-06");
   }

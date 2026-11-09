@@ -26,7 +26,7 @@ router.patch("/:treeId", authMiddleware, updateTree);
 router.get("/:treeId/measurements", authMiddleware, listTreeMeasurements);
 
 // Evaluación técnica y riesgo de la demo: solo lectura del historial. El POST
-// se retiró en CC-070 porque calculaba con reglas anteriores a la 3.0.
+// se retiró en CC-071 porque calculaba con reglas anteriores a la 3.0.
 router.get("/:treeId/risk-assessments", authMiddleware, listRiskAssessments);
 router.get("/:treeId/risk-assessments/latest", authMiddleware, getLatestRiskAssessment);
 

@@ -2,7 +2,7 @@
  * R02 — Tronco (REGLAS_INDICADORES: TR-CAV-01 a 11, TR-HER-01 a 04,
  * TR-COR-01 a 02, TR-GRI-01 a 06, TR-COD-01 a 04, TR-ADE-01 a 02,
  * TR-HON-01 a 03; MATRICES_CALCULO R02). Fuente: Excel maestro 3.0.0
- * (CC-070). No depende de treeRisk.ts ni de docs/methodology.
+ * (CC-071). No depende de treeRisk.ts ni de docs/methodology.
  *
  * Pisos, que se aplican primero: grieta en la unión codominante o
  * grieta transversal en la madera → Inminente; cavidad Severa o grieta
@@ -354,7 +354,7 @@ function evaluarCodominancia(input: R02Input): IndicadorResultado {
 function evaluarAdelgazamiento(input: R02Input): IndicadorResultado {
   const valor = input.adelgazamiento_insuficiente_tronco;
   if (valor === null) return noDeterminado("adelgazamiento_insuficiente_tronco sin valor (TR-ADE, obligatorio)");
-  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("adelgazamiento_insuficiente_tronco", valor, "CC-070"));
+  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("adelgazamiento_insuficiente_tronco", valor, "CC-071"));
   return valor ? indicador("leve", "TR-ADE-02") : indicador("despreciable", "TR-ADE-01");
 }
 
@@ -362,7 +362,7 @@ function evaluarAdelgazamiento(input: R02Input): IndicadorResultado {
 function evaluarHongos(input: R02Input): IndicadorResultado {
   const valor = input.cuerpos_fructiferos_tronco;
   if (valor === null) return noDeterminado("cuerpos_fructiferos_tronco sin valor (TR-HON, obligatorio)");
-  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("cuerpos_fructiferos_tronco", valor, "CC-070"));
+  if (!esBooleanoValido(valor)) return noDeterminado(motivoFueraDominioSiNo("cuerpos_fructiferos_tronco", valor, "CC-071"));
   if (!valor) return indicador("despreciable", "TR-HON-01");
 
   const cavidad = input.presenta_cavidad_pudricion_tronco;

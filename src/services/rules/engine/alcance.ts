@@ -41,7 +41,7 @@ export const CAMPOS_EVALUACION_INSTRUMENTAL = [
 
 /** CC-040 (a): Fitosanitario = D-83, D-84, D-85, D-89, D-65. */
 export const CAMPOS_MONITOREO_FITOSANITARIO = [
-  "sin_follaje_estacional", // CC-070: activa defoliación, clorosis y necrosis
+  "sin_follaje_estacional", // CC-071: activa defoliación, clorosis y necrosis
   "defoliacion_estimada_pct",
   "clorosis_pct",
   "necrosis_pct",
