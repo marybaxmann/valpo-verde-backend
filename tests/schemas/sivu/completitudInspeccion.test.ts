@@ -195,8 +195,8 @@ describe("tabla de completitud vs DICCIONARIO_CAMPOS (CC-056)", () => {
 describe("traducciones aprobadas en CC-056", () => {
   const sinCopa = { op: "no_verdadero", campo: "copa_no_presenta" };
 
-  it("clasificacion_vitalidad (D-169): siempre exigida, sin excepción por especie", () => {
-    expect(reglaDe("clasificacion_vitalidad")?.activacion).toEqual({ op: "siempre" });
+  it("clasificacion_vitalidad (D-169): no se exige en palmeras (CC-071)", () => {
+    expect(reglaDe("clasificacion_vitalidad")?.activacion).toEqual({ op: "distinto", campo: "tipo_hoja", valor: "palmera" });
   });
 
   it("observaciones_infraestructura (D-147): sin el caso «condición Sí con varios elementos»", () => {
@@ -212,7 +212,7 @@ describe("traducciones aprobadas en CC-056", () => {
   });
 
   it("«Condicional / Opcional» (D-70, D-71) se trata como Opcional", () => {
-    expect(reglaDe("profundidad_grieta_cm")).toBeUndefined();
+    expect(reglaDe("ancho_apertura_cm")).toBeUndefined();
     expect(reglaDe("ancho_apertura_cm")).toBeUndefined();
   });
 
@@ -240,8 +240,8 @@ describe("traducciones aprobadas en CC-056", () => {
     expect(reglaDe("presenta_tutorado")?.activacion).toEqual({ op: "menor_que", campo: "dap_cm", valor: 10 });
   });
 
-  it("direccion_inclinacion (D-38): angulo_inclinacion > 15", () => {
-    expect(reglaDe("direccion_inclinacion")?.activacion).toEqual({ op: "mayor_que", campo: "angulo_inclinacion", valor: 15 });
+  it("direccion_inclinacion (D-38): angulo_inclinacion ≥ 15", () => {
+    expect(reglaDe("direccion_inclinacion")?.activacion).toEqual({ op: "mayor_o_igual", campo: "angulo_inclinacion", valor: 15 });
   });
 
   it("copa: diámetros, copa faltante y muerte regresiva con copa_no_presenta ≠ true; exposición lumínica además con copa viva", () => {

@@ -147,6 +147,12 @@ export function cumple(c: CondicionActivacion, valor: (campo: string) => unknown
     }
     case "no_verdadero":
       return valor(c.campo) !== true;
+    case "distinto":
+      return valor(c.campo) !== c.valor;
+    case "mayor_o_igual": {
+      const v = valor(c.campo);
+      return typeof v === "number" && v >= c.valor;
+    }
     case "mayor_que": {
       const v = valor(c.campo);
       return typeof v === "number" && v > c.valor;

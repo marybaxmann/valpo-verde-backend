@@ -46,7 +46,7 @@ const numero = (v: unknown) => (v === null || v === undefined ? null : Number(v)
 /** Campos numéricos (numeric en la base: PostgREST puede devolverlos como texto). */
 const NUMERICOS = new Set([
   "utm_este", "utm_norte", "dap_cm", "altura_total_m", "diametro_copa_ns_m", "diametro_copa_eo_m", "diametro_copa_m",
-  "altura_primera_rama_m", "altura_base_copa_viva_m",
+  "altura_primera_rama_m", "altura_base_copa_viva_m", "altura_punta_viva_m",
 ]);
 
 function valorDeCampo(campo: string, v: unknown): unknown {

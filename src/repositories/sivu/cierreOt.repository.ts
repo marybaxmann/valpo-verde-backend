@@ -27,7 +27,13 @@ export interface InspeccionFinalizadaDeOt {
 
 export interface AjusteRegistradoRow {
   id: string;
-  campo: "clasificacion_riesgo" | "clasificacion_infraestructura" | "clasificacion_prioridad";
+  campo:
+    | "clasificacion_riesgo"
+    | "clasificacion_infraestructura"
+    | "clasificacion_prioridad"
+    | "probabilidad_falla_raices_cuello"
+    | "probabilidad_falla_tronco"
+    | "probabilidad_falla_copa_ramas";
   valor_calculado: string | null;
   valor_ajustado: string;
   fecha_ajuste: string;

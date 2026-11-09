@@ -22,6 +22,7 @@ import { AjustesBody, CalcularInspeccionBody, FinalizarInspeccionBody } from "..
 import { tipoSubtipoValido } from "../../schemas/sivu/alcanceInspeccion";
 import {
   AjustesEntrada,
+  EntradasLcr,
   NucleoEntradas,
   ResultadoEvaluacion,
   ensamblarResultadoEvaluacion,
@@ -45,8 +46,8 @@ import { mensajeCheck } from "../../utils/mensajesBase";
  */
 
 /**
- * Las 76 entradas del núcleo del motor (`NucleoEntradas`): R01, R02,
- * R03, M04, alcorque y M01/consecuencias. El chequeo de tipos de abajo
+ * Las entradas del núcleo del motor (`NucleoEntradas`): R01, R02, R03,
+ * condición de copa, M04, alcorque y M01/consecuencias. El chequeo de tipos de abajo
  * falla si el motor agrega o quita una entrada y esta lista no se
  * actualiza.
  */
@@ -54,17 +55,21 @@ const CLAVES_NUCLEO = [
   "levantamiento_del_plato_radicular", "angulo_inclinacion", "raices_expuestas", "necrosis_radicular",
   "raices_cortadas", "cavidad_pudricion_basal", "cavidad_basal_externa", "cavidad_basal_interna",
   "D_diametro_basal_tronco_cm", "d_diametro_cavidad_basal_cm", "Cc_longitud_abertura_cavidad_cm",
-  "C_circunferencia_basal_cm", "t_pared_residual_basal_cm",
+  "C_circunferencia_basal_cm", "t_pared_residual_basal_cm", "anillamiento", "cuerpos_fructiferos_base",
   "presenta_cavidad_pudricion_tronco", "cavidad_externa_tronco", "cavidad_interna_tronco",
   "D_diametro_tronco_cm", "d_diametro_cavidad_tronco_cm", "Cc_longitud_abertura_tronco_cm",
   "C_circunferencia_tronco_cm", "t_pared_residual_tronco_cm",
   "presenta_heridas_tronco", "condicion_heridas_tronco", "corteza_muerta_ausente", "presenta_exudaciones",
-  "presenta_fisura_grieta_tronco", "afectacion_fisura_grieta", "direccion_grieta",
+  "presenta_fisura_grieta_tronco", "afectacion_fisura_grieta", "direccion_grieta", "longitud_max_grieta_cm", "dap_cm",
   "troncos_codominantes", "grieta_union_codominante", "corteza_incluida",
-  "ramas_secas", "ramas_secas_pct_copa", "ramas_quebradas", "desequilibrio_copa", "defoliacion_estimada_pct",
+  "adelgazamiento_insuficiente_tronco", "cuerpos_fructiferos_tronco",
+  "ramas_secas", "ramas_secas_pct_copa", "ramas_quebradas", "permanece_suspendida",
+  "desequilibrio_copa", "defoliacion_estimada_pct", "sin_follaje_estacional", "muerte_regresiva_copa_pct",
   "infraestructura_inmediata", "interferencia_redes_servicios",
   "existe_vereda", "dano_interferencia_vereda", "presenta_levantamiento_vereda", "presenta_grieta_vereda",
   "presenta_hundimiento_vereda", "desnivel_max_vereda_cm", "ancho_max_grieta_vereda_cm",
+  "numero_grietas_vereda", "longitud_max_grieta_vereda_cm", "ancho_libre_remanente_m",
+  "existe_alcorque", "dano_interferencia_alcorque", "existe_elemento_vertical",
   "reduce_circulacion_peatonal", "impide_paso_seguro",
   "existe_calzada", "dano_interferencia_calzada", "levantamiento_calzada", "hundimiento_calzada",
   "desnivel_max_calzada_cm", "afecta_circulacion_vehicular",
@@ -78,7 +83,8 @@ const CLAVES_NUCLEO = [
   "consecuencia_raices_cuello", "consecuencia_tronco", "consecuencia_copa_ramas",
 ] as const satisfies readonly (keyof NucleoEntradas)[];
 
-type ClaveNucleoSinListar = Exclude<keyof NucleoEntradas, (typeof CLAVES_NUCLEO)[number]>;
+// Los datos para lcr_pct salen del árbol, no del borrador (ver resolverDatosLcr).
+type ClaveNucleoSinListar = Exclude<keyof NucleoEntradas, (typeof CLAVES_NUCLEO)[number] | keyof EntradasLcr>;
 const nucleoCompleto: [ClaveNucleoSinListar] extends [never] ? true : ClaveNucleoSinListar = true;
 void nucleoCompleto;
 
@@ -275,7 +281,12 @@ async function calcular(
     throw new AppError("El árbol de la inspección no existe", 404);
   }
 
-  const variablesCalculo = componerVariablesCalculo(variablesVigentes, variablesRegistradas);
+  const variablesCalculo = componerVariablesCalculo(
+    variablesVigentes,
+    variablesRegistradas,
+    resolverDapCm(versionArbol, arbolVigente),
+    resolverDatosLcr(versionArbol, arbolVigente)
+  );
   const huella = huellaCalculo({
     variablesCalculo,
     tipo,
@@ -336,13 +347,15 @@ async function calcular(
 /**
  * `variables_calculo` (diseño Fase 3, §3.9): cada entrada del núcleo
  * con lo registrado en esta inspección; si no lo registró, el valor
- * vigente del árbol; si tampoco hay, null. Solo las 76 claves del
+ * vigente del árbol; si tampoco hay, null. Solo las claves del
  * núcleo: lo demás del borrador (observaciones, vitalidad, etc.) no
  * entra al cálculo.
  */
 export function componerVariablesCalculo(
   vigentes: Readonly<Record<string, unknown>>,
-  registradas: Readonly<Record<string, unknown>>
+  registradas: Readonly<Record<string, unknown>>,
+  dapCm: number | null,
+  datosLcr?: EntradasLcr
 ): NucleoEntradas {
   const entradas: Record<string, unknown> = {};
   for (const clave of CLAVES_NUCLEO) {
@@ -350,7 +363,39 @@ export function componerVariablesCalculo(
     else if (Object.prototype.hasOwnProperty.call(vigentes, clave)) entradas[clave] = vigentes[clave] ?? null;
     else entradas[clave] = null;
   }
+  entradas.dap_cm = dapCm; // dato del árbol (ARBOLES), no de la evaluación
+  if (datosLcr) Object.assign(entradas, datosLcr);
   return entradas as unknown as NucleoEntradas;
+}
+
+/**
+ * dap_cm para el cálculo: el que registró la inspección, si lo registró;
+ * si no, el vigente del árbol. null si no hay un número válido.
+ */
+export function resolverDapCm(versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): number | null {
+  return numeroDelArbol("dap_cm", versionArbol, arbolVigente);
+}
+
+type VersionArbol = { campos: Record<string, unknown>; camposRegistrados: string[] };
+
+function numeroDelArbol(campo: string, versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): number | null {
+  const crudo = versionArbol?.camposRegistrados.includes(campo) ? versionArbol.campos[campo] : arbolVigente?.[campo];
+  if (crudo === null || crudo === undefined || crudo === "") return null;
+  const valor = Number(crudo);
+  return Number.isFinite(valor) ? valor : null;
+}
+
+/**
+ * Datos para lcr_pct (CC-071), con el mismo criterio que dap_cm. tipo_hoja
+ * viene del catálogo de especies del árbol vigente.
+ */
+export function resolverDatosLcr(versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): EntradasLcr {
+  return {
+    altura_punta_viva_m: numeroDelArbol("altura_punta_viva_m", versionArbol, arbolVigente),
+    altura_base_copa_viva_m: numeroDelArbol("altura_base_copa_viva_m", versionArbol, arbolVigente),
+    altura_total_m: numeroDelArbol("altura_total_m", versionArbol, arbolVigente),
+    tipo_hoja: (arbolVigente?.tipo_hoja as string | null | undefined) ?? null,
+  };
 }
 
 /**
@@ -391,8 +436,8 @@ function jsonCanonico(valor: unknown): string {
  * Corre el motor con los ajustes del Inspector como `AjustesEntrada`,
  * con `valorCalculadoEnElAjuste` = el valor calculado ahora (CC-044):
  * así el ajuste siempre se mantiene. La prioridad calculada depende del
- * riesgo y la infraestructura efectivos (M05), por eso se calcula en
- * tres pasos. Un ajuste igual al valor calculado se rechaza (D-173:
+ * riesgo y la infraestructura efectivos (M05), y estos de la probabilidad
+ * de falla efectiva (CC-071), por eso se calcula por pasos. Un ajuste igual al valor calculado se rechaza (D-173:
  * solo se ajusta lo que difiere).
  */
 function ensamblarConAjustes(
@@ -405,12 +450,29 @@ function ensamblarConAjustes(
   }
 
   const ajustes: AjustesEntrada = {};
+  const probabilidades = [
+    ["probabilidad_falla_raices_cuello", "probabilidadRaicesCuello"],
+    ["probabilidad_falla_tronco", "probabilidadTronco"],
+    ["probabilidad_falla_copa_ramas", "probabilidadCopaRamas"],
+  ] as const;
+  for (const [campo, clave] of probabilidades) {
+    const probabilidad = ajustesBody[campo];
+    if (!probabilidad) continue;
+    rechazarSiIgual(campo, probabilidad.valor_ajustado, sinAjustes[campo]);
+    ajustes[clave] = {
+      valorAjustado: probabilidad.valor_ajustado,
+      valorCalculadoEnElAjuste: sinAjustes[campo],
+      adjustmentId: `nuevo:${campo}`,
+    };
+  }
+  const conProbabilidad = ensamblarResultadoEvaluacion({ ...args, ajustes });
+
   const riesgo = ajustesBody.clasificacion_riesgo;
   if (riesgo) {
-    rechazarSiIgual("clasificacion_riesgo", riesgo.valor_ajustado, sinAjustes.clasificacion_riesgo_calculada);
+    rechazarSiIgual("clasificacion_riesgo", riesgo.valor_ajustado, conProbabilidad.clasificacion_riesgo_calculada);
     ajustes.riesgo = {
       valorAjustado: riesgo.valor_ajustado,
-      valorCalculadoEnElAjuste: sinAjustes.clasificacion_riesgo_calculada,
+      valorCalculadoEnElAjuste: conProbabilidad.clasificacion_riesgo_calculada,
       adjustmentId: "nuevo:clasificacion_riesgo",
     };
   }
@@ -419,11 +481,11 @@ function ensamblarConAjustes(
     rechazarSiIgual(
       "clasificacion_infraestructura",
       infraestructura.valor_ajustado,
-      sinAjustes.clasificacion_infraestructura_calculada
+      conProbabilidad.clasificacion_infraestructura_calculada
     );
     ajustes.infraestructura = {
       valorAjustado: infraestructura.valor_ajustado,
-      valorCalculadoEnElAjuste: sinAjustes.clasificacion_infraestructura_calculada,
+      valorCalculadoEnElAjuste: conProbabilidad.clasificacion_infraestructura_calculada,
       adjustmentId: "nuevo:clasificacion_infraestructura",
     };
   }
@@ -514,6 +576,9 @@ function resultadoParaFuncion(r: ResultadoEvaluacion): Record<string, unknown> {
 /** `p_ajustes`: un objeto por clasificación ajustada que el motor mantuvo (CC-044). */
 function ajustesParaFuncion(r: ResultadoEvaluacion, ajustesBody: AjustesBody | undefined): AjusteFinalizacion[] {
   const pares: Array<[CampoAjuste, string | null, string]> = [
+    ["probabilidad_falla_raices_cuello", r.probabilidad_falla_raices_cuello_ajustada, r.probabilidad_falla_raices_cuello],
+    ["probabilidad_falla_tronco", r.probabilidad_falla_tronco_ajustada, r.probabilidad_falla_tronco],
+    ["probabilidad_falla_copa_ramas", r.probabilidad_falla_copa_ramas_ajustada, r.probabilidad_falla_copa_ramas],
     ["clasificacion_riesgo", r.clasificacion_riesgo_ajustada, r.clasificacion_riesgo_calculada],
     ["clasificacion_infraestructura", r.clasificacion_infraestructura_ajustada, r.clasificacion_infraestructura_calculada],
     ["clasificacion_prioridad", r.clasificacion_prioridad_ajustada, r.clasificacion_prioridad_calculada],

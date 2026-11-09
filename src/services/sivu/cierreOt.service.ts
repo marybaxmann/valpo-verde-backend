@@ -21,9 +21,9 @@ import {
   reasignarOt,
 } from "../../repositories/sivu/cierreOt.repository";
 import { OrdenTrabajoRow, obtenerOrdenTrabajoPorId } from "../../repositories/sivu/workOrder.repository";
-import { obtenerInspeccionPorId } from "../../repositories/sivu/inspection.repository";
+import { obtenerArbolVigente, obtenerInspeccionPorId, obtenerVersionArbolDeInspeccion } from "../../repositories/sivu/inspection.repository";
 import { AjusteVigente, AjustesEntrada, ensamblarResultadoVigente } from "../rules/engine/ensamblaje";
-import { componerVariablesCalculo } from "./finalizacion.service";
+import { componerVariablesCalculo, resolverDapCm, resolverDatosLcr } from "./finalizacion.service";
 
 /** Intentos ante SV068: la composición cambió entre la lectura y la escritura. */
 const INTENTOS_COMPLETAR = 2;
@@ -45,7 +45,14 @@ async function otDeInspeccion(workOrderId: string): Promise<OrdenTrabajoRow> {
  */
 function ajustesDeLaInspeccion(ajustes: readonly AjusteRegistradoRow[], inspectionId: string): AjustesEntrada {
   const entrada: AjustesEntrada = {};
-  const clave = { clasificacion_riesgo: "riesgo", clasificacion_infraestructura: "infraestructura", clasificacion_prioridad: "prioridad" } as const;
+  const clave = {
+    clasificacion_riesgo: "riesgo",
+    clasificacion_infraestructura: "infraestructura",
+    clasificacion_prioridad: "prioridad",
+    probabilidad_falla_raices_cuello: "probabilidadRaicesCuello",
+    probabilidad_falla_tronco: "probabilidadTronco",
+    probabilidad_falla_copa_ramas: "probabilidadCopaRamas",
+  } as const;
   const propios = ajustes
     .filter((a) => a.inspection_id === inspectionId)
     .sort((a, b) => a.fecha_ajuste.localeCompare(b.fecha_ajuste));
@@ -62,7 +69,7 @@ function ajustesDeLaInspeccion(ajustes: readonly AjusteRegistradoRow[], inspecti
   return entrada;
 }
 
-async function prepararEvaluaciones(workOrderId: string): Promise<EvaluacionVigentePayload[]> {
+async function prepararEvaluaciones(workOrderId: string, accessToken: string): Promise<EvaluacionVigentePayload[]> {
   const inspecciones = await listarInspeccionesFinalizadasDeOt(workOrderId);
   if (inspecciones.length === 0) {
     throw new AppError("No se puede completar la orden de trabajo: debe tener al menos una inspección Finalizada (CC-050)", 422);
@@ -77,9 +84,18 @@ async function prepararEvaluaciones(workOrderId: string): Promise<EvaluacionVige
 
   return Promise.all(
     [...ultimaPorArbol.entries()].map(async ([treeId, inspeccion]) => {
-      const composicion = await obtenerComposicionPrevia(treeId, workOrderId);
+      const [composicion, versionArbol, arbolVigente] = await Promise.all([
+        obtenerComposicionPrevia(treeId, workOrderId),
+        obtenerVersionArbolDeInspeccion(accessToken, inspeccion.id),
+        obtenerArbolVigente(accessToken, treeId),
+      ]);
       const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
-        variablesCalculo: componerVariablesCalculo(composicion.entradas_vigentes, {}),
+        variablesCalculo: componerVariablesCalculo(
+          composicion.entradas_vigentes,
+          {},
+          resolverDapCm(versionArbol, arbolVigente),
+          resolverDatosLcr(versionArbol, arbolVigente)
+        ),
         ajustes: ajustesDeLaInspeccion(ajustes, inspeccion.id),
         motorCommit: env.MOTOR_COMMIT,
       });
@@ -102,7 +118,7 @@ export async function completarOrdenTrabajo(user: AuthenticatedUser, workOrderId
   }
 
   for (let intento = 1; ; intento++) {
-    const evaluaciones = await prepararEvaluaciones(workOrderId);
+    const evaluaciones = await prepararEvaluaciones(workOrderId, accessToken);
     try {
       return await completarOt(workOrderId, user.id, evaluaciones);
     } catch (err: unknown) {
@@ -166,13 +182,19 @@ export async function anularInspeccionFinalizada(
   for (let intento = 1; ; intento++) {
     let evaluacion: Omit<EvaluacionVigentePayload, "tree_id"> | null = null;
     if (ot.estado_ot === "completada") {
-      const [composicion, ultimaValida] = await Promise.all([
+      const [composicion, ultimaValida, arbolVigente] = await Promise.all([
         obtenerComposicionSinInspeccion(inspeccion.tree_id, inspectionId),
         obtenerUltimaInspeccionValidaSin(inspeccion.tree_id, inspectionId),
+        obtenerArbolVigente(accessToken, inspeccion.tree_id),
       ]);
       const ajustes = ultimaValida ? await listarAjustesDeInspecciones([ultimaValida]) : [];
       const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
-        variablesCalculo: componerVariablesCalculo(composicion.entradas_vigentes, {}),
+        variablesCalculo: componerVariablesCalculo(
+          composicion.entradas_vigentes,
+          {},
+          resolverDapCm(null, arbolVigente),
+          resolverDatosLcr(null, arbolVigente)
+        ),
         ajustes: ultimaValida ? ajustesDeLaInspeccion(ajustes, ultimaValida) : {},
         inspeccionAnuladaId: inspectionId,
         motorCommit: env.MOTOR_COMMIT,
