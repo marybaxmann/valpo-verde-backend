@@ -7,12 +7,13 @@ import PDFDocument from "pdfkit";
 import "pdfkit/standard-fonts/Helvetica";
 import "pdfkit/standard-fonts/HelveticaBold";
 import "pdfkit/standard-fonts/HelveticaOblique";
-import QRCode from "qrcode";
 import { env } from "../../config/env";
 import { AuthenticatedUser } from "../../types/auth";
 import { AppError } from "../../utils/AppError";
 import { assertProjectRole } from "../authorization.service";
-import { listarArbolesParaPlacas } from "../../repositories/sivu/conecta.repository";
+import { listarArbolesParaPlacas, obtenerArbolParaQr } from "../../repositories/sivu/conecta.repository";
+import { QrArbolQuery } from "../../schemas/sivu/conecta.schema";
+import { contornoModulos, matrizQr, qrStl, qrSvg } from "./qrGeometria";
 
 /**
  * GET /api/sivu/projects/:id/placas-qr — archivo imprimible de placas
@@ -30,14 +31,11 @@ const MARGEN = 36;
 
 export async function generarPlacasQr(user: AuthenticatedUser, projectId: string, token: string): Promise<Buffer> {
   await assertProjectRole(user, projectId, ["usuario_municipal"], token);
-  if (!env.CONECTA_URL_BASE) {
-    throw new AppError("Falta configurar la dirección pública de Conecta (CONECTA_URL_BASE) en el servidor", 503);
-  }
+  const base = urlBaseConecta();
   const arboles = await listarArbolesParaPlacas(token, projectId);
   if (arboles.length === 0) {
     throw new AppError("El proyecto no tiene árboles activos para generar placas", 404);
   }
-  const base = env.CONECTA_URL_BASE.replace(/\/+$/, "");
 
   const doc = new PDFDocument({ size: "A4", margin: MARGEN, info: { Title: "Placas QR — Valpo Verde Conecta" } });
   const partes: Buffer[] = [];
@@ -75,20 +73,59 @@ export async function generarPlacasQr(user: AuthenticatedUser, projectId: string
   return terminado;
 }
 
+function urlBaseConecta(): string {
+  if (!env.CONECTA_URL_BASE) {
+    throw new AppError("Falta configurar la dirección pública de Conecta (CONECTA_URL_BASE) en el servidor", 503);
+  }
+  return env.CONECTA_URL_BASE.replace(/\/+$/, "");
+}
+
 /**
- * El QR como cuadrados vectoriales (sin pasar por una imagen PNG):
- * nítido al imprimir a cualquier tamaño. Con un módulo de margen
- * blanco alrededor.
+ * El QR como un único trazado vectorial de módulos cuadrados (el mismo
+ * de `qrGeometria`), con margen silencioso de 4 módulos incluido en
+ * `lado`: nítido al imprimir a cualquier tamaño.
  */
 function dibujarQr(doc: PDFKit.PDFDocument, texto: string, x: number, y: number, lado: number): void {
-  const { modules } = QRCode.create(texto, { errorCorrectionLevel: "M" });
-  const n = modules.size;
-  const paso = lado / (n + 2);
-  doc.save().fillColor("#000000");
-  for (let fila = 0; fila < n; fila++) {
-    for (let col = 0; col < n; col++) {
-      if (modules.get(fila, col)) doc.rect(x + (col + 1) * paso, y + (fila + 1) * paso, paso, paso);
-    }
+  const matriz = matrizQr(texto);
+  const paso = lado / matriz.total;
+  doc.save().translate(x, y).scale(paso).path(contornoModulos(matriz)).fill("#000000").restore();
+}
+
+/**
+ * GET /api/sivu/projects/:id/trees/:treeId/qr — el QR de un árbol para
+ * modelarlo o imprimirlo en 3D, en SVG (placa + módulos) o STL (placa con
+ * módulos en relieve o grabados). Mismo destino que la placa del PDF:
+ * `${CONECTA_URL_BASE}/${qr_token}`; nunca el `tree_code`. Solo el
+ * Usuario municipal (como las placas, CC-062) y solo árboles activos.
+ */
+export async function generarQrArbol(
+  user: AuthenticatedUser,
+  projectId: string,
+  treeId: string,
+  opciones: QrArbolQuery,
+  token: string
+): Promise<{ archivo: Buffer | string; tipo: string; nombre: string }> {
+  await assertProjectRole(user, projectId, ["usuario_municipal"], token);
+  const base = urlBaseConecta();
+  const arbol = await obtenerArbolParaQr(token, projectId, treeId);
+  if (!arbol) throw new AppError("Árbol no encontrado en este proyecto", 404);
+  if (arbol.estado_ciclo_vida !== "activo") {
+    throw new AppError(`El árbol ${arbol.tree_code} no está activo: no se le genera placa`, 409);
   }
-  doc.fill().restore();
+  const url = `${base}/${arbol.qr_token}`;
+  const modulo = opciones.lado_mm / matrizQr(url).total;
+  if (modulo < 1) {
+    throw new AppError(
+      `Con lado_mm=${opciones.lado_mm} cada módulo mide ${modulo.toFixed(2)} mm; para que se lea impreso debe medir al menos 1 mm (aumenta lado_mm)`,
+      400
+    );
+  }
+  if (opciones.formato === "svg") {
+    return { archivo: qrSvg(url, opciones.lado_mm, `QR ${arbol.tree_code} — Valpo Verde Conecta`), tipo: "image/svg+xml", nombre: `qr-${arbol.tree_code}.svg` };
+  }
+  return {
+    archivo: qrStl(url, { ladoMm: opciones.lado_mm, baseMm: opciones.base_mm, relieveMm: opciones.relieve_mm, modo: opciones.modo }),
+    tipo: "model/stl",
+    nombre: `qr-${arbol.tree_code}-${opciones.modo}.stl`,
+  };
 }

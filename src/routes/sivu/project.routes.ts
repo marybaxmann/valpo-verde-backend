@@ -32,6 +32,7 @@ import {
   detalleIncidenciaController,
   listarIncidenciasController,
   placasQrController,
+  qrArbolController,
   revisarIncidenciaController,
 } from "../../controllers/sivu/conecta.controller";
 
@@ -98,5 +99,7 @@ router.get("/:id/incidencias", authMiddleware, listarIncidenciasController);
 router.get("/:id/incidencias/:incidentId", authMiddleware, detalleIncidenciaController);
 router.patch("/:id/incidencias/:incidentId/revision", authMiddleware, revisarIncidenciaController);
 router.get("/:id/placas-qr", authMiddleware, placasQrController);
+// QR de un árbol en SVG o STL, para modelar o imprimir en 3D: solo el Usuario municipal.
+router.get("/:id/trees/:treeId/qr", authMiddleware, qrArbolController);
 
 export default router;
