@@ -180,6 +180,25 @@ export async function revisarIncidencia(input: {
   return data as RevisionResultado;
 }
 
+/**
+ * Un árbol del proyecto para su QR individual (SVG/STL), con el JWT del
+ * usuario. `null` si no existe en ese proyecto o la RLS no lo deja ver.
+ */
+export async function obtenerArbolParaQr(
+  accessToken: string,
+  projectId: string,
+  treeId: string
+): Promise<{ tree_code: string; qr_token: string; estado_ciclo_vida: string } | null> {
+  const { data, error } = await createUserScopedClient(accessToken)
+    .from("trees")
+    .select("tree_code, qr_token, estado_ciclo_vida")
+    .eq("project_id", projectId)
+    .eq("id", treeId)
+    .maybeSingle();
+  if (error) lanzar(error);
+  return (data as { tree_code: string; qr_token: string; estado_ciclo_vida: string } | null) ?? null;
+}
+
 /** Árboles del proyecto para las placas QR (CC-062 punto 2), con el JWT del usuario. */
 export async function listarArbolesParaPlacas(
   accessToken: string,

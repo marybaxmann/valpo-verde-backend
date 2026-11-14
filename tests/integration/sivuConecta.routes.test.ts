@@ -31,12 +31,14 @@ import {
   listarIncidenciasProyecto,
   obtenerEstadoSeguimiento,
   obtenerFichaPublica,
+  obtenerArbolParaQr,
   obtenerIncidencia,
   purgarHuellasVencidas,
   revisarIncidencia,
 } from "../../src/repositories/sivu/conecta.repository";
 import { eliminarArchivoDeStorage, subirArchivoAStorage } from "../../src/repositories/sivu/photo.repository";
 import { obtenerMiembrosDeProyecto } from "../../src/repositories/sivu/workOrder.repository";
+import { env } from "../../src/config/env";
 import { FAKE_TOKEN, INSPECTOR_ID, MUNICIPAL_ID, fakeAuthUser, inspectorProfileRow, municipalProfileRow } from "../helpers/authFixtures";
 
 const mAuth = getAuthUserByToken as jest.Mock;
@@ -52,6 +54,7 @@ const mRevisar = revisarIncidencia as jest.Mock;
 const mSubir = subirArchivoAStorage as jest.Mock;
 const mBorrar = eliminarArchivoDeStorage as jest.Mock;
 const mMiembros = obtenerMiembrosDeProyecto as jest.Mock;
+const mArbolQr = obtenerArbolParaQr as jest.Mock;
 
 const QR = "8b7c6d5e-4f3a-4b2c-9d1e-0f9a8b7c6d5e";
 const PROJECT_ID = "33333333-3333-4333-8333-333333333333";
@@ -352,6 +355,67 @@ describe("B9 y revisión (internas)", () => {
     const res = await request(app).get(`/api/sivu/projects/${PROJECT_ID}/placas-qr`).set(auth);
     expect(res.status).toBe(503);
     expect(res.body.error).toMatch(/CONECTA_URL_BASE/);
+  });
+
+  describe("QR de un árbol (SVG/STL para 3D)", () => {
+    const TREE_ID = "44444444-4444-4444-8444-444444444444";
+    const ruta = (q = "") => `/api/sivu/projects/${PROJECT_ID}/trees/${TREE_ID}/qr${q}`;
+    beforeEach(() => {
+      env.CONECTA_URL_BASE = "https://conecta.example.cl/arbol";
+      mArbolQr.mockResolvedValue({ tree_code: "A-000421", qr_token: QR, estado_ciclo_vida: "activo" });
+    });
+    afterEach(() => {
+      env.CONECTA_URL_BASE = undefined;
+    });
+
+    it("solo el Usuario municipal", async () => {
+      como("inspector");
+      expect((await request(app).get(ruta()).set(auth)).status).toBe(403);
+    });
+
+    it("SVG por defecto, con el nombre del tree_code y medidas en mm", async () => {
+      como("municipal");
+      const res = await request(app).get(ruta()).set(auth).buffer(true).parse((r, cb) => {
+        let t = "";
+        r.on("data", (c: Buffer) => (t += c.toString()));
+        r.on("end", () => cb(null, t));
+      });
+      expect(res.status).toBe(200);
+      expect(res.headers["content-type"]).toMatch(/image\/svg\+xml/);
+      expect(res.headers["content-disposition"]).toContain("qr-A-000421.svg");
+      expect(res.body).toContain('width="80mm"');
+      expect(res.body).toContain('id="modulos"');
+      expect(mArbolQr).toHaveBeenCalledWith(FAKE_TOKEN, PROJECT_ID, TREE_ID);
+    });
+
+    it("STL grabado con medidas propias", async () => {
+      como("municipal");
+      const res = await request(app).get(ruta("?formato=stl&modo=grabado&lado_mm=100&base_mm=3&relieve_mm=1.5")).set(auth).buffer(true).parse((r, cb) => {
+        const partes: Buffer[] = [];
+        r.on("data", (c: Buffer) => partes.push(c));
+        r.on("end", () => cb(null, Buffer.concat(partes)));
+      });
+      expect(res.status).toBe(200);
+      expect(res.headers["content-disposition"]).toContain("qr-A-000421-grabado.stl");
+      const buf = res.body as Buffer;
+      expect(buf.length).toBe(84 + buf.readUInt32LE(80) * 50);
+    });
+
+    it("rechaza un formato desconocido y módulos de menos de 1 mm", async () => {
+      como("municipal");
+      expect((await request(app).get(ruta("?formato=obj")).set(auth)).status).toBe(400);
+      const chico = await request(app).get(ruta("?lado_mm=20")).set(auth);
+      expect(chico.status).toBe(400);
+      expect(chico.body.error).toMatch(/al menos 1 mm/);
+    });
+
+    it("árbol inexistente: 404; árbol no activo: 409", async () => {
+      como("municipal");
+      mArbolQr.mockResolvedValueOnce(null);
+      expect((await request(app).get(ruta()).set(auth)).status).toBe(404);
+      mArbolQr.mockResolvedValueOnce({ tree_code: "A-000421", qr_token: QR, estado_ciclo_vida: "talado" });
+      expect((await request(app).get(ruta()).set(auth)).status).toBe(409);
+    });
   });
 });
 

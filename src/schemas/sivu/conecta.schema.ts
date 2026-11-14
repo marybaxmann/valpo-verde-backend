@@ -114,3 +114,26 @@ export const revisionIncidenciaSchema = z
   });
 
 export type RevisionIncidenciaBody = z.infer<typeof revisionIncidenciaSchema>;
+
+/** Params de GET /api/sivu/projects/:id/trees/:treeId/qr. */
+export const qrArbolParamsSchema = z.object({
+  id: z.string().uuid("id de proyecto inválido"),
+  treeId: z.string().uuid("id de árbol inválido"),
+});
+
+/**
+ * Query de GET .../trees/:treeId/qr: el QR de un árbol para modelar o
+ * imprimir en 3D. Medidas en mm; `lado_mm` incluye el margen silencioso.
+ * `base_mm`, `relieve_mm` y `modo` solo aplican al STL.
+ */
+export const qrArbolQuerySchema = z
+  .object({
+    formato: z.enum(["svg", "stl"], { errorMap: () => ({ message: "formato debe ser svg o stl" }) }).default("svg"),
+    lado_mm: z.coerce.number().min(20, "lado_mm debe ser al menos 20").max(300, "lado_mm no puede superar 300").default(80),
+    base_mm: z.coerce.number().min(0.6, "base_mm debe ser al menos 0,6").max(10, "base_mm no puede superar 10").default(2),
+    relieve_mm: z.coerce.number().min(0.4, "relieve_mm debe ser al menos 0,4").max(10, "relieve_mm no puede superar 10").default(1),
+    modo: z.enum(["relieve", "grabado"], { errorMap: () => ({ message: "modo debe ser relieve o grabado" }) }).default("relieve"),
+  })
+  .strict();
+
+export type QrArbolQuery = z.infer<typeof qrArbolQuerySchema>;

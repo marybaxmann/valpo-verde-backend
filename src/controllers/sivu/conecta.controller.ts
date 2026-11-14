@@ -3,6 +3,8 @@ import { AppError } from "../../utils/AppError";
 import {
   incidenciaParamsSchema,
   listarIncidenciasQuerySchema,
+  qrArbolParamsSchema,
+  qrArbolQuerySchema,
   qrTokenParamSchema,
   reporteCiudadanoSchema,
   revisionIncidenciaSchema,
@@ -11,7 +13,7 @@ import {
 import { proyectoIdParamSchema } from "../../schemas/sivu/proyectos.schema";
 import { ARBOL_NO_ENCONTRADO, consultarSeguimiento, crearReporteCiudadano, fichaPublica } from "../../services/sivu/conecta.service";
 import { detalleIncidencia, listarIncidencias, revisar } from "../../services/sivu/incidencia.service";
-import { generarPlacasQr } from "../../services/sivu/placasQr.service";
+import { generarPlacasQr, generarQrArbol } from "../../services/sivu/placasQr.service";
 import { catalogosVigentes } from "../../services/sivu/diagnostico.service";
 
 const primerMensaje = (r: { error: { issues: Array<{ message: string }> } }) => r.error.issues[0]?.message ?? "Datos inválidos";
@@ -108,6 +110,20 @@ export async function placasQrController(req: Request, res: Response, next: Next
     if (!params.success) throw new AppError(primerMensaje(params), 400);
     const pdf = await generarPlacasQr(req.user!, params.data.id, req.accessToken!);
     res.status(200).set({ "Content-Type": "application/pdf", "Content-Disposition": 'attachment; filename="placas-qr.pdf"' }).send(pdf);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /api/sivu/projects/:id/trees/:treeId/qr — SVG o STL del QR de un árbol. */
+export async function qrArbolController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const params = qrArbolParamsSchema.safeParse(req.params);
+    if (!params.success) throw new AppError(primerMensaje(params), 400);
+    const query = qrArbolQuerySchema.safeParse(req.query);
+    if (!query.success) throw new AppError(primerMensaje(query), 400);
+    const { archivo, tipo, nombre } = await generarQrArbol(req.user!, params.data.id, params.data.treeId, query.data, req.accessToken!);
+    res.status(200).set({ "Content-Type": tipo, "Content-Disposition": `attachment; filename="${nombre}"` }).send(archivo);
   } catch (err) {
     next(err);
   }
