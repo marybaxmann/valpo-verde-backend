@@ -1,31 +1,31 @@
-# Preguntas para Mari antes de aplicar
+# Preguntas para Mari y Valej antes de aplicar
 
-> Cada una dice qué propongo si no hay otra indicación. Nada se aplica hasta tener las respuestas, el CC aprobado y las filas en el Excel.
+> **Quién responde:** lo de evaluación y medidas, **Valej** (1 y 4); lo de Conecta, fichas, textos y fotos, **Mari** (2, 3 y 5 a 11); la 12, las dos. Cada una dice qué propongo si no hay otra indicación. Nada se aplica hasta tener las respuestas, el CC aprobado y las filas en el Excel.
 
 ## Bloquean el CC
 
-**1. Medido vs estimado (relevo §3.2).** D-18 (DAP) y D-19 (altura) dicen «Medición en terreno o estimación con escala», pero ningún campo registra, árbol por árbol, cuál de las dos se usó. D-22 (copa) se calcula desde D-20 y D-21, que tienen la misma ambigüedad. D-26 sí es «Estimado» y D-25 es una clasificación del Inspector.
+**1. Medido vs estimado (relevo §3.2). — Valej** D-18 (DAP) y D-19 (altura) dicen «Medición en terreno o estimación con escala», pero ningún campo registra, árbol por árbol, cuál de las dos se usó. D-22 (copa) se calcula desde D-20 y D-21, que tienen la misma ambigüedad. D-26 sí es «Estimado» y D-25 es una clasificación del Inspector.
 - **(a)** Agregar un campo de método (Medición / Estimación con escala) para D-18, D-19, D-20 y D-21. Lo registra el Inspector en la inspección. Necesita su propio CC, filas en ARBOLES y cambio en el formulario B16. La ficha diría «medido» o «estimado» con certeza, pero solo para inspecciones nuevas: las de antes quedarían sin método.
 - **(b)** No agregar nada por ahora. La ficha rotula DAP, altura y copa como «medida en terreno o estimada con escala», D-26 como «estimación» y D-25 como «clasificación del Inspector».
 - **Propuesta:** (b) ahora, y (a) como CC aparte si se quiere el detalle.
 
-**2. Administrador y PR-004.** P4 dice que el Administrador edita las fichas, pero PR-004 v7.0 lo deja en solo lectura e incluye «fichas» entre lo que solo consulta. ¿Se aprueba crear **PR-004 v8.0** con esta única excepción: contenido ciudadano de especies y fichas públicas, sin escritura en inventario, OT, inspecciones ni incidencias?
+**2. Administrador y PR-004. — Mari** P4 dice que el Administrador edita las fichas, pero PR-004 v7.0 lo deja en solo lectura e incluye «fichas» entre lo que solo consulta. ¿Se aprueba crear **PR-004 v8.0** con esta única excepción: contenido ciudadano de especies y fichas públicas, sin escritura en inventario, OT, inspecciones ni incidencias?
 
-**3. Alcance del contenido por especie.** El catálogo es uno solo para todos los proyectos. Si un Usuario municipal del proyecto A edita el texto del olmo, cambia también en las fichas del proyecto B. ¿Se acepta, o el contenido de especie lo edita solo el Administrador?
+**3. Alcance del contenido por especie. — Mari** El catálogo es uno solo para todos los proyectos. Si un Usuario municipal del proyecto A edita el texto del olmo, cambia también en las fichas del proyecto B. ¿Se acepta, o el contenido de especie lo edita solo el Administrador?
 - **Propuesta:** cualquier Usuario municipal activo o el Administrador (como dice P4), porque hoy hay un solo proyecto piloto.
 
-**4. Interruptores apagados por defecto.** ¿Las 5 medidas empiezan en «No» en cada árbol, como proponía D6? La otra opción es que empiecen en «Sí» y se muestre todo lo que exista.
+**4. Interruptores apagados por defecto. — Valej** ¿Las 5 medidas empiezan en «No» en cada árbol, como proponía D6? La otra opción es que empiecen en «Sí» y se muestre todo lo que exista.
 - **Propuesta:** «No», que no publica nada sin una decisión explícita.
 
-**5. Fuentes por bloque.** El relevo pide «fuentes por bloque», pero los textos aprobados tienen sus fuentes por especie (`fuentes` en `contenidoEspecie.ts`). ¿Se acepta un bloque «General» para cargar las que ya existen, y por bloque desde ahora? La otra opción es repartirlas por bloque antes de cargar, revisando `FICHAS_SEIS_ESPECIES.md`.
+**5. Fuentes por bloque. — Mari** El relevo pide «fuentes por bloque», pero los textos aprobados tienen sus fuentes por especie (`fuentes` en `contenidoEspecie.ts`). ¿Se acepta un bloque «General» para cargar las que ya existen, y por bloque desde ahora? La otra opción es repartirlas por bloque antes de cargar, revisando `FICHAS_SEIS_ESPECIES.md`.
 
-**6. Qué bloques puede personalizar un árbol.** Propongo curiosidad, «quién soy» y consejo. Rasgos, año por estaciones e historia de la especie quedan fijos, porque son botánicos y comunes a la especie. ¿Está bien, o se quiere personalizar algún otro bloque?
+**6. Qué bloques puede personalizar un árbol. — Mari** Propongo curiosidad, «quién soy» y consejo. Rasgos, año por estaciones e historia de la especie quedan fijos, porque son botánicos y comunes a la especie. ¿Está bien, o se quiere personalizar algún otro bloque?
 
 ## Bloquean la carga de datos, no el CC
 
-**7. Camino para agregar *Acer negundo* y *Lagerstroemia indica* (P9).** ¿Las carga un Inspector en la plataforma (CC-053) o se hace una carga autorizada en la base de pruebas? Sin esas dos filas en `species`, su contenido ciudadano no tiene dónde guardarse.
+**7. — Mari.** Camino para agregar *Acer negundo* y *Lagerstroemia indica* (P9).** ¿Las carga un Inspector en la plataforma (CC-053) o se hace una carga autorizada en la base de pruebas? Sin esas dos filas en `species`, su contenido ciudadano no tiene dónde guardarse.
 
-**8. Créditos de fotos.** Propongo que toda foto de especie (referencial y de reconocimiento) lleve crédito obligatorio (autor y licencia). Las fotos propias del levantamiento llevarían «Valpo Verde, levantamiento 2026-10-01». La foto del olmo de terceros con marca de agua no se cargaría. ¿De acuerdo? Para la foto del ejemplar no propongo crédito: la toma la municipalidad.
+**8. Créditos de fotos. — Mari** Propongo que toda foto de especie (referencial y de reconocimiento) lleve crédito obligatorio (autor y licencia). Las fotos propias del levantamiento llevarían «Valpo Verde, levantamiento 2026-10-01». La foto del olmo de terceros con marca de agua no se cargaría. ¿De acuerdo? Para la foto del ejemplar no propongo crédito: la toma la municipalidad.
 
 ## Menores (se pueden ajustar después)
 
@@ -35,4 +35,4 @@
 
 **11. Árbol sin especie vigente** (A-000507, 508, 509, 512 y 513, P18). La ficha no muestra contenido de especie, pero sí «Mi historia», la foto propia y las medidas activadas, si existen. ¿Correcto?
 
-**12. Numeración D-n.** Las filas quedan provisionalmente en D-280 a D-306. Si CC-068 (densidad de la madera) entra antes al Excel, se corren 4. ¿Cuál entra primero?
+**12. Numeración D-n. — Mari y Valej** Las filas quedan provisionalmente en D-280 a D-306. Si CC-068 (densidad de la madera) entra antes al Excel, se corren 4. ¿Cuál entra primero?
