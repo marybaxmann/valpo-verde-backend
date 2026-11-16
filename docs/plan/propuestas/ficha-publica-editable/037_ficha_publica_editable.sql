@@ -1,6 +1,7 @@
 -- =====================================================================
 -- Migración 037 — Valpo Verde Conecta: ficha pública editable
--- (CC-0XX borrador, reescritura de la propuesta D6; filas D-280 a D-306
+-- (CC-073 provisional, borrador final del 2026-11-16 con las respuestas de
+-- Mari y Valej; reescritura de la propuesta D6; filas D-280 a D-306
 -- provisionales; PR-022 v3.0 y PR-004 v8.0 propuestas)
 -- =====================================================================
 --
@@ -441,7 +442,9 @@ $$;
 --                         con su tipo para rotular «Foto referencial».
 --   medidas               solo las activadas (D-296 a D-300) que tienen
 --                         valor vigente; cada una con su naturaleza
---                         (ver la pregunta de medido vs estimado).
+--                         (Valej, 2026-11-16: DAP, altura y copa =
+--                         medicion_o_estimacion; D-26 = estimacion;
+--                         D-25 = clasificacion).
 -- Sigue sin entregar: tree_code, tree_id, coordenadas, proyecto,
 -- inspecciones, fotos técnicas (D-27), incidencias, riesgo ni ninguna
 -- clasificación técnica. updated_by nunca sale.
@@ -514,7 +517,7 @@ AS $$
       'dap_cm',          CASE WHEN p.mostrar_dap           AND b.dap_cm IS NOT NULL
                               THEN jsonb_build_object('valor', b.dap_cm, 'unidad', 'cm', 'naturaleza', 'medicion_o_estimacion') END,
       'diametro_copa_m', CASE WHEN p.mostrar_diametro_copa AND b.diametro_copa_m IS NOT NULL
-                              THEN jsonb_build_object('valor', b.diametro_copa_m, 'unidad', 'm', 'naturaleza', 'calculado') END,
+                              THEN jsonb_build_object('valor', b.diametro_copa_m, 'unidad', 'm', 'naturaleza', 'medicion_o_estimacion') END,
       'rango_edad_estimada_anios', CASE WHEN p.mostrar_rango_edad AND b.rango_edad_estimada_anios IS NOT NULL
                               THEN jsonb_build_object('codigo', b.rango_edad_estimada_anios, 'naturaleza', 'estimacion') END
     ))

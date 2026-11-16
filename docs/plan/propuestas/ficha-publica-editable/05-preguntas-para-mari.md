@@ -15,10 +15,19 @@
 | 7 | **Carga autorizada en la base de pruebas** (`gmlbmyreoxgoqrolhyxo`) de *Acer negundo* y *Lagerstroemia indica* con los datos aprobados en P9, y dejarla registrada. |
 | 8 | **Aprobado.** Autor y licencia obligatorios; no se usa la foto del olmo con marca de agua; mientras no haya foto propia, el olmo queda sin foto. |
 | 9, 10, 11 | **Aprobados** como se proponen. |
-| 12 | La numeración D-n se ajusta según cuándo entre CC-068. |
+| 12 | La numeración D-n se ajusta al copiar las filas al Excel, según si CC-068 entra antes. **No frena el CC.** |
 | 1, 4 | Las responde Valej. |
 
-**Pendiente:** respuestas de Valej a la 1 y la 4. Sin ellas el CC no se registra.
+Mari confirmó estas respuestas el 2026-11-16 en el mensaje que trajo las de Valej. En la 2 precisó que la excepción cubre solo el contenido ciudadano de especies y fichas públicas, sin inventario, OT, inspecciones ni incidencias.
+
+### Valej, 2026-11-16 (medidas)
+
+| # | Respuesta |
+|---|---|
+| 1 | **Opción (b).** No se agrega un campo de método y la opción (a) queda **descartada, no postergada**: no es posible saber cómo se determinó cada dato. La ficha dice «medida en terreno o estimada con escala» para el DAP, la altura y la copa; «estimación» para D-26, y «clasificación del Inspector» para D-25. |
+| 4 | **Aprobado.** Las cinco medidas empiezan en «No» en cada árbol. |
+
+**Todas las preguntas están respondidas.** El CC y las filas quedan para la revisión final de Mari; la 037 no se aplica hasta esa revisión.
 
 ## Bloquean el CC
 

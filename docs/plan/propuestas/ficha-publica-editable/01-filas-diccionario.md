@@ -1,6 +1,6 @@
 # Filas propuestas para DICCIONARIO_CAMPOS — ficha pública editable
 
-> **Borrador para la revisión de Mari (2026-11-15). No modifica el Excel.** Generado junto con `01-filas-diccionario.csv` (mismas filas, listo para copiar en las 12 columnas de la hoja). Origen: decisiones del §1.3 de `docs/relevo/RELEVO_2026-11-15_mari.md` y `RESPUESTAS_FICHA_PUBLICA.md` (P1 a P11).
+> **Versión para la revisión final de Mari (2026-11-16), con todas las respuestas de Mari y Valej** (`05-preguntas-para-mari.md`). **No modifica el Excel.** Generado junto con `01-filas-diccionario.csv` (mismas filas, listo para copiar en las 12 columnas de la hoja). Origen: decisiones del §1.3 de `docs/relevo/RELEVO_2026-11-15_mari.md` y `RESPUESTAS_FICHA_PUBLICA.md` (P1 a P11).
 
 ## Estructura vigente verificada
 
@@ -14,7 +14,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 ## Numeración
 
 - Las filas van **al final** (D-280 a D-306), como D-268 a D-279, para no renumerar ninguna fila citada. Por eso las filas de CATALOGO_ESPECIES no quedan junto a D-257 a D-262.
-- ⚠ **Los números son provisionales.** CC-068 (densidad de la madera, aprobado como propuesta) también agrega 4 filas a CATALOGO_ESPECIES que todavía no están en el Excel. Si entran antes, estas filas se corren 4 lugares. Hay que verificar la fila real con `scripts/metodologia/fila_diccionario.py` al incorporarlas.
+- ⚠ **Los números son provisionales.** CC-068 (densidad de la madera, aprobado como propuesta) también agrega 4 filas a CATALOGO_ESPECIES que todavía no están en el Excel. Si entran antes, estas filas se corren 4 lugares. La numeración se ajusta al copiar las filas al Excel y no frena el CC (respuesta de Mari a la pregunta 12). Hay que verificar la fila real con `scripts/metodologia/fila_diccionario.py` al incorporarlas.
 
 ## Cambios en otras hojas (también para incorporar con estas filas)
 
@@ -24,7 +24,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 
 ## Criterios usados
 
-- **Límites de caracteres:** se fijaron por sobre el texto más largo aprobado en V5 (`contenidoEspecie.ts`): curiosidad 152 → 200; «quién soy» 79 → 160; consejo 74 → 160; aporte 27 → 40; rasgo 80 → 120; estación 48 → 80; paso de ciclo 32 → 60. La historia de la especie llega a 300 y «Mi historia» a 1.000 (P2). Son propuestas: Mari puede ajustarlas.
+- **Límites de caracteres:** se fijaron por sobre el texto más largo aprobado en V5 (`contenidoEspecie.ts`): curiosidad 152 → 200; «quién soy» 79 → 160; consejo 74 → 160; aporte 27 → 40; rasgo 80 → 120; estación 48 → 80; paso de ciclo 32 → 60. La historia de la especie llega a 300 y «Mi historia» a 1.000 (P2). Aprobados por Mari el 2026-11-16 (pregunta 9).
 - **Una fila por campo, también para los compuestos.** Igual que `dap_fustes_cm` (D-17, «Lista de valores numéricos»), los bloques con varias partes (aportes, rasgos, estaciones, ciclo, fuentes) se declaran como «Lista estructurada» y sus partes en «Unidad / valores».
 - **Nada de esto entra en reglas.** Ningún campo participa en REGLAS_INDICADORES ni MATRICES_CALCULO, así que el cambio es PATCH (§14.10) y no genera `rule_version` nueva.
 
@@ -128,11 +128,11 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | ¿Cómo se obtiene? | Ingreso de la etiqueta y el texto de cada rasgo y carga opcional de su fotografía. |
 | Definiciones o criterios aplicables: | Características que permiten reconocer la especie en terreno (hoja, flor, fruto, semilla, corteza, silueta), cada una con una etiqueta, un texto breve y, si existe, una fotografía de reconocimiento. |
 | Tipo de dato | Lista estructurada (etiqueta, texto, fotografía, crédito) |
-| Unidad / valores | Hasta 3 rasgos. Etiqueta: hasta 20 caracteres. Texto: hasta 120 caracteres. Fotografía: JPG, PNG o WebP. Crédito: hasta 120 caracteres. |
+| Unidad / valores | Hasta 3 rasgos. Etiqueta: hasta 20 caracteres. Texto: hasta 120 caracteres. Fotografía: JPG, PNG o WebP. Crédito (autor y licencia): hasta 120 caracteres. |
 | Tipo de obligatoriedad | Opcional |
 | Fórmula / regla de cálculo | No aplica. |
 | Condición de activación | Al completar o actualizar el contenido ciudadano de la especie. |
-| Validación y dependencias | Cada rasgo requiere etiqueta y texto; la fotografía es opcional (sin fotografía, la ficha muestra «Foto próximamente»). Si hay fotografía, el crédito es obligatorio. La fotografía se guarda sin metadatos (EXIF, GPS ni datos de cámara) y en un almacenamiento público distinto del de las fotografías técnicas (D-27). No se usan fotografías de inspección para cumplir este campo. |
+| Validación y dependencias | Cada rasgo requiere etiqueta y texto; la fotografía es opcional (sin fotografía, la ficha muestra «Foto próximamente»). Si hay fotografía, el crédito con autor y licencia es obligatorio; las fotografías propias del levantamiento se acreditan «Valpo Verde, levantamiento 2026-10-01». No se usan fotografías con marca de agua ni sin permiso de uso. La fotografía se guarda sin metadatos (EXIF, GPS ni datos de cámara) y en un almacenamiento público distinto del de las fotografías técnicas (D-27). No se usan fotografías de inspección para cumplir este campo. |
 
 #### D-286 · `anio_estacional`
 
@@ -211,13 +211,13 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Origen | Manual |
 | ¿Quién lo ingresa? | Usuario municipal / Administrador |
 | ¿Cómo se obtiene? | Registro de la referencia consultada para cada bloque de contenido ciudadano. |
-| Definiciones o criterios aplicables: | Fuentes que respaldan el contenido ciudadano de la especie, asociadas al bloque que respaldan. Se guardan en el sistema y no se citan en el cuerpo de la ficha; como máximo, la ficha ofrece un enlace discreto «Fuentes». |
-| Tipo de dato | Lista estructurada (bloque, referencia, enlace) |
-| Unidad / valores | Bloque: Curiosidad / Aportes / Quién soy / Reconóceme / Mi año / Historia de la especie / Consejo / General. Referencia: hasta 200 caracteres. Enlace: URL opcional. |
+| Definiciones o criterios aplicables: | Fuentes que respaldan el contenido ciudadano de la especie, cada una asociada a uno o más bloques que respalda y al tema que sustenta. Se guardan en el sistema y no se citan en el cuerpo de la ficha; como máximo, la ficha ofrece un enlace discreto «Fuentes». |
+| Tipo de dato | Lista estructurada (bloques, tema, referencia, enlace) |
+| Unidad / valores | Bloques: uno o más de Curiosidad / Aportes / Quién soy / Reconóceme / Mi año / Historia de la especie / Consejo / General. Tema: hasta 120 caracteres. Referencia: hasta 300 caracteres, una obra por fuente. Enlace: URL opcional. |
 | Tipo de obligatoriedad | Condicional |
 | Fórmula / regla de cálculo | No aplica. |
 | Condición de activación | Cuando curiosidad_especie o historia_especie tienen valor. |
-| Validación y dependencias | Curiosidad e Historia de la especie requieren al menos una fuente de su bloque. El bloque General se admite solo para el contenido cargado antes de esta versión, cuyas fuentes están registradas por especie y no por bloque. El enlace, si se informa, debe ser una URL https válida. |
+| Validación y dependencias | Curiosidad e Historia de la especie requieren al menos una fuente de su bloque. Las fuentes se registran por bloque; el bloque General se usa solo para una fuente que no respalda un bloque claro (decisión de Mari, 2026-11-16), y una fuente General no cuenta como fuente de Curiosidad ni de Historia de la especie. Cada fuente es una obra que respalda un tema, con todos los bloques donde aparece ese tema; si la misma obra respalda varios temas, se registra una vez por tema. El enlace, si se informa, debe ser una URL https válida. |
 
 #### D-291 · `foto_referencial_especie`
 
@@ -245,13 +245,13 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Origen | Manual |
 | ¿Quién lo ingresa? | Usuario municipal / Administrador |
 | ¿Cómo se obtiene? | Ingreso del autor y la licencia de la fotografía referencial. |
-| Definiciones o criterios aplicables: | Autoría y condiciones de uso de foto_referencial_especie. |
+| Definiciones o criterios aplicables: | Autoría y licencia de foto_referencial_especie. |
 | Tipo de dato | Texto |
 | Unidad / valores | Hasta 120 caracteres |
 | Tipo de obligatoriedad | Condicional |
 | Fórmula / regla de cálculo | No aplica. |
 | Condición de activación | Cuando foto_referencial_especie tiene valor. |
-| Validación y dependencias | Obligatorio si existe foto_referencial_especie. No usar fotografías con marca de agua ni sin permiso de uso. |
+| Validación y dependencias | Obligatorio si existe foto_referencial_especie: autor y licencia (decisión de Mari, 2026-11-16). No usar fotografías con marca de agua ni sin permiso de uso; si no hay una fotografía que cumpla, la especie queda sin foto referencial (caso del olmo mientras no exista una foto propia). |
 
 #### D-293 · `contenido_editado_por`
 
@@ -319,7 +319,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Tipo de dato | Categoría |
 | Unidad / valores | Sí / No |
 | Tipo de obligatoriedad | Obligatorio |
-| Fórmula / regla de cálculo | Valor inicial: No. |
+| Fórmula / regla de cálculo | Valor inicial: No (decisión de Valej, 2026-11-16). |
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-25, valor vigente); no se escribe desde la ficha. Si clase_edad no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula como clasificación del Inspector. |
 
@@ -336,9 +336,9 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Tipo de dato | Categoría |
 | Unidad / valores | Sí / No |
 | Tipo de obligatoriedad | Obligatorio |
-| Fórmula / regla de cálculo | Valor inicial: No. |
+| Fórmula / regla de cálculo | Valor inicial: No (decisión de Valej, 2026-11-16). |
 | Condición de activación | Al guardar la ficha pública del árbol. |
-| Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-19, valor vigente); no se escribe desde la ficha. Si altura_total_m no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula según la decisión pendiente sobre medido o estimado (D-18 y D-19 admiten «medición en terreno o estimación con escala»). |
+| Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-19, valor vigente); no se escribe desde la ficha. Si altura_total_m no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula «medida en terreno o estimada con escala»: el inventario no registra cuál de las dos se usó en cada árbol y no se agrega un campo de método (decisión de Valej, 2026-11-16). |
 
 #### D-298 · `mostrar_dap`
 
@@ -353,9 +353,9 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Tipo de dato | Categoría |
 | Unidad / valores | Sí / No |
 | Tipo de obligatoriedad | Obligatorio |
-| Fórmula / regla de cálculo | Valor inicial: No. |
+| Fórmula / regla de cálculo | Valor inicial: No (decisión de Valej, 2026-11-16). |
 | Condición de activación | Al guardar la ficha pública del árbol. |
-| Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-18, valor vigente); no se escribe desde la ficha. Si dap_cm no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula según la decisión pendiente sobre medido o estimado (D-18 y D-19 admiten «medición en terreno o estimación con escala»). |
+| Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-18, valor vigente); no se escribe desde la ficha. Si dap_cm no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula «medida en terreno o estimada con escala»: el inventario no registra cuál de las dos se usó en cada árbol y no se agrega un campo de método (decisión de Valej, 2026-11-16). |
 
 #### D-299 · `mostrar_diametro_copa`
 
@@ -370,9 +370,9 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Tipo de dato | Categoría |
 | Unidad / valores | Sí / No |
 | Tipo de obligatoriedad | Obligatorio |
-| Fórmula / regla de cálculo | Valor inicial: No. |
+| Fórmula / regla de cálculo | Valor inicial: No (decisión de Valej, 2026-11-16). |
 | Condición de activación | Al guardar la ficha pública del árbol. |
-| Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-22, valor vigente); no se escribe desde la ficha. Si diametro_copa_m no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula como valor calculado desde las mediciones de copa (D-20 y D-21), con el mismo criterio de medido o estimado que esas mediciones. |
+| Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-22, valor vigente); no se escribe desde la ficha. Si diametro_copa_m no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula «medida en terreno o estimada con escala»: el inventario no registra cuál de las dos se usó en cada árbol y no se agrega un campo de método (decisión de Valej, 2026-11-16). |
 
 #### D-300 · `mostrar_rango_edad`
 
@@ -387,7 +387,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Tipo de dato | Categoría |
 | Unidad / valores | Sí / No |
 | Tipo de obligatoriedad | Obligatorio |
-| Fórmula / regla de cálculo | Valor inicial: No. |
+| Fórmula / regla de cálculo | Valor inicial: No (decisión de Valej, 2026-11-16). |
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-26, valor vigente); no se escribe desde la ficha. Si rango_edad_estimada_anios no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula como estimación (D-26: origen Estimado). |
 

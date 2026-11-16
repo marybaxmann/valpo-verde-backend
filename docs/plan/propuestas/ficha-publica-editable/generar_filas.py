@@ -69,10 +69,10 @@ fila(CAT, "rasgos_reconocimiento", "Manual", UM_ADM,
      "Ingreso de la etiqueta y el texto de cada rasgo y carga opcional de su fotografía.",
      "Características que permiten reconocer la especie en terreno (hoja, flor, fruto, semilla, corteza, silueta), cada una con una etiqueta, un texto breve y, si existe, una fotografía de reconocimiento.",
      "Lista estructurada (etiqueta, texto, fotografía, crédito)",
-     "Hasta 3 rasgos. Etiqueta: hasta 20 caracteres. Texto: hasta 120 caracteres. Fotografía: JPG, PNG o WebP. Crédito: hasta 120 caracteres.",
+     "Hasta 3 rasgos. Etiqueta: hasta 20 caracteres. Texto: hasta 120 caracteres. Fotografía: JPG, PNG o WebP. Crédito (autor y licencia): hasta 120 caracteres.",
      "Opcional", "No aplica.",
      "Al completar o actualizar el contenido ciudadano de la especie.",
-     "Cada rasgo requiere etiqueta y texto; la fotografía es opcional (sin fotografía, la ficha muestra «Foto próximamente»). Si hay fotografía, el crédito es obligatorio. La fotografía se guarda sin metadatos (EXIF, GPS ni datos de cámara) y en un almacenamiento público distinto del de las fotografías técnicas (D-27). No se usan fotografías de inspección para cumplir este campo.")
+     "Cada rasgo requiere etiqueta y texto; la fotografía es opcional (sin fotografía, la ficha muestra «Foto próximamente»). Si hay fotografía, el crédito con autor y licencia es obligatorio; las fotografías propias del levantamiento se acreditan «Valpo Verde, levantamiento 2026-10-01». No se usan fotografías con marca de agua ni sin permiso de uso. La fotografía se guarda sin metadatos (EXIF, GPS ni datos de cámara) y en un almacenamiento público distinto del de las fotografías técnicas (D-27). No se usan fotografías de inspección para cumplir este campo.")
 
 fila(CAT, "anio_estacional", "Manual", UM_ADM,
      "Redacción a partir de fuentes botánicas identificables.",
@@ -107,12 +107,12 @@ fila(CAT, "consejo_cuidado", "Manual", UM_ADM,
 
 fila(CAT, "fuentes_contenido_especie", "Manual", UM_ADM,
      "Registro de la referencia consultada para cada bloque de contenido ciudadano.",
-     "Fuentes que respaldan el contenido ciudadano de la especie, asociadas al bloque que respaldan. Se guardan en el sistema y no se citan en el cuerpo de la ficha; como máximo, la ficha ofrece un enlace discreto «Fuentes».",
-     "Lista estructurada (bloque, referencia, enlace)",
-     "Bloque: Curiosidad / Aportes / Quién soy / Reconóceme / Mi año / Historia de la especie / Consejo / General. Referencia: hasta 200 caracteres. Enlace: URL opcional.",
+     "Fuentes que respaldan el contenido ciudadano de la especie, cada una asociada a uno o más bloques que respalda y al tema que sustenta. Se guardan en el sistema y no se citan en el cuerpo de la ficha; como máximo, la ficha ofrece un enlace discreto «Fuentes».",
+     "Lista estructurada (bloques, tema, referencia, enlace)",
+     "Bloques: uno o más de Curiosidad / Aportes / Quién soy / Reconóceme / Mi año / Historia de la especie / Consejo / General. Tema: hasta 120 caracteres. Referencia: hasta 300 caracteres, una obra por fuente. Enlace: URL opcional.",
      "Condicional", "No aplica.",
      "Cuando curiosidad_especie o historia_especie tienen valor.",
-     "Curiosidad e Historia de la especie requieren al menos una fuente de su bloque. El bloque General se admite solo para el contenido cargado antes de esta versión, cuyas fuentes están registradas por especie y no por bloque. El enlace, si se informa, debe ser una URL https válida.")
+     "Curiosidad e Historia de la especie requieren al menos una fuente de su bloque. Las fuentes se registran por bloque; el bloque General se usa solo para una fuente que no respalda un bloque claro (decisión de Mari, 2026-11-16), y una fuente General no cuenta como fuente de Curiosidad ni de Historia de la especie. Cada fuente es una obra que respalda un tema, con todos los bloques donde aparece ese tema; si la misma obra respalda varios temas, se registra una vez por tema. El enlace, si se informa, debe ser una URL https válida.")
 
 fila(CAT, "foto_referencial_especie", "Manual", UM_ADM,
      "Carga de una fotografía representativa de la especie.",
@@ -123,10 +123,10 @@ fila(CAT, "foto_referencial_especie", "Manual", UM_ADM,
 
 fila(CAT, "credito_foto_referencial", "Manual", UM_ADM,
      "Ingreso del autor y la licencia de la fotografía referencial.",
-     "Autoría y condiciones de uso de foto_referencial_especie.",
+     "Autoría y licencia de foto_referencial_especie.",
      "Texto", "Hasta 120 caracteres", "Condicional", "No aplica.",
      "Cuando foto_referencial_especie tiene valor.",
-     "Obligatorio si existe foto_referencial_especie. No usar fotografías con marca de agua ni sin permiso de uso.")
+     "Obligatorio si existe foto_referencial_especie: autor y licencia (decisión de Mari, 2026-11-16). No usar fotografías con marca de agua ni sin permiso de uso; si no hay una fotografía que cumpla, la especie queda sin foto referencial (caso del olmo mientras no exista una foto propia).")
 
 fila(CAT, "contenido_editado_por", "Vinculado por plataforma", "Sistema",
      "Usuario autenticado que guarda el contenido ciudadano de la especie.",
@@ -161,13 +161,12 @@ for campo, dn, nombre in [
          "Activación o desactivación en la ficha pública del árbol.",
          f"Indica si la ficha pública muestra el valor vigente de ARBOLES.{nombre} ({dn}) del ejemplar.",
          "Categoría", "Sí / No", "Obligatorio",
-         "Valor inicial: No.",
+         "Valor inicial: No (decisión de Valej, 2026-11-16).",
          "Al guardar la ficha pública del árbol.",
          f"El valor mostrado sale exclusivamente del inventario ({dn}, valor vigente); no se escribe desde la ficha. Si {nombre} no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. "
          + ("Se rotula como estimación (D-26: origen Estimado)." if dn == "D-26"
             else "Se rotula como clasificación del Inspector." if dn == "D-25"
-            else "Se rotula según la decisión pendiente sobre medido o estimado (D-18 y D-19 admiten «medición en terreno o estimación con escala»)." if dn in ("D-18", "D-19")
-            else "Se rotula como valor calculado desde las mediciones de copa (D-20 y D-21), con el mismo criterio de medido o estimado que esas mediciones."))
+            else "Se rotula «medida en terreno o estimada con escala»: el inventario no registra cuál de las dos se usó en cada árbol y no se agrega un campo de método (decisión de Valej, 2026-11-16)."))
 
 fila(FP, "historia_ejemplar", "Manual", UM_ADM,
      "Redacción a partir de antecedentes del ejemplar.",
@@ -226,7 +225,8 @@ def main(dest: Path) -> None:
 
     md = []
     md.append("# Filas propuestas para DICCIONARIO_CAMPOS — ficha pública editable\n")
-    md.append("> **Borrador para la revisión de Mari (2026-11-15). No modifica el Excel.** Generado junto con "
+    md.append("> **Versión para la revisión final de Mari (2026-11-16), con todas las respuestas de Mari y Valej** "
+              "(`05-preguntas-para-mari.md`). **No modifica el Excel.** Generado junto con "
               "`01-filas-diccionario.csv` (mismas filas, listo para copiar en las 12 columnas de la hoja). "
               "Origen: decisiones del §1.3 de `docs/relevo/RELEVO_2026-11-15_mari.md` y `RESPUESTAS_FICHA_PUBLICA.md` (P1 a P11).\n")
     md.append("## Estructura vigente verificada\n")
@@ -243,6 +243,7 @@ def main(dest: Path) -> None:
               "Por eso las filas de CATALOGO_ESPECIES no quedan junto a D-257 a D-262.")
     md.append("- ⚠ **Los números son provisionales.** CC-068 (densidad de la madera, aprobado como propuesta) también agrega 4 filas a "
               "CATALOGO_ESPECIES que todavía no están en el Excel. Si entran antes, estas filas se corren 4 lugares. "
+              "La numeración se ajusta al copiar las filas al Excel y no frena el CC (respuesta de Mari a la pregunta 12). "
               "Hay que verificar la fila real con `scripts/metodologia/fila_diccionario.py` al incorporarlas.\n")
     md.append("## Cambios en otras hojas (también para incorporar con estas filas)\n")
     md.append("- **Hoja nueva `FICHAS_PUBLICAS`:** encabezado de columnas = los campos de FICHAS_PUBLICAS de abajo, en el mismo orden "
@@ -254,7 +255,7 @@ def main(dest: Path) -> None:
     md.append("## Criterios usados\n")
     md.append("- **Límites de caracteres:** se fijaron por sobre el texto más largo aprobado en V5 (`contenidoEspecie.ts`): curiosidad 152 → 200; "
               "«quién soy» 79 → 160; consejo 74 → 160; aporte 27 → 40; rasgo 80 → 120; estación 48 → 80; paso de ciclo 32 → 60. "
-              "La historia de la especie llega a 300 y «Mi historia» a 1.000 (P2). Son propuestas: Mari puede ajustarlas.")
+              "La historia de la especie llega a 300 y «Mi historia» a 1.000 (P2). Aprobados por Mari el 2026-11-16 (pregunta 9).")
     md.append("- **Una fila por campo, también para los compuestos.** Igual que `dap_fustes_cm` (D-17, «Lista de valores numéricos»), los bloques con "
               "varias partes (aportes, rasgos, estaciones, ciclo, fuentes) se declaran como «Lista estructurada» y sus partes en «Unidad / valores».")
     md.append("- **Nada de esto entra en reglas.** Ningún campo participa en REGLAS_INDICADORES ni MATRICES_CALCULO, así que el cambio es PATCH "

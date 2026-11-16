@@ -1,6 +1,6 @@
 # Migración 037 y endpoints — ficha pública editable (propuesta)
 
-> **Propuesta. No aplicada en ninguna base.** El SQL está en `037_ficha_publica_editable.sql` y su reversión en `037_ficha_publica_editable.down.sql`, en esta carpeta, fuera de `database/migrations/` a propósito. No hay código de backend escrito: abajo se describe qué se haría.
+> **Propuesta, versión final del 2026-11-16 para la revisión de Mari. No aplicada en ninguna base.** El SQL está en `037_ficha_publica_editable.sql` y su reversión en `037_ficha_publica_editable.down.sql`, en esta carpeta, fuera de `database/migrations/` a propósito. No hay código de backend escrito: abajo se describe qué se haría.
 >
 > Orden para aplicarla: CC aprobado → filas incorporadas al Excel → autorización de Mari → base de pruebas `gmlbmyreoxgoqrolhyxo` con el ciclo de siempre (aplicar → pruebas → revertir → reaplicar → pruebas, md5 de up y down). Nunca en `ytcxswbulsmboucardxa`.
 
@@ -56,7 +56,7 @@ El backend ya recodifica las fotos ciudadanas con `sharp` sin `.withMetadata()` 
     "anio_estacional": { "prim": "…", "ver": "…", "oto": "…", "inv": "…" },   // o "ciclo": { titulo, pasos }
     "historia_especie": "…",
     "consejo": "…",
-    "fuentes": [{ "bloque": "general", "referencia": "POWO (Kew), Ulmus minor" }]
+    "fuentes": [{ "bloques": ["quien_soy"], "tema": "Origen", "referencia": "POWO (Kew), Ulmus minor" }]
   },
   "ejemplar": { "historia": "…", "historia_fuente": "…" },          // vacío si no hay
   "foto_principal": { "tipo": "ejemplar" | "referencial_especie", "ruta": "…", "credito": "…" },  // o null
@@ -68,7 +68,7 @@ El backend ya recodifica las fotos ciudadanas con `sharp` sin `.withMetadata()` 
 ```
 
 - El backend (`conecta.service.ts`) convierte las rutas en URL públicas del bucket y agrega las etiquetas de `clase_edad` y del rango de edad con `etiquetaDe`, como ya hace con el origen y el follaje.
-- `naturaleza` de DAP y altura queda en `medicion_o_estimacion` hasta que Mari responda la pregunta 1.
+- `naturaleza` (Valej, 2026-11-16): DAP, altura y copa = `medicion_o_estimacion` («medida en terreno o estimada con escala»); D-26 = `estimacion`; D-25 = `clasificacion` («clasificación del Inspector»). No se agrega un campo de método.
 - Sigue sin entregar `tree_code`, `tree_id`, coordenadas, proyecto, riesgo, inspecciones, fotos técnicas, incidencias ni `updated_by`.
 - **Límite conocido:** si un árbol tiene textos personalizados pero su especie no tiene contenido, `contenido_especie` sale `null` y la personalización no se ve. Se puede cambiar si Mari prefiere mostrarla igual.
 
@@ -94,9 +94,9 @@ Todos con `authMiddleware`. Siguen la forma de las rutas de especie que ya exist
 
 ## 6. Datos iniciales (después de aplicar y con autorización)
 
-1. Script de carga en la base de pruebas: los textos aprobados de `contenidoEspecie.ts` (6 especies) a `species_public_content`. Las fuentes, por especie, quedan en el bloque «General». El nombre de visualización y el artículo salen de P11.
-2. Fotos de `src/assets/especies/` y `src/assets/especies/reconocer/`, recodificadas por el mismo camino del punto 3. Hay que recodificarlas aunque ya sean WebP sin GPS.
-3. *Acer negundo* y *Lagerstroemia indica* solo después de que existan en `species` (P9, pregunta 7).
+1. Script de carga en la base de pruebas: los textos aprobados de `contenidoEspecie.ts` (6 especies) a `species_public_content`. Las fuentes se cargan **por bloque** con la asignación de `06-fuentes-por-bloque.md` (respuesta 5 de Mari); «General» solo para lo que no tenga bloque claro. El nombre de visualización y el artículo salen de P11.
+2. Fotos de `src/assets/especies/` y `src/assets/especies/reconocer/`, recodificadas por el mismo camino del punto 3. Hay que recodificarlas aunque ya sean WebP sin GPS. Cada una con autor y licencia; **no se carga la foto del olmo con marca de agua**: el olmo queda sin foto referencial hasta tener una propia (respuesta 8).
+3. *Acer negundo* y *Lagerstroemia indica* **ya existen** en `species` de la base de pruebas: carga autorizada por Mari el 2026-11-16 (`database/cargas/2026-11-16_especies_p9.sql`).
 4. **No se borra nada del frontend** hasta comprobar que la ficha desplegada lee todo desde la API.
 
 ## 7. Pruebas propuestas
