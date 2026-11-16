@@ -96,7 +96,11 @@ async function existe(url: string | null | undefined) {
   const guardadoAdmin = await svc.editarContenidoEspecie(ADMIN, P, NEGUNDO, cuerpo, TOKEN);
   caso("PUT contenido: el Administrador (no miembro) también edita", guardadoAdmin?.updated_by === ADMIN.id);
 
-  // --- Foto referencial (el negundo no tenía)
+  // --- Foto referencial: solo si la especie no tiene una. Este bloque la
+  // pone y la quita (borra el archivo): con una foto real cargada, la perdería.
+  if (visto?.foto_referencial) {
+    console.log("OMITIDO: fotos de la especie — el negundo ya tiene foto referencial; este bloque la borraría");
+  } else {
   const conRef = await svc.fijarFotoContenidoEspecie(MUNI, P, NEGUNDO, "referencial", { credito: "Prueba del recorrido, se quita", temporal: false }, foto, TOKEN);
   const urlRef = conRef?.foto_referencial?.url;
   caso("PUT foto referencial: queda con su crédito y se publica", conRef?.foto_referencial?.credito === "Prueba del recorrido, se quita" && (await existe(urlRef)), conRef?.foto_referencial);
@@ -107,7 +111,11 @@ async function existe(url: string | null | undefined) {
   caso("PUT foto: rasgo inexistente → 404 y no queda archivo", (await status(() => svc.fijarFotoContenidoEspecie(MUNI, P, NEGUNDO, "no-existe", { credito: "A", temporal: false }, foto, TOKEN))) === 404);
   await svc.quitarFotoContenidoEspecie(MUNI, P, NEGUNDO, "referencial", TOKEN);
   const sinRef = await svc.verContenidoEspecie(MUNI, P, NEGUNDO, TOKEN);
-  caso("DELETE foto referencial: se quita y el archivo deja de existir", sinRef?.foto_referencial === null && !(await existe(urlRef)));
+  // En el bucket, no por la URL pública: la CDN puede seguir sirviendo la copia unos minutos.
+  const { data: especies } = await supabaseAdmin.storage.from("conecta-publico").list("especies", { limit: 1000 });
+  const nombreRef = urlRef!.split("/conecta-publico/")[1];
+  caso("DELETE foto referencial: se quita y el archivo se borra del bucket", sinRef?.foto_referencial === null && !(especies ?? []).some((o: { name: string }) => `especies/${o.name}` === nombreRef), especies);
+  }
 
   // --- Ficha del árbol
   const vistaFicha = await svc.verFichaArbol(INSP, P, TREE, TOKEN);
