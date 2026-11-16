@@ -88,6 +88,7 @@ import {
   ClasificacionRiesgoCodigo,
   ConsecuenciaCodigo,
   FormaAlcorqueCodigo,
+  ProbabilidadFallaCodigo,
   SubtipoInspeccionCodigo,
   TasaOcupacionCodigo,
   TipoInspeccionRealizadaCodigo,
@@ -99,12 +100,13 @@ import {
   calcularFechaProximoMonitoreo,
   FechaSugeridaResultado,
 } from "./fechas-sugeridas";
+import { calcularClaseCondicionItree, calcularLcr, CondicionCopaInput, evaluarDefoliacion, evaluarDesequilibrio } from "./condicion-copa";
 import { calcularCumplimientoDistanciaSeguridad, evaluarM04, M04Input, M04Resultado } from "./m04-infraestructura";
 import { evaluarM01 } from "./m01-probabilidad-impacto";
 import { evaluarClasificacionComponente } from "./m02-m03-clasificacion-componente";
 import { evaluarM05 } from "./m05-prioridad";
 import { evaluarR01, R01Input, R01Resultado } from "./r01-raices-cuello";
-import { evaluarR02, R02Input, R02Resultado } from "./r02-tronco";
+import { evaluarExudaciones, evaluarR02, R02Input, R02Resultado } from "./r02-tronco";
 import { evaluarR03, R03Input, R03Resultado } from "./r03-copa-ramas";
 import { evaluarR04 } from "./r04-clasificacion-riesgo";
 import { calcularSuperficieAlcorqueM2, ResultadoCalculo } from "./variables-calculo";
@@ -183,11 +185,25 @@ export interface EntradasAlcorque {
   superficie_alcorque_m2_manual: number | null;
 }
 
+/**
+ * Datos del árbol para lcr_pct (CC-071). Van en variables_calculo para
+ * que un cambio de altura o de especie cambie la huella del cálculo. No
+ * entran en ninguna clasificación.
+ */
+export interface EntradasLcr {
+  altura_punta_viva_m?: number | null;
+  altura_base_copa_viva_m?: number | null;
+  altura_total_m?: number | null;
+  tipo_hoja?: string | null;
+}
+
 export type NucleoEntradas = R01Input &
   R02Input &
   R03Input &
+  CondicionCopaInput &
   M04Input &
-  EntradasAlcorque & {
+  EntradasAlcorque &
+  EntradasLcr & {
     zona_objetivo: ZonaObjetivoCodigo | null;
     tasa_ocupacion_objetivo: TasaOcupacionCodigo | null;
     consecuencia_raices_cuello: ConsecuenciaCodigo | null;
@@ -200,6 +216,12 @@ export interface NucleoResultado {
   r02: R02Resultado;
   r03: R03Resultado;
   m04: M04Resultado;
+  /** Probabilidad de falla efectiva de cada componente: alimenta M02/M03 (CC-071). */
+  probabilidades: {
+    raicesCuello: ResolucionValorEfectivo<ProbabilidadFallaCodigo>;
+    tronco: ResolucionValorEfectivo<ProbabilidadFallaCodigo>;
+    copaRamas: ResolucionValorEfectivo<ProbabilidadFallaCodigo>;
+  };
   /** "no_determinado" (CC-024) cuando el componente no pudo clasificarse — nunca null salvo error interno. */
   clasificacionRaicesCuello: ClasificacionRiesgoCodigo;
   clasificacionTronco: ClasificacionRiesgoCodigo;
@@ -210,20 +232,43 @@ export interface NucleoResultado {
   clasificacionInfraestructuraCalculada: ClasificacionInfraestructuraCodigo;
 }
 
-function calcularNucleo(entradas: NucleoEntradas): NucleoResultado {
+function calcularNucleo(
+  entradas: NucleoEntradas,
+  ajustes?: AjustesEntrada,
+  inspeccionAnuladaId?: string | null,
+): NucleoResultado {
   const r01 = evaluarR01(entradas);
   const r02 = evaluarR02(entradas);
   const r03 = evaluarR03(entradas);
   const m01 = evaluarM01(entradas.zona_objetivo, entradas.tasa_ocupacion_objetivo);
 
+  // CC-071: R01–R03 guardan la probabilidad calculada; a M02/M03 entra la efectiva.
+  const probabilidades = {
+    raicesCuello: resolverValorEfectivo(
+      "probabilidad_falla_raices_cuello",
+      r01.probabilidadFalla,
+      filtrarPorAnulacion(ajustes?.probabilidadRaicesCuello, inspeccionAnuladaId),
+    ),
+    tronco: resolverValorEfectivo(
+      "probabilidad_falla_tronco",
+      r02.probabilidadFalla,
+      filtrarPorAnulacion(ajustes?.probabilidadTronco, inspeccionAnuladaId),
+    ),
+    copaRamas: resolverValorEfectivo(
+      "probabilidad_falla_copa_ramas",
+      r03.probabilidadFalla,
+      filtrarPorAnulacion(ajustes?.probabilidadCopaRamas, inspeccionAnuladaId),
+    ),
+  };
+
   const componenteRaicesCuello = evaluarClasificacionComponente(
-    r01.probabilidadFalla,
+    probabilidades.raicesCuello.valorEfectivo,
     m01.probabilidadImpacto,
     entradas.consecuencia_raices_cuello,
   );
-  const componenteTronco = evaluarClasificacionComponente(r02.probabilidadFalla, m01.probabilidadImpacto, entradas.consecuencia_tronco);
+  const componenteTronco = evaluarClasificacionComponente(probabilidades.tronco.valorEfectivo, m01.probabilidadImpacto, entradas.consecuencia_tronco);
   const componenteCopaRamas = evaluarClasificacionComponente(
-    r03.probabilidadFalla,
+    probabilidades.copaRamas.valorEfectivo,
     m01.probabilidadImpacto,
     entradas.consecuencia_copa_ramas,
   );
@@ -248,6 +293,7 @@ function calcularNucleo(entradas: NucleoEntradas): NucleoResultado {
     r02,
     r03,
     m04,
+    probabilidades,
     clasificacionRaicesCuello,
     clasificacionTronco,
     clasificacionCopaRamas,
@@ -257,35 +303,53 @@ function calcularNucleo(entradas: NucleoEntradas): NucleoResultado {
 }
 
 function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
+  const lcr = calcularLcr({
+    altura_punta_viva_m: entradas.altura_punta_viva_m ?? null,
+    altura_base_copa_viva_m: entradas.altura_base_copa_viva_m ?? null,
+    altura_total_m: entradas.altura_total_m ?? null,
+    tipo_hoja: entradas.tipo_hoja ?? null,
+  });
   return {
     SL_basal_pct: nucleo.r01.variablesCalculo.SL_basal_pct,
     R_radio_basal_cm: nucleo.r01.variablesCalculo.R_radio_basal_cm,
     t_R_basal: nucleo.r01.variablesCalculo.t_R_basal,
+    abertura_cavidad_basal_pct: nucleo.r01.variablesCalculo.abertura_cavidad_basal_pct,
     SL_tronco_pct: nucleo.r02.variablesCalculo.SL_tronco_pct,
     R_radio_tronco_cm: nucleo.r02.variablesCalculo.R_radio_tronco_cm,
     t_R_tronco: nucleo.r02.variablesCalculo.t_R_tronco,
+    abertura_cavidad_tronco_pct: nucleo.r02.variablesCalculo.abertura_cavidad_tronco_pct,
     superficie_alcorque_m2: calcularSuperficieAlcorqueM2(entradas),
     // D-142, calculado desde distancia_copa_red_aerea_m (D-140) — no es
     // un ResultadoCalculo con `motivo`; es "cumple"/"no_cumple"/null.
     cumplimiento_distancia_seguridad_bt_mt: calcularCumplimientoDistanciaSeguridad(entradas.distancia_copa_red_aerea_m),
+    clase_condicion_itree: calcularClaseCondicionItree(entradas.muerte_regresiva_copa_pct),
+    lcr_pct: lcr.lcr_pct,
+    alerta_lcr: lcr.alerta,
+    clasificacion_condicion_sitio: nucleo.m04.condicionSitio,
+    componentes_no_determinados_infraestructura: nucleo.m04.componentesNoDeterminados,
   };
 }
 
-function calcularIndicadores(nucleo: NucleoResultado) {
+function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas) {
   return {
     estabilidad: nucleo.r01.indicadores.estabilidad,
-    raicesExpuestas: nucleo.r01.indicadores.raicesExpuestas,
+    raices: nucleo.r01.indicadores.raices,
     cavidadBasal: nucleo.r01.indicadores.cavidadBasal,
+    anillamiento: nucleo.r01.indicadores.anillamiento,
+    hongosBase: nucleo.r01.indicadores.hongos,
     cavidadTronco: nucleo.r02.indicadores.cavidadTronco,
     heridas: nucleo.r02.indicadores.heridas,
     cortezaMuertaAusente: nucleo.r02.indicadores.cortezaMuertaAusente,
-    exudaciones: nucleo.r02.indicadores.exudaciones,
+    exudaciones: evaluarExudaciones(entradas), // contexto, sin puntaje (CC-071)
     fisurasGrietas: nucleo.r02.indicadores.fisurasGrietas,
     codominancia: nucleo.r02.indicadores.codominancia,
+    adelgazamiento: nucleo.r02.indicadores.adelgazamiento,
+    hongosTronco: nucleo.r02.indicadores.hongos,
     ramasSecas: nucleo.r03.indicadores.ramasSecas,
     ramasQuebradas: nucleo.r03.indicadores.ramasQuebradas,
-    desequilibrioCopa: nucleo.r03.indicadores.desequilibrioCopa,
-    defoliacion: nucleo.r03.indicadores.defoliacion,
+    // Condición y contexto de copa (CC-071): se informan, pero no entran en R03.
+    desequilibrioCopa: evaluarDesequilibrio(entradas),
+    defoliacion: evaluarDefoliacion(entradas),
     vereda: nucleo.m04.componentes.vereda,
     calzada: nucleo.m04.componentes.calzada,
     alcorque: nucleo.m04.componentes.alcorque,
@@ -321,7 +385,13 @@ export interface AjusteVigente<T extends string = string> {
 }
 
 export interface AjusteDescartado {
-  campo: "clasificacion_riesgo" | "clasificacion_infraestructura" | "clasificacion_prioridad";
+  campo:
+    | "clasificacion_riesgo"
+    | "clasificacion_infraestructura"
+    | "clasificacion_prioridad"
+    | "probabilidad_falla_raices_cuello"
+    | "probabilidad_falla_tronco"
+    | "probabilidad_falla_copa_ramas";
   valorCalculadoAnterior: string;
   valorAjustado: string;
   nuevoValorCalculado: string;
@@ -336,16 +406,24 @@ export interface AjusteDescartado {
  * Inspector nunca ajusta *a* ellos — un ajuste siempre resuelve a una
  * categoría concreta (D-171, PR-008 v2.0).
  */
+const PROBABILIDADES_AJUSTABLES = ["improbable", "posible", "probable", "inminente"] as const;
+
 const CODIGOS_AJUSTE_VALIDOS: Record<AjusteDescartado["campo"], readonly string[]> = {
   clasificacion_riesgo: ["bajo", "moderado", "alto", "extremo"],
   clasificacion_infraestructura: ["bajo", "moderado", "alto", "critico"],
   clasificacion_prioridad: ["baja", "media", "alta", "critica"],
+  probabilidad_falla_raices_cuello: PROBABILIDADES_AJUSTABLES,
+  probabilidad_falla_tronco: PROBABILIDADES_AJUSTABLES,
+  probabilidad_falla_copa_ramas: PROBABILIDADES_AJUSTABLES,
 };
 
 export interface AjustesEntrada {
   riesgo?: AjusteVigente<ClasificacionRiesgoCodigo> | null;
   infraestructura?: AjusteVigente<ClasificacionInfraestructuraCodigo> | null;
   prioridad?: AjusteVigente<ClasificacionPrioridadCodigo> | null;
+  probabilidadRaicesCuello?: AjusteVigente<ProbabilidadFallaCodigo> | null;
+  probabilidadTronco?: AjusteVigente<ProbabilidadFallaCodigo> | null;
+  probabilidadCopaRamas?: AjusteVigente<ProbabilidadFallaCodigo> | null;
 }
 
 interface ResolucionValorEfectivo<T extends string> {
@@ -502,10 +580,25 @@ function resolverAjustesYPrioridad(
 
   const resPrioridad = resolverValorEfectivo("clasificacion_prioridad", prioridadCalculada, ajustePrioridad);
 
-  const ajustesDescartados = [resRiesgo.ajusteDescartado, resInfraestructura.ajusteDescartado, resPrioridad.ajusteDescartado].filter(
+  const { raicesCuello, tronco, copaRamas } = nucleo.probabilidades;
+  const ajustesDescartados = [
+    raicesCuello.ajusteDescartado,
+    tronco.ajusteDescartado,
+    copaRamas.ajusteDescartado,
+    resRiesgo.ajusteDescartado,
+    resInfraestructura.ajusteDescartado,
+    resPrioridad.ajusteDescartado,
+  ].filter(
     (a): a is AjusteDescartado => a !== null,
   );
-  const adjustmentIdsVigentes = [resRiesgo.ajusteMantenidoId, resInfraestructura.ajusteMantenidoId, resPrioridad.ajusteMantenidoId].filter(
+  const adjustmentIdsVigentes = [
+    raicesCuello.ajusteMantenidoId,
+    tronco.ajusteMantenidoId,
+    copaRamas.ajusteMantenidoId,
+    resRiesgo.ajusteMantenidoId,
+    resInfraestructura.ajusteMantenidoId,
+    resPrioridad.ajusteMantenidoId,
+  ].filter(
     (id): id is string => id !== null,
   );
 
@@ -556,6 +649,10 @@ export interface ResultadoEvaluacion {
   probabilidad_falla_tronco: R02Resultado["probabilidadFalla"];
   puntaje_copa_ramas: number | null;
   probabilidad_falla_copa_ramas: R03Resultado["probabilidadFalla"];
+  /** CC-071: sin columna en `evaluations`; el valor ajustado vive en `classification_adjustments`. */
+  probabilidad_falla_raices_cuello_ajustada: ProbabilidadFallaCodigo | null;
+  probabilidad_falla_tronco_ajustada: ProbabilidadFallaCodigo | null;
+  probabilidad_falla_copa_ramas_ajustada: ProbabilidadFallaCodigo | null;
   probabilidad_impacto: string | null;
   clasificacion_raices_cuello: ClasificacionRiesgoCodigo;
   clasificacion_tronco: ClasificacionRiesgoCodigo;
@@ -600,8 +697,9 @@ export interface ResultadoEvaluacion {
 
 export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): ResultadoEvaluacion {
   const alcance = validarAlcance(args.tipoInspeccionRealizada, args.subtipoInspeccion ?? null, args.variables);
-  const nucleo = calcularNucleo(args.variablesCalculo);
+  const nucleo = calcularNucleo(args.variablesCalculo, args.ajustes);
   const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes);
+  const ajustadaOnull = (r: ResolucionValorEfectivo<ProbabilidadFallaCodigo>) => (r.ajusteMantenidoId ? r.valorEfectivo : null);
 
   // CC-055: Monitoreo puede adelantar la reinspección, nunca atrasarla;
   // los demás tipos la renuevan desde el riesgo nuevo, como antes.
@@ -619,13 +717,16 @@ export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): Res
     variables: args.variables,
     variables_calculo: args.variablesCalculo,
     calculados: calcularCalculados(args.variablesCalculo, nucleo),
-    indicadores: calcularIndicadores(nucleo),
+    indicadores: calcularIndicadores(nucleo, args.variablesCalculo),
     puntaje_raices_cuello: nucleo.r01.puntaje,
     probabilidad_falla_raices_cuello: nucleo.r01.probabilidadFalla,
     puntaje_tronco: nucleo.r02.puntaje,
     probabilidad_falla_tronco: nucleo.r02.probabilidadFalla,
     puntaje_copa_ramas: nucleo.r03.puntaje,
     probabilidad_falla_copa_ramas: nucleo.r03.probabilidadFalla,
+    probabilidad_falla_raices_cuello_ajustada: ajustadaOnull(nucleo.probabilidades.raicesCuello),
+    probabilidad_falla_tronco_ajustada: ajustadaOnull(nucleo.probabilidades.tronco),
+    probabilidad_falla_copa_ramas_ajustada: ajustadaOnull(nucleo.probabilidades.copaRamas),
     probabilidad_impacto: evaluarM01(args.variablesCalculo.zona_objetivo, args.variablesCalculo.tasa_ocupacion_objetivo).probabilidadImpacto,
     clasificacion_raices_cuello: nucleo.clasificacionRaicesCuello,
     clasificacion_tronco: nucleo.clasificacionTronco,
@@ -716,13 +817,13 @@ export interface ResultadoVigente {
  * `v_tree_current_inputs` antes de llegar aquí (§3.10 bis).
  */
 export function ensamblarResultadoVigente(args: ArgsResultadoVigente): ResultadoVigente {
-  const nucleo = calcularNucleo(args.variablesCalculo);
+  const nucleo = calcularNucleo(args.variablesCalculo, args.ajustes, args.inspeccionAnuladaId);
   const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes, args.inspeccionAnuladaId);
 
   return {
     entradas_vigentes: args.variablesCalculo,
     calculados: calcularCalculados(args.variablesCalculo, nucleo),
-    indicadores: calcularIndicadores(nucleo),
+    indicadores: calcularIndicadores(nucleo, args.variablesCalculo),
     puntaje_raices_cuello: nucleo.r01.puntaje,
     probabilidad_falla_raices_cuello: nucleo.r01.probabilidadFalla,
     puntaje_tronco: nucleo.r02.puntaje,

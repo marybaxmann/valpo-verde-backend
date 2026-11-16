@@ -46,6 +46,7 @@ export const camposArbolBaseSchema = z
     altura_primera_rama_no_presenta: z.boolean().nullable(),
     altura_base_copa_viva_m: z.number().nonnegative().nullable(),
     altura_base_copa_viva_no_presenta: z.boolean().nullable(),
+    altura_punta_viva_m: z.number().nonnegative().nullable(),
     clase_edad: z.enum(["joven", "semimaduro", "tempranamente_maduro", "maduro", "sobremaduro"]).nullable(),
     rango_edad_estimada_anios: z
       .enum([

@@ -26,7 +26,7 @@ function arbolSano(): NucleoEntradas {
     angulo_inclinacion: 0,
     raices_expuestas: false,
     necrosis_radicular: null,
-    raices_cortadas: null,
+    raices_cortadas: false,
     cavidad_pudricion_basal: false,
     cavidad_basal_externa: null,
     cavidad_basal_interna: null,
@@ -35,6 +35,8 @@ function arbolSano(): NucleoEntradas {
     Cc_longitud_abertura_cavidad_cm: null,
     C_circunferencia_basal_cm: null,
     t_pared_residual_basal_cm: null,
+    anillamiento: false,
+    cuerpos_fructiferos_base: false,
     // R02 — todo despreciable
     presenta_cavidad_pudricion_tronco: false,
     cavidad_externa_tronco: null,
@@ -51,15 +53,22 @@ function arbolSano(): NucleoEntradas {
     presenta_fisura_grieta_tronco: false,
     afectacion_fisura_grieta: null,
     direccion_grieta: null,
+    longitud_max_grieta_cm: null,
+    dap_cm: 30,
     troncos_codominantes: false,
     grieta_union_codominante: null,
     corteza_incluida: null,
+    adelgazamiento_insuficiente_tronco: false,
+    cuerpos_fructiferos_tronco: false,
     // R03 — todo despreciable
     ramas_secas: false,
     ramas_secas_pct_copa: null,
     ramas_quebradas: false,
+    permanece_suspendida: null,
     desequilibrio_copa: false,
     defoliacion_estimada_pct: 0,
+    sin_follaje_estacional: false,
+    muerte_regresiva_copa_pct: 0,
     // M04 — sin infraestructura inmediata (alcorque sin_afectacion, el resto no_aplica)
     infraestructura_inmediata: false,
     interferencia_redes_servicios: null,
@@ -70,6 +79,12 @@ function arbolSano(): NucleoEntradas {
     presenta_hundimiento_vereda: null,
     desnivel_max_vereda_cm: null,
     ancho_max_grieta_vereda_cm: null,
+    numero_grietas_vereda: null,
+    longitud_max_grieta_vereda_cm: null,
+    ancho_libre_remanente_m: null,
+    existe_alcorque: null,
+    dano_interferencia_alcorque: null,
+    existe_elemento_vertical: null,
     reduce_circulacion_peatonal: null,
     impide_paso_seguro: null,
     existe_calzada: null,
@@ -232,7 +247,9 @@ describe("resolverValorEfectivo", () => {
 
 describe("validarAlcance (CC-040 a, b)", () => {
   it("Evaluación inicial: ningún campo queda fuera de alcance, aunque estén todos presentes", () => {
-    const r = validarAlcance("evaluacion_inicial", null, arbolSano() as unknown as Record<string, unknown>);
+    // dap_cm es un dato del árbol (ARBOLES), no de REGISTRO_EVALUACION.
+    const { dap_cm: _dap, ...variables } = arbolSano();
+    const r = validarAlcance("evaluacion_inicial", null, variables as unknown as Record<string, unknown>);
     expect(r.camposFueraDeAlcance).toEqual([]);
     expect(r.valoresNoPermitidosEnAlcance).toEqual([]);
   });
@@ -262,7 +279,7 @@ describe("validarAlcance (CC-040 a, b)", () => {
       observaciones_radicular: "x",
       observaciones_tronco: "x",
       crecimiento_de_respuesta: false,
-      profundidad_grieta_cm: 3,
+      longitud_max_grieta_cm: 3,
       ancho_apertura_cm: 1,
       diametro_max_ramas_secas_cm: 5,
       numero_ramas_quebradas: 1,
@@ -301,10 +318,10 @@ describe("ensamblarResultadoEvaluacion", () => {
   it("árbol sano: Bajo/Bajo/Baja de punta a punta, sin ajustes", () => {
     const r = ensamblarResultadoEvaluacion(argsEvaluacionSana());
     expect(r.clasificacion_riesgo_calculada).toBe("bajo");
-    expect(r.clasificacion_infraestructura_calculada).toBe("bajo");
+    expect(r.clasificacion_infraestructura_calculada).toBe("no_aplica"); // sin infraestructura inmediata (IF-18)
     expect(r.clasificacion_prioridad_calculada).toBe("baja");
     expect(r.clasificacion_riesgo_ajustada).toBeNull();
-    expect(r.rule_version).toBe("2.1");
+    expect(r.rule_version).toBe("3.0");
     expect(r.motor_commit).toBe("abc1234");
     expect(r.ajustesDescartados).toEqual([]);
   });
@@ -523,4 +540,97 @@ describe("CC-055 — fecha_proxima_inspeccion sugerida según el tipo de inspecc
       }
     },
   );
+});
+
+describe("ajuste de la probabilidad de falla (CC-071)", () => {
+  const entradas = (): NucleoEntradas => ({
+    ...arbolSano(),
+    tasa_ocupacion_objetivo: "frecuente",
+    consecuencia_tronco: "severa",
+  });
+  const ajusteTronco = (calculado: "improbable" | "posible" = "improbable") => ({
+    valorAjustado: "inminente" as const,
+    valorCalculadoEnElAjuste: calculado,
+    adjustmentId: "adj-tronco",
+    inspectionId: "insp-1",
+  });
+
+  it("la probabilidad efectiva alimenta M02/M03, pero la calculada se conserva", () => {
+    const sin = ensamblarResultadoEvaluacion({ ...argsEvaluacionSana(), variablesCalculo: entradas() });
+    const con = ensamblarResultadoEvaluacion({
+      ...argsEvaluacionSana(),
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: ajusteTronco() },
+    });
+    expect(sin.clasificacion_tronco).toBe("bajo");
+    expect(sin.probabilidad_falla_tronco_ajustada).toBeNull();
+    expect(con.probabilidad_falla_tronco).toBe("improbable");
+    expect(con.probabilidad_falla_tronco_ajustada).toBe("inminente");
+    expect(con.clasificacion_tronco).toBe("extremo");
+    expect(con.clasificacion_riesgo_calculada).toBe("extremo");
+    expect(con.inspeccion.nivelRiesgo).toBe("extremo");
+  });
+
+  it("se descarta si la probabilidad recalculada ya no coincide y se marca revisión", () => {
+    const r = ensamblarResultadoVigente({
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: ajusteTronco("posible") },
+      motorCommit: "abc1234",
+    });
+    expect(r.clasificacion_tronco).toBe("bajo");
+    expect(r.adjustment_ids).toEqual([]);
+    expect(r.requiere_revision_ajuste).toBe(true);
+    expect(r.ajustes_descartados[0]).toMatchObject({ campo: "probabilidad_falla_tronco", adjustmentId: "adj-tronco" });
+  });
+
+  it("se mantiene en la vigente cuando coincide", () => {
+    const r = ensamblarResultadoVigente({
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: ajusteTronco() },
+      motorCommit: "abc1234",
+    });
+    expect(r.clasificacion_tronco).toBe("extremo");
+    expect(r.adjustment_ids).toEqual(["adj-tronco"]);
+    expect(r.requiere_revision_ajuste).toBe(false);
+  });
+
+  it("el ajuste de una inspección anulada se ignora por completo", () => {
+    const r = ensamblarResultadoVigente({
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: ajusteTronco() },
+      inspeccionAnuladaId: "insp-1",
+      motorCommit: "abc1234",
+    });
+    expect(r.clasificacion_tronco).toBe("bajo");
+    expect(r.adjustment_ids).toEqual([]);
+    expect(r.ajustes_descartados).toEqual([]);
+  });
+
+  it("un valor ajustado no_determinado se descarta por fuera de dominio", () => {
+    const r = ensamblarResultadoEvaluacion({
+      ...argsEvaluacionSana(),
+      variablesCalculo: entradas(),
+      ajustes: { probabilidadTronco: { ...ajusteTronco(), valorAjustado: "no_determinado" } },
+    });
+    expect(r.clasificacion_tronco).toBe("bajo");
+    expect(r.ajustesDescartados[0].motivo).toBe("valor ajustado fuera del dominio");
+  });
+});
+
+describe("lcr_pct en calculados (CC-071)", () => {
+  const conLcr = (extra: Partial<NucleoEntradas>) =>
+    ensamblarResultadoEvaluacion({ ...argsEvaluacionSana(), variablesCalculo: { ...arbolSano(), ...extra } }).calculados;
+
+  it("calcula el porcentaje y no altera la clasificación", () => {
+    const c = conLcr({ altura_punta_viva_m: 10, altura_base_copa_viva_m: 4, altura_total_m: 10, tipo_hoja: "latifoliada" });
+    expect(c.lcr_pct).toBe(60);
+    expect(c.alerta_lcr).toBe(false);
+  });
+  it("alerta bajo 40 %", () => {
+    expect(conLcr({ altura_punta_viva_m: 8, altura_base_copa_viva_m: 6, altura_total_m: 10, tipo_hoja: "latifoliada" }).alerta_lcr).toBe(true);
+  });
+  it("no se calcula en palmeras ni sin los datos", () => {
+    expect(conLcr({ altura_punta_viva_m: 10, altura_base_copa_viva_m: 4, altura_total_m: 10, tipo_hoja: "palmera" }).lcr_pct).toBeNull();
+    expect(conLcr({}).lcr_pct).toBeNull();
+  });
 });

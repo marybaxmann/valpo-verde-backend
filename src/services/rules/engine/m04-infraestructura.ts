@@ -1,50 +1,35 @@
 /**
- * M04 — Clasificación global de afectación a infraestructura
- * (REGLAS_INDICADORES: IN-GEN-01, IN-VER-01 a 06, IN-CAL-01 a 06,
- * IN-ALC-01 a 05, IN-VRT-01 a 05, IN-RAE-01 a 06, IN-RSU-01 a 07;
- * MATRICES_CALCULO M04). Fuente: Excel maestro 2.1.0.
+ * M04 — Clasificación global de infraestructura (REGLAS_INDICADORES:
+ * IN-GEN-01, IN-VER-01 a 11, IN-CAL-01 a 06, IN-ALC-01 a 06, IN-VRT-01 a
+ * 06, IN-RAE-01 a 06, IN-RSU-01 a 07, IN-SIT-01 a 05; MATRICES_CALCULO
+ * M04). Fuente: Excel maestro 3.0.0 (CC-071).
  *
- * Seis componentes: vereda, calzada, alcorque y superficie permeable,
- * infraestructura vertical, red aérea, red subterránea. Cada uno
- * devuelve una categoría parcial (No aplica / Sin afectación / Leve /
- * Moderada / Severa / No determinado). D-170: los componentes No
- * aplica y No determinado se tratan igual — se excluyen del cálculo
- * (a diferencia de R04, aquí No determinado NUNCA bloquea el
- * resultado global: clasificacion_infraestructura siempre es Bajo,
- * Moderado, Alto, Crítico o No aplica — nunca No determinado).
+ * Seis componentes: vereda, calzada, alcorque, infraestructura vertical,
+ * red aérea y red subterránea. Cada uno devuelve una categoría parcial
+ * (No aplica / Sin afectación / Leve / Moderada / Severa / No
+ * determinado). Los componentes No aplica y No determinado se excluyen
+ * (D-170): No determinado nunca bloquea el resultado global, pero lo
+ * marca como parcial (`componentesNoDeterminados`).
  *
- * P_I = suma de los puntajes de los componentes incluidos (Sin
- * afectación=0, Leve=1, Moderada=2, Severa=3). n = cantidad de
- * componentes incluidos. Si n = 0 → No aplica. Si n > 0:
- * P_I% = P_I / (3 × n) × 100, con < 15 % Bajo, < 35 % Moderado,
- * < 65 % Alto, ≥ 65 % Crítico.
+ * Clasificación según el peor componente evaluado: Sin afectación o Leve
+ * → Bajo; Moderada → Moderado; una Severa → Alto; dos o más Severas →
+ * Crítico; sin componentes evaluados → No aplica. Los puntajes de los
+ * componentes solo expresan el orden de severidad: P_I y P_I% ya no
+ * existen, y `puntajeInfraestructura`/`pctInfraestructura` quedan null.
  *
- * Mismo patrón que R01–R03: el motor nunca rellena, supone ni
- * sustituye un dato.
+ * La condición del sitio (IN-SIT) es un resultado propio: se calcula
+ * siempre y, si hay alcorque, se considera en su clasificación.
+ *
+ * Mismo patrón que R01–R03: el motor nunca rellena, supone ni sustituye
+ * un dato.
  *
  * `reglaId`: el ID exacto de REGLAS_INDICADORES que produjo el
- * resultado (p. ej. "IN-VER-03", "IN-GEN-01" cuando el gate es lo que
- * excluyó el componente). `null` cuando el resultado es un corte
- * genérico por dato faltante, fuera de dominio o combinación inválida
- * que el diccionario exige pero que REGLAS_INDICADORES no numera.
+ * resultado. `null` cuando el resultado es un corte genérico por dato
+ * faltante, fuera de dominio o combinación inválida.
  *
- * Simplificación explícita de esta implementación (aprobada):
- * `cumplimiento_distancia_seguridad_bt_mt` (D-142) es "Calculado por
- * plataforma" — se calcula aquí desde `distancia_copa_red_aerea_m`
- * (D-140), no se acepta como entrada ya resuelta.
- *
- * CC-043 (decisión de la responsable, 2026-10-22): `tipo_red_aerea`
- * (D-139) es selección múltiple completa (catálogo `tipo_red_aerea`,
- * 5 valores). El Excel no define cómo tratar "Función no determinada"
- * en las reglas IN-RAE; la decisión (opción B) es: si la selección
- * incluye Función no determinada y NO incluye Eléctrica, el
- * componente queda no_determinado (podría ser eléctrica); si incluye
- * Eléctrica, se aplican IN-RAE-02 a 04 aunque también esté marcada
- * Función no determinada. Pendiente llevar el texto a REGLAS_
- * INDICADORES (IN-RAE) y a D-139 en la próxima versión del paquete.
- * Este caso de CC-043 no tiene un ID numerado de REGLAS_INDICADORES,
- * así que su `reglaId` queda `null` (igual que cualquier otro corte
- * genérico), con "CC-043" citado en el motivo.
+ * CC-043: si `tipo_red_aerea` incluye Función no determinada y no
+ * Eléctrica, el componente queda no_determinado; si incluye Eléctrica,
+ * se aplican IN-RAE-02 a 04.
  */
 
 import {
@@ -68,6 +53,9 @@ export interface M04Input {
   presenta_hundimiento_vereda: boolean | null; // D-99, condicional: dano_interferencia_vereda = Sí
   desnivel_max_vereda_cm: number | null; // D-100, condicional: presenta_levantamiento_vereda = Sí o presenta_hundimiento_vereda = Sí; cm > 0
   ancho_max_grieta_vereda_cm: number | null; // D-102, condicional: presenta_grieta_vereda = Sí; cm > 0
+  numero_grietas_vereda: number | null; // D-101, condicional: presenta_grieta_vereda = Sí; entero ≥ 1
+  longitud_max_grieta_vereda_cm: number | null; // D-103, condicional: presenta_grieta_vereda = Sí; cm > 0
+  ancho_libre_remanente_m: number | null; // D-106, necesario si reduce_circulacion_peatonal = Sí; m ≥ 0
   reduce_circulacion_peatonal: boolean | null; // D-105, condicional: dano_interferencia_vereda = Sí
   impide_paso_seguro: boolean | null; // D-107, condicional: dano_interferencia_vereda = Sí
 
@@ -79,12 +67,15 @@ export interface M04Input {
   desnivel_max_calzada_cm: number | null; // D-115, condicional: levantamiento_calzada = Sí o hundimiento_calzada = Sí; cm > 0
   afecta_circulacion_vehicular: boolean | null; // D-117, condicional: dano_interferencia_calzada = Sí
 
-  // Alcorque y superficie permeable (IN-ALC) — se evalúa siempre (IN-ALC-05)
+  // Alcorque (IN-ALC) y condición del sitio (IN-SIT)
+  existe_alcorque: boolean | null; // D-120, condicional: infraestructura_inmediata = Sí
+  dano_interferencia_alcorque: boolean | null; // D-126, condicional: existe_alcorque = Sí
   suelo_sellado_impermeabilizado: boolean | null; // D-128, obligatorio
   indicios_compactacion_superficial: boolean | null; // D-127, obligatorio
   obstaculos_crecimiento_radicular: boolean | null; // D-129, obligatorio
 
   // Infraestructura vertical (IN-VRT)
+  existe_elemento_vertical: boolean | null; // D-130, condicional: infraestructura_inmediata = Sí
   contacto_interferencia_infraestructura_vertical: boolean | null; // D-131, condicional: infraestructura_inmediata = Sí
   dano_fisico_observable_infraestructura_vertical: boolean | null; // D-134, condicional: contacto = Sí
   compromete_estabilidad_funcionalidad: boolean | null; // D-135, condicional: contacto = Sí
@@ -146,7 +137,7 @@ function medicionInvalida(valor: number | null, nombre: string): string | null {
   return null;
 }
 
-/** IN-GEN-01 (primera cláusula): infraestructura_inmediata = No excluye vereda, calzada, infraestructura vertical, red aérea y red subterránea. */
+/** IN-GEN-01 (primera cláusula): infraestructura_inmediata = No excluye todos los componentes, incluido el alcorque. */
 function gateInfraestructuraInmediata(input: M04Input): ResultadoComponenteInfraestructura | null {
   if (input.infraestructura_inmediata === null) {
     return noDeterminadoInfra("infraestructura_inmediata sin valor (D-91, obligatorio)");
@@ -243,32 +234,55 @@ function evaluarVereda(input: M04Input): ResultadoComponenteInfraestructura {
   if (errorDesnivel) return noDeterminadoInfra(errorDesnivel);
 
   const necesitaGrieta = input.presenta_grieta_vereda;
-  if (necesitaGrieta && input.ancho_max_grieta_vereda_cm === null) {
-    return noDeterminadoInfra("ancho_max_grieta_vereda_cm sin valor pese a presenta_grieta_vereda = Sí (D-102)");
+  if (necesitaGrieta) {
+    for (const [valor, nombre, fila] of [
+      [input.ancho_max_grieta_vereda_cm, "ancho_max_grieta_vereda_cm", "D-102"],
+      [input.numero_grietas_vereda, "numero_grietas_vereda", "D-101"],
+      [input.longitud_max_grieta_vereda_cm, "longitud_max_grieta_vereda_cm", "D-103"],
+    ] as const) {
+      if (valor === null) return noDeterminadoInfra(`${nombre} sin valor pese a presenta_grieta_vereda = Sí (${fila})`);
+    }
+    if (!Number.isInteger(input.numero_grietas_vereda) || input.numero_grietas_vereda! < 1) {
+      return noDeterminadoInfra(`numero_grietas_vereda debe ser un entero ≥ 1 (${input.numero_grietas_vereda}) (D-101)`);
+    }
   }
-  const errorGrieta = medicionInvalida(input.ancho_max_grieta_vereda_cm, "ancho_max_grieta_vereda_cm");
-  if (errorGrieta) return noDeterminadoInfra(errorGrieta);
+  for (const [valor, nombre] of [
+    [input.ancho_max_grieta_vereda_cm, "ancho_max_grieta_vereda_cm"],
+    [input.longitud_max_grieta_vereda_cm, "longitud_max_grieta_vereda_cm"],
+  ] as const) {
+    const error = medicionInvalida(valor, nombre);
+    if (error) return noDeterminadoInfra(error);
+  }
 
+  const ancho = input.ancho_libre_remanente_m;
+  if (input.reduce_circulacion_peatonal) {
+    if (ancho === null) return noDeterminadoInfra("ancho_libre_remanente_m sin valor pese a reduce_circulacion_peatonal = Sí (D-106)");
+    if (!Number.isFinite(ancho) || ancho < 0) return noDeterminadoInfra(`ancho_libre_remanente_m debe ser un número ≥ 0 (${ancho}) (D-106)`);
+  }
+
+  const candidatos: Array<{ categoria: CategoriaDeterminada; reglaId: string }> = [];
   const desnivel = input.desnivel_max_vereda_cm;
-  const grieta = input.ancho_max_grieta_vereda_cm;
-  let base: CategoriaDeterminada;
-  let baseRegla: string;
-  if (desnivel !== null && desnivel > 5.0) {
-    base = "severa";
-    baseRegla = "IN-VER-03";
-  } else if ((desnivel !== null && desnivel >= 2.5 && desnivel <= 5.0) || (grieta !== null && grieta >= 1)) {
-    base = "moderada";
-    baseRegla = "IN-VER-04";
-  } else {
-    base = "leve"; // ni levantamiento/hundimiento ni grieta activados (o activados bajo el umbral)
-    baseRegla = "IN-VER-05";
+  if (desnivel !== null && desnivel > 5.0) candidatos.push({ categoria: "severa", reglaId: "IN-VER-03" });
+  else if (desnivel !== null && desnivel >= 2.5) candidatos.push({ categoria: "moderada", reglaId: "IN-VER-04" });
+
+  if (necesitaGrieta) {
+    const n = input.numero_grietas_vereda!;
+    const w = input.ancho_max_grieta_vereda_cm!;
+    const l = input.longitud_max_grieta_vereda_cm!;
+    if (n === 1 && w < 1 && l <= 30) candidatos.push({ categoria: "leve", reglaId: "IN-VER-07" });
+    else if (n >= 2 && w >= 1 && l > 60) candidatos.push({ categoria: "severa", reglaId: "IN-VER-08" });
+    else candidatos.push({ categoria: "moderada", reglaId: "IN-VER-09" });
   }
 
-  if (input.reduce_circulacion_peatonal && input.impide_paso_seguro) {
-    base = "severa"; // reemplaza la categoría obtenida en IN-VER-03 a 05
-    baseRegla = "IN-VER-06";
+  if (input.reduce_circulacion_peatonal) {
+    if (ancho! < 0.9) candidatos.push({ categoria: "severa", reglaId: "IN-VER-11" });
+    else if (ancho! < 1.2) candidatos.push({ categoria: "moderada", reglaId: "IN-VER-10" });
+    if (input.impide_paso_seguro) candidatos.push({ categoria: "severa", reglaId: "IN-VER-06" });
   }
-  return indicadorInfra(base, baseRegla);
+
+  // Sin ninguna condición anterior, el daño confirmado es Leve (IN-VER-05). La vereda toma la más severa.
+  const resultado = [...candidatos, { categoria: "leve" as const, reglaId: "IN-VER-05" }].reduce(masSeveraInfra);
+  return indicadorInfra(resultado.categoria, resultado.reglaId);
 }
 
 /** IN-CAL-01 a 06. */
@@ -339,47 +353,90 @@ function evaluarCalzada(input: M04Input): ResultadoComponenteInfraestructura {
   return indicadorInfra(base, baseRegla);
 }
 
-/** IN-ALC-01 a 05. Se evalúa siempre (no la gatea infraestructura_inmediata). */
-function evaluarAlcorque(input: M04Input): ResultadoComponenteInfraestructura {
-  if (input.suelo_sellado_impermeabilizado === null) {
-    return noDeterminadoInfra("suelo_sellado_impermeabilizado sin valor (D-128, obligatorio)");
-  }
-  if (!esBooleanoValido(input.suelo_sellado_impermeabilizado)) {
-    return noDeterminadoInfra(motivoFueraDominioSiNo("suelo_sellado_impermeabilizado", input.suelo_sellado_impermeabilizado, "D-128"));
-  }
-  if (input.indicios_compactacion_superficial === null) {
-    return noDeterminadoInfra("indicios_compactacion_superficial sin valor (D-127, obligatorio)");
-  }
-  if (!esBooleanoValido(input.indicios_compactacion_superficial)) {
-    return noDeterminadoInfra(motivoFueraDominioSiNo("indicios_compactacion_superficial", input.indicios_compactacion_superficial, "D-127"));
-  }
-  if (input.obstaculos_crecimiento_radicular === null) {
-    return noDeterminadoInfra("obstaculos_crecimiento_radicular sin valor (D-129, obligatorio)");
-  }
-  if (!esBooleanoValido(input.obstaculos_crecimiento_radicular)) {
-    return noDeterminadoInfra(motivoFueraDominioSiNo("obstaculos_crecimiento_radicular", input.obstaculos_crecimiento_radicular, "D-129"));
-  }
+type CondicionesSitio = { sellado: boolean; compactacion: boolean; obstaculos: boolean };
 
-  const candidatos: Array<{ categoria: CategoriaDeterminada; reglaId: string }> = [];
-  if (input.suelo_sellado_impermeabilizado) candidatos.push({ categoria: "severa", reglaId: "IN-ALC-01" });
-  if (input.indicios_compactacion_superficial) candidatos.push({ categoria: "moderada", reglaId: "IN-ALC-02" });
-  if (input.obstaculos_crecimiento_radicular) candidatos.push({ categoria: "leve", reglaId: "IN-ALC-03" });
-
-  if (candidatos.length === 0) return indicadorInfra("sin_afectacion", "IN-ALC-05");
-  if (candidatos.length === 1) return indicadorInfra(candidatos[0].categoria, candidatos[0].reglaId);
-  // Dos o más condiciones: la más severa, bajo la regla de combinación IN-ALC-04.
-  const masSevero = candidatos.reduce(masSeveraInfra);
-  return indicadorInfra(masSevero.categoria, "IN-ALC-04");
+/** Las tres condiciones del sitio ya validadas, o el motivo por el que no se pueden usar. */
+function leerCondicionesSitio(input: M04Input): CondicionesSitio | { motivo: string } {
+  for (const [valor, nombre, fila] of [
+    [input.suelo_sellado_impermeabilizado, "suelo_sellado_impermeabilizado", "D-128"],
+    [input.indicios_compactacion_superficial, "indicios_compactacion_superficial", "D-127"],
+    [input.obstaculos_crecimiento_radicular, "obstaculos_crecimiento_radicular", "D-129"],
+  ] as const) {
+    if (valor === null) return { motivo: `${nombre} sin valor (${fila}, obligatorio)` };
+    if (!esBooleanoValido(valor)) return { motivo: motivoFueraDominioSiNo(nombre, valor, fila) };
+  }
+  return {
+    sellado: input.suelo_sellado_impermeabilizado!,
+    compactacion: input.indicios_compactacion_superficial!,
+    obstaculos: input.obstaculos_crecimiento_radicular!,
+  };
 }
 
-/** IN-VRT-01 a 05. */
+export type CategoriaCondicionSitio = "sin_restriccion" | "leve" | "moderada" | "severa";
+
+export interface CondicionSitioResultado {
+  categoria: CategoriaCondicionSitio | null; // null = no_determinado
+  reglaId: string | null;
+  motivo?: string;
+}
+
+/** IN-SIT-01 a 05. Se calcula siempre, también con infraestructura_inmediata = No. */
+export function evaluarCondicionSitio(input: M04Input): CondicionSitioResultado {
+  const c = leerCondicionesSitio(input);
+  if ("motivo" in c) return { categoria: null, reglaId: null, motivo: c.motivo };
+  const presentes = [c.obstaculos, c.compactacion, c.sellado].filter(Boolean).length;
+  if (presentes === 0) return { categoria: "sin_restriccion", reglaId: "IN-SIT-01" };
+  const categoria: CategoriaCondicionSitio = c.sellado ? "severa" : c.compactacion ? "moderada" : "leve";
+  if (presentes > 1) return { categoria, reglaId: "IN-SIT-05" };
+  return { categoria, reglaId: c.sellado ? "IN-SIT-04" : c.compactacion ? "IN-SIT-03" : "IN-SIT-02" };
+}
+
+/** IN-ALC-01 a 06: daño en sus límites combinado con la condición del sitio (IF-19). Nunca llega a Severa. */
+function evaluarAlcorque(input: M04Input): ResultadoComponenteInfraestructura {
+  const gate = gateInfraestructuraInmediata(input);
+  if (gate !== null) return gate;
+
+  if (input.existe_alcorque === null) {
+    return noDeterminadoInfra("existe_alcorque sin valor (D-120, condicional activado por infraestructura_inmediata = Sí)");
+  }
+  if (!esBooleanoValido(input.existe_alcorque)) {
+    return noDeterminadoInfra(motivoFueraDominioSiNo("existe_alcorque", input.existe_alcorque, "D-120"));
+  }
+  if (!input.existe_alcorque) return noAplica("existe_alcorque = No (IN-ALC-01)", "IN-ALC-01");
+
+  if (input.dano_interferencia_alcorque === null) {
+    return noDeterminadoInfra("dano_interferencia_alcorque sin valor (D-126, condicional activado por existe_alcorque = Sí)");
+  }
+  if (!esBooleanoValido(input.dano_interferencia_alcorque)) {
+    return noDeterminadoInfra(motivoFueraDominioSiNo("dano_interferencia_alcorque", input.dano_interferencia_alcorque, "D-126"));
+  }
+  const c = leerCondicionesSitio(input);
+  if ("motivo" in c) return noDeterminadoInfra(c.motivo);
+
+  const conCondicion = c.sellado || c.compactacion || c.obstaculos;
+  if (input.dano_interferencia_alcorque) {
+    return conCondicion ? indicadorInfra("moderada", "IN-ALC-06") : indicadorInfra("leve", "IN-ALC-05");
+  }
+  if (c.sellado) return indicadorInfra("moderada", "IN-ALC-04");
+  return conCondicion ? indicadorInfra("leve", "IN-ALC-03") : indicadorInfra("sin_afectacion", "IN-ALC-02");
+}
+
+/** IN-VRT-01 a 06. */
 function evaluarInfraestructuraVertical(input: M04Input): ResultadoComponenteInfraestructura {
   const gate = gateInfraestructuraInmediata(input);
   if (gate !== null) return gate;
 
+  if (input.existe_elemento_vertical === null) {
+    return noDeterminadoInfra("existe_elemento_vertical sin valor (D-130, condicional activado por infraestructura_inmediata = Sí)");
+  }
+  if (!esBooleanoValido(input.existe_elemento_vertical)) {
+    return noDeterminadoInfra(motivoFueraDominioSiNo("existe_elemento_vertical", input.existe_elemento_vertical, "D-130"));
+  }
+  if (!input.existe_elemento_vertical) return noAplica("existe_elemento_vertical = No (IN-VRT-06)", "IN-VRT-06");
+
   if (input.contacto_interferencia_infraestructura_vertical === null) {
     return noDeterminadoInfra(
-      "contacto_interferencia_infraestructura_vertical sin valor (D-131, condicional activado por infraestructura_inmediata = Sí)",
+      "contacto_interferencia_infraestructura_vertical sin valor (D-131, condicional activado por existe_elemento_vertical = Sí)",
     );
   }
   if (!esBooleanoValido(input.contacto_interferencia_infraestructura_vertical)) {
@@ -545,50 +602,46 @@ function evaluarRedSubterranea(input: M04Input): ResultadoComponenteInfraestruct
   );
 }
 
+export type ComponenteInfraestructura = "vereda" | "calzada" | "alcorque" | "infraestructuraVertical" | "redAerea" | "redSubterranea";
+
 export interface M04Resultado {
-  componentes: {
-    vereda: ResultadoComponenteInfraestructura;
-    calzada: ResultadoComponenteInfraestructura;
-    alcorque: ResultadoComponenteInfraestructura;
-    infraestructuraVertical: ResultadoComponenteInfraestructura;
-    redAerea: ResultadoComponenteInfraestructura;
-    redSubterranea: ResultadoComponenteInfraestructura;
-  };
-  puntajeInfraestructura: number | null; // P_I; null si n = 0
-  pctInfraestructura: number | null; // P_I%; null si n = 0
+  componentes: Record<ComponenteInfraestructura, ResultadoComponenteInfraestructura>;
+  /** Ya no se calculan (peor componente): se mantienen en null por compatibilidad con la versión 2.1. */
+  puntajeInfraestructura: null;
+  pctInfraestructura: null;
   clasificacionInfraestructura: ClasificacionInfraestructuraCodigo; // nunca no_determinado (D-170)
+  /** Componentes excluidos por No determinado. Con elementos, la clasificación es parcial (IF-21). */
+  componentesNoDeterminados: ComponenteInfraestructura[];
+  condicionSitio: CondicionSitioResultado;
 }
 
-function clasificarPct(pct: number): "bajo" | "moderado" | "alto" | "critico" {
-  if (pct < 15) return "bajo";
-  if (pct < 35) return "moderado";
-  if (pct < 65) return "alto";
-  return "critico"; // ≥ 65
+function clasificarPeorComponente(categorias: CategoriaDeterminada[]): "bajo" | "moderado" | "alto" | "critico" {
+  const severas = categorias.filter((c) => c === "severa").length;
+  if (severas >= 2) return "critico";
+  if (severas === 1) return "alto";
+  return categorias.includes("moderada") ? "moderado" : "bajo";
 }
 
 export function evaluarM04(input: M04Input): M04Resultado {
-  const vereda = evaluarVereda(input);
-  const calzada = evaluarCalzada(input);
-  const alcorque = evaluarAlcorque(input);
-  const infraestructuraVertical = evaluarInfraestructuraVertical(input);
-  const redAerea = evaluarRedAerea(input);
-  const redSubterranea = evaluarRedSubterranea(input);
-
-  const componentes = { vereda, calzada, alcorque, infraestructuraVertical, redAerea, redSubterranea };
-  // D-170: No aplica y No determinado se excluyen por igual del cálculo.
-  const incluidos = Object.values(componentes).filter((c) => c.puntaje !== null) as ResultadoComponenteInfraestructura[];
-  const n = incluidos.length;
-
-  if (n === 0) {
-    return { componentes, puntajeInfraestructura: null, pctInfraestructura: null, clasificacionInfraestructura: "no_aplica" };
-  }
-
-  const puntajeInfraestructura = incluidos.reduce((acc, c) => acc + (c.puntaje as number), 0);
-  const pctInfraestructura = (puntajeInfraestructura / (3 * n)) * 100;
-  return {
-    componentes,
-    puntajeInfraestructura,
-    pctInfraestructura,
-    clasificacionInfraestructura: clasificarPct(pctInfraestructura),
+  const componentes: M04Resultado["componentes"] = {
+    vereda: evaluarVereda(input),
+    calzada: evaluarCalzada(input),
+    alcorque: evaluarAlcorque(input),
+    infraestructuraVertical: evaluarInfraestructuraVertical(input),
+    redAerea: evaluarRedAerea(input),
+    redSubterranea: evaluarRedSubterranea(input),
   };
+  const comunes = {
+    componentes,
+    puntajeInfraestructura: null,
+    pctInfraestructura: null,
+    componentesNoDeterminados: (Object.keys(componentes) as ComponenteInfraestructura[]).filter((k) => componentes[k].categoria === "no_determinado"),
+    condicionSitio: evaluarCondicionSitio(input),
+  };
+  // D-170: No aplica y No determinado se excluyen por igual.
+  const incluidas = Object.values(componentes)
+    .filter((c) => c.puntaje !== null)
+    .map((c) => c.categoria as CategoriaDeterminada);
+
+  return { ...comunes, clasificacionInfraestructura: incluidas.length === 0 ? "no_aplica" : clasificarPeorComponente(incluidas) };
 }

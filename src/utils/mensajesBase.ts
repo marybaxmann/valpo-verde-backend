@@ -34,6 +34,10 @@ const MENSAJES_CHECK: Array<[string, string]> = [
     "chk_trees_especie_o_comun",
     "Indique la especie científica o el nombre común del árbol.",
   ],
+  [
+    "chk_tdv_punta_viva",
+    "La altura de la punta viva no puede superar la altura total ni ser menor que la altura de la base de la copa viva.",
+  ],
 ];
 
 export function mensajeCheck(mensajeBase: string): string {

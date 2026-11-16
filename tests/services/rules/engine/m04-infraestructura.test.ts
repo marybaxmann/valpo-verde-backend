@@ -11,6 +11,9 @@ function base(): M04Input {
     presenta_hundimiento_vereda: null,
     desnivel_max_vereda_cm: null,
     ancho_max_grieta_vereda_cm: null,
+    numero_grietas_vereda: null,
+    longitud_max_grieta_vereda_cm: null,
+    ancho_libre_remanente_m: null,
     reduce_circulacion_peatonal: null,
     impide_paso_seguro: null,
     existe_calzada: null,
@@ -19,9 +22,12 @@ function base(): M04Input {
     hundimiento_calzada: null,
     desnivel_max_calzada_cm: null,
     afecta_circulacion_vehicular: null,
+    existe_alcorque: null,
+    dano_interferencia_alcorque: null,
     suelo_sellado_impermeabilizado: false,
     indicios_compactacion_superficial: false,
     obstaculos_crecimiento_radicular: false,
+    existe_elemento_vertical: true,
     contacto_interferencia_infraestructura_vertical: null,
     dano_fisico_observable_infraestructura_vertical: null,
     compromete_estabilidad_funcionalidad: null,
@@ -36,14 +42,9 @@ function base(): M04Input {
 }
 
 describe("IN-GEN-01 — gates", () => {
-  it("infraestructura_inmediata = No: vereda, calzada, vertical, aérea y subterránea quedan No aplica; el alcorque se evalúa igual", () => {
+  it("infraestructura_inmediata = No: los seis componentes quedan No aplica, también el alcorque (IF-18)", () => {
     const r = evaluarM04(base());
-    expect(r.componentes.vereda.categoria).toBe("no_aplica");
-    expect(r.componentes.calzada.categoria).toBe("no_aplica");
-    expect(r.componentes.infraestructuraVertical.categoria).toBe("no_aplica");
-    expect(r.componentes.redAerea.categoria).toBe("no_aplica");
-    expect(r.componentes.redSubterranea.categoria).toBe("no_aplica");
-    expect(r.componentes.alcorque.categoria).toBe("sin_afectacion");
+    expect(Object.values(r.componentes).every((c) => c.categoria === "no_aplica")).toBe(true);
   });
   it("interferencia_redes_servicios = No (con infraestructura_inmediata = Sí): solo aérea y subterránea quedan No aplica", () => {
     const r = evaluarM04({ ...base(), infraestructura_inmediata: true, existe_vereda: false, existe_calzada: false, interferencia_redes_servicios: false });
@@ -85,17 +86,15 @@ describe("IN-VER — Vereda", () => {
     const r = evaluarM04({ ...base(), ...danoSinActivadores, presenta_hundimiento_vereda: true, desnivel_max_vereda_cm: 3 });
     expect(r.componentes.vereda.categoria).toBe("moderada");
   });
-  it("IN-VER-04 (por grieta): presenta_grieta_vereda = Sí y ancho ≥ 1 cm → Moderada", () => {
-    const r = evaluarM04({ ...base(), ...danoSinActivadores, presenta_grieta_vereda: true, ancho_max_grieta_vereda_cm: 1.5 });
-    expect(r.componentes.vereda.categoria).toBe("moderada");
-  });
+
   it("IN-VER-05: ningún activador (levantamiento/hundimiento/grieta = No) → Leve", () => {
     const r = evaluarM04({ ...base(), ...danoSinActivadores });
     expect(r.componentes.vereda.categoria).toBe("leve");
   });
-  it("IN-VER-06: reduce_circulacion_peatonal = Sí e impide_paso_seguro = Sí → Severa, reemplaza la categoría base", () => {
-    const r = evaluarM04({ ...base(), ...danoSinActivadores, reduce_circulacion_peatonal: true, impide_paso_seguro: true });
+  it("IN-VER-06: reduce_circulacion_peatonal = Sí e impide_paso_seguro = Sí → Severa", () => {
+    const r = evaluarM04({ ...base(), ...danoSinActivadores, reduce_circulacion_peatonal: true, impide_paso_seguro: true, ancho_libre_remanente_m: 2 });
     expect(r.componentes.vereda.categoria).toBe("severa");
+    expect(r.componentes.vereda.reglaId).toBe("IN-VER-06");
   });
 
   it("presenta_levantamiento_vereda = Sí pero desnivel_max_vereda_cm sin valor → no_determinado (no se trata como 'no cumple')", () => {
@@ -107,6 +106,46 @@ describe("IN-VER — Vereda", () => {
     const r = evaluarM04({ ...base(), ...danoSinActivadores, presenta_grieta_vereda: true });
     expect(r.componentes.vereda.categoria).toBe("no_determinado");
     expect(r.componentes.vereda.motivo).toMatch(/ancho_max_grieta_vereda_cm/);
+  });
+  const grietas = (n: number | null, ancho: number | null, largo: number | null) => ({
+    ...danoSinActivadores, presenta_grieta_vereda: true as const,
+    numero_grietas_vereda: n, ancho_max_grieta_vereda_cm: ancho, longitud_max_grieta_vereda_cm: largo,
+  });
+  it.each<[number, number, number, string, string]>([
+    [1, 0.9, 30, "leve", "IN-VER-07"],
+    [1, 1, 30, "moderada", "IN-VER-09"],
+    [1, 0.9, 31, "moderada", "IN-VER-09"],
+    [2, 1, 60, "moderada", "IN-VER-09"],
+    [2, 0.9, 61, "moderada", "IN-VER-09"],
+    [2, 1, 61, "severa", "IN-VER-08"],
+  ])("grietas: N=%p, ancho=%p, largo=%p → %s (%s)", (n, w, l, categoria, regla) => {
+    const c = evaluarM04({ ...base(), ...grietas(n, w, l) }).componentes.vereda;
+    expect(c.categoria).toBe(categoria);
+    expect(c.reglaId).toBe(regla);
+  });
+  it.each([[null, 1, 30], [1, 1, null], [0, 1, 30], [1.5, 1, 30]])("grietas sin dato válido (%p, %p, %p) → no_determinado", (n, w, l) => {
+    expect(evaluarM04({ ...base(), ...grietas(n, w, l) }).componentes.vereda.categoria).toBe("no_determinado");
+  });
+  it.each<[number, string, string]>([
+    [1.2, "leve", "IN-VER-05"],
+    [1.19, "moderada", "IN-VER-10"],
+    [0.9, "moderada", "IN-VER-10"],
+    [0.89, "severa", "IN-VER-11"],
+    [0, "severa", "IN-VER-11"],
+  ])("ancho libre %p m con paso reducido → %s (%s)", (ancho, categoria, regla) => {
+    const c = evaluarM04({ ...base(), ...danoSinActivadores, reduce_circulacion_peatonal: true, ancho_libre_remanente_m: ancho }).componentes.vereda;
+    expect(c.categoria).toBe(categoria);
+    expect(c.reglaId).toBe(regla);
+  });
+  it("una vereda angosta de origen no sube si el daño no reduce el paso", () => {
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, ancho_libre_remanente_m: 0.5 }).componentes.vereda.categoria).toBe("leve");
+  });
+  it("paso reducido sin ancho medido → no_determinado", () => {
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, reduce_circulacion_peatonal: true }).componentes.vereda.motivo).toMatch(/ancho_libre_remanente_m/);
+  });
+  it("el resultado es la categoría más severa entre desnivel, grietas y paso", () => {
+    const c = evaluarM04({ ...base(), ...grietas(1, 0.5, 10), presenta_levantamiento_vereda: true, desnivel_max_vereda_cm: 6 }).componentes.vereda;
+    expect(c.categoria).toBe("severa");
   });
   it("presenta_levantamiento_vereda sin valor (con dano = Sí) → no_determinado, no se ignora", () => {
     const r = evaluarM04({ ...base(), ...conInfra, existe_vereda: true, dano_interferencia_vereda: true });
@@ -177,30 +216,28 @@ describe("IN-CAL — Calzada", () => {
   });
 });
 
-describe("IN-ALC — Alcorque y superficie permeable (se evalúa siempre)", () => {
-  it("IN-ALC-01: suelo_sellado_impermeabilizado = Sí → Severa", () => {
-    const r = evaluarM04({ ...base(), suelo_sellado_impermeabilizado: true });
-    expect(r.componentes.alcorque.categoria).toBe("severa");
+describe("IN-ALC — Alcorque", () => {
+  const con = { infraestructura_inmediata: true as const, existe_alcorque: true as const };
+  it("IN-GEN-01: sin infraestructura inmediata el alcorque no se evalúa", () => {
+    expect(evaluarM04({ ...base(), suelo_sellado_impermeabilizado: true }).componentes.alcorque.categoria).toBe("no_aplica");
   });
-  it("IN-ALC-02: indicios_compactacion_superficial = Sí → Moderada", () => {
-    const r = evaluarM04({ ...base(), indicios_compactacion_superficial: true });
-    expect(r.componentes.alcorque.categoria).toBe("moderada");
+  it("IN-ALC-01: sin alcorque → No aplica", () => {
+    expect(evaluarM04({ ...base(), infraestructura_inmediata: true, existe_alcorque: false }).componentes.alcorque.categoria).toBe("no_aplica");
   });
-  it("IN-ALC-03: obstaculos_crecimiento_radicular = Sí → Leve", () => {
-    const r = evaluarM04({ ...base(), obstaculos_crecimiento_radicular: true });
-    expect(r.componentes.alcorque.categoria).toBe("leve");
+  it.each<[Partial<M04Input>, string]>([
+    [{ dano_interferencia_alcorque: false }, "sin_afectacion"],
+    [{ dano_interferencia_alcorque: false, obstaculos_crecimiento_radicular: true }, "leve"],
+    [{ dano_interferencia_alcorque: false, indicios_compactacion_superficial: true }, "leve"],
+    [{ dano_interferencia_alcorque: false, suelo_sellado_impermeabilizado: true }, "moderada"],
+    [{ dano_interferencia_alcorque: true }, "leve"],
+    [{ dano_interferencia_alcorque: true, obstaculos_crecimiento_radicular: true }, "moderada"],
+    [{ dano_interferencia_alcorque: true, suelo_sellado_impermeabilizado: true, indicios_compactacion_superficial: true }, "moderada"],
+  ])("caso %# → %s (nunca Severa)", (cambios, categoria) => {
+    expect(evaluarM04({ ...base(), ...con, ...cambios }).componentes.alcorque.categoria).toBe(categoria);
   });
-  it("IN-ALC-04: dos condiciones Sí → la más severa (compactación + obstáculos → Moderada)", () => {
-    const r = evaluarM04({ ...base(), indicios_compactacion_superficial: true, obstaculos_crecimiento_radicular: true });
-    expect(r.componentes.alcorque.categoria).toBe("moderada");
-  });
-  it("IN-ALC-04: suelo sellado + compactación → la más severa (Severa)", () => {
-    const r = evaluarM04({ ...base(), suelo_sellado_impermeabilizado: true, indicios_compactacion_superficial: true });
-    expect(r.componentes.alcorque.categoria).toBe("severa");
-  });
-  it("IN-ALC-05: las tres condiciones = No → Sin afectación (base() ya lo cubre)", () => {
-    const r = evaluarM04(base());
-    expect(r.componentes.alcorque.categoria).toBe("sin_afectacion");
+  it("dato faltante → no_determinado", () => {
+    expect(evaluarM04({ ...base(), ...con, dano_interferencia_alcorque: null }).componentes.alcorque.categoria).toBe("no_determinado");
+    expect(evaluarM04({ ...base(), ...con, dano_interferencia_alcorque: false, suelo_sellado_impermeabilizado: null }).componentes.alcorque.categoria).toBe("no_determinado");
   });
 });
 
@@ -379,7 +416,7 @@ describe("reglaId — el ID de REGLAS_INDICADORES (o del gate IN-GEN-01) que pro
     expect(evaluarM04({ ...base(), ...danoSinActivadores, presenta_levantamiento_vereda: true, desnivel_max_vereda_cm: 6 }).componentes.vereda.reglaId).toBe("IN-VER-03");
     expect(evaluarM04({ ...base(), ...danoSinActivadores, presenta_hundimiento_vereda: true, desnivel_max_vereda_cm: 3 }).componentes.vereda.reglaId).toBe("IN-VER-04");
     expect(evaluarM04({ ...base(), ...danoSinActivadores }).componentes.vereda.reglaId).toBe("IN-VER-05");
-    expect(evaluarM04({ ...base(), ...danoSinActivadores, reduce_circulacion_peatonal: true, impide_paso_seguro: true }).componentes.vereda.reglaId).toBe("IN-VER-06");
+    expect(evaluarM04({ ...base(), ...danoSinActivadores, reduce_circulacion_peatonal: true, impide_paso_seguro: true, ancho_libre_remanente_m: 2 }).componentes.vereda.reglaId).toBe("IN-VER-06");
   });
   it("IN-CAL-01 a 06", () => {
     const conInfra = { infraestructura_inmediata: true as const };
@@ -394,14 +431,18 @@ describe("reglaId — el ID de REGLAS_INDICADORES (o del gate IN-GEN-01) que pro
     expect(evaluarM04({ ...base(), ...danoSinActivadores }).componentes.calzada.reglaId).toBe("IN-CAL-05");
     expect(evaluarM04({ ...base(), ...danoSinActivadores, afecta_circulacion_vehicular: true }).componentes.calzada.reglaId).toBe("IN-CAL-06");
   });
-  it("IN-ALC-01 a 05 (IN-ALC-04 cuando hay dos o más condiciones)", () => {
-    expect(evaluarM04({ ...base(), suelo_sellado_impermeabilizado: true }).componentes.alcorque.reglaId).toBe("IN-ALC-01");
-    expect(evaluarM04({ ...base(), indicios_compactacion_superficial: true }).componentes.alcorque.reglaId).toBe("IN-ALC-02");
-    expect(evaluarM04({ ...base(), obstaculos_crecimiento_radicular: true }).componentes.alcorque.reglaId).toBe("IN-ALC-03");
-    expect(evaluarM04({ ...base(), indicios_compactacion_superficial: true, obstaculos_crecimiento_radicular: true }).componentes.alcorque.reglaId).toBe("IN-ALC-04");
-    expect(evaluarM04(base()).componentes.alcorque.reglaId).toBe("IN-ALC-05");
+  it("IN-ALC-01 a 06", () => {
+    const con = { infraestructura_inmediata: true as const, existe_alcorque: true as const };
+    const regla = (c: Partial<M04Input>) => evaluarM04({ ...base(), ...con, dano_interferencia_alcorque: false, ...c }).componentes.alcorque.reglaId;
+    expect(regla({ existe_alcorque: false })).toBe("IN-ALC-01");
+    expect(regla({})).toBe("IN-ALC-02");
+    expect(regla({ obstaculos_crecimiento_radicular: true })).toBe("IN-ALC-03");
+    expect(regla({ suelo_sellado_impermeabilizado: true })).toBe("IN-ALC-04");
+    expect(regla({ dano_interferencia_alcorque: true })).toBe("IN-ALC-05");
+    expect(regla({ dano_interferencia_alcorque: true, suelo_sellado_impermeabilizado: true })).toBe("IN-ALC-06");
   });
-  it("IN-VRT-01 a 05", () => {
+  it("IN-VRT-01 a 06", () => {
+    expect(evaluarM04({ ...base(), infraestructura_inmediata: true, existe_elemento_vertical: false }).componentes.infraestructuraVertical.reglaId).toBe("IN-VRT-06");
     const conInfra = { infraestructura_inmediata: true as const };
     expect(evaluarM04({ ...base(), ...conInfra, contacto_interferencia_infraestructura_vertical: false }).componentes.infraestructuraVertical.reglaId).toBe("IN-VRT-01");
     expect(
@@ -461,115 +502,94 @@ describe("reglaId — el ID de REGLAS_INDICADORES (o del gate IN-GEN-01) que pro
   });
 });
 
-describe("M04 — normalización P_I% (D-170: No aplica y No determinado se excluyen de P_I y n)", () => {
-  it("n = 0 (los seis componentes excluidos) → clasificacion_infraestructura = No aplica", () => {
-    const r = evaluarM04({
-      ...base(),
-      infraestructura_inmediata: false, // excluye vereda/calzada/vertical/aérea/subterránea
-      suelo_sellado_impermeabilizado: null, indicios_compactacion_superficial: null, obstaculos_crecimiento_radicular: null, // alcorque → no_determinado
-    });
-    expect(r.puntajeInfraestructura).toBeNull();
-    expect(r.pctInfraestructura).toBeNull();
-    expect(r.clasificacionInfraestructura).toBe("no_aplica");
-  });
-
-  // Los otros cuatro componentes (vereda, calzada, alcorque, vertical) quedan
-  // incluidos; aérea y subterránea se excluyen con interferencia_redes_servicios
-  // = No, para controlar n = 4 (denominador 3 × 4 = 12) con precisión.
-  const conCuatroComponentes = {
+describe("M04 — peor componente (D-170: No aplica y No determinado se excluyen)", () => {
+  const conTodos = {
     infraestructura_inmediata: true as const,
     interferencia_redes_servicios: false as const,
     existe_vereda: true as const,
+    dano_interferencia_vereda: false as const,
     existe_calzada: true as const,
-    contacto_interferencia_infraestructura_vertical: false as const, // Sin afectación por defecto
-    dano_interferencia_vereda: false as const, // Sin afectación por defecto
-    dano_interferencia_calzada: false as const, // Sin afectación por defecto
+    dano_interferencia_calzada: false as const,
+    existe_alcorque: false as const,
+    contacto_interferencia_infraestructura_vertical: false as const,
   };
+  const verticalLeve = { contacto_interferencia_infraestructura_vertical: true as const, dano_fisico_observable_infraestructura_vertical: false as const, compromete_estabilidad_funcionalidad: false as const };
+  const verticalModerada = { ...verticalLeve, compromete_estabilidad_funcionalidad: true as const };
+  const verticalSevera = { ...verticalModerada, dano_fisico_observable_infraestructura_vertical: true as const };
+  const calzadaSevera = { dano_interferencia_calzada: true as const, levantamiento_calzada: true as const, hundimiento_calzada: false as const, desnivel_max_calzada_cm: 6, afecta_circulacion_vehicular: false as const };
 
-  it("P_I = 1 de 12 (8,33 %) → Bajo", () => {
-    const r = evaluarM04({ ...base(), ...conCuatroComponentes, obstaculos_crecimiento_radicular: true }); // alcorque leve (1)
-    expect(r.puntajeInfraestructura).toBe(1);
-    expect(r.pctInfraestructura).toBeCloseTo((1 / 12) * 100, 6);
+  it("sin componentes evaluados → No aplica", () => {
+    const r = evaluarM04(base());
+    expect(r.clasificacionInfraestructura).toBe("no_aplica");
+    expect(r.componentesNoDeterminados).toEqual([]);
+  });
+  it("todo Sin afectación → Bajo", () => {
+    expect(evaluarM04({ ...base(), ...conTodos }).clasificacionInfraestructura).toBe("bajo");
+  });
+  it("peor componente Leve → Bajo", () => {
+    expect(evaluarM04({ ...base(), ...conTodos, ...verticalLeve }).clasificacionInfraestructura).toBe("bajo");
+  });
+  it("peor componente Moderada → Moderado", () => {
+    expect(evaluarM04({ ...base(), ...conTodos, ...verticalModerada }).clasificacionInfraestructura).toBe("moderado");
+  });
+  it("una Severa no se diluye con otros componentes sanos → Alto", () => {
+    expect(evaluarM04({ ...base(), ...conTodos, ...verticalSevera }).clasificacionInfraestructura).toBe("alto");
+  });
+  it("dos Severas → Crítico", () => {
+    expect(evaluarM04({ ...base(), ...conTodos, ...verticalSevera, ...calzadaSevera }).clasificacionInfraestructura).toBe("critico");
+  });
+  it("varias Moderadas no suben el resultado", () => {
+    const r = evaluarM04({ ...base(), ...conTodos, ...verticalModerada, existe_alcorque: true, dano_interferencia_alcorque: true, obstaculos_crecimiento_radicular: true });
+    expect(r.componentes.alcorque.categoria).toBe("moderada");
+    expect(r.clasificacionInfraestructura).toBe("moderado");
+  });
+  it("P_I y P_I% ya no se calculan", () => {
+    const r = evaluarM04({ ...base(), ...conTodos, ...verticalSevera });
+    expect(r.puntajeInfraestructura).toBeNull();
+    expect(r.pctInfraestructura).toBeNull();
+  });
+  it("IF-21: un componente No determinado se excluye y marca el resultado como parcial", () => {
+    const r = evaluarM04({ ...base(), ...conTodos, interferencia_redes_servicios: true, red_aerea_presente: false, red_subterranea_presente: "no_determinado" });
     expect(r.clasificacionInfraestructura).toBe("bajo");
+    expect(r.componentesNoDeterminados).toEqual(["redSubterranea"]);
   });
-  it("P_I = 2 de 12 (16,67 %) → Moderado (justo sobre el límite de 15 %)", () => {
-    const r = evaluarM04({ ...base(), ...conCuatroComponentes, indicios_compactacion_superficial: true }); // alcorque moderada (2)
-    expect(r.pctInfraestructura).toBeCloseTo((2 / 12) * 100, 6);
-    expect(r.clasificacionInfraestructura).toBe("moderado");
+  it("IF-21: todos los componentes No determinados → No aplica, parcial", () => {
+    const r = evaluarM04({ ...base(), infraestructura_inmediata: null });
+    expect(r.clasificacionInfraestructura).toBe("no_aplica");
+    expect(r.componentesNoDeterminados).toHaveLength(6);
   });
-  it("P_I = 4 de 12 (33,33 %) → Moderado (justo bajo el límite de 35 %)", () => {
-    const r = evaluarM04({
-      ...base(), ...conCuatroComponentes,
-      suelo_sellado_impermeabilizado: true, // alcorque severa (3)
-      contacto_interferencia_infraestructura_vertical: true, // vertical leve (1)
-      dano_fisico_observable_infraestructura_vertical: false, compromete_estabilidad_funcionalidad: false,
-    });
-    expect(r.puntajeInfraestructura).toBe(4);
-    expect(r.pctInfraestructura).toBeCloseTo((4 / 12) * 100, 6);
-    expect(r.clasificacionInfraestructura).toBe("moderado");
+});
+
+describe("IN-SIT — Condición del sitio", () => {
+  it.each<[Partial<M04Input>, string, string]>([
+    [{}, "sin_restriccion", "IN-SIT-01"],
+    [{ obstaculos_crecimiento_radicular: true }, "leve", "IN-SIT-02"],
+    [{ indicios_compactacion_superficial: true }, "moderada", "IN-SIT-03"],
+    [{ suelo_sellado_impermeabilizado: true }, "severa", "IN-SIT-04"],
+    [{ obstaculos_crecimiento_radicular: true, indicios_compactacion_superficial: true }, "moderada", "IN-SIT-05"],
+    [{ obstaculos_crecimiento_radicular: true, suelo_sellado_impermeabilizado: true }, "severa", "IN-SIT-05"],
+  ])("caso %#, también sin infraestructura inmediata", (cambios, categoria, regla) => {
+    const r = evaluarM04({ ...base(), ...cambios });
+    expect(r.condicionSitio.categoria).toBe(categoria);
+    expect(r.condicionSitio.reglaId).toBe(regla);
+    expect(r.clasificacionInfraestructura).toBe("no_aplica");
   });
-  it("P_I = 5 de 12 (41,67 %) → Alto (justo sobre el límite de 35 %)", () => {
-    const r = evaluarM04({
-      ...base(), ...conCuatroComponentes,
-      suelo_sellado_impermeabilizado: true, // alcorque severa (3)
-      contacto_interferencia_infraestructura_vertical: true, // vertical moderada (2)
-      dano_fisico_observable_infraestructura_vertical: false, compromete_estabilidad_funcionalidad: true,
-    });
-    expect(r.puntajeInfraestructura).toBe(5);
-    expect(r.pctInfraestructura).toBeCloseTo((5 / 12) * 100, 6);
-    expect(r.clasificacionInfraestructura).toBe("alto");
+  it("dato faltante → sin categoría, con motivo", () => {
+    const r = evaluarM04({ ...base(), suelo_sellado_impermeabilizado: null });
+    expect(r.condicionSitio.categoria).toBeNull();
+    expect(r.condicionSitio.motivo).toMatch(/suelo_sellado_impermeabilizado/);
   });
-  it("P_I = 7 de 12 (58,33 %) → Alto (justo bajo el límite de 65 %)", () => {
-    const r = evaluarM04({
-      ...base(), ...conCuatroComponentes,
-      suelo_sellado_impermeabilizado: true, // alcorque severa (3)
-      contacto_interferencia_infraestructura_vertical: true, // vertical severa (3)
-      dano_fisico_observable_infraestructura_vertical: true, compromete_estabilidad_funcionalidad: true,
-      dano_interferencia_vereda: true, presenta_levantamiento_vereda: false, presenta_hundimiento_vereda: false, presenta_grieta_vereda: false,
-      reduce_circulacion_peatonal: false, impide_paso_seguro: false, // vereda leve (1)
-    });
-    expect(r.puntajeInfraestructura).toBe(7);
-    expect(r.pctInfraestructura).toBeCloseTo((7 / 12) * 100, 6);
-    expect(r.clasificacionInfraestructura).toBe("alto");
-  });
-  it("P_I = 8 de 12 (66,67 %) → Crítico (justo sobre el límite de 65 %)", () => {
-    const r = evaluarM04({
-      ...base(), ...conCuatroComponentes,
-      suelo_sellado_impermeabilizado: true, // alcorque severa (3)
-      contacto_interferencia_infraestructura_vertical: true, // vertical severa (3)
-      dano_fisico_observable_infraestructura_vertical: true, compromete_estabilidad_funcionalidad: true,
-      dano_interferencia_vereda: true, presenta_levantamiento_vereda: true, presenta_hundimiento_vereda: false, presenta_grieta_vereda: false,
-      desnivel_max_vereda_cm: 3, reduce_circulacion_peatonal: false, impide_paso_seguro: false, // vereda moderada (2)
-    });
-    expect(r.puntajeInfraestructura).toBe(8);
-    expect(r.pctInfraestructura).toBeCloseTo((8 / 12) * 100, 6);
-    expect(r.clasificacionInfraestructura).toBe("critico");
-  });
-  it("P_I = 12 de 12 (100 %) → Crítico (máximo con los cuatro componentes en Severa)", () => {
-    const r = evaluarM04({
-      ...base(), ...conCuatroComponentes,
-      suelo_sellado_impermeabilizado: true, // alcorque severa (3)
-      contacto_interferencia_infraestructura_vertical: true, dano_fisico_observable_infraestructura_vertical: true, compromete_estabilidad_funcionalidad: true, // vertical severa (3)
-      dano_interferencia_vereda: true, presenta_levantamiento_vereda: true, presenta_hundimiento_vereda: false, presenta_grieta_vereda: false,
-      desnivel_max_vereda_cm: 6, reduce_circulacion_peatonal: false, impide_paso_seguro: false, // vereda severa (3)
-      dano_interferencia_calzada: true, levantamiento_calzada: true, hundimiento_calzada: false,
-      desnivel_max_calzada_cm: 6, afecta_circulacion_vehicular: false, // calzada severa (3)
-    });
-    expect(r.puntajeInfraestructura).toBe(12);
-    expect(r.pctInfraestructura).toBe(100);
-    expect(r.clasificacionInfraestructura).toBe("critico");
+  it("IN-VRT y sitio no suben la clasificación sin alcorque", () => {
+    const r = evaluarM04({ ...base(), infraestructura_inmediata: true, existe_vereda: false, existe_calzada: false, existe_alcorque: false, interferencia_redes_servicios: false, contacto_interferencia_infraestructura_vertical: false, suelo_sellado_impermeabilizado: true });
+    expect(r.condicionSitio.categoria).toBe("severa");
+    expect(r.clasificacionInfraestructura).toBe("bajo");
   });
 });
 
 describe("Campos faltantes → no_determinado por componente (el motor nunca rellena ni supone)", () => {
-  it("infraestructura_inmediata = null → no_determinado en los 5 componentes que gatea (alcorque no se ve afectado)", () => {
+  it("infraestructura_inmediata = null → no_determinado en los seis componentes", () => {
     const r = evaluarM04({ ...base(), infraestructura_inmediata: null });
-    expect(r.componentes.vereda.categoria).toBe("no_determinado");
-    expect(r.componentes.calzada.categoria).toBe("no_determinado");
-    expect(r.componentes.infraestructuraVertical.categoria).toBe("no_determinado");
-    expect(r.componentes.redAerea.categoria).toBe("no_determinado");
-    expect(r.componentes.redSubterranea.categoria).toBe("no_determinado");
-    expect(r.componentes.alcorque.categoria).toBe("sin_afectacion");
+    expect(Object.values(r.componentes).every((c) => c.categoria === "no_determinado")).toBe(true);
   });
   it("desnivel_max_vereda_cm = NaN (con presenta_levantamiento_vereda = Sí) → no_determinado, nunca se clasifica", () => {
     const r = evaluarM04({
