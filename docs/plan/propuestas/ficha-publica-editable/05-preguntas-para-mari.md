@@ -2,6 +2,24 @@
 
 > **Quién responde:** lo de evaluación y medidas, **Valej** (1 y 4); lo de Conecta, fichas, textos y fotos, **Mari** (2, 3 y 5 a 11); la 12, las dos. Cada una dice qué propongo si no hay otra indicación. Nada se aplica hasta tener las respuestas, el CC aprobado y las filas en el Excel.
 
+## Respuestas recibidas
+
+### Mari, 2026-11-16 (reenviadas por la usuaria en el chat)
+
+| # | Respuesta |
+|---|---|
+| 2 | **Aprobado.** PR-004 v8.0 con la excepción solo para textos y fotos públicas. |
+| 3 | **Aprobado.** Cualquier Usuario municipal activo o el Administrador. Revisarlo cuando exista un segundo proyecto. |
+| 5 | **Cambia la propuesta:** cargar las fuentes **por bloque** desde ya, según la sección «Fuentes por bloque» de cada especie en `FICHAS_SEIS_ESPECIES.md` (v5). «General» solo para lo que no tenga un bloque claro. |
+| 6 | **Aprobado.** Un árbol puede reemplazar curiosidad, «quién soy» y consejo; rasgos, estaciones e historia de la especie quedan fijos. |
+| 7 | **Carga autorizada en la base de pruebas** (`gmlbmyreoxgoqrolhyxo`) de *Acer negundo* y *Lagerstroemia indica* con los datos aprobados en P9, y dejarla registrada. |
+| 8 | **Aprobado.** Autor y licencia obligatorios; no se usa la foto del olmo con marca de agua; mientras no haya foto propia, el olmo queda sin foto. |
+| 9, 10, 11 | **Aprobados** como se proponen. |
+| 12 | La numeración D-n se ajusta según cuándo entre CC-068. |
+| 1, 4 | Las responde Valej. |
+
+**Pendiente:** respuestas de Valej a la 1 y la 4. Sin ellas el CC no se registra.
+
 ## Bloquean el CC
 
 **1. Medido vs estimado (relevo §3.2). — Valej** D-18 (DAP) y D-19 (altura) dicen «Medición en terreno o estimación con escala», pero ningún campo registra, árbol por árbol, cuál de las dos se usó. D-22 (copa) se calcula desde D-20 y D-21, que tienen la misma ambigüedad. D-26 sí es «Estimado» y D-25 es una clasificación del Inspector.
