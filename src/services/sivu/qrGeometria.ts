@@ -41,8 +41,15 @@ export function matrizQr(texto: string): MatrizQr {
  * nonzero). Dos módulos que solo se tocan por una esquina quedan como
  * polígonos separados. Es la forma que se extruye directamente en
  * Blender, Fusion, Tinkercad u OpenSCAD.
+ *
+ * `holgura` (en módulos, por defecto 0) mete todo el contorno hacia
+ * dentro de lo oscuro. Con 0, dos módulos en diagonal comparten un
+ * vértice y, al extruirlos, una arista: OpenSCAD/CGAL rechaza esa malla
+ * («The given mesh is not closed») al unirla con la placa. Con una
+ * holgura mínima quedan separados por 2 × holgura y cada polígono es
+ * cerrado y simple. El PDF usa 0: en papel no importa.
  */
-export function contornoModulos({ total, oscuro }: MatrizQr): string {
+export function contornoModulos({ total, oscuro }: MatrizQr, holgura = 0): string {
   // Aristas de cada módulo en sentido horario (y hacia abajo); las que
   // comparten dos módulos oscuros se anulan entre sí.
   const aristas = new Map<string, [number, number, number, number]>();
@@ -79,10 +86,12 @@ export function contornoModulos({ total, oscuro }: MatrizQr): string {
   while (salientes.size > 0) {
     const inicio = salientes.values().next().value![0];
     quitar(inicio);
-    const puntos: Array<[number, number]> = [[inicio[0], inicio[1]]];
+    // Cada vértice guarda la dirección con que se llega y con que se sale.
+    const puntos: Array<{ x: number; y: number; ex: number; ey: number; sx: number; sy: number }> = [];
     let [, , x, y] = inicio;
     let dx = inicio[2] - inicio[0];
     let dy = inicio[3] - inicio[1];
+    puntos.push({ x: inicio[0], y: inicio[1], ex: 0, ey: 0, sx: dx, sy: dy });
     while (x !== inicio[0] || y !== inicio[1]) {
       const opciones = salientes.get(`${x},${y}`)!;
       // En un vértice con dos salidas (módulos que se tocan en diagonal)
@@ -99,15 +108,30 @@ export function contornoModulos({ total, oscuro }: MatrizQr): string {
       quitar(siguiente);
       const ndx = siguiente[2] - siguiente[0];
       const ndy = siguiente[3] - siguiente[1];
-      if (ndx !== dx || ndy !== dy) puntos.push([x, y]);
+      if (ndx !== dx || ndy !== dy) puntos.push({ x, y, ex: dx, ey: dy, sx: ndx, sy: ndy });
       dx = ndx;
       dy = ndy;
       x = siguiente[2];
       y = siguiente[3];
     }
-    let d = `M${puntos[0][0]} ${puntos[0][1]}`;
-    for (let i = 1; i < puntos.length; i++) {
-      d += puntos[i][1] === puntos[i - 1][1] ? `H${puntos[i][0]}` : `V${puntos[i][1]}`;
+    // Al cerrar, se llega al primer vértice con la última dirección.
+    puntos[0].ex = dx;
+    puntos[0].ey = dy;
+
+    // Lo oscuro queda a la derecha de cada arista: normal interior
+    // (-dy, dx) con el eje Y hacia abajo. En una esquina se suman las
+    // dos normales, en un tramo recto basta una.
+    const desplazado = puntos.map((p) => {
+      if (holgura === 0) return [p.x, p.y];
+      const recto = p.ex === p.sx && p.ey === p.sy;
+      const nx = -p.ey + (recto ? 0 : -p.sy);
+      const ny = p.ex + (recto ? 0 : p.sx);
+      return [p.x + holgura * nx, p.y + holgura * ny];
+    });
+    const num = (v: number) => String(Math.round(v * 1e4) / 1e4);
+    let d = `M${num(desplazado[0][0])} ${num(desplazado[0][1])}`;
+    for (let i = 1; i < desplazado.length; i++) {
+      d += puntos[i].y === puntos[i - 1].y ? `H${num(desplazado[i][0])}` : `V${num(desplazado[i][1])}`;
     }
     trazos.push(`${d}Z`);
   }
@@ -115,10 +139,23 @@ export function contornoModulos({ total, oscuro }: MatrizQr): string {
 }
 
 /**
- * SVG del QR con dos piezas con nombre, listas para separar al modelar:
- * `placa` (el cuadrado blanco completo, margen incluido) y `modulos`
- * (un solo trazado negro). Medidas reales en milímetros.
+ * SVG del QR para impresión 3D: **solo** la geometría de los módulos
+ * oscuros, en un único trazado `modulos` de polígonos cerrados. No lleva
+ * fondo, rectángulo blanco ni ninguna otra forma: OpenSCAD (`import()`)
+ * y los demás programas de modelado convierten en sólido toda forma
+ * rellena, así que un fondo se extruiría como una losa encima del QR.
+ *
+ * El margen silencioso de 4 módulos queda como espacio vacío: el
+ * `viewBox` (y el ancho y alto en mm) incluye el margen, pero ningún
+ * trazado entra en él. Al imprimir en papel, el fondo lo pone la hoja.
+ *
+ * Los módulos llevan una holgura de `HOLGURA_SVG_MODULOS` por lado
+ * (0,5 % del módulo, ~0,009 mm en una placa de 80 mm): imperceptible e
+ * irrelevante para el escaneo, y evita que dos módulos en diagonal se
+ * toquen (ver `contornoModulos`).
  */
+export const HOLGURA_SVG_MODULOS = 0.005;
+
 export function qrSvg(texto: string, ladoMm: number, titulo: string): string {
   const matriz = matrizQr(texto);
   const t = matriz.total;
@@ -127,8 +164,7 @@ export function qrSvg(texto: string, ladoMm: number, titulo: string): string {
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<svg xmlns="http://www.w3.org/2000/svg" width="${ladoMm}mm" height="${ladoMm}mm" viewBox="0 0 ${t} ${t}" shape-rendering="crispEdges">` +
     `<title>${tituloSeguro}</title>` +
-    `<rect id="placa" width="${t}" height="${t}" fill="#ffffff"/>` +
-    `<path id="modulos" fill="#000000" fill-rule="nonzero" d="${contornoModulos(matriz)}"/>` +
+    `<path id="modulos" fill="#000000" fill-rule="nonzero" d="${contornoModulos(matriz, HOLGURA_SVG_MODULOS)}"/>` +
     `</svg>\n`
   );
 }

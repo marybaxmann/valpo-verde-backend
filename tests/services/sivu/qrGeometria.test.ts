@@ -1,4 +1,4 @@
-import { MARGEN_MODULOS, contornoModulos, matrizQr, qrStl, qrSvg } from "../../../src/services/sivu/qrGeometria";
+import { HOLGURA_SVG_MODULOS, MARGEN_MODULOS, contornoModulos, matrizQr, qrStl, qrSvg } from "../../../src/services/sivu/qrGeometria";
 
 const URL_PRUEBA = "https://conecta.example.cl/arbol/8b7c6d5e-4f3a-4b2c-9d1e-0f9a8b7c6d5e";
 
@@ -70,14 +70,63 @@ describe("qrGeometria", () => {
     }
   });
 
-  it("el SVG mide en milímetros y separa placa y módulos", () => {
+  it("el SVG mide en milímetros y trae solo el trazado de los módulos", () => {
     const svg = qrSvg(URL_PRUEBA, 80, "QR A-000421 <prueba>");
     expect(svg).toContain('width="80mm" height="80mm"');
     expect(svg).toContain(`viewBox="0 0 ${matriz.total} ${matriz.total}"`);
-    expect(svg).toContain('id="placa"');
     expect(svg).toContain('id="modulos"');
-    expect(svg).not.toMatch(/<circle|rx=|gradient/i);
     expect(svg).toContain("<title>QR A-000421 prueba</title>");
+    // Sin fondo ni ninguna otra forma: OpenSCAD extruiría cualquier relleno.
+    expect(svg).not.toMatch(/<rect|<circle|<ellipse|<polygon|<polyline|<line|<image|<use|<g[\s>]|id="placa"|#fff|white|rx=|gradient/i);
+    const elementos = [...svg.matchAll(/<([a-z]+)[\s>]/gi)].map((m) => m[1]);
+    expect(elementos).toEqual(["svg", "title", "path"]);
+  });
+
+  it("sin holgura (PDF) el trazado sigue en coordenadas enteras", () => {
+    expect(contornoModulos(matriz)).toMatch(/^[MHVZ0-9 ]+$/);
+  });
+
+  it("con la holgura del SVG cubre los mismos módulos y ningún polígono toca a otro", () => {
+    const d = qrSvg(URL_PRUEBA, 80, "QR").match(/ d="([^"]+)"/)![1];
+    expect(d).toBe(contornoModulos(matriz, HOLGURA_SVG_MODULOS));
+    const polis = poligonos(d);
+    for (let f = 0; f < matriz.total; f++) {
+      for (let c = 0; c < matriz.total; c++) {
+        expect(vueltas(polis, c + 0.5, f + 0.5) !== 0).toBe(matriz.oscuro[f][c]);
+      }
+    }
+    // Ningún vértice repetido, ni dentro de un polígono ni entre polígonos:
+    // los módulos en diagonal ya no comparten esquina.
+    const vistos = new Set<string>();
+    for (const p of polis) {
+      for (const [x, y] of p) {
+        const k = `${x},${y}`;
+        expect(vistos.has(k)).toBe(false);
+        vistos.add(k);
+      }
+    }
+    // La holgura es mínima: ningún vértice se aleja más de 0,005 módulos
+    // de la grilla (el punto de partida de un trazado puede estar en
+    // medio de un tramo recto y moverse en un solo eje).
+    for (const p of polis) {
+      for (const [x, y] of p) {
+        expect(Math.abs(x - Math.round(x))).toBeLessThanOrEqual(HOLGURA_SVG_MODULOS + 1e-9);
+        expect(Math.abs(y - Math.round(y))).toBeLessThanOrEqual(HOLGURA_SVG_MODULOS + 1e-9);
+      }
+    }
+  });
+
+  it("el margen silencioso del SVG queda vacío: ningún vértice entra en los 4 módulos del borde", () => {
+    const d = qrSvg(URL_PRUEBA, 80, "QR").match(/ d="([^"]+)"/)![1];
+    const t = matriz.total;
+    for (const p of poligonos(d)) {
+      for (const [x, y] of p) {
+        expect(x).toBeGreaterThanOrEqual(MARGEN_MODULOS);
+        expect(y).toBeGreaterThanOrEqual(MARGEN_MODULOS);
+        expect(x).toBeLessThanOrEqual(t - MARGEN_MODULOS);
+        expect(y).toBeLessThanOrEqual(t - MARGEN_MODULOS);
+      }
+    }
   });
 
   function leerStl(buf: Buffer) {
