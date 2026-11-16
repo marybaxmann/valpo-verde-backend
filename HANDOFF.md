@@ -35,6 +35,20 @@
 
 ---
 
+## ▶ Novedad 2026-11-16 (bloque 33) — 037 aplicada en la base de pruebas y carga inicial de Conecta (solo local)
+
+**Autorización:** Mari, 2026-11-16 («Sí, autoriza»), solo para `gmlbmyreoxgoqrolhyxo`. Nada en la base real. Nada publicado: rama `docs/ficha-publica-editable` sin push.
+
+- **037** movida a `database/migrations/037_ficha_publica_editable.sql` (+ `.down.sql`); encabezado actualizado. Ciclo completo en pruebas: aplicar (`20261116173222`) → pruebas → revertir (`…173521`) → reaplicar (`…173708`) → pruebas. md5 de up `9ee06c8d…` y down `2819630e…` iguales a los archivos en LF. La reversión deja `fn_ficha_publica_arbol` idéntica a la 028 (md5 de la definición y privilegios).
+- **Pruebas** `database/fase6/pruebas_037_ficha_publica.sql`, F1 a F7 OK: permisos (Inspector, Encargado, inactivo, no miembro y suplantación rechazados; Administrador transversal), CHECK, fotos de rasgos conservadas, foto temporal con crédito fijo, ficha con claves de la 028 y medidas solo activadas con valor, proyecto cerrado, privilegios y bucket. `diametro_copa_m` es columna generada en `trees` (no se puede escribir).
+- **Carga inicial** `database/cargas/2026-11-16_contenido_conecta.mjs` + `.json` (se niega a correr fuera de pruebas; `--revertir` la deshace). Textos aprobados y fuentes por bloque (06) de las 6 especies, con `updated_by` = «Usuario Admin Prueba». Fotos recodificadas sin metadatos (verificado en la URL pública): 4 de «Reconóceme» («Valpo Verde, levantamiento 2026-10-01») y la del olmo como temporal.
+- **Códigos** en los JSONB (snake_case): íconos `sombra, frescor, aves, polinizadores, flores, siempreverde, hito, generaciones`; bloques `curiosidad, aportes, quien_soy, reconoceme, mi_anio, historia_especie, consejo, general`. Aportes `{icono, titulo}`, rasgos `{id, etiqueta, texto, foto_path, credito}`, fuentes `{bloques, tema, referencia, enlace?}`. El Zod de los endpoints debe seguir esto.
+
+**Pendiente:**
+1. **Pregunta para Mari:** autor y licencia de las fotos referenciales de arce negundo, falso plátano, crespón, araucaria y ginkgo, y de la «Silueta» de la araucaria (hoy «origen no documentado»). Sin eso no se cargan (D-292).
+2. Endpoints y Zod de `03-migracion-y-endpoints.md` §5 (no escritos). El frontend sigue leyendo `contenidoEspecie.ts`; no borrar nada del frontend hasta que la ficha desplegada lea todo de la API.
+3. VERSION 3.0.1, `00-index.md`, PR con el CC y tag `metodologia-v3.0.1` (FUENTE SINCRONIZADA).
+
 ## ▶ Novedad 2026-11-16 (bloque 32) — CC-073 aprobado: filas en el Excel, reglas nuevas (solo local)
 
 - **Aprobación de Mari (2026-11-16):** CC-073 y filas aprobados, con un cambio: la foto actual del olmo (terceros, con marca de agua) queda como **referencial temporal**, con crédito «Foto de terceros, uso referencial temporal» y una marca de reemplazo → campo nuevo **`foto_referencial_temporal`** (CATALOGO_ESPECIES, **D-293**). Total: **28 filas, D-280 a D-307**. Fuentes: P10 no se carga; consejo del olmo y bloques sin fuente quedan así.
