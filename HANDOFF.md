@@ -50,7 +50,7 @@
 - **Actualización (2026-11-16, mismo bloque) — SVG del QR sin fondo publicado** (autorizado por la usuaria):
   - Qué cambia (`src/services/sivu/qrGeometria.ts`, `e23e8df`): el SVG ya no lleva `<rect id="placa">` (OpenSCAD lo importaba como losa sólida); trae solo `svg`, `title` y un `path` con los módulos en negro. El margen de 4 módulos queda vacío dentro del `viewBox`. Cada módulo se reduce 0,005 módulos por lado (~0,009 mm en 80 mm) para que dos módulos en diagonal no compartan esquina: con eso OpenSCAD 2021.01 ya no da «The given mesh is not closed». El PDF de placas y el STL no cambian; las URL y los identificadores tampoco.
   - Validación: jsQR lee la URL exacta del SVG y del render de OpenSCAD; `modelo placa.scad` de Mari (sin cambios) renderiza en `completo` y `detalles`. Jest 1691/1691, `tsc` limpio.
-  - Ramas: `feature/fase6-backend-api` avanzó `1ba307e..e23e8df`; `release/demo` `9b31293..69d75cc` (fusión, árbol = `e23e8df`). Vercel marcó `69d75cc` como `success` en GitHub; `/health` 200. **Sin probar con sesión:** descargar un SVG desde el frontend (Usuario municipal) y confirmar que no trae `<rect>`.
+  - Ramas: `feature/fase6-backend-api` avanzó `1ba307e..e23e8df`; `release/demo` `9b31293..69d75cc` (fusión, árbol = `e23e8df`). Vercel marcó `69d75cc` como `success` en GitHub; `/health` 200. **Validado por la usuaria (2026-11-16):** SVG de A-000504 descargado desde `sivu.cl`, sin `<rect>`, con la holgura nueva (coordenadas ,005/,995) y margen vacío; el de la araucaria importado en su modelo de OpenSCAD sin errores. `sivu.cl` es el dominio real del frontend: `CONECTA_URL_BASE` está bien. Falta solo escanear una placa impresa (P21).
   - `Desktop/plataforma/placa/qr-A-000504.svg` se regeneró con la misma URL (original respaldado en el scratchpad de la sesión). Su URL usa `https://sivu.cl/arbol/…` (revisar `CONECTA_URL_BASE` con P22).
 
 **Prompt para el siguiente agente:**
@@ -58,7 +58,7 @@
 ```
 Lee HANDOFF.md (bloques 29 y 28). release/demo (69d75cc) ya está igual a
 feature/fase6-backend-api (e23e8df) y desplegada, con la metodología 3.0 y el QR SVG sin fondo.
-Pendiente: probar con sesión las rutas de evaluación y la descarga del SVG; esperar las
+Pendiente: probar con sesión las rutas de evaluación (la descarga del SVG ya se validó); esperar las
 respuestas de Mari a la ficha pública editable. No toques la base real.
 ```
 
