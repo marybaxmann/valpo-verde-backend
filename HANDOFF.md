@@ -16,7 +16,7 @@
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** 2026-11-16: API con metodología 3.0 y QR SVG publicados; robustez (PA-29/38) local; Mari respondió; 2 especies cargadas en pruebas; faltan respuestas de Valej.
+- **Resumen:** 2026-11-16: release/demo 9fc0039 (metodología 3.0, QR SVG, robustez PA-29/38) publicada; Mari respondió; 2 especies en pruebas; faltan respuestas de Valej.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -43,7 +43,7 @@
 - **PA-38 (hallazgo T3):** `src/middlewares/registroPeticiones.middleware.ts`, primero en `app.ts`. Cada petición tiene `request_id` (reutiliza un `X-Request-Id` válido del cliente) en la cabecera `X-Request-Id` (expuesta por CORS) y una línea JSON al terminar: método, ruta sin datos (sin consulta; segmentos con dígitos → `:param`, así no quedan ID ni `qr_token`), estado, duración y `tiempo_agotado_bd`. No registra cuerpo, cabeceras, IP, token ni usuario. Las respuestas **5xx** agregan `request_id` al cuerpo (campo nuevo, compatible: `error` no cambia); las 4xx no cambian. Sin registro en NODE_ENV=test.
 - Pruebas nuevas: `tests/config/fetchConTiempoMaximo.test.ts` (incluye supabase-js real con un fetch colgado: 1 sola llamada, error devuelto, petición marcada) y `tests/middlewares/registroPeticiones.test.ts`. Ajustadas 2 expectativas de `tree.routes.test.ts` (500 con `request_id`). `tsc` limpio; Jest 88 suites / **1705** OK.
 - **PA-35 (errores tipados) no se hizo:** el `msg.includes(...)` que queda está en los módulos de la demo antigua (`tree.service.ts`, `moduleRecords.service.ts`, `treeRiskAssessment.service.ts`) y en `project.service.ts`; tiparlo exige que las funciones SQL lancen SQLSTATE propios (migración, depende de PA-04). Los repositorios SIVU ya propagan `cause: error.code`.
-- **Pendiente:** publicar con autorización (feature y luego release/demo); tras desplegar, revisar los registros de Vercel.
+- **Publicado con autorización de la usuaria (2026-11-16):** `feature/fase6-backend-api` `e23e8df..88cef45`; `release/demo` `69d75cc..9fc0039` (fusión, árbol = `88cef45`). Vercel `success` en GitHub. Verificado en `https://sivu-api.vercel.app`: `/health` y `/api/sivu/conecta/catalogos` 200 con `X-Request-Id` (nuevo, o el del cliente si es válido) y `Access-Control-Expose-Headers: X-Request-Id`; QR sin sesión sigue en 401. **Sin ver:** las líneas del registro en Vercel (el MCP no tiene acceso al equipo) y un 504 real.
 
 ### Respuestas de Mari (ficha pública editable)
 - Registradas en `docs/plan/propuestas/ficha-publica-editable/05-preguntas-para-mari.md` (§ Respuestas recibidas, commit `0b75917`). Aprobadas 2, 3, 6, 8, 9, 10 y 11. **Cambio en la 5:** fuentes **por bloque** desde ya, según «Fuentes por bloque» de cada especie en `C:/Users/usuario/code/FICHAS_SEIS_ESPECIES.md` (v5); «General» solo si no hay bloque claro → hay que ajustar `fuentes_contenido_especie` en `generar_filas.py`, el CC y la 037. La 1 y la 4 (medidas) son de **Valej**: sin ellas el CC no se registra.
@@ -55,8 +55,8 @@
 **Prompt para el siguiente agente:**
 
 ```
-Lee HANDOFF.md (bloques 30 y 29). Con autorización: publica feature/robustez-api (88cef45)
-en feature/fase6-backend-api y release/demo, y revisa los registros. Ficha pública: ajusta
+Lee HANDOFF.md (bloques 30 y 29). release/demo (9fc0039) = feature (88cef45), con tiempo
+máximo de Supabase y registro de peticiones publicados. Ficha pública: ajusta
 las fuentes por bloque (respuesta 5 de Mari, FICHAS_SEIS_ESPECIES.md v5) y espera a Valej
 (preguntas 1 y 4) antes de registrar el CC. No toques la base real.
 ```
