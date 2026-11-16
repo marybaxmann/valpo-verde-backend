@@ -1,10 +1,10 @@
 # Ficha pública editable de Valpo Verde Conecta — paquete para la revisión de Mari
 
-> **Propuesta, 2026-11-15; versión final para la revisión de Mari, 2026-11-16** (todas las preguntas respondidas por Mari y Valej). Preparada a partir de `docs/relevo/RELEVO_2026-11-15_mari.md` (§1.3 y §3.1), que reescribe la propuesta D6. **No modifica nada:** ni el Excel, ni `docs/registro-cambios.md`, ni la base (de pruebas o real), ni el frontend, ni `release/demo`. La única escritura en la base de pruebas fue la carga aparte de dos especies (`database/cargas/2026-11-16_especies_p9.sql`, autorizada por Mari).
+> **Propuesta del 2026-11-15. CC-073 APROBADO por Mari el 2026-11-16** y registrado en `docs/registro-cambios.md`; filas D-280 a D-307 copiadas al Excel. **La 037 no está aplicada** (requiere autorización aparte). Preparada a partir de `docs/relevo/RELEVO_2026-11-15_mari.md` (§1.3 y §3.1), que reescribe la propuesta D6. **No modifica nada:** ni el Excel, ni `docs/registro-cambios.md`, ni la base (de pruebas o real), ni el frontend, ni `release/demo`. La única escritura en la base de pruebas fue la carga aparte de dos especies (`database/cargas/2026-11-16_especies_p9.sql`, autorizada por Mari).
 
 | Archivo | Qué es |
 |---|---|
-| `01-filas-diccionario.md` | Las 27 filas propuestas para DICCIONARIO_CAMPOS: 15 de CATALOGO_ESPECIES y 12 de la hoja nueva FICHAS_PUBLICAS. Usan las 12 columnas vigentes, verificadas en el `.xlsx`. |
+| `01-filas-diccionario.md` | Las 28 filas propuestas para DICCIONARIO_CAMPOS: 16 de CATALOGO_ESPECIES y 12 de la hoja nueva FICHAS_PUBLICAS. Usan las 12 columnas vigentes, verificadas en el `.xlsx`. |
 | `01-filas-diccionario.csv` | Las mismas filas, listas para copiar en la hoja (UTF-8). |
 | `generar_filas.py` | Genera los dos archivos anteriores desde una sola fuente. No lee ni escribe el Excel. |
 | `02-CC-borrador.md` | Borrador del CC con el formato del registro (número provisional CC-073), **sin registrar**. |

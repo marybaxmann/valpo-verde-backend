@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Migración 037 — Valpo Verde Conecta: ficha pública editable
 -- (CC-073 provisional, borrador final del 2026-11-16 con las respuestas de
--- Mari y Valej; reescritura de la propuesta D6; filas D-280 a D-306
+-- Mari y Valej; reescritura de la propuesta D6; filas D-280 a D-307
 -- provisionales; PR-022 v3.0 y PR-004 v8.0 propuestas)
 -- =====================================================================
 --
@@ -19,11 +19,11 @@
 --
 -- Agrega:
 --   1. species_public_content: contenido ciudadano por especie
---      (CATALOGO_ESPECIES, D-280 a D-294). Tabla 1:1 aparte de species
+--      (CATALOGO_ESPECIES, D-280 a D-295). Tabla 1:1 aparte de species
 --      porque la edita otro rol: así el Inspector no puede escribir
 --      textos ciudadanos ni el Usuario municipal datos botánicos.
 --   2. tree_public_content: personalización por árbol (FICHAS_PUBLICAS,
---      D-295 a D-306). Solo lo que difiere de la especie.
+--      D-296 a D-307). Solo lo que difiere de la especie.
 --   3. Bucket público conecta-publico, solo para imágenes ya
 --      recodificadas sin metadatos por el backend.
 --   4. Funciones de escritura SECURITY DEFINER (solo service_role):
@@ -40,7 +40,7 @@
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 1. Contenido ciudadano por especie (D-280 a D-294)
+-- 1. Contenido ciudadano por especie (D-280 a D-295)
 -- ---------------------------------------------------------------------
 -- Las formas internas de los JSONB (aportes, rasgos, estaciones, ciclo,
 -- fuentes) las valida el backend con Zod campo por campo; la base
@@ -66,39 +66,42 @@ CREATE TABLE public.species_public_content (
   fuentes                     JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(fuentes) = 'array'),                                         -- D-290
   foto_referencial_path       TEXT,                                                                                                                -- D-291
   credito_foto_referencial    TEXT CHECK (credito_foto_referencial IS NULL OR char_length(credito_foto_referencial) BETWEEN 1 AND 120),           -- D-292
-  updated_by                  UUID NOT NULL REFERENCES public.user_profiles(id),                                                                  -- D-293
-  updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),                                                                                  -- D-294
+  foto_referencial_temporal   BOOLEAN NOT NULL DEFAULT false,                                                                                       -- D-293; foto de terceros, a reemplazar
+  updated_by                  UUID NOT NULL REFERENCES public.user_profiles(id),                                                                  -- D-294
+  updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),                                                                                  -- D-295
 
   CONSTRAINT chk_spc_articulo_con_nombre
     CHECK ((nombre_comun_visualizacion IS NULL) = (articulo_nombre IS NULL)),                 -- D-281
   CONSTRAINT chk_spc_anio_o_ciclo
     CHECK (anio_estacional IS NULL OR ciclo IS NULL),                                         -- D-286/D-287
   CONSTRAINT chk_spc_credito_foto
-    CHECK (foto_referencial_path IS NULL OR credito_foto_referencial IS NOT NULL)             -- D-292
+    CHECK (foto_referencial_path IS NULL OR credito_foto_referencial IS NOT NULL),            -- D-292
+  CONSTRAINT chk_spc_temporal_con_foto
+    CHECK (NOT foto_referencial_temporal OR foto_referencial_path IS NOT NULL)                -- D-293
 );
 
 -- ---------------------------------------------------------------------
--- 2. Personalización por árbol (FICHAS_PUBLICAS, D-295 a D-306)
+-- 2. Personalización por árbol (FICHAS_PUBLICAS, D-296 a D-307)
 -- ---------------------------------------------------------------------
 CREATE TABLE public.tree_public_content (
-  tree_id                 UUID PRIMARY KEY REFERENCES public.trees(id) ON DELETE RESTRICT,  -- D-295
-  mostrar_clase_edad      BOOLEAN NOT NULL DEFAULT false,                                    -- D-296
-  mostrar_altura_total    BOOLEAN NOT NULL DEFAULT false,                                    -- D-297
-  mostrar_dap             BOOLEAN NOT NULL DEFAULT false,                                    -- D-298
-  mostrar_diametro_copa   BOOLEAN NOT NULL DEFAULT false,                                    -- D-299
-  mostrar_rango_edad      BOOLEAN NOT NULL DEFAULT false,                                    -- D-300
-  historia                TEXT CHECK (historia IS NULL OR char_length(btrim(historia)) BETWEEN 1 AND 1000),          -- D-301
-  historia_fuente         TEXT CHECK (historia_fuente IS NULL OR char_length(btrim(historia_fuente)) BETWEEN 1 AND 300),  -- D-302
-  foto_path               TEXT,                                                              -- D-303; solo fn_fijar_foto_ficha_publica
-  -- D-304: {"curiosidad": {"texto", "fuente"}, "quien_soy": {...}, "consejo": {...}}
+  tree_id                 UUID PRIMARY KEY REFERENCES public.trees(id) ON DELETE RESTRICT,  -- D-296
+  mostrar_clase_edad      BOOLEAN NOT NULL DEFAULT false,                                    -- D-297
+  mostrar_altura_total    BOOLEAN NOT NULL DEFAULT false,                                    -- D-298
+  mostrar_dap             BOOLEAN NOT NULL DEFAULT false,                                    -- D-299
+  mostrar_diametro_copa   BOOLEAN NOT NULL DEFAULT false,                                    -- D-300
+  mostrar_rango_edad      BOOLEAN NOT NULL DEFAULT false,                                    -- D-301
+  historia                TEXT CHECK (historia IS NULL OR char_length(btrim(historia)) BETWEEN 1 AND 1000),          -- D-302
+  historia_fuente         TEXT CHECK (historia_fuente IS NULL OR char_length(btrim(historia_fuente)) BETWEEN 1 AND 300),  -- D-303
+  foto_path               TEXT,                                                              -- D-304; solo fn_fijar_foto_ficha_publica
+  -- D-305: {"curiosidad": {"texto", "fuente"}, "quien_soy": {...}, "consejo": {...}}
   textos_personalizados   JSONB NOT NULL DEFAULT '{}'::jsonb
                             CHECK (jsonb_typeof(textos_personalizados) = 'object'
                                    AND (textos_personalizados - ARRAY['curiosidad', 'quien_soy', 'consejo']) = '{}'::jsonb),
-  updated_by              UUID NOT NULL REFERENCES public.user_profiles(id),                -- D-305
-  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),                                -- D-306
+  updated_by              UUID NOT NULL REFERENCES public.user_profiles(id),                -- D-306
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),                                -- D-307
 
   CONSTRAINT chk_tpc_fuente_con_historia
-    CHECK (historia_fuente IS NULL OR historia IS NOT NULL)                                   -- D-302
+    CHECK (historia_fuente IS NULL OR historia IS NOT NULL)                                   -- D-303
 );
 
 -- Proyecto Cerrado = solo consulta (D-265; RG fila 27; CC-042). El
@@ -286,12 +289,16 @@ $$;
 -- 4b. Fijar o quitar una foto de la especie. p_ranura = 'referencial'
 -- o el id de un rasgo existente. p_path NULL = quitar. Devuelve la ruta
 -- anterior para que el backend borre el archivo DESPUÉS de confirmar.
+-- p_temporal (D-293, solo 'referencial'): foto de terceros de uso
+-- referencial temporal; su crédito es fijo y debe reemplazarse por una
+-- foto oficial de SIVU antes de retirar «Prototipo» (CC-073).
 CREATE FUNCTION public.fn_fijar_foto_especie(
   p_species_id UUID,
   p_usuario UUID,
   p_ranura TEXT,
   p_path TEXT,
-  p_credito TEXT
+  p_credito TEXT,
+  p_temporal BOOLEAN DEFAULT false
 ) RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -301,8 +308,15 @@ DECLARE
   v_actual public.species_public_content%ROWTYPE;
   v_anterior TEXT;
   v_credito TEXT := NULLIF(btrim(COALESCE(p_credito, '')), '');
+  v_temporal BOOLEAN := COALESCE(p_temporal, false) AND p_path IS NOT NULL;
 BEGIN
   PERFORM public.fn_assert_editor_contenido_publico(p_usuario, NULL, 'SV080');
+  IF v_temporal AND p_ranura <> 'referencial' THEN
+    RAISE EXCEPTION 'Solo la foto referencial de la especie puede ser temporal' USING ERRCODE = 'SV080';
+  END IF;
+  IF v_temporal THEN
+    v_credito := 'Foto de terceros, uso referencial temporal';
+  END IF;
   IF p_path IS NOT NULL AND v_credito IS NULL THEN
     RAISE EXCEPTION 'La fotografía requiere su crédito (autor y licencia)' USING ERRCODE = 'SV080';
   END IF;
@@ -317,6 +331,7 @@ BEGIN
     UPDATE public.species_public_content
     SET foto_referencial_path = p_path,
         credito_foto_referencial = CASE WHEN p_path IS NULL THEN NULL ELSE v_credito END,
+        foto_referencial_temporal = v_temporal,
         updated_by = p_usuario, updated_at = now()
     WHERE species_id = p_species_id;
   ELSE
@@ -363,7 +378,7 @@ BEGIN
   PERFORM public.fn_assert_editor_contenido_publico(p_usuario, v_project_id, 'SV081');
 
   IF v_fuente IS NOT NULL AND v_historia IS NULL THEN
-    RAISE EXCEPTION 'La fuente de «Mi historia» requiere el texto (D-302)' USING ERRCODE = 'SV081';
+    RAISE EXCEPTION 'La fuente de «Mi historia» requiere el texto (D-303)' USING ERRCODE = 'SV081';
   END IF;
 
   INSERT INTO public.tree_public_content AS c (
@@ -396,7 +411,7 @@ BEGIN
 END;
 $$;
 
--- 4d. Fijar o quitar la foto pública del árbol (D-303). Crea la fila si
+-- 4d. Fijar o quitar la foto pública del árbol (D-304). Crea la fila si
 -- no existe (interruptores en No). Devuelve la ruta anterior.
 CREATE FUNCTION public.fn_fijar_foto_ficha_publica(
   p_tree_id UUID,
@@ -436,11 +451,11 @@ $$;
 --   nombre_visualizacion  D-280 → D-14 → NULL (el frontend escribe
 --                         «Un árbol de Valparaíso»).
 --   contenido_especie     D-281 a D-292, con los textos personalizados
---                         del árbol (D-304) ya aplicados encima.
---   ejemplar              «Mi historia» (D-301, D-302) y foto (D-303).
+--                         del árbol (D-305) ya aplicados encima.
+--   ejemplar              «Mi historia» (D-302, D-303) y foto (D-304).
 --   foto_principal        ejemplar → referencial de la especie → NULL,
 --                         con su tipo para rotular «Foto referencial».
---   medidas               solo las activadas (D-296 a D-300) que tienen
+--   medidas               solo las activadas (D-297 a D-301) que tienen
 --                         valor vigente; cada una con su naturaleza
 --                         (Valej, 2026-11-16: DAP, altura y copa =
 --                         medicion_o_estimacion; D-26 = estimacion;
@@ -534,12 +549,12 @@ GRANT EXECUTE ON FUNCTION public.fn_ficha_publica_arbol(UUID) TO service_role;
 
 REVOKE ALL ON FUNCTION public.fn_assert_editor_contenido_publico(UUID, UUID, TEXT) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.fn_guardar_contenido_especie(UUID, UUID, JSONB) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.fn_fijar_foto_especie(UUID, UUID, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.fn_fijar_foto_especie(UUID, UUID, TEXT, TEXT, TEXT, BOOLEAN) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.fn_guardar_ficha_publica_arbol(UUID, UUID, JSONB) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.fn_fijar_foto_ficha_publica(UUID, UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.fn_assert_editor_contenido_publico(UUID, UUID, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.fn_guardar_contenido_especie(UUID, UUID, JSONB) TO service_role;
-GRANT EXECUTE ON FUNCTION public.fn_fijar_foto_especie(UUID, UUID, TEXT, TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fn_fijar_foto_especie(UUID, UUID, TEXT, TEXT, TEXT, BOOLEAN) TO service_role;
 GRANT EXECUTE ON FUNCTION public.fn_guardar_ficha_publica_arbol(UUID, UUID, JSONB) TO service_role;
 GRANT EXECUTE ON FUNCTION public.fn_fijar_foto_ficha_publica(UUID, UUID, TEXT) TO service_role;
 

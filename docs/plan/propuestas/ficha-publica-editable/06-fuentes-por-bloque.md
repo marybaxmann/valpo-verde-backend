@@ -71,7 +71,11 @@
 | Lagerström | Historia de la especie | Linnean Society, correspondencia de Lagerström con Linneo (https://linnean-online.org/777771990/) · Disertación linneana *Chinensia Lagerströmiana*, 1754 (https://huntbot.org/linndiss/linndiss/064) |
 | Colores de flor, polinizadores, sol y floración en madera nueva (daño por poda fuerte) | Reconóceme · Aportes · Mi año · Consejo | NC State Extension · RHS 100448 |
 
-## Para que Mari decida al revisar
+## Decisiones de Mari (2026-11-16)
+
+Los tres puntos quedan como se proponen: la respuesta P10 **no se carga** como fuente pública; el consejo del olmo **queda sin fuente**; los bloques sin fuente propia **quedan así**.
+
+### Puntos que se le consultaron
 
 1. **«Tu P10»** aparece como fuente de la araucaria y del ginkgo. Es una respuesta de la responsable al cuestionario, no una obra publicada. **Propuesta:** no cargarla como fuente pública; esos temas ya tienen POWO, Embrapa y Oregon State.
 2. **Consejo del olmo** («No pises ni cubras la tierra…»): su fuente es «recomendación general de arbolado urbano», sin obra. El Consejo no exige fuente. **Propuesta:** dejarlo sin fuente, o citar CONAF si Mari tiene la referencia, como sugería el documento.

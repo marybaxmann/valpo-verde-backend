@@ -11,7 +11,7 @@
 
 DROP FUNCTION public.fn_fijar_foto_ficha_publica(UUID, UUID, TEXT);
 DROP FUNCTION public.fn_guardar_ficha_publica_arbol(UUID, UUID, JSONB);
-DROP FUNCTION public.fn_fijar_foto_especie(UUID, UUID, TEXT, TEXT, TEXT);
+DROP FUNCTION public.fn_fijar_foto_especie(UUID, UUID, TEXT, TEXT, TEXT, BOOLEAN);
 DROP FUNCTION public.fn_guardar_contenido_especie(UUID, UUID, JSONB);
 DROP FUNCTION public.fn_assert_editor_contenido_publico(UUID, UUID, TEXT);
 

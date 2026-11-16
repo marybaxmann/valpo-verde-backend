@@ -8,8 +8,8 @@
 
 | Qué | Dónde | Por qué así |
 |---|---|---|
-| Contenido ciudadano de la especie (D-280 a D-294) | Tabla nueva `species_public_content`, 1:1 con `species` | La editan otros roles que los datos botánicos. En una tabla aparte, el Inspector no puede escribir textos ciudadanos y el Usuario municipal no puede tocar género, familia, origen, follaje ni hoja. `fn_complete_species` (018i) queda igual. |
-| Personalización por árbol (D-295 a D-306) | Tabla nueva `tree_public_content`, 1:1 con `trees`, creada al primer guardado | «Solo lo que difiere». Sin fila, la ficha muestra solo la especie y ninguna medida. |
+| Contenido ciudadano de la especie (D-280 a D-295) | Tabla nueva `species_public_content`, 1:1 con `species` | La editan otros roles que los datos botánicos. En una tabla aparte, el Inspector no puede escribir textos ciudadanos y el Usuario municipal no puede tocar género, familia, origen, follaje ni hoja. `fn_complete_species` (018i) queda igual. |
+| Personalización por árbol (D-296 a D-307) | Tabla nueva `tree_public_content`, 1:1 con `trees`, creada al primer guardado | «Solo lo que difiere». Sin fila, la ficha muestra solo la especie y ninguna medida. |
 | Medidas del ejemplar | **No se copian.** Se leen de los valores vigentes de `trees` (`dap_cm`, `altura_total_m`, `diametro_copa_m`, `clase_edad`, `rango_edad_estimada_anios`) | P1: «solo del inventario». Si una OT actualiza la medida, la ficha la muestra sola. |
 | Fotos | Bucket nuevo **público** `conecta-publico`, solo WebP, 2 MB | Distinto de `tree-photos` (privado, evidencia técnica con EXIF, D-27). |
 
@@ -49,7 +49,7 @@ El backend ya recodifica las fotos ciudadanas con `sharp` sin `.withMetadata()` 
   "nombre_visualizacion": "Olmo común",          // D-280 → D-14 → null («Un árbol de Valparaíso» en el frontend)
   "articulo": "el",
   "contenido_especie": {                          // null si no hay especie vigente o no tiene contenido
-    "curiosidad": "…",                            // la del árbol (D-304) si existe; si no, la de la especie
+    "curiosidad": "…",                            // la del árbol (D-305) si existe; si no, la de la especie
     "aportes": [{ "icono": "sombra", "titulo": "Sombra en verano" }],
     "quien_soy": "…",
     "rasgos": [{ "etiqueta": "Semillas", "texto": "…", "foto_path": null, "credito": null }],

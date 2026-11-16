@@ -126,7 +126,15 @@ fila(CAT, "credito_foto_referencial", "Manual", UM_ADM,
      "Autoría y licencia de foto_referencial_especie.",
      "Texto", "Hasta 120 caracteres", "Condicional", "No aplica.",
      "Cuando foto_referencial_especie tiene valor.",
-     "Obligatorio si existe foto_referencial_especie: autor y licencia (decisión de Mari, 2026-11-16). No usar fotografías con marca de agua ni sin permiso de uso; si no hay una fotografía que cumpla, la especie queda sin foto referencial (caso del olmo mientras no exista una foto propia).")
+     "Obligatorio si existe foto_referencial_especie: autor y licencia (decisión de Mari, 2026-11-16). No usar fotografías con marca de agua ni sin permiso de uso, salvo una fotografía de terceros cargada como temporal (foto_referencial_temporal = Sí), que se acredita «Foto de terceros, uso referencial temporal».")
+
+fila(CAT, "foto_referencial_temporal", "Manual", UM_ADM,
+     "Marca al cargar o reemplazar la fotografía referencial.",
+     "Indica que foto_referencial_especie es una fotografía de terceros de uso referencial temporal, que debe reemplazarse por una fotografía oficial de SIVU (propia, con autor y licencia, sin marca de agua y sin datos de ubicación). No es la fotografía oficial de la especie.",
+     "Categoría", "Sí / No", "Condicional",
+     "Valor inicial: No.",
+     "Cuando foto_referencial_especie tiene valor.",
+     "Si es Sí, credito_foto_referencial = «Foto de terceros, uso referencial temporal» y la fotografía puede tener marca de agua; la ficha la sigue rotulando «Foto referencial de la especie». Vuelve a No al reemplazarla por una fotografía oficial. Excepción aprobada por Mari el 2026-11-16 para la fotografía actual del olmo (CC-073). Antes de dar por terminado Valpo Verde Conecta (retirar «Prototipo»), ninguna especie puede tener este campo en Sí.")
 
 fila(CAT, "contenido_editado_por", "Vinculado por plataforma", "Sistema",
      "Usuario autenticado que guarda el contenido ciudadano de la especie.",

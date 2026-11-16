@@ -13,7 +13,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 
 ## Numeración
 
-- Las filas van **al final** (D-280 a D-306), como D-268 a D-279, para no renumerar ninguna fila citada. Por eso las filas de CATALOGO_ESPECIES no quedan junto a D-257 a D-262.
+- Las filas van **al final** (D-280 a D-307), como D-268 a D-279, para no renumerar ninguna fila citada. Por eso las filas de CATALOGO_ESPECIES no quedan junto a D-257 a D-262.
 - ⚠ **Los números son provisionales.** CC-068 (densidad de la madera, aprobado como propuesta) también agrega 4 filas a CATALOGO_ESPECIES que todavía no están en el Excel. Si entran antes, estas filas se corren 4 lugares. La numeración se ajusta al copiar las filas al Excel y no frena el CC (respuesta de Mari a la pregunta 12). Hay que verificar la fila real con `scripts/metodologia/fila_diccionario.py` al incorporarlas.
 
 ## Cambios en otras hojas (también para incorporar con estas filas)
@@ -251,9 +251,26 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Tipo de obligatoriedad | Condicional |
 | Fórmula / regla de cálculo | No aplica. |
 | Condición de activación | Cuando foto_referencial_especie tiene valor. |
-| Validación y dependencias | Obligatorio si existe foto_referencial_especie: autor y licencia (decisión de Mari, 2026-11-16). No usar fotografías con marca de agua ni sin permiso de uso; si no hay una fotografía que cumpla, la especie queda sin foto referencial (caso del olmo mientras no exista una foto propia). |
+| Validación y dependencias | Obligatorio si existe foto_referencial_especie: autor y licencia (decisión de Mari, 2026-11-16). No usar fotografías con marca de agua ni sin permiso de uso, salvo una fotografía de terceros cargada como temporal (foto_referencial_temporal = Sí), que se acredita «Foto de terceros, uso referencial temporal». |
 
-#### D-293 · `contenido_editado_por`
+#### D-293 · `foto_referencial_temporal`
+
+| Columna | Valor |
+|---|---|
+| Hoja | CATALOGO_ESPECIES |
+| Campo | foto_referencial_temporal |
+| Origen | Manual |
+| ¿Quién lo ingresa? | Usuario municipal / Administrador |
+| ¿Cómo se obtiene? | Marca al cargar o reemplazar la fotografía referencial. |
+| Definiciones o criterios aplicables: | Indica que foto_referencial_especie es una fotografía de terceros de uso referencial temporal, que debe reemplazarse por una fotografía oficial de SIVU (propia, con autor y licencia, sin marca de agua y sin datos de ubicación). No es la fotografía oficial de la especie. |
+| Tipo de dato | Categoría |
+| Unidad / valores | Sí / No |
+| Tipo de obligatoriedad | Condicional |
+| Fórmula / regla de cálculo | Valor inicial: No. |
+| Condición de activación | Cuando foto_referencial_especie tiene valor. |
+| Validación y dependencias | Si es Sí, credito_foto_referencial = «Foto de terceros, uso referencial temporal» y la fotografía puede tener marca de agua; la ficha la sigue rotulando «Foto referencial de la especie». Vuelve a No al reemplazarla por una fotografía oficial. Excepción aprobada por Mari el 2026-11-16 para la fotografía actual del olmo (CC-073). Antes de dar por terminado Valpo Verde Conecta (retirar «Prototipo»), ninguna especie puede tener este campo en Sí. |
+
+#### D-294 · `contenido_editado_por`
 
 | Columna | Valor |
 |---|---|
@@ -270,7 +287,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar el contenido ciudadano de la especie. |
 | Validación y dependencias | Referencia válida a USUARIOS con Rol = Usuario municipal o Administrador y activo = Sí. No editable manualmente. Editar los datos botánicos del Inspector (D-257 a D-262) no lo modifica. |
 
-#### D-294 · `fecha_edicion_contenido`
+#### D-295 · `fecha_edicion_contenido`
 
 | Columna | Valor |
 |---|---|
@@ -289,7 +306,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 
 ### FICHAS_PUBLICAS
 
-#### D-295 · `id_arbol`
+#### D-296 · `id_arbol`
 
 | Columna | Valor |
 |---|---|
@@ -306,7 +323,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar por primera vez la ficha pública de un árbol. |
 | Validación y dependencias | Referencia válida a ARBOLES.id_arbol. Una única fila por árbol. Si el árbol no tiene fila en FICHAS_PUBLICAS, su ficha pública muestra solo el contenido de la especie y ningún dato del ejemplar. No se publica id_arbol: la ficha se identifica por el código QR, nunca por el identificador del árbol (CC-062). |
 
-#### D-296 · `mostrar_clase_edad`
+#### D-297 · `mostrar_clase_edad`
 
 | Columna | Valor |
 |---|---|
@@ -323,7 +340,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-25, valor vigente); no se escribe desde la ficha. Si clase_edad no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula como clasificación del Inspector. |
 
-#### D-297 · `mostrar_altura_total`
+#### D-298 · `mostrar_altura_total`
 
 | Columna | Valor |
 |---|---|
@@ -340,7 +357,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-19, valor vigente); no se escribe desde la ficha. Si altura_total_m no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula «medida en terreno o estimada con escala»: el inventario no registra cuál de las dos se usó en cada árbol y no se agrega un campo de método (decisión de Valej, 2026-11-16). |
 
-#### D-298 · `mostrar_dap`
+#### D-299 · `mostrar_dap`
 
 | Columna | Valor |
 |---|---|
@@ -357,7 +374,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-18, valor vigente); no se escribe desde la ficha. Si dap_cm no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula «medida en terreno o estimada con escala»: el inventario no registra cuál de las dos se usó en cada árbol y no se agrega un campo de método (decisión de Valej, 2026-11-16). |
 
-#### D-299 · `mostrar_diametro_copa`
+#### D-300 · `mostrar_diametro_copa`
 
 | Columna | Valor |
 |---|---|
@@ -374,7 +391,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-22, valor vigente); no se escribe desde la ficha. Si diametro_copa_m no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula «medida en terreno o estimada con escala»: el inventario no registra cuál de las dos se usó en cada árbol y no se agrega un campo de método (decisión de Valej, 2026-11-16). |
 
-#### D-300 · `mostrar_rango_edad`
+#### D-301 · `mostrar_rango_edad`
 
 | Columna | Valor |
 |---|---|
@@ -391,7 +408,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | El valor mostrado sale exclusivamente del inventario (D-26, valor vigente); no se escribe desde la ficha. Si rango_edad_estimada_anios no tiene valor, no se muestra nada aunque el interruptor esté en Sí: ni un valor aproximado ni un texto de relleno. Se rotula como estimación (D-26: origen Estimado). |
 
-#### D-301 · `historia_ejemplar`
+#### D-302 · `historia_ejemplar`
 
 | Columna | Valor |
 |---|---|
@@ -408,7 +425,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | Si está vacío, la sección «Mi historia» no se muestra. No presentar relatos inventados como hechos comprobados. Si incluye una afirmación histórica concreta, debe registrarse fuente_historia_ejemplar (decisión de la responsable, 2026-11-14); el sistema no lo exige al guardar y el formulario lo recuerda. |
 
-#### D-302 · `fuente_historia_ejemplar`
+#### D-303 · `fuente_historia_ejemplar`
 
 | Columna | Valor |
 |---|---|
@@ -425,7 +442,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Cuando historia_ejemplar tiene valor. |
 | Validación y dependencias | Solo admite valor si historia_ejemplar tiene valor. Obligatoria en el criterio de la responsable cuando el texto contiene una afirmación histórica concreta; el sistema no puede verificarlo y no la exige al guardar. La ficha la muestra solo cuando existe. |
 
-#### D-303 · `foto_publica_arbol`
+#### D-304 · `foto_publica_arbol`
 
 | Columna | Valor |
 |---|---|
@@ -442,7 +459,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | Se guarda sin metadatos (EXIF, GPS ni datos de cámara), en un almacenamiento público distinto del de las fotografías técnicas. No se reutilizan fotografías de D-27. Sin personas identificables ni patentes. Al reemplazarla o quitarla se elimina el archivo anterior. Si no existe, la ficha usa foto_referencial_especie (rotulada como referencial). |
 
-#### D-304 · `textos_personalizados`
+#### D-305 · `textos_personalizados`
 
 | Columna | Valor |
 |---|---|
@@ -459,7 +476,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | Un único texto por bloque. Si el texto queda vacío, se vuelve a mostrar el de la especie. Curiosidad requiere fuente. No se personalizan los rasgos de reconocimiento, el año ni la historia de la especie, que son botánicos y comunes a todos sus ejemplares. |
 
-#### D-305 · `editado_por`
+#### D-306 · `editado_por`
 
 | Columna | Valor |
 |---|---|
@@ -476,7 +493,7 @@ Leída del `.xlsx` con openpyxl (no del CSV), rama `feature/fase6-backend-api` e
 | Condición de activación | Al guardar la ficha pública del árbol. |
 | Validación y dependencias | Referencia válida a USUARIOS con Rol = Usuario municipal (miembro del proyecto del árbol) o Administrador, y activo = Sí. No editable manualmente. |
 
-#### D-306 · `fecha_edicion`
+#### D-307 · `fecha_edicion`
 
 | Columna | Valor |
 |---|---|
