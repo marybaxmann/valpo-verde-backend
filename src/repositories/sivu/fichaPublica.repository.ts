@@ -150,8 +150,20 @@ export async function fijarFotoArbol(treeId: string, usuario: string, path: stri
 
 // --- Bucket público -------------------------------------------------------
 
+/**
+ * Caché de la URL pública: 5 minutos en vez de la hora por defecto de
+ * Supabase. Al quitar una foto (por ejemplo, porque sale una persona,
+ * D-304) el archivo se borra al instante, pero la CDN puede seguir
+ * sirviendo la copia hasta que vence esta caché (visto en la base de
+ * pruebas, 2026-11-16). Las rutas son únicas por subida, así que una caché
+ * corta no hace que se vea una foto vieja en lugar de la nueva.
+ */
+const CACHE_FOTO_PUBLICA_SEGUNDOS = "300";
+
 export async function subirFotoPublica(path: string, buffer: Buffer): Promise<void> {
-  const { error } = await supabaseAdmin.storage.from(BUCKET_CONECTA).upload(path, buffer, { contentType: "image/webp", upsert: false });
+  const { error } = await supabaseAdmin.storage
+    .from(BUCKET_CONECTA)
+    .upload(path, buffer, { contentType: "image/webp", upsert: false, cacheControl: CACHE_FOTO_PUBLICA_SEGUNDOS });
   if (error) throw new Error(error.message);
 }
 
