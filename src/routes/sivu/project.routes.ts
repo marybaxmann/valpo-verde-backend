@@ -35,6 +35,17 @@ import {
   qrArbolController,
   revisarIncidenciaController,
 } from "../../controllers/sivu/conecta.controller";
+import {
+  editarContenidoEspecieController,
+  editarFichaArbolController,
+  fijarFotoArbolController,
+  fijarFotoEspecieController,
+  quitarFotoArbolController,
+  quitarFotoEspecieController,
+  verContenidoEspecieController,
+  verFichaArbolController,
+} from "../../controllers/sivu/fichaPublica.controller";
+import { subirFotoUnica } from "../../middlewares/upload.middleware";
 
 const router = Router();
 
@@ -101,5 +112,17 @@ router.patch("/:id/incidencias/:incidentId/revision", authMiddleware, revisarInc
 router.get("/:id/placas-qr", authMiddleware, placasQrController);
 // QR de un árbol en SVG o STL, para modelar o imprimir en 3D: solo el Usuario municipal.
 router.get("/:id/trees/:treeId/qr", authMiddleware, qrArbolController);
+
+// Ficha pública editable (CC-073; PR-022 v3.0, PR-004 v8.0). Ver: todos los
+// miembros. Editar: Usuario municipal miembro y Administrador; publica al
+// guardar. Fotos: un archivo en «foto», recodificado a WebP sin metadatos.
+router.get("/:id/species/:speciesId/contenido-publico", authMiddleware, verContenidoEspecieController);
+router.put("/:id/species/:speciesId/contenido-publico", authMiddleware, editarContenidoEspecieController);
+router.put("/:id/species/:speciesId/contenido-publico/fotos/:ranura", authMiddleware, subirFotoUnica, fijarFotoEspecieController);
+router.delete("/:id/species/:speciesId/contenido-publico/fotos/:ranura", authMiddleware, quitarFotoEspecieController);
+router.get("/:id/trees/:treeId/ficha-publica", authMiddleware, verFichaArbolController);
+router.put("/:id/trees/:treeId/ficha-publica", authMiddleware, editarFichaArbolController);
+router.put("/:id/trees/:treeId/ficha-publica/foto", authMiddleware, subirFotoUnica, fijarFotoArbolController);
+router.delete("/:id/trees/:treeId/ficha-publica/foto", authMiddleware, quitarFotoArbolController);
 
 export default router;

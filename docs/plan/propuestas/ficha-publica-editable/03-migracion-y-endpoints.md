@@ -1,6 +1,6 @@
 # Migración 037 y endpoints — ficha pública editable (propuesta)
 
-> **Aplicada en la base de pruebas el 2026-11-16** (autorizada por Mari). El SQL está ahora en `database/migrations/037_ficha_publica_editable.sql` y su reversión en `.down.sql`; las pruebas, en `database/fase6/pruebas_037_ficha_publica.sql`. Nunca en `ytcxswbulsmboucardxa`. No hay código de backend escrito: los endpoints de abajo siguen pendientes.
+> **Aplicada en la base de pruebas el 2026-11-16** (autorizada por Mari). El SQL está ahora en `database/migrations/037_ficha_publica_editable.sql` y su reversión en `.down.sql`; las pruebas, en `database/fase6/pruebas_037_ficha_publica.sql`. Nunca en `ytcxswbulsmboucardxa`. **Endpoints implementados el 2026-11-16** (rama local `docs/ficha-publica-editable`): contrato en `docs/api/contrato-frontend.md` §8 ter.
 >
 > Orden para aplicarla: CC aprobado → filas incorporadas al Excel → autorización de Mari → base de pruebas `gmlbmyreoxgoqrolhyxo` con el ciclo de siempre (aplicar → pruebas → revertir → reaplicar → pruebas, md5 de up y down). Nunca en `ytcxswbulsmboucardxa`.
 

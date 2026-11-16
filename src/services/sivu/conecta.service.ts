@@ -10,6 +10,7 @@ import {
   purgarHuellasVencidas,
 } from "../../repositories/sivu/conecta.repository";
 import { ReporteCiudadanoBody } from "../../schemas/sivu/conecta.schema";
+import { urlPublica } from "../../repositories/sivu/fichaPublica.repository";
 
 /**
  * Valpo Verde Conecta, parte pública (#62; CC-062 / PR-022 v2.0). Sin
@@ -32,11 +33,76 @@ function huellaDe(codigo: string): string {
 const conEtiqueta = (catalogo: string, codigo: string | null) =>
   codigo === null ? null : { codigo, etiqueta: etiquetaDe(catalogo, codigo) };
 
-/** GET /api/sivu/conecta/arboles/:qrToken — ficha pública (CC-062 punto 3). */
+/** Como conEtiqueta, pero un código fuera del catálogo no tumba la ficha pública. */
+function conEtiquetaSegura(catalogo: string, codigo: string) {
+  try {
+    return { codigo, etiqueta: etiquetaDe(catalogo, codigo) };
+  } catch {
+    return { codigo, etiqueta: codigo };
+  }
+}
+
+/** Rótulos de la naturaleza de cada medida (Valej, 2026-11-16; CC-073). */
+const NATURALEZA: Record<string, string> = {
+  medicion_o_estimacion: "Medida en terreno o estimada con escala",
+  estimacion: "Estimación",
+  clasificacion: "Clasificación del Inspector",
+};
+const naturaleza = (codigo: string) => ({ codigo, etiqueta: NATURALEZA[codigo] ?? codigo });
+
+type Ficha = NonNullable<Awaited<ReturnType<typeof obtenerFichaPublica>>>;
+
+/**
+ * Contenido ciudadano de la especie (CC-073): rutas de foto → URL pública
+ * del bucket, y etiquetas de ícono y bloque. Nunca entrega la ruta interna.
+ */
+function contenidoEspeciePublico(c: Ficha["contenido_especie"]) {
+  if (!c) return null;
+  return {
+    curiosidad: c.curiosidad ?? null,
+    aportes: (c.aportes ?? []).map((a) => ({ icono: conEtiquetaSegura("icono_aporte", a.icono), titulo: a.titulo })),
+    quien_soy: c.quien_soy ?? null,
+    rasgos: (c.rasgos ?? []).map((r) => ({
+      etiqueta: r.etiqueta,
+      texto: r.texto,
+      foto: r.foto_path ? { url: urlPublica(r.foto_path), credito: r.credito ?? null } : null,
+    })),
+    anio_estacional: c.anio_estacional ?? null,
+    ciclo: c.ciclo ?? null,
+    historia_especie: c.historia_especie ?? null,
+    consejo: c.consejo ?? null,
+    fuentes: (c.fuentes ?? []).map((f) => ({
+      bloques: f.bloques.map((b) => conEtiquetaSegura("bloque_contenido", b)),
+      tema: f.tema,
+      referencia: f.referencia,
+      enlace: f.enlace ?? null,
+    })),
+  };
+}
+
+function medidasPublicas(m: Ficha["medidas"]) {
+  const salida: Record<string, unknown> = {};
+  for (const [campo, v] of Object.entries(m ?? {})) {
+    if (!v) continue;
+    salida[campo] =
+      "codigo" in v
+        ? { ...conEtiquetaSegura(campo, v.codigo), naturaleza: naturaleza(v.naturaleza) }
+        : { valor: v.valor, unidad: v.unidad, naturaleza: naturaleza(v.naturaleza) };
+  }
+  return salida;
+}
+
+/**
+ * GET /api/sivu/conecta/arboles/:qrToken — ficha pública (CC-062 punto 3,
+ * ampliada por CC-073). Conserva las claves de la 028 y agrega el
+ * contenido de la especie, lo propio del ejemplar, la foto principal y
+ * solo las medidas activadas que tienen valor.
+ */
 export async function fichaPublica(qrToken: string) {
   const ficha = await obtenerFichaPublica(qrToken);
   if (!ficha) throw new AppError(ARBOL_NO_ENCONTRADO, 404);
   const s = ficha.sobre_la_especie;
+  const fp = ficha.foto_principal ?? null;
   return {
     especie_cientifica: ficha.especie_cientifica,
     nombre_comun: ficha.nombre_comun,
@@ -49,6 +115,13 @@ export async function fichaPublica(qrToken: string) {
       persistencia_follaje: conEtiqueta("persistencia_follaje", s.persistencia_follaje),
       tipo_hoja: conEtiqueta("tipo_hoja", s.tipo_hoja),
     },
+    // D-280 → D-14 → null: el frontend escribe «Un árbol de Valparaíso».
+    nombre_visualizacion: ficha.nombre_visualizacion ?? ficha.nombre_comun ?? null,
+    articulo: ficha.articulo ?? null,
+    contenido_especie: contenidoEspeciePublico(ficha.contenido_especie),
+    ejemplar: { historia: ficha.ejemplar?.historia ?? null, historia_fuente: ficha.ejemplar?.historia_fuente ?? null },
+    foto_principal: fp ? { tipo: fp.tipo, url: urlPublica(fp.ruta), credito: fp.credito ?? null } : null,
+    medidas: medidasPublicas(ficha.medidas),
   };
 }
 

@@ -103,13 +103,51 @@ describe("GET /api/sivu/conecta/catalogos (público)", () => {
 });
 
 describe("GET /api/sivu/conecta/arboles/:qrToken (ficha pública)", () => {
-  it("sin sesión, entrega solo especie, nombre común, ubicación y «Sobre esta especie» con etiquetas", async () => {
+  it("sin sesión, conserva las claves de la 028 y agrega las de CC-073 vacías si la base no las trae", async () => {
     mFicha.mockResolvedValue(FICHA);
     const res = await request(app).get(`/api/sivu/conecta/arboles/${QR}`);
     expect(res.status).toBe(200);
-    expect(Object.keys(res.body.data).sort()).toEqual(["especie_cientifica", "nombre_comun", "sobre_la_especie", "ubicacion_descriptiva"]);
+    expect(Object.keys(res.body.data).sort()).toEqual([
+      "articulo", "contenido_especie", "ejemplar", "especie_cientifica", "foto_principal", "medidas",
+      "nombre_comun", "nombre_visualizacion", "sobre_la_especie", "ubicacion_descriptiva",
+    ]);
     expect(res.body.data.sobre_la_especie.origen_biogeografico).toEqual({ codigo: "introducida", etiqueta: "Introducida" });
+    expect(res.body.data).toMatchObject({ nombre_visualizacion: "Falso plátano", contenido_especie: null, foto_principal: null, medidas: {} });
     expect(JSON.stringify(res.body)).not.toMatch(/tree_code|utm|riesgo|project/);
+  });
+
+  it("CC-073: contenido de la especie con etiquetas, fotos como URL pública y medidas con su naturaleza", async () => {
+    mFicha.mockResolvedValue({
+      ...FICHA,
+      nombre_visualizacion: "Falso plátano",
+      articulo: "el",
+      contenido_especie: {
+        curiosidad: "¡Mi nombre engaña!",
+        aportes: [{ icono: "polinizadores", titulo: "Flores para abejas" }],
+        rasgos: [{ etiqueta: "Hoja", texto: "Cinco lóbulos.", foto_path: "especies/a.webp", credito: "Valpo Verde, levantamiento 2026-10-01" }],
+        fuentes: [{ bloques: ["curiosidad"], tema: "Arce y no plátano", referencia: "RHS 269" }],
+      },
+      ejemplar: { historia: "Plantado por los vecinos." },
+      foto_principal: { tipo: "referencial_especie", ruta: "especies/r.webp", credito: "Foto de terceros, uso referencial temporal" },
+      medidas: {
+        altura_total_m: { valor: 12.5, unidad: "m", naturaleza: "medicion_o_estimacion" },
+        rango_edad_estimada_anios: { codigo: "26_30", naturaleza: "estimacion" },
+      },
+    });
+    const res = await request(app).get(`/api/sivu/conecta/arboles/${QR}`);
+    expect(res.status).toBe(200);
+    const d = res.body.data;
+    expect(d.articulo).toBe("el");
+    expect(d.contenido_especie.aportes[0].icono).toEqual({ codigo: "polinizadores", etiqueta: "Polinizadores" });
+    expect(d.contenido_especie.fuentes[0].bloques).toEqual([{ codigo: "curiosidad", etiqueta: "Curiosidad" }]);
+    expect(d.contenido_especie.rasgos[0].foto.url).toMatch(/\/storage\/v1\/object\/public\/conecta-publico\/especies\/a\.webp$/);
+    expect(d.foto_principal).toMatchObject({ tipo: "referencial_especie", credito: "Foto de terceros, uso referencial temporal" });
+    expect(d.foto_principal.url).toMatch(/conecta-publico\/especies\/r\.webp$/);
+    expect(d.ejemplar).toEqual({ historia: "Plantado por los vecinos.", historia_fuente: null });
+    expect(d.medidas.altura_total_m).toEqual({ valor: 12.5, unidad: "m", naturaleza: { codigo: "medicion_o_estimacion", etiqueta: "Medida en terreno o estimada con escala" } });
+    expect(d.medidas.rango_edad_estimada_anios).toMatchObject({ codigo: "26_30", naturaleza: { codigo: "estimacion", etiqueta: "Estimación" } });
+    // Nunca la ruta interna del bucket.
+    expect(JSON.stringify(d)).not.toMatch(/foto_path|"ruta"/);
   });
 
   it("QR inexistente y QR mal formado reciben la misma respuesta", async () => {
