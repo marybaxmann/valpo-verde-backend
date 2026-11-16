@@ -1,16 +1,14 @@
 -- =====================================================================
 -- Migración 037 — Valpo Verde Conecta: ficha pública editable
--- (CC-073 provisional, borrador final del 2026-11-16 con las respuestas de
--- Mari y Valej; reescritura de la propuesta D6; filas D-280 a D-307
--- provisionales; PR-022 v3.0 y PR-004 v8.0 propuestas)
+-- (CC-073, aprobado por Mari el 2026-11-16; filas D-280 a D-307;
+-- PR-022 v3.0 y PR-004 v8.0)
 -- =====================================================================
 --
--- PROPUESTA — NO APLICAR. Está en docs/plan/propuestas/ y no en
--- database/migrations/ a propósito. Requiere, en este orden: CC aprobado,
--- filas incorporadas al Excel maestro y autorización de la responsable
--- para aplicar en la base de pruebas (gmlbmyreoxgoqrolhyxo). Nunca en la
--- base real (ytcxswbulsmboucardxa). El número 037 es el siguiente libre
--- después de la 036; la 032 sigue como propuesta aparte.
+-- Autorizada por Mari el 2026-11-16, solo para la base de pruebas
+-- (gmlbmyreoxgoqrolhyxo). Nunca en la base real (ytcxswbulsmboucardxa).
+-- Pruebas: database/fase6/pruebas_037_ficha_publica.sql. El número 037
+-- es el siguiente libre después de la 036; la 032 sigue como propuesta
+-- aparte.
 --
 -- Lo que ya existe y NO se toca: species y sus funciones (012, 018i;
 -- datos botánicos que mantiene el Inspector, CC-053), trees y sus

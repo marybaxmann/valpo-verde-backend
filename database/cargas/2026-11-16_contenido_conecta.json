@@ -1,0 +1,188 @@
+{
+  "_origen": "Textos aprobados por Mari el 2026-11-14 (valpo-verde-frontend, src/components/conecta/contenidoEspecie.ts; FICHAS_SEIS_ESPECIES.md v5). Fuentes por bloque según docs/plan/propuestas/ficha-publica-editable/06-fuentes-por-bloque.md, con las decisiones de Mari del 2026-11-16: «tu P10» no se carga; el consejo del olmo y los bloques sin fuente propia quedan sin fuente. Códigos de ícono y de bloque en snake_case (convenciones-catalogos.md); las etiquetas son las de LISTAS (Icono_aporte, Bloque_contenido).",
+  "especies": {
+    "Ulmus minor": {
+      "nombre_comun_visualizacion": "Olmo común",
+      "articulo_nombre": "el",
+      "curiosidad": "Mis hojas son chuecas: un lado de su base nace más abajo que el otro.",
+      "aportes": [{ "icono": "sombra", "titulo": "Sombra en verano" }, { "icono": "aves", "titulo": "Refugio para pájaros" }],
+      "quien_soy": "Vengo de Europa, el norte de África y el oeste de Asia.",
+      "rasgos": [{ "id": "semillas", "etiqueta": "Semillas", "texto": "Mis semillas tienen alas redondas, como discos planos." }],
+      "anio_estacional": {
+        "prim": "Brotan mis hojas y vuelan mis semillas.",
+        "ver": "Copa verde y llena.",
+        "oto": "Me pongo amarillo.",
+        "inv": "Sin hojas; al final, flores diminutas y rojizas."
+      },
+      "ciclo": null,
+      "historia_especie": "En el siglo XX, la grafiosis mató a millones de olmos. ¡Cada olmo sano vale oro!",
+      "consejo": "No pises ni cubras la tierra junto a mi tronco: mis raíces necesitan aire.",
+      "fuentes": [
+        { "bloques": ["quien_soy"], "tema": "Origen", "referencia": "POWO (Kew), Ulmus minor" },
+        { "bloques": ["quien_soy"], "tema": "Origen", "referencia": "European Atlas of Forest Tree Species" },
+        { "bloques": ["curiosidad", "reconoceme", "mi_anio"], "tema": "Hoja asimétrica, sámaras y flores antes que las hojas", "referencia": "RHS, Ulmus minor" },
+        { "bloques": ["curiosidad", "reconoceme", "mi_anio"], "tema": "Hoja asimétrica, sámaras y flores antes que las hojas", "referencia": "Woodland Trust, Field elm" },
+        { "bloques": ["historia_especie"], "tema": "Grafiosis", "referencia": "European Atlas of Forest Tree Species (Dutch elm disease)" },
+        { "bloques": ["aportes"], "tema": "Sombra y refugio para aves", "referencia": "Woodland Trust, Field elm" }
+      ]
+    },
+    "Acer negundo": {
+      "nombre_comun_visualizacion": "Arce negundo",
+      "articulo_nombre": "el",
+      "curiosidad": "Mis semillas tienen alas y caen girando como hélices, de dos en dos.",
+      "aportes": [{ "icono": "sombra", "titulo": "Sombra en pocos años" }, { "icono": "frescor", "titulo": "Frescor en verano" }],
+      "quien_soy": "Vengo de Norteamérica y crezco muy rápido.",
+      "rasgos": [{ "id": "hoja", "etiqueta": "Hoja", "texto": "Cada hoja tiene de 3 a 5 folíolos unidos a un mismo tallo." }],
+      "anio_estacional": {
+        "prim": "Hojas nuevas y flores colgantes.",
+        "ver": "Maduran mis semillas.",
+        "oto": "Me pongo amarillo.",
+        "inv": "Descanso sin hojas."
+      },
+      "ciclo": null,
+      "historia_especie": "Me dicen «arce de hoja de fresno». Solo los árboles femeninos dan semillas.",
+      "consejo": "Mi madera es blanda: no te cuelgues de mis ramas.",
+      "fuentes": [
+        { "bloques": ["curiosidad", "quien_soy", "reconoceme", "historia_especie"], "tema": "Origen, folíolos (3 a 5), sámaras en pares y especie dioica", "referencia": "POWO (Kew) 781412-1" },
+        { "bloques": ["curiosidad", "quien_soy", "reconoceme", "historia_especie"], "tema": "Origen, folíolos (3 a 5), sámaras en pares y especie dioica", "referencia": "NC State Extension, Acer negundo" },
+        { "bloques": ["curiosidad", "quien_soy", "reconoceme", "historia_especie"], "tema": "Origen, folíolos (3 a 5), sámaras en pares y especie dioica", "referencia": "Oregon State University, Acer negundo" },
+        { "bloques": ["quien_soy", "aportes", "consejo"], "tema": "Crecimiento rápido y madera blanda", "referencia": "NC State Extension, Acer negundo" },
+        { "bloques": ["quien_soy", "aportes", "consejo"], "tema": "Crecimiento rápido y madera blanda", "referencia": "UF/IFAS ST-20" },
+        { "bloques": ["historia_especie"], "tema": "«Arce de hoja de fresno»", "referencia": "Oregon State University, Acer negundo" },
+        { "bloques": ["historia_especie"], "tema": "«Arce de hoja de fresno»", "referencia": "World Flora Online" },
+        { "bloques": ["mi_anio"], "tema": "Estaciones", "referencia": "NC State Extension, Acer negundo" }
+      ]
+    },
+    "Araucaria angustifolia": {
+      "nombre_comun_visualizacion": "Araucaria brasileña",
+      "articulo_nombre": "la",
+      "curiosidad": "La gralha-azul, un pájaro azul de Brasil, se lleva mis piñones para comerlos en otra parte. ¡Los que se le caen pueden convertirse en nuevas araucarias!",
+      "aportes": [{ "icono": "siempreverde", "titulo": "Verde todo el año" }, { "icono": "hito", "titulo": "Un hito en la plaza" }],
+      "quien_soy": "Vengo del sur de Brasil, donde mi especie está en peligro crítico.",
+      "rasgos": [
+        { "id": "silueta", "etiqueta": "Silueta", "texto": "De adulta pierdo las ramas bajas y quedo como un paraguas." },
+        { "id": "hojas", "etiqueta": "Hojas", "texto": "Duras, alargadas y con punta que pincha. ¡Mejor no tocarlas!" }
+      ],
+      "anio_estacional": null,
+      "ciclo": {
+        "titulo": "Mi piña",
+        "pasos": [
+          { "etiqueta": "Año 1", "texto": "El viento me poliniza." },
+          { "etiqueta": "Año 2", "texto": "Madura mi piña." },
+          { "etiqueta": "Al final", "texto": "Se desarma y suelta los piñones." }
+        ]
+      },
+      "historia_especie": "Soy el símbolo del estado de Paraná: una de mis ramas está en su bandera.",
+      "consejo": "Mis piñas son pesadas: no te quedes bajo mi copa cuando están maduras.",
+      "fuentes": [
+        { "bloques": ["quien_soy", "reconoceme"], "tema": "Origen, silueta de paraguas y hojas punzantes", "referencia": "POWO (Kew), Araucaria angustifolia" },
+        { "bloques": ["quien_soy", "reconoceme"], "tema": "Origen, silueta de paraguas y hojas punzantes", "referencia": "Embrapa (descripción dendrológica)" },
+        { "bloques": ["quien_soy"], "tema": "En peligro crítico", "referencia": "UICN, Lista Roja" },
+        { "bloques": ["mi_anio"], "tema": "Polinización por el viento; piña que madura unos dos años después", "referencia": "Embrapa Florestas, CT0060", "enlace": "https://www.infoteca.cnptia.embrapa.br/bitstream/doc/304455/1/CT0060.pdf" },
+        { "bloques": ["mi_anio"], "tema": "Polinización por el viento; piña que madura unos dos años después", "referencia": "Embrapa Florestas 2025, métodos de colecta, cap. 2", "enlace": "https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1173624/1/EmbrapaFlorestas-2025-AraucariaAngustifoliaMetodosdeColeta-cap2.pdf" },
+        { "bloques": ["historia_especie"], "tema": "Símbolo de Paraná (rama en la bandera)", "referencia": "Gobierno de Paraná, Agência Estadual de Notícias", "enlace": "https://www.parana.pr.gov.br/aen/Noticia/Parana-planta-o-futuro-distribuicao-de-668-mil-mudas-de-Araucaria-reforca-simbolo-do" },
+        { "bloques": ["curiosidad"], "tema": "Gralha-azul", "referencia": "Embrapa, Espécies Arbóreas Brasileiras, vol. 1, Pinheiro-do-Paraná", "enlace": "https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1140113/1/Especies-Arboreas-Brasileiras-vol-1-Pinheiro-do-Parana.pdf" },
+        { "bloques": ["curiosidad"], "tema": "Gralha-azul", "referencia": "Reinert y Bornschein 1998, Ornitología Neotropical", "enlace": "https://sora.unm.edu/sites/default/files/journals/on/v009n02/p0213-p0218.pdf" }
+      ]
+    },
+    "Ginkgo biloba": {
+      "nombre_comun_visualizacion": "Ginkgo",
+      "articulo_nombre": "el",
+      "curiosidad": "Un ginkgo del jardín Shukkeien, en Hiroshima, sobrevivió a la bomba atómica de 1945. ¡Sigue vivo hasta hoy!",
+      "aportes": [{ "icono": "sombra", "titulo": "Sombra fresca en verano" }, { "icono": "generaciones", "titulo": "Un árbol para generaciones" }],
+      "quien_soy": "Vengo de China. Soy un fósil viviente: el último de mi familia.",
+      "rasgos": [{ "id": "hoja", "etiqueta": "Hoja", "texto": "Mi hoja es un abanico: sus nervios se dividen en dos una y otra vez." }],
+      "anio_estacional": {
+        "prim": "Brotan mis abanicos verdes.",
+        "ver": "Hojas verdes y firmes.",
+        "oto": "Me vuelvo dorado.",
+        "inv": "Descanso sin hojas."
+      },
+      "ciclo": null,
+      "historia_especie": "Tengo hojas anchas, pero soy pariente de los pinos: una gimnosperma.",
+      "consejo": "Mis semillas huelen fuerte e irritan la piel: no las toques sin guantes.",
+      "fuentes": [
+        { "bloques": ["quien_soy", "historia_especie"], "tema": "Origen, fósil viviente, único sobreviviente de su grupo y gimnosperma", "referencia": "POWO (Kew), Ginkgo biloba" },
+        { "bloques": ["quien_soy", "historia_especie"], "tema": "Origen, fósil viviente, único sobreviviente de su grupo y gimnosperma", "referencia": "Oregon State University, Ginkgo biloba" },
+        { "bloques": ["curiosidad"], "tema": "Hiroshima (Shukkeien)", "referencia": "Guía oficial de Hiroshima" },
+        { "bloques": ["curiosidad"], "tema": "Hiroshima (Shukkeien)", "referencia": "Agencia de Turismo de Japón (MLIT), «Shukkeien Garden»", "enlace": "https://www.mlit.go.jp/tagengo-db/en/R1-00480.html" },
+        { "bloques": ["reconoceme", "mi_anio"], "tema": "Hoja en abanico y otoño dorado", "referencia": "Oregon State University, Ginkgo biloba" },
+        { "bloques": ["reconoceme", "mi_anio"], "tema": "Hoja en abanico y otoño dorado", "referencia": "RHS, Ginkgo biloba" },
+        { "bloques": ["aportes"], "tema": "Sombra y longevidad", "referencia": "Oregon State University, Ginkgo biloba" },
+        { "bloques": ["aportes"], "tema": "Sombra y longevidad", "referencia": "NC State Extension, Ginkgo biloba" },
+        { "bloques": ["consejo"], "tema": "Semillas que irritan la piel", "referencia": "NC State Extension, Ginkgo biloba (toxicity)" }
+      ]
+    },
+    "Acer pseudoplatanus": {
+      "nombre_comun_visualizacion": "Falso plátano",
+      "articulo_nombre": "el",
+      "curiosidad": "¡Mi nombre engaña! Aunque me llaman falso plátano, soy un arce. Mis semillas tienen alas y giran como pequeños helicópteros.",
+      "aportes": [{ "icono": "sombra", "titulo": "Gran sombra" }, { "icono": "polinizadores", "titulo": "Flores para abejas" }],
+      "quien_soy": "Vengo de Europa y el oeste de Asia, y aguanto bien el viento y la brisa marina.",
+      "rasgos": [
+        { "id": "hoja", "etiqueta": "Hoja", "texto": "Mi hoja parece una mano abierta, casi siempre con cinco lóbulos y borde dentado." },
+        { "id": "flores", "etiqueta": "Flores", "texto": "En primavera cuelgo racimos de flores amarillo verdoso." }
+      ],
+      "anio_estacional": {
+        "prim": "Hojas nuevas y flores en racimo.",
+        "ver": "Maduran mis semillas.",
+        "oto": "Se caen mis hojas.",
+        "inv": "Descanso sin hojas."
+      },
+      "ciclo": null,
+      "historia_especie": "Con los años, mi corteza se desprende en placas y deja ver tonos más claros.",
+      "consejo": "Dale espacio a mis raíces: no excaves junto a mi tronco.",
+      "fuentes": [
+        { "bloques": ["curiosidad"], "tema": "Arce y no plátano (hojas opuestas y sámaras frente a hojas alternas y frutos esféricos)", "referencia": "Oregon State University, Acer pseudoplatanus" },
+        { "bloques": ["curiosidad"], "tema": "Arce y no plátano (hojas opuestas y sámaras frente a hojas alternas y frutos esféricos)", "referencia": "RHS 269" },
+        { "bloques": ["quien_soy", "reconoceme", "mi_anio"], "tema": "Origen, hoja de 5 lóbulos y flores en racimo", "referencia": "POWO (Kew) 781462-1" },
+        { "bloques": ["quien_soy", "reconoceme", "mi_anio"], "tema": "Origen, hoja de 5 lóbulos y flores en racimo", "referencia": "Oregon State University, Acer pseudoplatanus" },
+        { "bloques": ["quien_soy"], "tema": "Viento y brisa marina", "referencia": "RHS 269 (exposed, coastal)" },
+        { "bloques": ["historia_especie"], "tema": "Corteza en placas", "referencia": "Oregon State University, Acer pseudoplatanus" },
+        { "bloques": ["historia_especie"], "tema": "Corteza en placas", "referencia": "RHS 269" },
+        { "bloques": ["aportes"], "tema": "Sombra", "referencia": "Oregon State University, Acer pseudoplatanus" },
+        { "bloques": ["aportes"], "tema": "Abejas", "referencia": "Woodland Trust, Sycamore", "enlace": "https://www.woodlandtrust.org.uk/trees-woods-and-wildlife/british-trees/a-z-of-british-trees/sycamore/" }
+      ]
+    },
+    "Lagerstroemia indica": {
+      "nombre_comun_visualizacion": "Crespón",
+      "articulo_nombre": "el",
+      "curiosidad": "Mis pétalos parecen papel crepé arrugado. ¡De ahí viene mi nombre!",
+      "aportes": [{ "icono": "flores", "titulo": "Color en verano" }, { "icono": "polinizadores", "titulo": "Alimento para polinizadores" }],
+      "quien_soy": "Vengo de Asia y crezco con uno o varios troncos.",
+      "rasgos": [
+        { "id": "hojas", "etiqueta": "Hojas", "texto": "Mis hojas son lisas y ovaladas, sin dientes en el borde." },
+        { "id": "flores", "etiqueta": "Flores", "texto": "Mis pétalos arrugados pueden ser blancos, rosados, rojos o violetas." },
+        { "id": "tronco", "etiqueta": "Tronco", "texto": "Mi corteza se pela en láminas y deja manchas de colores." }
+      ],
+      "anio_estacional": {
+        "prim": "Brotan mis hojas.",
+        "ver": "Me lleno de flores.",
+        "oto": "Hojas amarillas, naranjas o rojizas.",
+        "inv": "Sin hojas: se luce mi tronco."
+      },
+      "ciclo": null,
+      "historia_especie": "Mi nombre, Lagerstroemia, honra a Magnus von Lagerström, un comerciante sueco que le hacía llegar a Linneo plantas de Asia.",
+      "consejo": "Me gusta el sol. Florezco en ramas nuevas: una poda fuerte me debilita.",
+      "fuentes": [
+        { "bloques": ["quien_soy", "reconoceme", "mi_anio"], "tema": "Origen, troncos, hojas simples de borde liso, corteza exfoliante y color de otoño", "referencia": "POWO (Kew) 553576-1" },
+        { "bloques": ["quien_soy", "reconoceme", "mi_anio"], "tema": "Origen, troncos, hojas simples de borde liso, corteza exfoliante y color de otoño", "referencia": "NC State Extension, Lagerstroemia indica" },
+        { "bloques": ["quien_soy", "reconoceme", "mi_anio"], "tema": "Origen, troncos, hojas simples de borde liso, corteza exfoliante y color de otoño", "referencia": "RHS 100448" },
+        { "bloques": ["curiosidad"], "tema": "Nombre por los pétalos crespos", "referencia": "NC State Extension, Lagerstroemia indica" },
+        { "bloques": ["curiosidad"], "tema": "Nombre por los pétalos crespos", "referencia": "Smithsonian Gardens" },
+        { "bloques": ["historia_especie"], "tema": "Lagerström", "referencia": "Linnean Society, correspondencia de Lagerström con Linneo", "enlace": "https://linnean-online.org/777771990/" },
+        { "bloques": ["historia_especie"], "tema": "Lagerström", "referencia": "Disertación linneana Chinensia Lagerströmiana, 1754", "enlace": "https://huntbot.org/linndiss/linndiss/064" },
+        { "bloques": ["reconoceme", "aportes", "mi_anio", "consejo"], "tema": "Colores de flor, polinizadores, sol y floración en madera nueva (daño por poda fuerte)", "referencia": "NC State Extension, Lagerstroemia indica" },
+        { "bloques": ["reconoceme", "aportes", "mi_anio", "consejo"], "tema": "Colores de flor, polinizadores, sol y floración en madera nueva (daño por poda fuerte)", "referencia": "RHS 100448" }
+      ]
+    }
+  },
+  "fotos": [
+    { "especie": "Ulmus minor", "ranura": "referencial", "archivo": "ulmus-minor.webp", "temporal": true, "credito": null },
+    { "especie": "Acer negundo", "ranura": "hoja", "archivo": "reconocer/acer-negundo-hoja.webp", "credito": "Valpo Verde, levantamiento 2026-10-01" },
+    { "especie": "Acer pseudoplatanus", "ranura": "hoja", "archivo": "reconocer/acer-pseudoplatanus-hoja.webp", "credito": "Valpo Verde, levantamiento 2026-10-01" },
+    { "especie": "Acer pseudoplatanus", "ranura": "flores", "archivo": "reconocer/acer-pseudoplatanus-flores.webp", "credito": "Valpo Verde, levantamiento 2026-10-01" },
+    { "especie": "Lagerstroemia indica", "ranura": "hojas", "archivo": "reconocer/lagerstroemia-indica-hoja.webp", "credito": "Valpo Verde, levantamiento 2026-10-01" }
+  ],
+  "_fotos_no_cargadas": "Fotos referenciales de Acer negundo, Acer pseudoplatanus, Lagerstroemia indica, Araucaria angustifolia y Ginkgo biloba, y la foto «Silueta» de la araucaria: sin autor ni licencia registrados (FOTOS_FICHAS_INVENTARIO.md: «origen no documentado»). D-292 exige autor y licencia; quedan pendientes hasta que Mari indique su crédito."
+}

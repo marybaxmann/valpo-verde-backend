@@ -1,6 +1,6 @@
 # Ficha pública editable de Valpo Verde Conecta — paquete para la revisión de Mari
 
-> **Propuesta del 2026-11-15. CC-073 APROBADO por Mari el 2026-11-16** y registrado en `docs/registro-cambios.md`; filas D-280 a D-307 copiadas al Excel. **La 037 no está aplicada** (requiere autorización aparte). Preparada a partir de `docs/relevo/RELEVO_2026-11-15_mari.md` (§1.3 y §3.1), que reescribe la propuesta D6. **No modifica nada:** ni el Excel, ni `docs/registro-cambios.md`, ni la base (de pruebas o real), ni el frontend, ni `release/demo`. La única escritura en la base de pruebas fue la carga aparte de dos especies (`database/cargas/2026-11-16_especies_p9.sql`, autorizada por Mari).
+> **Propuesta del 2026-11-15. CC-073 APROBADO por Mari el 2026-11-16** y registrado en `docs/registro-cambios.md`; filas D-280 a D-307 copiadas al Excel. **La 037 está aplicada en la base de pruebas** (2026-11-16, autorizada por Mari; ahora en `database/migrations/`) con la carga inicial del contenido. Preparada a partir de `docs/relevo/RELEVO_2026-11-15_mari.md` (§1.3 y §3.1), que reescribe la propuesta D6. **No modifica nada:** ni el Excel, ni `docs/registro-cambios.md`, ni la base (de pruebas o real), ni el frontend, ni `release/demo`. La única escritura en la base de pruebas fue la carga aparte de dos especies (`database/cargas/2026-11-16_especies_p9.sql`, autorizada por Mari).
 
 | Archivo | Qué es |
 |---|---|
@@ -8,7 +8,7 @@
 | `01-filas-diccionario.csv` | Las mismas filas, listas para copiar en la hoja (UTF-8). |
 | `generar_filas.py` | Genera los dos archivos anteriores desde una sola fuente. No lee ni escribe el Excel. |
 | `02-CC-borrador.md` | Borrador del CC con el formato del registro (número provisional CC-073), **sin registrar**. |
-| `037_ficha_publica_editable.sql` / `.down.sql` | Migración propuesta y su reversión: tablas, RLS, bucket público, funciones de escritura y `fn_ficha_publica_arbol` ampliada. **No aplicar.** |
+| `database/migrations/037_ficha_publica_editable.sql` / `.down.sql` | Migración y su reversión (movidas desde esta carpeta al aplicarla): tablas, RLS, bucket público, funciones de escritura y `fn_ficha_publica_arbol` ampliada. Aplicada solo en la base de pruebas. |
 | `03-migracion-y-endpoints.md` | Explicación del modelo, los permisos, las fotos sin EXIF, la función pública ampliada, los endpoints, los datos iniciales y las pruebas. |
 | `05-preguntas-para-mari.md` | 12 preguntas, **todas respondidas** (Mari: 2, 3, 5 a 12; Valej: 1 y 4, medidas). |
 | `06-fuentes-por-bloque.md` | Asignación de las fuentes de las seis especies a los bloques de la ficha, para la carga inicial, con 3 puntos menores para Mari. |

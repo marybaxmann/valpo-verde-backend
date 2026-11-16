@@ -1,5 +1,5 @@
 -- =====================================================================
--- Reversión de la 037 — PROPUESTA, NO APLICAR
+-- Reversión de la 037 (CC-073)
 -- =====================================================================
 -- Deja fn_ficha_publica_arbol exactamente como en la 028 y borra todo lo
 -- que la 037 crea. El bucket no se borra con SQL: Supabase bloquea el
