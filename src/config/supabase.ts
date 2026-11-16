@@ -1,5 +1,9 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { env } from "./env";
+import { crearFetchConTiempoMaximo } from "./fetchConTiempoMaximo";
+
+/** Todas las llamadas a Supabase (datos, Auth y Storage) tienen tiempo máximo (PA-29). */
+const fetchSupabase = crearFetchConTiempoMaximo(env.SUPABASE_TIEMPO_MAXIMO_MS);
 
 /**
  * Cliente administrativo de Supabase (service role key).
@@ -20,6 +24,7 @@ export const supabaseAdmin = createClient(
       autoRefreshToken: false,
       persistSession: false,
     },
+    global: { fetch: fetchSupabase },
   }
 );
 
@@ -47,6 +52,7 @@ export function createUserScopedClient(accessToken: string): SupabaseClient {
       detectSessionInUrl: false,
     },
     global: {
+      fetch: fetchSupabase,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

@@ -19,6 +19,9 @@ const envSchema = z.object({
   // las placas apunta a `${CONECTA_URL_BASE}/${qr_token}` (CC-062).
   // Opcional: sin ella, solo las placas responden 503.
   CONECTA_URL_BASE: z.string().url({ message: "CONECTA_URL_BASE debe ser una URL válida" }).optional(),
+  // Tiempo máximo de cada llamada a Supabase, en milisegundos (PA-29).
+  // Al agotarse, la petición responde 504 en vez de quedar colgada.
+  SUPABASE_TIEMPO_MAXIMO_MS: z.coerce.number().int().min(1000).max(60000).default(15000),
 });
 
 const parsed = envSchema.safeParse(process.env);
