@@ -16,7 +16,7 @@
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** 2026-11-16: release/demo = feature (9b31293), metodología 3.0 publicada; QR SVG sin fondo pendiente (local); ficha pública editable en propuesta.
+- **Resumen:** 2026-11-16: release/demo (69d75cc) = feature (e23e8df): metodología 3.0 y QR SVG sin fondo publicados; ficha pública editable en propuesta.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -43,17 +43,23 @@
 - **Verificación del despliegue** en `https://sivu-api.vercel.app`: `/health` 200; `/api/sivu/conecta/catalogos` 200 con datos; `POST /api/trees/:id/risk-assessments` pasó de 401 a 404 (ruta retirada = versión nueva en línea). **Sin probar:** rutas con sesión (formulario, resultados de riesgo) — conviene usarlas una vez desde el frontend. El MCP de Vercel no tiene acceso al equipo `marybaxmanns-projects` (403), así que no se vio el log del build.
 - **Reversión, si hace falta:** volver a publicar `20a2526` en `release/demo`.
 - **Pendiente:**
-  - Corrección del SVG del QR sin fondo para impresión 3D: rama local `fix/qr-svg-sin-fondo` (`e23e8df`, worktree `../valpo-verde-backend-qrsvg`), **sin push**, postergada por la usuaria. Hasta que se publique, la API entrega el SVG con el `<rect id="placa">` de fondo. `Desktop/plataforma/placa/qr-A-000504.svg` ya se corrigió a mano (original respaldado en el scratchpad de la sesión).
+  - ~~Corrección del SVG del QR sin fondo~~ **Publicada el mismo día** (ver la actualización de abajo).
   - Aplicar la 035 y la 036 en la base real (Fase 8).
   - Este bloque del HANDOFF es **solo local** (rama `docs/ficha-publica-editable`), igual que el 28.
+
+- **Actualización (2026-11-16, mismo bloque) — SVG del QR sin fondo publicado** (autorizado por la usuaria):
+  - Qué cambia (`src/services/sivu/qrGeometria.ts`, `e23e8df`): el SVG ya no lleva `<rect id="placa">` (OpenSCAD lo importaba como losa sólida); trae solo `svg`, `title` y un `path` con los módulos en negro. El margen de 4 módulos queda vacío dentro del `viewBox`. Cada módulo se reduce 0,005 módulos por lado (~0,009 mm en 80 mm) para que dos módulos en diagonal no compartan esquina: con eso OpenSCAD 2021.01 ya no da «The given mesh is not closed». El PDF de placas y el STL no cambian; las URL y los identificadores tampoco.
+  - Validación: jsQR lee la URL exacta del SVG y del render de OpenSCAD; `modelo placa.scad` de Mari (sin cambios) renderiza en `completo` y `detalles`. Jest 1691/1691, `tsc` limpio.
+  - Ramas: `feature/fase6-backend-api` avanzó `1ba307e..e23e8df`; `release/demo` `9b31293..69d75cc` (fusión, árbol = `e23e8df`). Vercel marcó `69d75cc` como `success` en GitHub; `/health` 200. **Sin probar con sesión:** descargar un SVG desde el frontend (Usuario municipal) y confirmar que no trae `<rect>`.
+  - `Desktop/plataforma/placa/qr-A-000504.svg` se regeneró con la misma URL (original respaldado en el scratchpad de la sesión). Su URL usa `https://sivu.cl/arbol/…` (revisar `CONECTA_URL_BASE` con P22).
 
 **Prompt para el siguiente agente:**
 
 ```
-Lee HANDOFF.md (bloques 29 y 28). release/demo ya está igual a feature/fase6-backend-api
-(9b31293) y desplegada. Si la usuaria retoma el QR: rama local fix/qr-svg-sin-fondo (e23e8df),
-llévala a feature/fase6-backend-api y release/demo solo con su autorización y verifica el SVG
-publicado (sin <rect>, escaneable). No toques la base real.
+Lee HANDOFF.md (bloques 29 y 28). release/demo (69d75cc) ya está igual a
+feature/fase6-backend-api (e23e8df) y desplegada, con la metodología 3.0 y el QR SVG sin fondo.
+Pendiente: probar con sesión las rutas de evaluación y la descarga del SVG; esperar las
+respuestas de Mari a la ficha pública editable. No toques la base real.
 ```
 
 ## ▶ Novedad 2026-11-15 (bloque 28) — Relevo de Mari: propuesta de ficha pública editable (solo local)
