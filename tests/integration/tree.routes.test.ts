@@ -241,6 +241,7 @@ describe("GET /api/projects/:id/trees", () => {
     expect(res.status).toBe(500);
     expect(res.body).toEqual({
       error: "Los datos espaciales del inventario tienen un formato inesperado",
+      request_id: expect.any(String),
     });
     expect(res.body).not.toHaveProperty("data");
     consoleSpy.mockRestore();
@@ -255,7 +256,7 @@ describe("GET /api/projects/:id/trees", () => {
     const res = await request(app).get(`/api/projects/${PROJECT_ID}/trees`).set(authHeader);
 
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: "Error interno del servidor" });
+    expect(res.body).toEqual({ error: "Error interno del servidor", request_id: expect.any(String) });
     consoleSpy.mockRestore();
   });
 

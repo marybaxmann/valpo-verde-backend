@@ -3,6 +3,7 @@ import cors from "cors";
 import { env } from "./config/env";
 import routes from "./routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
+import { registroPeticionesMiddleware } from "./middlewares/registroPeticiones.middleware";
 
 const app = express();
 
@@ -10,6 +11,11 @@ const app = express();
 // X-Forwarded-For. Sin esto, los límites por IP de Conecta (CC-062)
 // contarían a todos los visitantes como uno solo.
 app.set("trust proxy", 1);
+
+// Primero de todo: identificador de correlación y registro de cada
+// petición (PA-38), y el contexto donde se marca si la base agotó su
+// tiempo máximo (PA-29).
+app.use(registroPeticionesMiddleware);
 
 // Las respuestas de la API son datos que cambian (OT, diagnósticos): sin ETag
 // ni caché del navegador, para que nunca se muestre un estado viejo (304).
@@ -20,7 +26,7 @@ app.use((_req, res, next) => {
 });
 
 // CORS_ORIGIN admite varios orígenes separados por coma (local + despliegue).
-app.use(cors({ origin: env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean), credentials: true }));
+app.use(cors({ origin: env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean), credentials: true, exposedHeaders: ["X-Request-Id"] }));
 // Límite explícito, no el default de express (100kb): un sector por
 // KML/KMZ en base64 (archivo de hasta 5 MB, ver geometriaSector.service.ts)
 // pesa más que eso en JSON. 8mb deja margen para el overhead de base64
