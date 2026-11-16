@@ -1,8 +1,8 @@
 // Fotos referenciales de especie (CC-073; D-291 a D-293), según la
-// actualización de Mari del 2026-11-16. Solo la base de pruebas
+// actualización de la responsable del 2026-11-16. Solo la base de pruebas
 // (gmlbmyreoxgoqrolhyxo); se niega a correr contra otra.
 //
-//   - Arce negundo y Falso plátano: fotos propias de Mari, levantamiento del
+//   - Arce negundo y Falso plátano: fotos del equipo de SIVU, levantamiento del
 //     2026-10-01 en Plaza Victoria (AV_000009/IMG_9984, árbol A-000425, y
 //     AV_000007/IMG_9947, árbol A-000423). No temporales.
 //   - Crespón: imagen de terceros, temporal hasta tener una foto propia con
@@ -23,11 +23,13 @@ import { createClient } from "@supabase/supabase-js";
 const BASE_PRUEBAS = "gmlbmyreoxgoqrolhyxo";
 const BUCKET = "conecta-publico";
 const USUARIO_CARGA = "2bf463a9-fbad-4288-89aa-fa77acfafd29"; // «Usuario Admin Prueba» (admin, activo)
-const CREDITO_MARI = "Valpo Verde (Mari), levantamiento 2026-10-01";
+// Crédito «SIVU» (2026-11-16): las fotos propias son del equipo y no se
+// acreditan a personas; origen en docs/conecta-fotos.md.
+const CREDITO_EQUIPO = "SIVU";
 
 const FOTOS = [
-  { especie: "Acer negundo", archivo: "acer-negundo.webp", credito: CREDITO_MARI, temporal: false },
-  { especie: "Acer pseudoplatanus", archivo: "acer-pseudoplatanus.webp", credito: CREDITO_MARI, temporal: false },
+  { especie: "Acer negundo", archivo: "acer-negundo.webp", credito: CREDITO_EQUIPO, temporal: false },
+  { especie: "Acer pseudoplatanus", archivo: "acer-pseudoplatanus.webp", credito: CREDITO_EQUIPO, temporal: false },
   { especie: "Lagerstroemia indica", archivo: "lagerstroemia-indica.webp", credito: null, temporal: true },
 ];
 

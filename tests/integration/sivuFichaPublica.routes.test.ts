@@ -105,7 +105,7 @@ const CONTENIDO = {
 const FILA = {
   species_id: SPECIES_ID,
   ...CONTENIDO,
-  rasgos: [{ id: "hoja", etiqueta: "Hoja", texto: "Cinco lóbulos.", foto_path: "especies/h.webp", credito: "Valpo Verde, levantamiento 2026-10-01" }],
+  rasgos: [{ id: "hoja", etiqueta: "Hoja", texto: "Cinco lóbulos.", foto_path: "especies/h.webp", credito: "SIVU" }],
   foto_referencial_path: null,
   credito_foto_referencial: null,
   foto_referencial_temporal: false,
@@ -209,22 +209,35 @@ describe("Fotos de la especie", () => {
     como("municipal");
     mFijarEspecie.mockResolvedValue({ ruta_anterior: "especies/vieja.webp" });
     mContenido.mockResolvedValue(FILA);
-    const res = await request(app).put(`${url}/referencial`).set(auth).field("credito", "SIVU, CC BY 4.0").attach("foto", jpg, "IMG_9964.jpg");
+    const res = await request(app).put(`${url}/referencial`).set(auth).attach("foto", jpg, "IMG_9964.jpg");
     expect(res.status).toBe(200);
     const [ruta, buffer] = mSubir.mock.calls[0];
     expect(ruta).toMatch(/^especies\/[0-9a-f-]{36}\.webp$/);
     const meta = await sharp(buffer).metadata();
     expect(meta).toMatchObject({ format: "webp", width: 1600 });
     expect(meta.exif).toBeUndefined();
-    expect(mFijarEspecie).toHaveBeenCalledWith(expect.objectContaining({ ranura: "referencial", path: ruta, credito: "SIVU, CC BY 4.0", temporal: false }));
+    expect(mFijarEspecie).toHaveBeenCalledWith(expect.objectContaining({ ranura: "referencial", path: ruta, credito: "SIVU", temporal: false }));
     expect(mBorrar).toHaveBeenLastCalledWith(["especies/vieja.webp"]);
   });
 
-  it("sin crédito y sin marca temporal → 400 antes de subir (D-292)", async () => {
+  it("no se pide crédito: la foto propia se guarda como «SIVU»; mandar un crédito → 400", async () => {
     como("municipal");
-    const res = await request(app).put(`${url}/referencial`).set(auth).attach("foto", jpg, "a.jpg");
-    expect(res.status).toBe(400);
-    expect(mSubir).not.toHaveBeenCalled();
+    mFijarEspecie.mockResolvedValue({ ruta_anterior: null });
+    mContenido.mockResolvedValue(FILA);
+    const res = await request(app).put(`${url}/hoja`).set(auth).attach("foto", jpg, "a.jpg");
+    expect(res.status).toBe(200);
+    expect(mFijarEspecie).toHaveBeenCalledWith(expect.objectContaining({ ranura: "hoja", credito: "SIVU", temporal: false }));
+    const conCredito = await request(app).put(`${url}/hoja`).set(auth).field("credito", "Una persona").attach("foto", jpg, "a.jpg");
+    expect(conCredito.status).toBe(400);
+  });
+
+  it("la edición tampoco muestra el crédito", async () => {
+    como("municipal");
+    mContenido.mockResolvedValue({ ...FILA, foto_referencial_path: "especies/r.webp", credito_foto_referencial: "SIVU" });
+    const res = await request(app).get(`${base}/species/${SPECIES_ID}/contenido-publico`).set(auth);
+    expect(res.status).toBe(200);
+    expect(res.body.data.foto_referencial).toEqual({ url: expect.any(String), temporal: false });
+    expect(JSON.stringify(res.body)).not.toMatch(/credito|SIVU/);
   });
 
   it("temporal solo en la referencial (D-293); con ella, el crédito lo fija la base", async () => {
@@ -239,14 +252,14 @@ describe("Fotos de la especie", () => {
   it("si la base rechaza, borra lo que subió", async () => {
     como("municipal");
     mFijarEspecie.mockRejectedValue(new Error("El rasgo flor no existe en la especie", { cause: "SV080" }));
-    const res = await request(app).put(`${url}/flor`).set(auth).field("credito", "A, CC0").attach("foto", jpg, "a.jpg");
+    const res = await request(app).put(`${url}/flor`).set(auth).attach("foto", jpg, "a.jpg");
     expect(res.status).toBe(404);
     expect(mBorrar).toHaveBeenCalledWith([mSubir.mock.calls[0][0]]);
   });
 
   it("un archivo que no es imagen → 400 y no se sube nada", async () => {
     como("municipal");
-    const res = await request(app).put(`${url}/referencial`).set(auth).field("credito", "A").attach("foto", Buffer.from("no soy una foto"), "a.jpg");
+    const res = await request(app).put(`${url}/referencial`).set(auth).attach("foto", Buffer.from("no soy una foto"), "a.jpg");
     expect(res.status).toBe(400);
     expect(mSubir).not.toHaveBeenCalled();
   });

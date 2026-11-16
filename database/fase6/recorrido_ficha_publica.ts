@@ -92,7 +92,12 @@ async function existe(url: string | null | undefined) {
   const guardado = await svc.editarContenidoEspecie(MUNI, P, NEGUNDO, cuerpo, TOKEN);
   caso("PUT contenido: el municipal miembro guarda el mismo contenido", guardado?.curiosidad === visto?.curiosidad && guardado?.updated_by === MUNI.id, guardado?.updated_by);
   caso("PUT contenido: la foto del rasgo que sigue se conserva", guardado?.rasgos[0]?.foto?.url === visto?.rasgos[0]?.foto?.url);
-  caso("PUT contenido: y también su crédito (requiere la 038)", guardado?.rasgos[0]?.foto?.credito === visto?.rasgos[0]?.foto?.credito && Boolean(visto?.rasgos[0]?.foto?.credito), guardado?.rasgos[0]?.foto);
+  {
+    // El crédito no sale por la API (no se muestra en la plataforma): se lee de la base.
+    const { data: fila } = await supabaseAdmin.from("species_public_content").select("rasgos").eq("species_id", NEGUNDO).single();
+    caso("PUT contenido: la foto del rasgo conserva su crédito guardado (requiere la 038)", fila?.rasgos?.[0]?.credito === "SIVU", fila?.rasgos?.[0]);
+    caso("GET/PUT contenido: la edición no muestra créditos", !JSON.stringify(guardado).includes("credito"), guardado);
+  }
   const guardadoAdmin = await svc.editarContenidoEspecie(ADMIN, P, NEGUNDO, cuerpo, TOKEN);
   caso("PUT contenido: el Administrador (no miembro) también edita", guardadoAdmin?.updated_by === ADMIN.id);
 
@@ -101,14 +106,15 @@ async function existe(url: string | null | undefined) {
   if (visto?.foto_referencial) {
     console.log("OMITIDO: fotos de la especie — el negundo ya tiene foto referencial; este bloque la borraría");
   } else {
-  const conRef = await svc.fijarFotoContenidoEspecie(MUNI, P, NEGUNDO, "referencial", { credito: "Prueba del recorrido, se quita", temporal: false }, foto, TOKEN);
+  const conRef = await svc.fijarFotoContenidoEspecie(MUNI, P, NEGUNDO, "referencial", { temporal: false }, foto, TOKEN);
   const urlRef = conRef?.foto_referencial?.url;
-  caso("PUT foto referencial: queda con su crédito y se publica", conRef?.foto_referencial?.credito === "Prueba del recorrido, se quita" && (await existe(urlRef)), conRef?.foto_referencial);
+  const { data: filaRef } = await supabaseAdmin.from("species_public_content").select("credito_foto_referencial").eq("species_id", NEGUNDO).single();
+  caso("PUT foto referencial: se publica y queda guardada como «SIVU»", filaRef?.credito_foto_referencial === "SIVU" && (await existe(urlRef)), filaRef);
   const bajada = Buffer.from(await (await fetch(urlRef!)).arrayBuffer());
   const meta = await sharp(bajada).metadata();
   caso("PUT foto referencial: WebP de 1600 px sin metadatos", meta.format === "webp" && meta.width === 1600 && !meta.exif && !meta.icc, { format: meta.format, width: meta.width, exif: !!meta.exif });
-  caso("PUT foto: temporal en un rasgo → 400", (await status(() => svc.fijarFotoContenidoEspecie(MUNI, P, NEGUNDO, "hoja", { credito: null, temporal: true }, foto, TOKEN))) === 400);
-  caso("PUT foto: rasgo inexistente → 404 y no queda archivo", (await status(() => svc.fijarFotoContenidoEspecie(MUNI, P, NEGUNDO, "no-existe", { credito: "A", temporal: false }, foto, TOKEN))) === 404);
+  caso("PUT foto: temporal en un rasgo → 400", (await status(() => svc.fijarFotoContenidoEspecie(MUNI, P, NEGUNDO, "hoja", { temporal: true }, foto, TOKEN))) === 400);
+  caso("PUT foto: rasgo inexistente → 404 y no queda archivo", (await status(() => svc.fijarFotoContenidoEspecie(MUNI, P, NEGUNDO, "no-existe", { temporal: false }, foto, TOKEN))) === 404);
   await svc.quitarFotoContenidoEspecie(MUNI, P, NEGUNDO, "referencial", TOKEN);
   const sinRef = await svc.verContenidoEspecie(MUNI, P, NEGUNDO, TOKEN);
   // En el bucket, no por la URL pública: la CDN puede seguir sirviendo la copia unos minutos.

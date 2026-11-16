@@ -1,10 +1,11 @@
 // Fotos propias de SIVU para la araucaria y el ginkgo (CC-073; D-285,
 // D-291, D-292), 2026-11-16. Solo la base de pruebas (gmlbmyreoxgoqrolhyxo).
 //
-// Fotos de Mari tomadas en Plaza Victoria el 2026-11-11 (frontend, commits
+// Fotos del equipo de SIVU tomadas en Plaza Victoria el 2026-11-11 (frontend, commits
 // 98f2940 y b92d499; en 9549d39 siguen iguales). Crédito «SIVU»
 // (indicación de la responsable, 2026-11-16: todas las fotos finales serán
-// del equipo). El crédito se guarda pero la ficha pública no lo muestra.
+// del equipo). El crédito se guarda pero la plataforma no lo muestra;
+// el origen de cada foto está en docs/conecta-fotos.md.
 //   - Araucaria: referencial y rasgo «Silueta» (la misma foto, como en
 //     contenidoEspecie.ts del frontend).
 //   - Ginkgo: referencial.

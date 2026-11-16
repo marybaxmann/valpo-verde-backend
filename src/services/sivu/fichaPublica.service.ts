@@ -32,6 +32,14 @@ import { ContenidoEspecieBody, FichaPublicaArbolBody } from "../../schemas/sivu/
 
 const EDITORES = ["admin", "usuario_municipal"] as const;
 
+/**
+ * Crédito de las fotos propias (D-285, D-292). Pertenecen al equipo de
+ * SIVU: no se acreditan a personas ni se muestran en la plataforma; el
+ * detalle de cada foto está en docs/conecta-fotos.md (indicación de la
+ * responsable, 2026-11-16).
+ */
+export const CREDITO_EQUIPO = "SIVU";
+
 /** Etiqueta de un código; si no está en el catálogo, el propio código (nunca 500 por un dato). */
 function etiquetaSegura(catalogo: string, codigo: string): string {
   try {
@@ -73,7 +81,7 @@ function presentarContenido(c: ContenidoEspecieRow | null) {
       id: r.id,
       etiqueta: r.etiqueta,
       texto: r.texto,
-      foto: r.foto_path ? { url: urlPublica(r.foto_path), credito: r.credito ?? null } : null,
+      foto: r.foto_path ? { url: urlPublica(r.foto_path) } : null,
     })),
     anio_estacional: c.anio_estacional,
     ciclo: c.ciclo,
@@ -81,7 +89,7 @@ function presentarContenido(c: ContenidoEspecieRow | null) {
     consejo: c.consejo,
     fuentes: c.fuentes,
     foto_referencial: c.foto_referencial_path
-      ? { url: urlPublica(c.foto_referencial_path), credito: c.credito_foto_referencial, temporal: c.foto_referencial_temporal }
+      ? { url: urlPublica(c.foto_referencial_path), temporal: c.foto_referencial_temporal }
       : null,
     updated_by: c.updated_by,
     updated_at: c.updated_at,
@@ -130,7 +138,7 @@ export async function fijarFotoContenidoEspecie(
   projectId: string,
   speciesId: string,
   ranura: string,
-  datos: { credito: string | null; temporal: boolean },
+  datos: { temporal: boolean },
   archivo: Buffer | undefined,
   accessToken: string
 ) {
@@ -139,16 +147,15 @@ export async function fijarFotoContenidoEspecie(
   if (datos.temporal && ranura !== "referencial") {
     throw new AppError("Solo la foto referencial de la especie puede ser temporal (D-293)", 400);
   }
-  if (!datos.temporal && !datos.credito) {
-    throw new AppError("La fotografía requiere su crédito: autor y licencia (D-292)", 400);
-  }
+  // Propia → «SIVU»; temporal de terceros → la base fija su crédito.
+  const credito = datos.temporal ? null : CREDITO_EQUIPO;
   await exigirEspecie(speciesId);
   const webp = await procesarFotoPublica(archivo);
   const ruta = `especies/${randomUUID()}.webp`;
   await subirFotoPublica(ruta, webp);
   let anterior: string | null;
   try {
-    anterior = (await fijarFotoEspecie({ speciesId, usuario: user.id, ranura, path: ruta, credito: datos.credito, temporal: datos.temporal })).ruta_anterior;
+    anterior = (await fijarFotoEspecie({ speciesId, usuario: user.id, ranura, path: ruta, credito, temporal: datos.temporal })).ruta_anterior;
   } catch (err) {
     await borrarFotosPublicas([ruta]);
     throw traducirErrorFicha(err);

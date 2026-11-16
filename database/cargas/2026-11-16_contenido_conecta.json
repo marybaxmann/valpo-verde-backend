@@ -179,10 +179,10 @@
   },
   "fotos": [
     { "especie": "Ulmus minor", "ranura": "referencial", "archivo": "ulmus-minor.webp", "temporal": true, "credito": null },
-    { "especie": "Acer negundo", "ranura": "hoja", "archivo": "reconocer/acer-negundo-hoja.webp", "credito": "Valpo Verde, levantamiento 2026-10-01" },
-    { "especie": "Acer pseudoplatanus", "ranura": "hoja", "archivo": "reconocer/acer-pseudoplatanus-hoja.webp", "credito": "Valpo Verde, levantamiento 2026-10-01" },
-    { "especie": "Acer pseudoplatanus", "ranura": "flores", "archivo": "reconocer/acer-pseudoplatanus-flores.webp", "credito": "Valpo Verde, levantamiento 2026-10-01" },
-    { "especie": "Lagerstroemia indica", "ranura": "hojas", "archivo": "reconocer/lagerstroemia-indica-hoja.webp", "credito": "Valpo Verde, levantamiento 2026-10-01" }
+    { "especie": "Acer negundo", "ranura": "hoja", "archivo": "reconocer/acer-negundo-hoja.webp", "credito": "SIVU" },
+    { "especie": "Acer pseudoplatanus", "ranura": "hoja", "archivo": "reconocer/acer-pseudoplatanus-hoja.webp", "credito": "SIVU" },
+    { "especie": "Acer pseudoplatanus", "ranura": "flores", "archivo": "reconocer/acer-pseudoplatanus-flores.webp", "credito": "SIVU" },
+    { "especie": "Lagerstroemia indica", "ranura": "hojas", "archivo": "reconocer/lagerstroemia-indica-hoja.webp", "credito": "SIVU" }
   ],
   "_fotos_no_cargadas": "Fotos referenciales de Acer negundo, Acer pseudoplatanus, Lagerstroemia indica, Araucaria angustifolia y Ginkgo biloba, y la foto «Silueta» de la araucaria: sin autor ni licencia registrados (FOTOS_FICHAS_INVENTARIO.md: «origen no documentado»). D-292 exige autor y licencia; quedan pendientes hasta que Mari indique su crédito."
 }

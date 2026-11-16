@@ -133,14 +133,13 @@ export type ContenidoEspecieBody = z.infer<typeof contenidoEspecieSchema>;
 export const ranuraSchema = z.string().regex(/^[a-z0-9_-]{1,40}$/, "ranura inválida");
 
 /**
- * Multipart: todo llega como texto. `credito` (D-292, D-285) es
- * obligatorio salvo que `temporal` = true (D-293, solo la referencial):
- * entonces la base fija el crédito «Foto de terceros, uso referencial
- * temporal».
+ * Multipart: todo llega como texto. No se pide crédito: las fotos propias
+ * pertenecen al equipo y el servicio guarda «SIVU» (indicación de la
+ * responsable, 2026-11-16). Con `temporal` = true (D-293, solo la
+ * referencial) la base guarda «Foto de terceros, uso referencial temporal».
  */
 export const fotoEspecieBodySchema = z
   .object({
-    credito: textoOpcional("credito", 120),
     temporal: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
   })
   .strict();
