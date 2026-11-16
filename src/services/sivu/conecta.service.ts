@@ -55,6 +55,11 @@ type Ficha = NonNullable<Awaited<ReturnType<typeof obtenerFichaPublica>>>;
 /**
  * Contenido ciudadano de la especie (CC-073): rutas de foto → URL pública
  * del bucket, y etiquetas de ícono y bloque. Nunca entrega la ruta interna.
+ *
+ * Las fotos salen sin su crédito: el autor y la licencia se guardan
+ * (D-285, D-292; PR-022 v3.0) y se ven en la edición, pero la ficha no los
+ * muestra (indicación de la responsable, 2026-11-16: a la ciudadanía no le
+ * interesa y las fotos finales serán todas del equipo de SIVU).
  */
 function contenidoEspeciePublico(c: Ficha["contenido_especie"]) {
   if (!c) return null;
@@ -65,7 +70,7 @@ function contenidoEspeciePublico(c: Ficha["contenido_especie"]) {
     rasgos: (c.rasgos ?? []).map((r) => ({
       etiqueta: r.etiqueta,
       texto: r.texto,
-      foto: r.foto_path ? { url: urlPublica(r.foto_path), credito: r.credito ?? null } : null,
+      foto: r.foto_path ? { url: urlPublica(r.foto_path) } : null,
     })),
     anio_estacional: c.anio_estacional ?? null,
     ciclo: c.ciclo ?? null,
@@ -120,7 +125,8 @@ export async function fichaPublica(qrToken: string) {
     articulo: ficha.articulo ?? null,
     contenido_especie: contenidoEspeciePublico(ficha.contenido_especie),
     ejemplar: { historia: ficha.ejemplar?.historia ?? null, historia_fuente: ficha.ejemplar?.historia_fuente ?? null },
-    foto_principal: fp ? { tipo: fp.tipo, url: urlPublica(fp.ruta), credito: fp.credito ?? null } : null,
+    // Sin crédito (ver contenidoEspeciePublico).
+    foto_principal: fp ? { tipo: fp.tipo, url: urlPublica(fp.ruta) } : null,
     medidas: medidasPublicas(ficha.medidas),
   };
 }

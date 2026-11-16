@@ -141,8 +141,12 @@ describe("GET /api/sivu/conecta/arboles/:qrToken (ficha pública)", () => {
     expect(d.contenido_especie.aportes[0].icono).toEqual({ codigo: "polinizadores", etiqueta: "Polinizadores" });
     expect(d.contenido_especie.fuentes[0].bloques).toEqual([{ codigo: "curiosidad", etiqueta: "Curiosidad" }]);
     expect(d.contenido_especie.rasgos[0].foto.url).toMatch(/\/storage\/v1\/object\/public\/conecta-publico\/especies\/a\.webp$/);
-    expect(d.foto_principal).toMatchObject({ tipo: "referencial_especie", credito: "Foto de terceros, uso referencial temporal" });
+    expect(Object.keys(d.foto_principal).sort()).toEqual(["tipo", "url"]);
+    expect(d.foto_principal.tipo).toBe("referencial_especie");
     expect(d.foto_principal.url).toMatch(/conecta-publico\/especies\/r\.webp$/);
+    // El crédito se guarda pero la ficha pública no lo muestra (2026-11-16).
+    expect(d.contenido_especie.rasgos[0].foto).toEqual({ url: expect.any(String) });
+    expect(JSON.stringify(d)).not.toMatch(/credito|Foto de terceros|levantamiento/);
     expect(d.ejemplar).toEqual({ historia: "Plantado por los vecinos.", historia_fuente: null });
     expect(d.medidas.altura_total_m).toEqual({ valor: 12.5, unidad: "m", naturaleza: { codigo: "medicion_o_estimacion", etiqueta: "Medida en terreno o estimada con escala" } });
     expect(d.medidas.rango_edad_estimada_anios).toMatchObject({ codigo: "26_30", naturaleza: { codigo: "estimacion", etiqueta: "Estimación" } });
