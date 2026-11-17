@@ -90,6 +90,9 @@ export type VersionMedicionRow = Record<(typeof CAMPOS_MEDICION)[number], unknow
   inspection_id: string | null;
   campos_registrados: string[] | null;
   created_at: string;
+  /** 039: 'registro' (alta o inspección) o 'correccion_ubicacion'. */
+  origen: "registro" | "correccion_ubicacion";
+  motivo: string | null;
   inspections: {
     codigo_inspeccion: string | null;
     estado_registro: string;
@@ -103,7 +106,7 @@ export async function listarVersionesMedicion(accessToken: string, treeId: strin
   const { data, error } = await createUserScopedClient(accessToken)
     .from("tree_data_versions")
     .select(
-      `id, inspection_id, campos_registrados, created_at, ${CAMPOS_MEDICION.join(", ")}, inspections(codigo_inspeccion, estado_registro, fecha_inspeccion, work_orders(estado_ot, fecha_completada_ot))`
+      `id, inspection_id, campos_registrados, created_at, origen, motivo, ${CAMPOS_MEDICION.join(", ")}, inspections(codigo_inspeccion, estado_registro, fecha_inspeccion, work_orders(estado_ot, fecha_completada_ot))`
     )
     .eq("tree_id", treeId)
     .order("created_at", { ascending: true });

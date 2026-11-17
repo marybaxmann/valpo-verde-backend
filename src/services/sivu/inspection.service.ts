@@ -11,9 +11,14 @@ import {
   CamposArbol,
   SQLSTATE_ALTA_ARBOL,
   SQLSTATE_BORRADOR_INSPECCION,
+  VariableRetirada,
+  conservarVariablesRetiradas,
   guardarBorradorInspeccion as guardarBorradorInspeccionRepo,
   obtenerInspeccionPorId,
+  obtenerRuleVersionBorrador,
+  obtenerVariablesBorrador,
 } from "../../repositories/sivu/inspection.repository";
+import { camposPermitidosPorTipo } from "../rules/engine/alcance";
 import { obtenerOrdenTrabajoPorId } from "../../repositories/sivu/workOrder.repository";
 import { CrearBorradorInspeccionBody, GuardarBorradorInspeccionBody } from "../../schemas/sivu/inspeccion.schema";
 
@@ -96,6 +101,15 @@ export async function guardarBorradorInspeccion(
   }
 
   await assertProjectRole(user, ot.project_id, ["inspector"], accessToken);
+
+  // 039 (decisión 5): un borrador guardado con una metodología anterior puede
+  // tener variables que la vigente ya no usa; el guardado completo las
+  // reemplazaría. Se conservan antes, sin alterar las reglas del borrador.
+  // Solo quien puede guardar (Inspector responsable, borrador en Preguardado; la
+  // función de la base lo vuelve a exigir al guardar).
+  if (ot.responsable_accion_id === user.id && inspeccion.estado_registro === "preguardado") {
+    await conservarRetiradasAntesDeGuardar(inspectionId, body, accessToken);
+  }
 
   try {
     return await guardarBorradorInspeccionRepo({
@@ -208,4 +222,36 @@ function traducirErrorBorrador(err: unknown): Error {
     return new AppError(mensajeCheck(error.message), 400);
   }
   return error;
+}
+
+/**
+ * Variables guardadas en el borrador que no están en el alcance vigente de su
+ * tipo/subtipo ni en el cuerpo nuevo: son de una metodología anterior (p. ej.
+ * `condicion_radicular_entorno`, retirada en la 3.0). Se conservan en
+ * `evaluations.variables_retiradas` con su valor y la rule_version con que se
+ * registraron. No vuelven al cálculo ni a la completitud: solo se preservan.
+ */
+export function variablesRetiradas(
+  guardadas: Record<string, unknown>,
+  body: Pick<GuardarBorradorInspeccionBody, "tipo_inspeccion_realizada" | "subtipo_inspeccion" | "variables">
+): string[] {
+  const alcance = new Set<string>(camposPermitidosPorTipo(body.tipo_inspeccion_realizada, body.subtipo_inspeccion ?? null) ?? []);
+  return Object.keys(guardadas).filter((k) => !alcance.has(k) && !(k in body.variables) && guardadas[k] !== null && guardadas[k] !== undefined);
+}
+
+async function conservarRetiradasAntesDeGuardar(
+  inspectionId: string,
+  body: GuardarBorradorInspeccionBody,
+  accessToken: string
+): Promise<void> {
+  const guardadas = await obtenerVariablesBorrador(accessToken, inspectionId);
+  if (!guardadas) return;
+  const retiradas = variablesRetiradas(guardadas, body);
+  if (retiradas.length === 0) return;
+  const ruleVersion = await obtenerRuleVersionBorrador(inspectionId);
+  const hoy = hoyEnChile();
+  const nuevas: Record<string, VariableRetirada> = Object.fromEntries(
+    retiradas.map((k) => [k, { valor: guardadas[k], rule_version_origen: ruleVersion, retirada_el: hoy }])
+  );
+  await conservarVariablesRetiradas(inspectionId, nuevas);
 }

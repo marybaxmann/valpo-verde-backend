@@ -321,6 +321,7 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "vista_foto", codigo: "base", etiqueta: "Base", orden: 1, estado: "vigente", cc: "CC-049" },
   { catalogo: "vista_foto", codigo: "tronco", etiqueta: "Tronco", orden: 2, estado: "vigente", cc: "CC-049" },
   { catalogo: "vista_foto", codigo: "copa", etiqueta: "Copa", orden: 3, estado: "vigente", cc: "CC-049" },
+  { catalogo: "vista_foto", codigo: "detalle", etiqueta: "Detalle", orden: 4, estado: "vigente", cc: "039 (integración AV_000001–012, decisión A)" },
 
   // --- estado_ciclo_vida: AM-22 resuelto (Valej, 2026-11-01): un solo estado. Rige estado_presencia
   //     (D-28, derivado); estado_ciclo_vida conserva sus códigos (PR-021) como copia que el Sistema

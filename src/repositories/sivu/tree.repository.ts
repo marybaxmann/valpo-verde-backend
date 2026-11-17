@@ -81,3 +81,102 @@ export async function crearArbolAlta(input: AltaArbolInput): Promise<ArbolAltaRo
 
   return data as unknown as ArbolAltaRow;
 }
+
+/** Datos mínimos del árbol para autorizar una operación sobre él dentro de un proyecto. */
+export interface ArbolDeProyectoRow {
+  id: string;
+  tree_code: string;
+  project_id: string;
+  legacy_id: string | null;
+  estado_ciclo_vida: string;
+}
+
+/** El árbol, solo si pertenece al proyecto (con `service_role`, después de autorizar el rol). */
+export async function obtenerArbolDeProyecto(projectId: string, treeId: string): Promise<ArbolDeProyectoRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from("trees")
+    .select("id, tree_code, project_id, legacy_id, estado_ciclo_vida")
+    .eq("id", treeId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Error al obtener el árbol: ${error.message}`);
+  }
+  return (data as unknown as ArbolDeProyectoRow) ?? null;
+}
+
+/** El árbol que ya tiene ese identificador de origen, en cualquier proyecto (legacy_id es UNIQUE). */
+export async function obtenerArbolPorLegacyId(legacyId: string): Promise<ArbolDeProyectoRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from("trees")
+    .select("id, tree_code, project_id, legacy_id, estado_ciclo_vida")
+    .eq("legacy_id", legacyId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Error al buscar el identificador de origen: ${error.message}`);
+  }
+  return (data as unknown as ArbolDeProyectoRow) ?? null;
+}
+
+/**
+ * Asigna `legacy_id` solo si está vacío (`.is("legacy_id", null)`): nunca
+ * reasigna un identificador. Devuelve null si no se actualizó ninguna fila
+ * (ya tenía uno). `legacy_id` no es un campo versionado: fn_refresh_tree_current
+ * no lo toca.
+ */
+export async function asignarLegacyIdSiVacio(treeId: string, legacyId: string): Promise<ArbolDeProyectoRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from("trees")
+    .update({ legacy_id: legacyId })
+    .eq("id", treeId)
+    .is("legacy_id", null)
+    .select("id, tree_code, project_id, legacy_id, estado_ciclo_vida")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+  return (data as unknown as ArbolDeProyectoRow) ?? null;
+}
+
+export interface CorreccionUbicacionInput {
+  treeId: string;
+  sector: string | null;
+  ubicacionDescriptiva: string | null;
+  utmEste: number | null;
+  utmNorte: number | null;
+  motivo: string;
+  usuarioId: string;
+}
+
+export interface CorreccionUbicacionResultado {
+  cambio: boolean;
+  tree_id: string;
+  version_id?: string;
+  campos?: string[];
+  anterior?: { sector: string | null; ubicacion_descriptiva: string | null; utm_este: number | null; utm_norte: number | null };
+}
+
+/**
+ * `fn_corregir_ubicacion_arbol` (039; decisión F): versión nueva en
+ * `tree_data_versions` (origen 'correccion_ubicacion') y recálculo del
+ * árbol, en una sola transacción. EXECUTE solo para service_role.
+ */
+export async function corregirUbicacionArbol(input: CorreccionUbicacionInput): Promise<CorreccionUbicacionResultado> {
+  const { data, error } = await supabaseAdmin.rpc("fn_corregir_ubicacion_arbol", {
+    p_tree_id: input.treeId,
+    p_sector: input.sector,
+    p_ubicacion_descriptiva: input.ubicacionDescriptiva,
+    p_utm_este: input.utmEste,
+    p_utm_norte: input.utmNorte,
+    p_motivo: input.motivo,
+    p_usuario: input.usuarioId,
+  });
+
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+  return data as unknown as CorreccionUbicacionResultado;
+}
