@@ -88,6 +88,18 @@ describe("obtenerFichaArbol (B2)", () => {
     expect(Object.keys(f.historial[1].valores).sort()).toEqual(["especie_cientifica", "sector"]);
   });
 
+  it("039: una corrección de ubicación aparece como tal, con motivo, sus campos y su fecha en Chile", async () => {
+    (listarVersionesMedicion as jest.Mock).mockResolvedValue([
+      ...versiones,
+      { ...vacios, id: "v4", inspection_id: null, origen: "correccion_ubicacion", motivo: "Coordenadas del Excel actualizado", campos_registrados: ["utm_este", "utm_norte"],
+        created_at: "2026-11-17T02:30:00Z", utm_este: "255424.00", utm_norte: "6340508.00", inspections: null },
+    ]);
+    const f = await obtenerFichaArbol(user, P, T, "token");
+    expect(f.historial.map((h) => h.origen)).toEqual(["correccion_ubicacion", "inspeccion", "alta"]);
+    // 02:30 UTC del 17 es el 16 en Chile.
+    expect(f.historial[0]).toMatchObject({ vigente_desde: "2026-11-16", motivo: "Coordenadas del Excel actualizado", valores: { utm_este: 255424, utm_norte: 6340508 } });
+    expect(f.historial[2]).not.toHaveProperty("motivo");
+  });
   it("sin especie vigente: origen no determinado y sin persistencia ni tipo de hoja (D-260 a D-262)", async () => {
     (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, especie_cientifica: null });
     const f = await obtenerFichaArbol(user, P, T, "token");

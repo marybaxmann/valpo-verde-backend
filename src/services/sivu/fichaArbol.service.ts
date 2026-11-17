@@ -1,5 +1,6 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { AppError } from "../../utils/AppError";
+import { fechaEnChile } from "../../utils/fechaChile";
 import { assertProjectAccess } from "../authorization.service";
 import { CATALOGO } from "../rules/engine/catalogs";
 import {
@@ -85,17 +86,25 @@ function historial(versiones: VersionMedicionRow[], fechaRegistro: string) {
   return versiones
     .filter((v) => v.inspection_id === null || (v.inspections?.estado_registro === "finalizado" && v.inspections.work_orders?.estado_ot === "completada"))
     .map((v) => {
-      const esAlta = v.inspection_id === null;
+      // 039: una versión sin inspección es el alta o una corrección autorizada de ubicación.
+      const esCorreccion = v.origen === "correccion_ubicacion";
+      const esAlta = v.inspection_id === null && !esCorreccion;
       const campos = esAlta
         ? CAMPOS_MEDICION.filter((c) => v[c] !== null && v[c] !== undefined)
         : (v.campos_registrados ?? []).filter((c): c is (typeof CAMPOS_MEDICION)[number] => (CAMPOS_MEDICION as readonly string[]).includes(c));
       return {
-        origen: esAlta ? ("alta" as const) : ("inspeccion" as const),
-        // Desde cuándo rigió: el alta, desde su registro; una inspección, desde que se completó su OT.
-        vigente_desde: esAlta ? fechaRegistro : v.inspections?.work_orders?.fecha_completada_ot ?? null,
+        origen: esCorreccion ? ("correccion_ubicacion" as const) : esAlta ? ("alta" as const) : ("inspeccion" as const),
+        // Desde cuándo rigió: el alta, desde su registro; una inspección, desde que se completó su OT;
+        // una corrección, desde que se registró (fecha en Chile, igual que la usa fn_refresh_tree_current).
+        vigente_desde: esCorreccion
+          ? fechaEnChile(v.created_at)
+          : esAlta
+            ? fechaRegistro
+            : v.inspections?.work_orders?.fecha_completada_ot ?? null,
         inspection_id: v.inspection_id,
         codigo_inspeccion: v.inspections?.codigo_inspeccion ?? null,
         fecha_inspeccion: v.inspections?.fecha_inspeccion ?? null,
+        ...(esCorreccion ? { motivo: v.motivo } : {}),
         valores: Object.fromEntries(campos.map((c) => [c, valorDeCampo(c, v[c])])),
       };
     })

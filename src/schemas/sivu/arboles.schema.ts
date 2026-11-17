@@ -60,3 +60,45 @@ export const arbolIdParamSchema = z.object({
 });
 
 export type ArbolIdParam = z.infer<typeof arbolIdParamSchema>;
+
+/**
+ * Body de PATCH /api/sivu/projects/:id/trees/:treeId/ubicacion (039;
+ * decisión F): corrección autorizada de la ubicación del inventario.
+ * Al menos un campo; las dos coordenadas van juntas; el motivo es
+ * obligatorio (queda en el historial de `tree_data_versions`).
+ */
+export const corregirUbicacionSchema = z
+  .object({
+    sector: textoObligatorio("sector").optional(),
+    ubicacion_descriptiva: textoObligatorio("ubicacion_descriptiva").optional(),
+    utm_este: coordenadaUtmEste.optional(),
+    utm_norte: coordenadaUtmNorte.optional(),
+    motivo: textoObligatorio("motivo").max(500, "motivo: máximo 500 caracteres"),
+  })
+  .strict()
+  .refine((b) => (b.utm_este === undefined) === (b.utm_norte === undefined), {
+    message: "utm_este y utm_norte se corrigen juntas",
+  })
+  .refine((b) => b.sector !== undefined || b.ubicacion_descriptiva !== undefined || b.utm_este !== undefined, {
+    message: "debe incluir al menos un campo de ubicación",
+  });
+
+export type CorregirUbicacionBody = z.infer<typeof corregirUbicacionSchema>;
+
+/**
+ * Body de PATCH /api/sivu/projects/:id/trees/:treeId/legacy-id (039):
+ * identificador del sistema de origen. Texto corto sin espacios; el
+ * formato concreto (p. ej. AV_NNNNNN) lo define cada levantamiento.
+ */
+export const asignarLegacyIdSchema = z
+  .object({
+    legacy_id: z
+      .string()
+      .trim()
+      .min(1, "legacy_id es obligatorio")
+      .max(64, "legacy_id: máximo 64 caracteres")
+      .regex(/^[A-Za-z0-9_.-]+$/, "legacy_id solo admite letras, dígitos, guion, punto y guion bajo"),
+  })
+  .strict();
+
+export type AsignarLegacyIdBody = z.infer<typeof asignarLegacyIdSchema>;
