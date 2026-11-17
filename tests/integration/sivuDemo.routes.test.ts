@@ -127,7 +127,7 @@ describe("GET /api/sivu/projects/:id/resumen (B7)", () => {
   });
   it("catálogos incluyen vista_foto y estado_ciclo_vida", async () => {
     const res = await get("/api/sivu/catalogs");
-    expect(res.body.data.vista_foto.map((c: any) => c.etiqueta)).toEqual(["Árbol completo", "Base", "Tronco", "Copa"]);
+    expect(res.body.data.vista_foto.map((c: any) => c.etiqueta)).toEqual(["Árbol completo", "Base", "Tronco", "Copa", "Detalle"]);
     expect(res.body.data.estado_ciclo_vida.map((c: any) => c.codigo)).toEqual(["activo", "tocon", "retirado"]);
   });
 });

@@ -35,6 +35,15 @@ import {
   qrArbolController,
   revisarIncidenciaController,
 } from "../../controllers/sivu/conecta.controller";
+import {
+  asignarLegacyIdController,
+  confirmarSubidaArbolController,
+  corregirUbicacionController,
+  listarFotosArbolController,
+  solicitarSubidaArbolController,
+  subirFotoArbolController,
+} from "../../controllers/sivu/integracionArbol.controller";
+import { subirFotoUnica } from "../../middlewares/upload.middleware";
 
 const router = Router();
 
@@ -65,6 +74,15 @@ router.post("/:id/trees", authMiddleware, altaMunicipalArbolController);
 router.get("/:id/trees", authMiddleware, listarInventarioController);
 // Ficha del árbol (B2): todos los miembros activos y el Administrador.
 router.get("/:id/trees/:treeId", authMiddleware, fichaArbolController);
+// 039 — Fotos del árbol: listar (todos los miembros), registro sin inspección
+// (usuario_municipal o inspector) y carga firmada para originales > 4,5 MB.
+router.get("/:id/trees/:treeId/photos", authMiddleware, listarFotosArbolController);
+router.post("/:id/trees/:treeId/photos", authMiddleware, subirFotoUnica, subirFotoArbolController);
+router.post("/:id/trees/:treeId/photos/upload-url", authMiddleware, solicitarSubidaArbolController);
+router.post("/:id/trees/:treeId/photos/confirm", authMiddleware, confirmarSubidaArbolController);
+// 039 — Corrección autorizada de la ubicación y vínculo del identificador de origen (usuario_municipal).
+router.patch("/:id/trees/:treeId/ubicacion", authMiddleware, corregirUbicacionController);
+router.patch("/:id/trees/:treeId/legacy-id", authMiddleware, asignarLegacyIdController);
 // Árboles cercanos a una coordenada UTM, para no duplicar en un Levantamiento (CC-052).
 router.get("/:id/nearby-trees", authMiddleware, arbolesCercanosController);
 // Crear una OT de Inspección (#58; D-238, D-244, CC-036). Solo usuario_municipal.

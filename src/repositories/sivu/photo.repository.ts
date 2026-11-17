@@ -10,22 +10,30 @@ export const BUCKET_FOTOS = "tree-photos";
  */
 export const SEGUNDOS_URL_FIRMADA = 10 * 60;
 
+/**
+ * D-27: las cuatro vistas principales. 'detalle' (039) es una foto
+ * complementaria: nunca completa D-27 (fn_finalizar_inspeccion y
+ * completitud.ts cuentan solo las cuatro).
+ */
+export type VistaFoto = "arbol_completo" | "base" | "tronco" | "copa" | "detalle";
+
 export interface PhotoRow {
   id: string;
   tree_id: string;
   storage_path: string;
-  vista: "arbol_completo" | "base" | "tronco" | "copa" | null;
+  vista: VistaFoto | null;
   inspection_id: string | null;
   maintenance_record_id: string | null;
   incident_id: string | null;
   uploaded_by: string | null;
   created_at: string;
+  /** SHA-256 del archivo original (039); null en fotos recodificadas o anteriores a la 039. */
+  sha256: string | null;
 }
 
 /**
  * Sube el archivo ya verificado (y, si corresponde, recodificado sin
- * metadatos) al bucket privado, con `service_role` — nunca el cliente
- * sube directo a Storage (CC-049 punto 2).
+ * metadatos) al bucket privado, con `service_role`.
  */
 export async function subirArchivoAStorage(path: string, buffer: Buffer, contentType: string): Promise<void> {
   const { error } = await supabaseAdmin.storage.from(BUCKET_FOTOS).upload(path, buffer, {
@@ -57,6 +65,38 @@ export async function eliminarArchivoDeStorage(path: string): Promise<void> {
   }
 }
 
+/**
+ * Carga firmada (039; decisión H): enlace de un solo uso para que el
+ * cliente suba el original directo a Storage, sin pasar por el límite
+ * de 4,5 MB del cuerpo de Vercel. La ruta es siempre de staging
+ * (`pendientes/…`), la decide el servidor y no cuenta como foto hasta
+ * que `confirmar` la verifica (formato real, tamaño, huella) y la mueve.
+ */
+export async function crearUrlSubidaFirmada(path: string): Promise<{ signedUrl: string; token: string; path: string }> {
+  const { data, error } = await supabaseAdmin.storage.from(BUCKET_FOTOS).createSignedUploadUrl(path);
+  if (error || !data) {
+    throw new Error(error?.message ?? "No se pudo generar el enlace de carga");
+  }
+  return { signedUrl: data.signedUrl, token: data.token, path: data.path };
+}
+
+/** Descarga un objeto del bucket (para verificar una carga firmada o derivar la copia pública). null si no existe. */
+export async function descargarArchivo(path: string): Promise<Buffer | null> {
+  const { data, error } = await supabaseAdmin.storage.from(BUCKET_FOTOS).download(path);
+  if (error || !data) {
+    return null;
+  }
+  return Buffer.from(await data.arrayBuffer());
+}
+
+/** Mueve un objeto dentro del bucket (staging → ruta definitiva). */
+export async function moverArchivo(desde: string, hacia: string): Promise<void> {
+  const { error } = await supabaseAdmin.storage.from(BUCKET_FOTOS).move(desde, hacia);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export interface CrearFotoInput {
   /**
    * Generado por el service ANTES de insertar (no el default de la
@@ -67,15 +107,20 @@ export interface CrearFotoInput {
   id: string;
   treeId: string;
   storagePath: string;
-  vista: "arbol_completo" | "base" | "tronco" | "copa" | null;
+  vista: VistaFoto | null;
   inspectionId: string | null;
   maintenanceRecordId: string | null;
   incidentId: string | null;
   uploadedBy: string;
+  /** Huella del original (039); null u omitida cuando el archivo se recodificó. */
+  sha256?: string | null;
 }
 
 const PHOTO_COLUMNS =
-  "id, tree_id, storage_path, vista, inspection_id, maintenance_record_id, incident_id, uploaded_by, created_at";
+  "id, tree_id, storage_path, vista, inspection_id, maintenance_record_id, incident_id, uploaded_by, created_at, sha256";
+
+/** SQLSTATE de una violación de unicidad (039: `uq_photos_tree_sha256`). */
+export const SQLSTATE_UNIQUE_VIOLATION = "23505";
 
 /**
  * `photos` (migración 015) no tiene policy de escritura para
@@ -94,6 +139,7 @@ export async function crearFotoRegistro(input: CrearFotoInput): Promise<PhotoRow
       maintenance_record_id: input.maintenanceRecordId,
       incident_id: input.incidentId,
       uploaded_by: input.uploadedBy,
+      sha256: input.sha256 ?? null,
     })
     .select(PHOTO_COLUMNS)
     .single();
@@ -117,6 +163,37 @@ export async function listarFotosPorInspeccion(accessToken: string, inspectionId
   }
 
   return (data ?? []) as unknown as PhotoRow[];
+}
+
+/** Todas las fotos del árbol (registro, inspecciones, mantención, incidencias), con el JWT del usuario (RLS de la 017). */
+export async function listarFotosPorArbol(accessToken: string, treeId: string): Promise<PhotoRow[]> {
+  const { data, error } = await createUserScopedClient(accessToken)
+    .from("photos")
+    .select(PHOTO_COLUMNS)
+    .eq("tree_id", treeId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(`Error al listar fotos del árbol: ${error.message}`);
+  }
+
+  return (data ?? []) as unknown as PhotoRow[];
+}
+
+/** Foto del árbol con esa huella (039), para no asociar dos veces el mismo original. */
+export async function buscarFotoPorHuella(treeId: string, sha256: string): Promise<PhotoRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from("photos")
+    .select(PHOTO_COLUMNS)
+    .eq("tree_id", treeId)
+    .eq("sha256", sha256)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Error al buscar la foto por huella: ${error.message}`);
+  }
+
+  return (data as unknown as PhotoRow) ?? null;
 }
 
 /**

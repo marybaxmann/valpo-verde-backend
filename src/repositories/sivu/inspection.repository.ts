@@ -189,6 +189,63 @@ export async function obtenerVariablesBorrador(
   return (data?.variables as Record<string, unknown> | undefined) ?? null;
 }
 
+/** Valor de una variable que la metodología vigente ya no usa, conservado tal como se guardó (039). */
+export interface VariableRetirada {
+  valor: unknown;
+  /** rule_version con que se registró el valor. */
+  rule_version_origen: string | null;
+  /** Fecha (Chile) en que se apartó al guardar con la metodología vigente. */
+  retirada_el: string;
+}
+
+/**
+ * 039 (decisión 5): agrega a `evaluations.variables_retiradas` las variables
+ * que el borrador guardó con una metodología anterior y que la vigente ya no
+ * usa, ANTES de que el guardado las reemplace. Nunca sobrescribe una ya
+ * conservada (gana la primera). Con `service_role`, después de que el service
+ * verificó el rol; `evaluations` no tiene policy de escritura para
+ * `authenticated` (CC-033).
+ */
+export async function conservarVariablesRetiradas(
+  inspectionId: string,
+  nuevas: Record<string, VariableRetirada>
+): Promise<void> {
+  const { data, error } = await supabaseAdmin
+    .from("evaluations")
+    .select("id, variables_retiradas")
+    .eq("inspection_id", inspectionId)
+    .maybeSingle();
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+  if (!data) return;
+
+  const existentes = (data.variables_retiradas as Record<string, VariableRetirada> | null) ?? {};
+  const agregar = Object.fromEntries(Object.entries(nuevas).filter(([k]) => !(k in existentes)));
+  if (Object.keys(agregar).length === 0) return;
+
+  const { error: errUpd } = await supabaseAdmin
+    .from("evaluations")
+    .update({ variables_retiradas: { ...existentes, ...agregar } })
+    .eq("id", data.id);
+  if (errUpd) {
+    throw new Error(errUpd.message, { cause: errUpd.code });
+  }
+}
+
+/**
+ * `inspections.rule_version` del borrador ANTES de guardarlo: la metodología con que se
+ * registraron sus valores. En un borrador, `evaluations.rule_version` es NULL por
+ * `chk_evaluations_calculado_coherente` (hallazgo del ensayo del 2026-11-16).
+ */
+export async function obtenerRuleVersionBorrador(inspectionId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.from("inspections").select("rule_version").eq("id", inspectionId).maybeSingle();
+  if (error) {
+    throw new Error(error.message, { cause: error.code });
+  }
+  return (data?.rule_version as string | null | undefined) ?? null;
+}
+
 export interface VersionArbolInspeccion {
   campos: Record<string, unknown>;
   camposRegistrados: string[];

@@ -219,6 +219,7 @@ describe("subirFotoInspeccion (CC-049, mismas reglas de CC-048/CC-050)", () => {
       incident_id: null,
       uploaded_by: INSPECTOR_ID,
       created_at: "2026-10-25T00:00:00Z",
+      sha256: null,
     };
     mockCrearFoto.mockResolvedValueOnce(fotoCreada);
 
@@ -248,6 +249,7 @@ describe("subirFotoInspeccion (CC-049, mismas reglas de CC-048/CC-050)", () => {
       incident_id: null,
       uploaded_by: INSPECTOR_ID,
       created_at: "2026-10-25T00:00:00Z",
+      sha256: null,
     };
     mockCrearFoto.mockResolvedValueOnce(fotoCreada);
 
@@ -333,6 +335,7 @@ describe("listarFotosInspeccion (cualquier rol con acceso al proyecto)", () => {
         incident_id: null,
         uploaded_by: INSPECTOR_ID,
         created_at: "2026-10-25T00:00:00Z",
+        sha256: null,
       },
     ];
     mockListarFotos.mockResolvedValueOnce(fotos);

@@ -2230,6 +2230,7 @@ motivo)
 | 2026-10-25 | APROBADO (decisiones finales) | marybaxmann | Metadatos: EXIF/GPS solo en fotos ciudadanas, las del Inspector sin recodificar. Límite del formulario público: 10/hora/IP. Retención de la foto ciudadana según `resultado_revision` (nueva decisión, implementa el #62). Ajustes técnicos: `file_size_limit`/`allowed_mime_types` en el bucket, enlaces de 10 min, ruta sin datos personales, versiones exactas de `sharp`/`multer`/`express-rate-limit`. Confirmado: las 4 vistas obligatorias son el dominio vigente de `photos.vista` (D-27), sin discrepancia. |
 | 2026-10-25 | IMPLEMENTADO (bucket) | marybaxmann | Migración 019 aplicada y probada en `valpo-verde-conecta-pruebas`; revertir por SQL bloqueado por Supabase (`storage.protect_delete()`) — la 019 se reescribió idempotente y se verificó reaplicándola, `list_migrations` sin entradas a medias, asesor de seguridad sin hallazgos nuevos. |
 | 2026-10-25 | IMPLEMENTADO (backend, fotos de inspección) | marybaxmann | `POST`/`GET /api/sivu/inspections/:inspectionId/photos` — subida (solo Inspector, sin recodificar) y lectura con enlace firmado (cualquier rol con acceso). Verificado con imágenes reales (`sharp`, sin mockear): formato por contenido, EXIF conservado para Inspector y removido cuando se pide. Pendiente: endpoint ciudadano y retención tras revisión (#62). |
+| 2026-11-16 | ENMENDADO POR CC-073 | Valej | Punto 2 (carga firmada con verificación del backend) y punto 9 (vista «detalle», opcional y fuera de D-27). El resto sin cambios. |
 
 ---
 
@@ -3103,3 +3104,127 @@ motivo)
 | 2026-11-09 | APROBADO METODOLÓGICAMENTE (Excel 3.0.0 en preparación; backend implementado en rama) | Valej | Se retira el `POST` de la evaluación de la demo, para que ninguna vía nueva calcule con reglas anteriores a la 3.0. |
 | 2026-11-09 | FUENTE SINCRONIZADA (3.0.0 registrada como publicada; tag pendiente) | Valej | Hoja VERSION, export y `00-index.md` con 3.0.0 publicada el 2026-11-09. Verificación automática §14.9 sin hallazgos. Excepción al orden de §14.7, aprobada por Valej: el motor se implementó en la rama antes de publicar. El tag `metodologia-v3.0.0` y el pull request quedan pendientes de su indicación. |
 | 2026-11-09 | FUENTE SINCRONIZADA (3.0.0 publicada; tag `metodologia-v3.0.0`) | Valej | PR #75 fusionado en `feature/fase6-backend-api` y tag creado sobre 431d900. Frontend desplegado confirmado: `feature/fase7-maqueta-lab`, que no usa los endpoints de la demo. Pendiente: aplicar las migraciones 035 y 036 fuera de pruebas antes de desplegar, adaptar el frontend, lecturas de la API con sesión real, regresión SQL completa de 018e y 020, y revisión de protocolos. |
+
+---
+
+### CC-073 — Fotografías: vista «detalle», fotos de registro del árbol, huella del original y carga firmada (enmienda de CC-049)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-16 |
+| Origen | Integración de la primera tanda del levantamiento (AV_000001–AV_000012), decisiones A, B, H y G de la responsable (2026-11-16). De 153 fotos originales, 28 son de detalle (no corresponden a ninguna de las 4 vistas de D-27), 31 son de árboles cuya evaluación finalizada no se repite (AV_000003, 006, 010) y 1 supera el límite de 4,5 MB del cuerpo en Vercel (AV_000007 F16, 5,27 MB). Con CC-049 vigente, 53 originales no podían asociarse al ejemplar. |
+| Tipo | 2 — operativo (política de Storage y fotos) (+3, modelo de datos) |
+| Estado | APROBADO (implementación lista en rama; pendiente de ensayo y publicación) |
+| Regla / campo afectado | CC-049 puntos (2) y (9); `photos.vista` (D-27); `photos` (migración 015); bucket `tree-photos` (019). |
+| Versión anterior | CC-049: **(2)** subida siempre a través del backend, nunca el cliente directo a Storage; **(9)** el dominio de `photos.vista` son exactamente las 4 vistas de D-27; las fotos solo se suben a una inspección preguardada de una OT en ejecución, por el Inspector responsable. |
+| Versión nueva | **(1) Vista «detalle».** `photos.vista` admite `detalle`, una foto complementaria que **nunca completa D-27**: `fn_finalizar_inspeccion` (026) y `completitud.ts` siguen exigiendo las 4 vistas (`arbol_completo`, `base`, `tronco`, `copa`). Una foto que no muestra la copa completa no se clasifica como copa (decisión G). **(2) Fotos de registro del árbol.** Un original puede asociarse al ejemplar sin abrir una inspección (`photos` sin inspección, mantención ni incidencia: origen «registro»). Lo hace el Usuario municipal o el Inspector del proyecto. No cuenta para D-27 ni altera ninguna evaluación; su objetivo es que todas las fotos válidas queden en la ficha sin crear reevaluaciones duplicadas (decisión B). **(3) Huella del original.** `photos.sha256` guarda el SHA-256 del archivo, que se guarda sin recodificar (CC-049 punto 6). Un índice único por árbol impide asociar dos veces el mismo original (409). Las 16 fotos de octubre reciben su huella solo si el MD5 del objeto en Storage coincide con el original local. **(4) Carga firmada (enmienda del punto 2).** Para originales que superan el cuerpo de una solicitud a la API se usan dos pasos: (a) el cliente declara tipo, tamaño (≤ 10 MB) y SHA-256; el backend aplica **todas** las reglas de la subida directa (rol, Inspector responsable, OT en ejecución, inspección preguardada, vista según D-27) y entrega un enlace de un solo uso a una ruta de staging `pendientes/{usuario}/{uuid}`, que decide el servidor; (b) el cliente sube a ese enlace; (c) al confirmar, el backend **vuelve a autorizar**, descarga el archivo, verifica el formato real con `sharp`, el tamaño y que la huella coincida con la declarada, rechaza duplicados y recién entonces mueve el archivo a su ruta definitiva y crea la fila. Si algo falla, el archivo de staging se borra. El cliente nunca elige la ruta, nunca lee el bucket y nada cuenta como foto sin la verificación del backend. **Se mantienen sin cambios** los puntos 1, 3, 5, 6, 7, 8 y 10 de CC-049: bucket privado, enlaces firmados de lectura de 10 minutos tras `assertProjectAccess`, 10 MB, jpg/png por contenido, fotos del Inspector sin recodificar, rutas solo con ids. |
+| Motivo | Asociar todas las fotos originales válidas al ejemplar correcto sin inventar vistas, sin duplicar archivos ni evaluaciones y sin reducir la resolución de la evidencia del Inspector. |
+| Fundamento / fuente | Decisiones A, B, G y H de la responsable (2026-11-16). D-27; CC-049; PR-010 v4.0. |
+| Archivos afectados | `database/migrations/039_fotos_detalle_ubicacion_borradores.sql`/`.down.sql`; `src/repositories/sivu/photo.repository.ts`; `src/services/sivu/photo.service.ts`; `src/schemas/sivu/fotos.schema.ts`; `src/controllers/sivu/integracionArbol.controller.ts`; `src/routes/sivu/{project,inspection}.routes.ts`; `src/services/rules/engine/catalogs.ts` (`vista_foto` = «Detalle»); frontend: `src/api/fotosFirmadas.ts`, `src/api/inspections.ts`, `src/pages/InspectionFormPage.tsx`, `src/components/TreePhotos.tsx`, `src/types/inspection.ts`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Sí, menor: el dominio de la vista fotográfica suma «Detalle» (opcional, no obligatoria). D-27 no cambia. Llevar a la próxima versión del paquete. |
+| Impacto en BD | Migración 039: CHECK de `photos.vista` + `detalle`; `photos.sha256` con formato verificado e índice único `(tree_id, sha256)`. Sin policies nuevas: todo sigue pasando por `service_role` desde el backend. |
+| Impacto en backend / API | `GET`/`POST /api/sivu/projects/:id/trees/:treeId/photos`; `POST …/photos/upload-url` y `…/confirm` (árbol e inspección); deduplicación por huella en todas las subidas de originales. |
+| Impacto en frontend | Quinta casilla «Detalle (opcional)» en el formulario de inspección. Los archivos de más de 4 MB usan la carga firmada sin reducirse. La ficha interna muestra todas las fotos del ejemplar agrupadas por origen. |
+| Pruebas necesarias | `integracion039.test.ts`: detalle aceptado y fuera de D-27; duplicado → 409 sin subir; duplicado concurrente → 409 y archivo borrado; registro solo municipal o inspector y solo en árboles del proyecto; solicitar firmada con OT no en ejecución → 422 sin enlace; confirmar con huella distinta → 422 y staging borrado; archivo que no es imagen → 400 y staging borrado; sin carga → 404; confirmación correcta → se mueve y se registra con la huella. En el ensayo: AV_000007 F16 (5,27 MB) por carga firmada y verificación de que no quedan objetos en `pendientes/`. |
+| Dependencias | CC-049; D-27. |
+| rule_version | sin cambio |
+| Aprobado por | Valej |
+| Fecha de aprobación | 2026-11-16 |
+| Fecha de implementación | — (rama `feature/integracion-av-001-012`, sin publicar) |
+| Commits / PR asociados | Pendiente |
+| Observaciones | Objetos de staging abandonados (el cliente nunca confirma): quedan en `pendientes/` sin fila. Se detectan con la verificación nº 3 de `99_verificacion.sql`; falta una limpieza periódica (mejora futura). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-16 | EN REVISIÓN | Valej | Borrador redactado durante la integración AV_000001–012. |
+| 2026-11-16 | APROBADO | Valej | Aprobado con la condición de que el número esté libre (verificado en todas las ramas de backend y frontend). Enmienda los puntos 2 y 9 de CC-049 sin modificar su texto. |
+
+---
+
+### CC-074 — Foto pública del ejemplar a partir de sus fotografías (RETIRADA)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-16 |
+| Origen | Decisión I de la integración AV_000001–012: mostrar fotografías del ejemplar en la ficha pública de Valpo Verde Conecta. |
+| Tipo | 3 — permisos y endpoint público |
+| Estado | **RETIRADA (2026-11-16), sin implementación** |
+| Motivo del retiro | La responsable delimitó el alcance: la integración AV_000001–012 abarca solo la plataforma interna de SIVU (inventario, evaluaciones, fotografías y su visualización en la ficha interna). La ficha pública de Valpo Verde Conecta —página del QR, diseño, contenido ciudadano, fotos de presentación y el mecanismo de la foto principal— es responsabilidad de Mari y no se modifica ni se integra en esta tarea. |
+| Efecto | **CC-062 no se enmienda.** La migración 039 no toca `fn_ficha_publica_arbol` ni `photos` tiene columnas de publicación; el backend de la integración no tiene rutas de publicación; los contratos de Conecta quedan intactos. La publicación de los árboles no depende de la ficha pública. |
+| Aprobado por | Valej (retiro) |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-16 | EN REVISIÓN | Valej | Borrador: copias derivadas en el bucket privado, enlaces firmados y galería. |
+| 2026-11-16 | APROBADO | Valej | Foto principal preferentemente vista general; las demás solo si se autorizan. |
+| 2026-11-16 | REDEFINIDO | Valej | Alineado con la ficha pública editable de Mari (detectada en la base de pruebas). |
+| 2026-11-16 | RETIRADO | Valej | Delimitación del trabajo: la ficha pública es de Mari; esta integración no la modifica. Probado solo en el ensayo aislado y eliminado de la rama. |
+---
+
+### CC-075 — Corrección autorizada de la ubicación del inventario y vínculo del identificador de origen
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-16 |
+| Origen | Decisiones 2, 4 y F de la responsable (2026-11-16): coordenadas UTM actualizadas desde el Excel de ubicaciones, con trazabilidad, sin exigir finalizar una inspección y sin que el recálculo las revierta; `legacy_id` (AV_NNNNNN) vinculado a cada árbol. No se pidió como CC, pero cambia cómo se registra un dato del inventario fuera de una OT, así que no se deja implícito. |
+| Tipo | 2 — operativo (+3, modelo de datos) |
+| Estado | APROBADO (implementación lista en rama; pendiente de ensayo y publicación) |
+| Regla / campo afectado | D-7 a D-10 (sector, ubicación descriptiva, UTM); REGLAS_GENERALES fila 12 (historial con lo que fue vigente); `fn_refresh_tree_current` (021/025); `trees.legacy_id`. |
+| Versión anterior | La ubicación vigente sale del alta o de la última inspección finalizada de una OT completada que la haya registrado. No existe otra vía. `legacy_id` solo puede escribirse por SQL. |
+| Versión nueva | **(1)** El Usuario municipal puede corregir sector, ubicación descriptiva o coordenadas (estas dos, juntas) con **motivo obligatorio**. **(2)** La corrección queda como una versión nueva en `tree_data_versions` (`origen = correccion_ubicacion`, con autor y motivo), visible en el historial de la ficha. **(3)** `fn_refresh_tree_current` toma la ubicación del registro más reciente entre las inspecciones válidas y las correcciones (por fecha de la OT o de la corrección), así que un recálculo no la revierte. Una inspección posterior que registre la ubicación la reemplaza, igual que hoy. **(4)** Es idempotente (si ya está vigente no escribe) y valida el sector con los triggers existentes. **(5)** `legacy_id` se asigna solo si está vacío. **Nunca se reasigna:** el mismo valor responde sin cambios, y otro valor o uno de otro árbol, 409. |
+| Motivo | Usar las coordenadas actualizadas del Excel sin inventar inspecciones ni perder la versión anterior. |
+| Fundamento / fuente | Decisiones 2, 4 y F (2026-11-16). D-7 a D-10. |
+| Archivos afectados | Migración 039 (`tree_data_versions.origen`/`motivo` y su CHECK; parche de `fn_refresh_tree_current`; `fn_corregir_ubicacion_arbol`); `src/repositories/sivu/tree.repository.ts`; `src/services/sivu/tree.service.ts`; `src/schemas/sivu/arboles.schema.ts`; `src/services/sivu/fichaArbol.service.ts` y su repositorio (historial). |
+| Impacto en Excel metodológico | Por confirmar: puede requerir una nota en REGLAS_GENERALES sobre las correcciones de inventario fuera de una OT. |
+| Impacto en BD | Ver «Archivos afectados». Verificado en solo lectura: los 11 árboles se reconstruyen exactamente desde `tree_data_versions` (el recálculo es seguro) y las anclas del parche existen en la función vigente. |
+| Impacto en API | `PATCH /api/sivu/projects/:id/trees/:treeId/ubicacion`; `PATCH …/legacy-id` (solo municipal). |
+| Pruebas necesarias | Esquema (motivo obligatorio, coordenadas juntas, al menos un campo); solo municipal; SV039 y SV046 → 422; historial con origen «corrección» y fecha en Chile; `legacy_id`: mismo valor, otro valor, valor ajeno y vacío. En el ensayo: corregir, completar luego una OT del mismo árbol sin ubicación registrada y comprobar que la corrección sigue vigente. |
+| Dependencias | REGLAS_GENERALES fila 12; migraciones 021 y 025; CC-073 (misma migración). |
+| rule_version | sin cambio |
+| Aprobado por | Valej |
+| Fecha de aprobación | 2026-11-16 |
+| Fecha de implementación | — (rama `feature/integracion-av-001-012`, sin publicar) |
+| Commits / PR asociados | Pendiente |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-16 | EN REVISIÓN | Valej | Borrador redactado durante la integración AV_000001–012. |
+| 2026-11-16 | APROBADO | Valej | Aprobado (corrección de coordenadas con historial y vínculo de legacy_id). |
+
+---
+
+### CC-076 — Conservación de variables retiradas al cambiar la metodología de un borrador
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-16 |
+| Origen | Decisión 5 de la responsable (2026-11-16) al aprobar la integración de la metodología 3.0 (CC-071) con `release/demo`. El borrador INS-000333 (A-000439, OT-I-000360 en ejecución) guarda `condicion_radicular_entorno`, que la 3.0 retira; el formulario arma el envío con los campos del esquema vigente y el guardado reemplaza `evaluations.variables` completo, así que el valor se perdería al guardar. |
+| Tipo | 3 — modelo de datos (protección de datos registrados) |
+| Estado | APROBADO EN PRINCIPIO (decisión 5); mecanismo pendiente de confirmar en el ensayo |
+| Regla / campo afectado | `evaluations.variables` de inspecciones en Preguardado; CC-040 (alcance por tipo); CC-063; CC-071. |
+| Versión anterior | Sin regla: un cambio de metodología que retira variables hace que el siguiente guardado del borrador las descarte. |
+| Versión nueva | **(1)** Antes de guardar un borrador, el backend copia a `evaluations.variables_retiradas` cada variable guardada que no está en el alcance vigente de su tipo/subtipo ni en el cuerpo nuevo, con su valor, la `rule_version` con que se registró y la fecha. **(2)** Solo agrega: nunca sobrescribe un valor ya conservado. **(3)** Esas variables no vuelven al cálculo, a la completitud ni a la API pública: solo se preservan. **(4)** Solo actúa cuando quien guarda es el Inspector responsable y la inspección está en Preguardado. **(5)** Las inspecciones finalizadas no se tocan ni se recalculan: conservan sus resultados y su `rule_version` (2.1). **(6)** No se agrega ni se rellena `condicion_radicular_entorno` ni ningún otro campo para cumplir la metodología anterior. |
+| Motivo | Que la actualización metodológica no elimine información ya registrada. |
+| Fundamento / fuente | Decisiones 2, 5 y 6 de la responsable (2026-11-16). CC-071. |
+| Archivos afectados | Migración 039 (`evaluations.variables_retiradas`); `src/repositories/sivu/inspection.repository.ts`; `src/services/sivu/inspection.service.ts`; `tests/services/sivu/integracion039_borradores.test.ts`. |
+| Impacto en Excel metodológico | Ninguno. |
+| Impacto en BD | Columna `evaluations.variables_retiradas` (JSONB, por defecto `{}`). El down de la 039 se detiene si hay valores conservados. |
+| Pruebas necesarias | Detecta solo variables fuera de alcance y no nulas; una variable vigente omitida no se considera retirada; se conserva antes de guardar y con la `rule_version` de origen; un Inspector no responsable o una inspección finalizada no escriben nada. En el ensayo: un borrador 2.1 con `condicion_radicular_entorno` guardado con la 3.0 conserva el valor. |
+| Dependencias | CC-071, CC-063, CC-040. |
+| rule_version | sin cambio |
+| Aprobado por | Valej (en principio, decisión 5) |
+| Fecha de aprobación | 2026-11-16 |
+| Commits / PR asociados | Pendiente |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-16 | APROBADO EN PRINCIPIO | Valej | Decisión 5: proteger INS-000333 y los demás borradores. Mecanismo por confirmar en el ensayo. |

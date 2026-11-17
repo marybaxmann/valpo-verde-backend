@@ -11,6 +11,10 @@ import {
   listarFotosInspeccionController,
   subirFotoInspeccionController,
 } from "../../controllers/sivu/photo.controller";
+import {
+  confirmarSubidaInspeccionController,
+  solicitarSubidaInspeccionController,
+} from "../../controllers/sivu/integracionArbol.controller";
 
 /** Montado en /api/sivu/inspections (#58). */
 import { anularInspeccionController } from "../../controllers/sivu/cierreOt.controller";
@@ -26,6 +30,9 @@ router.patch("/:inspectionId", authMiddleware, guardarBorradorInspeccionControll
 // evidencia). Listar: cualquier rol con acceso al proyecto.
 router.post("/:inspectionId/photos", authMiddleware, subirFotoUnica, subirFotoInspeccionController);
 router.get("/:inspectionId/photos", authMiddleware, listarFotosInspeccionController);
+// 039 — Carga firmada (originales > 4,5 MB, límite del cuerpo en Vercel): mismas reglas que la subida directa.
+router.post("/:inspectionId/photos/upload-url", authMiddleware, solicitarSubidaInspeccionController);
+router.post("/:inspectionId/photos/confirm", authMiddleware, confirmarSubidaInspeccionController);
 // Quitar una foto subida por error: solo el Inspector responsable y solo en Preguardado.
 router.delete("/:inspectionId/photos/:photoId", authMiddleware, eliminarFotoInspeccionController);
 

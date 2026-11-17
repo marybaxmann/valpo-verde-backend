@@ -13,3 +13,8 @@ const formatoFecha = new Intl.DateTimeFormat("en-CA", {
 export function hoyEnChile(): string {
   return formatoFecha.format(new Date());
 }
+
+/** Día en Chile (AAAA-MM-DD) de un instante ISO (039: vigencia de una corrección de ubicación). */
+export function fechaEnChile(instante: string): string {
+  return formatoFecha.format(new Date(instante));
+}
