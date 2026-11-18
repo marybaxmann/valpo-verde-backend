@@ -8,6 +8,7 @@ import {
 } from "./alcanceInspeccion";
 import { esCodigoVigente } from "../../services/rules/engine/catalogs";
 import { altaPorLevantamientoSchema } from "./arboles.schema";
+import { validarFisiologiaCopa } from "../../services/sivu/fisiologiaCopa";
 
 /**
  * Subconjunto de ARBOLES que el Inspector puede corregir desde una
@@ -145,7 +146,12 @@ const camposComunesInspeccion = {
  * el aviso en `alcanceInspeccion.ts`.
  */
 function validarAlcanceVariables(
-  data: { tipo_inspeccion_realizada: string; subtipo_inspeccion?: string | null; variables: Record<string, unknown> },
+  data: {
+    tipo_inspeccion_realizada: string;
+    subtipo_inspeccion?: string | null;
+    variables: Record<string, unknown>;
+    campos_arbol?: { copa_no_presenta?: boolean | null };
+  },
   ctx: z.RefinementCtx
 ): void {
   if (!tipoSubtipoValido(data.tipo_inspeccion_realizada, data.subtipo_inspeccion ?? null)) {
@@ -229,6 +235,10 @@ function validarAlcanceVariables(
         message: `"${clave}" es Sí / No: debe ser true, false o null: ${JSON.stringify(valor)}`,
       });
     }
+  }
+
+  for (const { campo, motivo } of validarFisiologiaCopa(data.variables, data.campos_arbol?.copa_no_presenta === true)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["variables", campo], message: motivo });
   }
 }
 
