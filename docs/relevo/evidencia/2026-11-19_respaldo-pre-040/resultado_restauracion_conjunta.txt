@@ -1,0 +1,13 @@
+﻿Restauración conjunta (auth + storage + public) · 2026-11-19T00:37:02
+Respaldo: 2026-11-19_0011 · PostgreSQL 17 + PostGIS 3.5 en Docker (postgis/postgis:17-3.5)
+
+Resultado: APROBADA
+  user_profiles_id_fkey existe: True · validada: True · referencias huérfanas: 0
+  FK hacia auth.users en total: 1 · todas validadas: True
+  public: 35 tablas, 9988 filas esperadas · auth y storage: 37 tablas con datos, 1305 filas esperadas (contadas en el dump)
+  auth.users restaurados: 9 · storage.objects restaurados: 932
+  Diferencias de conteo: ninguna
+  Errores de pg_restore: 1 (0 inesperados)
+    - pg_restore: error: could not execute query: ERROR:  schema "public" already exists
+
+Procedimiento reproducible: tools/respaldo-sivu/probar_restauracion.ps1 (en el repositorio: scripts/respaldo/).

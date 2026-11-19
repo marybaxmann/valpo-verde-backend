@@ -1,0 +1,11 @@
+﻿Respaldo SIVU · gmlbmyreoxgoqrolhyxo · 2026-11-19T00:11:48
+
+public.dump · 0.65 MB · 475 objetos · SHA-256 1B01CA74AC1E6EF577C1A9B8B8A6977D6AE77F8D61E44A52F0368D04015C61A2
+auth_storage.dump · 0.14 MB · 38 objetos · SHA-256 404310365AC087DB140E46259B7538976122CB8E8E58626301E0927C29AB03BC
+conteos_origen.csv · 35 tablas de public
+
+Restauracion probada 2026-11-19T00:17:32 en PostgreSQL 17 + PostGIS (Docker, base temporal):
+  35 de 35 tablas y 9988 de 9988 filas coinciden con conteos_origen.csv.
+  Historial de migraciones (131) y fn_finalizar_inspeccion restaurados.
+  2 errores esperados: el esquema public ya existia; la FK user_profiles -> auth.users no se creo porque la prueba no cargo las cuentas completas (estan en auth_storage.dump).
+  Detalle en restauracion_prueba.txt.
