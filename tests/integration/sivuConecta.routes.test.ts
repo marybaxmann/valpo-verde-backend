@@ -27,6 +27,7 @@ import { getAuthUserByToken } from "../../src/repositories/auth.repository";
 import { findUserProfileById } from "../../src/repositories/userProfile.repository";
 import { findMembership } from "../../src/repositories/projectMember.repository";
 import {
+  borrarIncidencia,
   crearIncidenciaCiudadana,
   listarIncidenciasProyecto,
   obtenerEstadoSeguimiento,
@@ -51,6 +52,7 @@ const mPurgar = purgarHuellasVencidas as jest.Mock;
 const mListar = listarIncidenciasProyecto as jest.Mock;
 const mObtener = obtenerIncidencia as jest.Mock;
 const mRevisar = revisarIncidencia as jest.Mock;
+const mBorrarInc = borrarIncidencia as jest.Mock;
 const mSubir = subirArchivoAStorage as jest.Mock;
 const mBorrar = eliminarArchivoDeStorage as jest.Mock;
 const mMiembros = obtenerMiembrosDeProyecto as jest.Mock;
@@ -384,6 +386,66 @@ describe("B9 y revisión (internas)", () => {
       .set(auth)
       .send({ estado_incidencia: "en_revision", resultado_revision: "requiere_antecedentes" });
     expect(res.status).toBe(422);
+  });
+
+  describe("borrar una incidencia (CC-079)", () => {
+    const url = `/api/sivu/projects/${PROJECT_ID}/incidencias/${INCIDENT_ID}`;
+
+    it("solo el Usuario municipal: el Inspector recibe 403 y no se borra nada", async () => {
+      como("inspector");
+      mBorrarInc.mockClear();
+      const res = await request(app).delete(url).set(auth).send({ motivo: "Reporte de prueba" });
+      expect(res.status).toBe(403);
+      expect(mBorrarInc).not.toHaveBeenCalled();
+    });
+
+    it("sin motivo: 400 antes de llamar a la base", async () => {
+      como("municipal");
+      mBorrarInc.mockClear();
+      const res = await request(app).delete(url).set(auth).send({});
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/motivo/);
+      expect(mBorrarInc).not.toHaveBeenCalled();
+    });
+
+    it("borra y elimina los archivos de las fotos; devuelve las OT borradas", async () => {
+      como("municipal");
+      mObtener.mockResolvedValue(fila);
+      mBorrar.mockClear();
+      mBorrarInc.mockResolvedValue({
+        codigo_incidencia: "INC-000001",
+        ots_borradas: [{ codigo_ot: "OT-I-000001", tipo_ot: "inspeccion", estado_ot: "pendiente" }],
+        fotos_borradas: ["incidencias/a/1.jpg"],
+      });
+      const res = await request(app).delete(url).set(auth).send({ motivo: "  Reporte de prueba  " });
+      expect(res.status).toBe(200);
+      expect(mBorrarInc).toHaveBeenCalledWith({ incidentId: INCIDENT_ID, usuario: MUNICIPAL_ID, motivo: "Reporte de prueba" });
+      expect(res.body.data).toEqual({
+        codigo_incidencia: "INC-000001",
+        ots_borradas: [{ codigo_ot: "OT-I-000001", tipo_ot: "inspeccion", estado_ot: "pendiente" }],
+        fotos_borradas: 1,
+      });
+      expect(mBorrar).toHaveBeenCalledWith("incidencias/a/1.jpg");
+    });
+
+    it("OT con trabajo técnico (SV083): 409 y no se borran archivos", async () => {
+      como("municipal");
+      mObtener.mockResolvedValue(fila);
+      mBorrar.mockClear();
+      mBorrarInc.mockRejectedValue(new Error("No se puede borrar: una OT vinculada ya tiene inspección", { cause: "SV083" }));
+      const res = await request(app).delete(url).set(auth).send({ motivo: "Reporte de prueba" });
+      expect(res.status).toBe(409);
+      expect(mBorrar).not.toHaveBeenCalled();
+    });
+
+    it("incidencia de otro proyecto o inexistente: 404", async () => {
+      como("municipal");
+      mObtener.mockResolvedValue(null);
+      mBorrarInc.mockClear();
+      const res = await request(app).delete(url).set(auth).send({ motivo: "Reporte de prueba" });
+      expect(res.status).toBe(404);
+      expect(mBorrarInc).not.toHaveBeenCalled();
+    });
   });
 
   it("placas QR: solo el Usuario municipal", async () => {

@@ -3280,3 +3280,40 @@ motivo)
 | 2026-11-16 | APROBADO METODOLÓGICAMENTE | marybaxmann | Aprueba el CC y las filas con la excepción de la foto del olmo (campo nuevo D-293, `foto_referencial_temporal`) y el pendiente de fotos oficiales. Filas copiadas al Excel (D-280 a D-307), hoja FICHAS_PUBLICAS y listas Icono_aporte y Bloque_contenido; export regenerado; `verificar_14_9.py` sin hallazgos; Jest 1705/1705. PR-003 v9.0, PR-004 v8.0 y PR-022 v3.0 en `docs/project-rules.md`. Falta: VERSION 3.0.1, `00-index.md` y tag para FUENTE SINCRONIZADA; la 037 no se aplicó (requiere autorización). |
 | 2026-11-16 | APROBADO METODOLÓGICAMENTE | Claude (autorizado por marybaxmann) | 037 aplicada en la base de pruebas `gmlbmyreoxgoqrolhyxo` el 2026-11-16 con autorización de Mari (`database/migrations/037_ficha_publica_editable.sql`): ciclo completo aplicar → pruebas → revertir → reaplicar → pruebas; md5 de up y down iguales a los archivos; la reversión deja `fn_ficha_publica_arbol` idéntica a la 028 (md5 y privilegios). Pruebas `database/fase6/pruebas_037_ficha_publica.sql` F1 a F7 OK. Carga inicial (`database/cargas/2026-11-16_contenido_conecta.mjs` y `.json`): textos y fuentes por bloque de las 6 especies, 4 fotos de «Reconóceme» del levantamiento y la foto del olmo como temporal; sin metadatos. No se cargaron las fotos referenciales de las otras 5 especies ni la «Silueta» de la araucaria: sin autor ni licencia registrados (D-292). Sigue faltando VERSION 3.0.1, `00-index.md` y tag para FUENTE SINCRONIZADA. |
 | 2026-11-19 | APROBADO METODOLÓGICAMENTE | Claude (autorizado por marybaxmann) | Renumerado de CC-073 a CC-078 al integrar la rama en `feature/fase6-backend-api`: CC-073 ya era el de fotografías (Valej). Las migraciones 037 y 038 y las cargas del 2026-11-16, ya aplicadas en la base de pruebas, conservan en sus comentarios la numeración del borrador (CC-073). |
+
+---
+
+### CC-079 — Borrado de incidencias por el Usuario municipal, con registro de trazabilidad (PR-022 v4.0, PR-003 v10.0)
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-19 |
+| Origen | Pedido de la responsable (2026-11-19): poder borrar desde el rol municipal las incidencias de prueba. |
+| Tipo | 3 — modelo de datos y permisos (+4, endpoint) |
+| Estado | APROBADO (implementación en rama; migración 042 pendiente de autorización para la base de pruebas) |
+| Regla / campo afectado | PR-022 v3.0 (incidencias: solo revisión, sin borrado); PR-003 v9.0 (Usuario municipal); `incidents`, `photos`, `incident_reporters`, `work_orders`. |
+| Versión anterior | Una incidencia no se borra: solo se revisa (Validada, Descartada, Requiere antecedentes). «Descartada» borra las fotos y el nombre y RUT, pero la incidencia queda. |
+| Versión nueva | **(1)** El Usuario municipal miembro del proyecto borra una incidencia en cualquier estado, con un motivo (3 a 300 caracteres). **(2)** Borrado real: incidencia, fotos (filas y archivos), nombre y RUT del reportante y OT vinculadas por `incident_id`; el código de seguimiento deja de funcionar. **(3)** Límite: no se borra nada si alguna OT vinculada tiene inspección, mantención o evaluación registrada (`inspections`, `maintenance_records`, `tree_assessments`). **(4)** Trazabilidad: tabla `incident_deletions` con proyecto, código, árbol (`tree_code`), tipo, origen, estado y resultado de revisión que tenía, fecha del reporte, OT borradas (código, tipo, estado), cantidad de fotos, motivo, quién y cuándo; sin nombre, RUT ni descripción. La leen el Administrador y los miembros del proyecto; nadie la escribe directo. **(5)** Proyecto Cerrado: no se borra (trigger existente). |
+| Motivo | Limpiar reportes de prueba o ingresados por error sin perder la trazabilidad de que existieron. |
+| Fundamento / fuente | Decisiones de la responsable (marybaxmann), 2026-11-19: «borrado real con registro»; con OT vinculada, «se puede borrar con la OT pero debe quedar la trazabilidad». El límite del punto (3) protege el historial técnico del árbol (PR-018, versiones vigentes). |
+| Archivos afectados | `database/migrations/042_borrar_incidencias.sql`/`.down.sql`; `src/repositories/sivu/conecta.repository.ts`; `src/services/sivu/incidencia.service.ts`; `src/controllers/sivu/conecta.controller.ts`; `src/schemas/sivu/conecta.schema.ts`; `src/routes/sivu/project.routes.ts`; `tests/integration/sivuConecta.routes.test.ts`; `docs/project-rules.md`; `docs/api/contrato-frontend.md`. Frontend: `IncidenciaPage`, `IncidentsPage`, `api/incidencias.ts`. |
+| Impacto en diagramas | Ninguno. |
+| Impacto en Excel metodológico | Ninguno en campos ni reglas existentes. Pendiente decidir si el registro de borrados entra a DICCIONARIO_CAMPOS (es operativo, no metodológico). |
+| Impacto en BD | Migración 042: tabla `incident_deletions` con RLS de lectura (Administrador y miembros) y función `fn_borrar_incidencia` (SECURITY DEFINER, EXECUTE solo `service_role`), con errores SV082 (validación) y SV083 (OT con trabajo). |
+| Impacto en backend / API | `DELETE /api/sivu/projects/:id/incidencias/:incidentId` con `{ motivo }`: 200 `{ codigo_incidencia, ots_borradas, fotos_borradas }`; 400 sin motivo; 403 otro rol; 404 no existe en el proyecto; 409 OT con trabajo o proyecto cerrado; 422 rechazo de la función. Borra los archivos de las fotos después de la transacción. |
+| Impacto en frontend | Detalle de la incidencia: acción «Borrar» solo para el Usuario municipal, con confirmación que nombra las OT que se borran y pide el motivo; vuelve a la bandeja con el aviso. |
+| Pruebas necesarias | Jest: 403 otro rol, 400 sin motivo, 200 con archivos borrados y OT devueltas, 409 con SV083 sin borrar archivos, 404. SQL sobre copia aislada: borrado con y sin OT, bloqueo con OT con inspección, registro sin datos personales, rol y membresía, proyecto cerrado. |
+| Dependencias | CC-036, CC-049, CC-062. |
+| rule_version | sin cambio |
+| Aprobado por | marybaxmann (Mari) |
+| Fecha de aprobación | 2026-11-19 |
+| Fecha de implementación | — |
+| Commits / PR asociados | — |
+| Observaciones | En la base de pruebas, al 2026-11-19, hay 6 incidencias; solo INC-000017 (QA) tiene OT (OT-I-000358, pendiente y sin inspección). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-19 | APROBADO | marybaxmann | Decide borrado real con registro y borrado conjunto de la OT con trazabilidad. |
+

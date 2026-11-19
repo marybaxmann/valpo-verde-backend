@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../utils/AppError";
 import {
+  borradoIncidenciaSchema,
   incidenciaParamsSchema,
   listarIncidenciasQuerySchema,
   qrArbolParamsSchema,
@@ -12,7 +13,7 @@ import {
 } from "../../schemas/sivu/conecta.schema";
 import { proyectoIdParamSchema } from "../../schemas/sivu/proyectos.schema";
 import { ARBOL_NO_ENCONTRADO, consultarSeguimiento, crearReporteCiudadano, fichaPublica } from "../../services/sivu/conecta.service";
-import { detalleIncidencia, listarIncidencias, revisar } from "../../services/sivu/incidencia.service";
+import { borrar, detalleIncidencia, listarIncidencias, revisar } from "../../services/sivu/incidencia.service";
 import { generarPlacasQr, generarQrArbol } from "../../services/sivu/placasQr.service";
 import { catalogosVigentes } from "../../services/sivu/diagnostico.service";
 
@@ -98,6 +99,19 @@ export async function revisarIncidenciaController(req: Request, res: Response, n
     const body = revisionIncidenciaSchema.safeParse(req.body);
     if (!body.success) throw new AppError(primerMensaje(body), 400);
     res.status(200).json({ data: await revisar(req.user!, params.data.id, params.data.incidentId, body.data, req.accessToken!) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** DELETE /api/sivu/projects/:id/incidencias/:incidentId — borrado con registro (CC-079). */
+export async function borrarIncidenciaController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const params = incidenciaParamsSchema.safeParse(req.params);
+    if (!params.success) throw new AppError(primerMensaje(params), 400);
+    const body = borradoIncidenciaSchema.safeParse(req.body ?? {});
+    if (!body.success) throw new AppError(primerMensaje(body), 400);
+    res.status(200).json({ data: await borrar(req.user!, params.data.id, params.data.incidentId, body.data, req.accessToken!) });
   } catch (err) {
     next(err);
   }

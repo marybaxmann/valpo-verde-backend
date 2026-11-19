@@ -512,9 +512,11 @@ Afecta:
 - permisos
 - RLS
 
-## PR-003 — Rol Usuario municipal (v9.0)
-Estado: vigente
+## PR-003 — Rol Usuario municipal (v9.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 9.0
+Reemplazada por: PR-003 v10.0
+Motivo del reemplazo: no incluía el borrado de incidencias con registro (CC-079).
 Reemplaza: PR-003 v8.0
 Origen: CC-026, CC-032, CC-039, CC-078
 Motivo: el Usuario municipal mantiene el contenido ciudadano de Valpo Verde Conecta: textos y fotos de las especies y fichas públicas de los árboles de sus proyectos (CC-078). Sin otros cambios respecto de v8.0.
@@ -531,6 +533,43 @@ Puede:
 - crear órdenes de trabajo, incluidas las OT de Levantamiento, y actualizar su estado (CC-022); las OT de Mantenimiento las completa el Sistema (PR-020 v1.0). La prioridad de la OT se propone por defecto desde la `clasificacion_prioridad` vigente del árbol y puede modificarla;
 - definir, al crear una OT de Mantenimiento, si requiere revisión del Inspector (`requiere_revision_inspector`); Tala y Retiro_tocón la exigen siempre;
 - reportar, revisar y consultar incidencias, y actualizar su estado (CC-022);
+- editar el contenido ciudadano de las especies (CATALOGO_ESPECIES, desde `nombre_comun_visualizacion`) y la ficha pública de los árboles de sus proyectos (FICHAS_PUBLICAS), con sus fotografías públicas. Publica al guardar, sin borrador ni aprobación (PR-022 v3.0, CC-078). El contenido de una especie es común a todos los proyectos.
+
+No realiza:
+- registro ni modificación de datos técnicos del árbol (fustes, DAP, altura, copa, clase de edad, edad estimada) ni evaluaciones técnicas; las modificaciones posteriores al alta las realiza el Inspector mediante OT;
+- revisión de ejecuciones de mantenimiento;
+- registro ni modificación del catálogo de especies ni de sus características botánicas (D-257 a D-262; PR-019 v1.2), aunque sí edita su contenido ciudadano (CC-078);
+- cálculo de severidades, puntajes o priorización técnica;
+- modificación manual de resultados calculados.
+
+Identificadores de los demás roles: `admin`, `inspector` y `encargado_mantencion` (CC-032). El rol es global y un usuario puede pertenecer a varios proyectos (PR-005 v3.0).
+
+Afecta:
+- frontend
+- backend
+- permisos
+- RLS
+
+## PR-003 — Rol Usuario municipal (v10.0)
+Estado: vigente
+Versión: 10.0
+Reemplaza: PR-003 v9.0
+Origen: CC-026, CC-032, CC-039, CC-078, CC-079
+Motivo: el Usuario municipal puede borrar incidencias de sus proyectos con motivo y registro de trazabilidad (CC-079). Sin otros cambios respecto de v9.0.
+
+- Identificador interno: `usuario_municipal`
+- Etiqueta de interfaz: `Usuario municipal`
+- "Acceder a su proyecto asignado" significa que exista una fila en `project_members` para ese usuario y proyecto (PR-005 v3.0, ADR-005 v2.0).
+
+Puede:
+- acceder a su proyecto asignado;
+- ver dashboard básico;
+- consultar inventario, resultados técnicos e indicadores básicos;
+- registrar el alta de un árbol solo con el nombre común o científico y la ubicación: coordenadas UTM, sector y descripción del lugar (PR-006 v10.0). No ingresa características de la especie: se obtienen del catálogo (CC-039);
+- crear órdenes de trabajo, incluidas las OT de Levantamiento, y actualizar su estado (CC-022); las OT de Mantenimiento las completa el Sistema (PR-020 v1.0). La prioridad de la OT se propone por defecto desde la `clasificacion_prioridad` vigente del árbol y puede modificarla;
+- definir, al crear una OT de Mantenimiento, si requiere revisión del Inspector (`requiere_revision_inspector`); Tala y Retiro_tocón la exigen siempre;
+- reportar, revisar y consultar incidencias, y actualizar su estado (CC-022);
+- borrar incidencias de sus proyectos (pruebas o ingresos por error), con motivo y registro de trazabilidad; también las OT vinculadas sin trabajo técnico (PR-022 v4.0, CC-079);
 - editar el contenido ciudadano de las especies (CATALOGO_ESPECIES, desde `nombre_comun_visualizacion`) y la ficha pública de los árboles de sus proyectos (FICHAS_PUBLICAS), con sus fotografías públicas. Publica al guardar, sin borrador ni aprobación (PR-022 v3.0, CC-078). El contenido de una especie es común a todos los proyectos.
 
 No realiza:
@@ -2669,9 +2708,11 @@ Afecta:
 - base de datos
 - permisos
 - RLS
-## PR-022 — Incidencias ciudadanas y datos del reportante (v3.0)
-Estado: vigente
+## PR-022 — Incidencias ciudadanas y datos del reportante (v3.0 — REEMPLAZADA)
+Estado: reemplazada
 Versión: 3.0
+Reemplazada por: PR-022 v4.0
+Motivo del reemplazo: no permitía borrar incidencias de prueba o ingresadas por error (CC-079).
 Reemplaza: PR-022 v2.0
 Origen: CC-036, CC-062, CC-078
 Motivo: la ficha pública suma contenido ciudadano por especie y por árbol, editable por la municipalidad sin cambiar el frontend (CC-078). Sin otros cambios respecto de v2.0, cuyo motivo era: participación ciudadana (Valpo Verde Conecta) sin cuentas ciudadanas ni datos personales nuevos: placas QR, ficha pública y código de seguimiento (CC-062), sobre el canal de reporte y la protección de los datos del reportante de PR-022 v1.0 (CC-036).
@@ -2698,6 +2739,66 @@ Requiere antecedentes:
 - No significa pedirle información al reportante: el Inspector confirma en terreno el estado del árbol.
 - El Usuario municipal crea una OT de Inspección del árbol vinculada a la incidencia mediante `id_incidencia`; elige la `Accion_solicitada` entre las de Inspección (no se fija). Con el resultado de esa inspección registra Validada o Descartada.
 - Si la incidencia validada requiere mantenimiento, la OT de Mantenimiento también se vincula con `id_incidencia`.
+
+Valpo Verde Conecta (CC-062):
+- No existen cuentas ni un rol ciudadano.
+- Placas QR: cada árbol se identifica en su placa por `qr_token` (aleatorio; nunca el `tree_code`, que es correlativo). Un UUID aleatorio basta porque no es secreto: está impreso en la placa. Las placas las genera el Usuario municipal desde el proyecto, en un archivo imprimible.
+- Ficha pública del árbol (por `qr_token`): muestra `especie_cientifica`, `nombre_comun` (o el nombre de visualización de la especie) y `ubicacion_descriptiva`, más el contenido ciudadano descrito abajo. No muestra el nivel de riesgo ni ningún otro resultado técnico, ni el `tree_code`, las coordenadas, el proyecto, inspecciones, fotos o incidencias.
+- «Sobre esta especie»: los campos botánicos de CATALOGO_ESPECIES (`especie_cientifica`, `genero`, `familia`, `origen_biogeografico`, `persistencia_follaje`, `tipo_hoja`), con sus reglas de presentación del Excel.
+- Contenido ciudadano (CC-078):
+  - **Por especie** (CATALOGO_ESPECIES, D-280 a D-295): nombre de visualización y artículo, curiosidad, hasta 2 aportes, quién soy, hasta 3 rasgos de reconocimiento, año por estaciones o ciclo, historia de la especie, consejo, fuentes por bloque y foto referencial. Lo comparten todos los ejemplares y es común a todos los proyectos.
+  - **Por árbol** (FICHAS_PUBLICAS, D-296 a D-307), solo lo que difiere: interruptores para mostrar clase de edad, altura, DAP, copa y edad estimada (en No por defecto); «Mi historia» y su fuente; una foto pública propia, distinta de D-27; textos que reemplazan la curiosidad, «quién soy» o el consejo de la especie. Los rasgos, el año y la historia de la especie no se personalizan.
+  - Lo editan el Usuario municipal (para los árboles de sus proyectos) y el Administrador (PR-003 v9.0, PR-004 v8.0). Se publica al guardar, sin borrador, aprobación ni versionado. El Inspector conserva los datos botánicos (CC-053) y no edita contenido ciudadano.
+  - Las medidas salen solo del valor vigente del inventario; sin valor no se muestra nada. Rótulos: DAP, altura y copa, «medida en terreno o estimada con escala»; edad estimada, «estimación»; clase de edad, «clasificación del Inspector».
+  - Fotografías: principal = la del ejemplar → la referencial de la especie, rotulada «Foto referencial de la especie» → «Fotografía no disponible». Todas sin metadatos, en un almacenamiento público separado de las fotos técnicas, con autor y licencia. Una foto de terceros solo se admite como referencial temporal marcada para reemplazo (`foto_referencial_temporal`). Antes de retirar «Prototipo» de Conecta, todas las fotos referenciales y de terceros se reemplazan por fotos oficiales de SIVU.
+  - La historia de la especie y «Mi historia» del ejemplar no se duplican. Un árbol sin especie vigente no muestra contenido de especie, pero sí lo propio del ejemplar.
+- Código de seguimiento: se entrega una sola vez al reportar y permite consultar solo el estado del reporte (`estado_incidencia`), sin datos personales. Es aleatorio, de al menos 128 bits, generado con un generador criptográfico; la base guarda solo su huella. Se consulta por el cuerpo de la solicitud, nunca en la URL, con un límite de 30 consultas por hora por IP; un código inexistente, vencido o mal formado recibe la misma respuesta. Sigue funcionando 90 días después de que el reporte queda Resuelto o Descartado; después se borra su huella.
+- La ficha y el seguimiento se leen con funciones de solo lectura (PR-018 v6.0).
+
+Afecta:
+- frontend
+- backend
+- base de datos
+- permisos
+- RLS
+
+## PR-022 — Incidencias ciudadanas y datos del reportante (v4.0)
+Estado: vigente
+Versión: 4.0
+Reemplaza: PR-022 v3.0
+Origen: CC-036, CC-062, CC-078, CC-079
+Motivo: el Usuario municipal puede borrar incidencias de prueba o ingresadas por error, con sus fotos, datos del reportante y OT sin trabajo técnico, dejando un registro de trazabilidad (CC-079). Sin otros cambios respecto de v3.0.
+
+Ingreso:
+- Toda incidencia entra por el código QR de un árbol (AMD-34), mediante un formulario público, sin cuenta ciudadana.
+- `id_arbol` y `ubicacion` se obtienen del árbol del QR. `origen_reporte` = Comunidad.
+- El reportante ingresa nombre (máximo 100 caracteres), RUT, tipo de incidencia, descripción y al menos una fotografía (PR-010 v3.0).
+- El RUT se valida en estructura y dígito verificador.
+- El endpoint público limita la cantidad de solicitudes y valida las fotografías. Escribe por el backend con la credencial de servicio (PR-018 v6.0).
+- Las fotografías ciudadanas siguen CC-049: se guardan sin metadatos, se conservan si el reporte se valida y se eliminan si se descarta.
+- Al reportar, la persona recibe un código de seguimiento (ver «Valpo Verde Conecta»).
+
+Visibilidad del nombre y del RUT:
+- Solo los ve el Usuario municipal miembro del proyecto del árbol.
+- No los ven el Administrador, el Inspector ni el Encargado de mantención. La API no los entrega en sus respuestas a esos roles, ni aparecen en exportaciones ni registros.
+
+Conservación del nombre y del RUT:
+- Se conservan hasta que la incidencia se aprueba o se rechaza (`resultado_revision` = Validada o Descartada), y en ese momento se eliminan los dos.
+- Con `resultado_revision` = Requiere antecedentes se conservan hasta la resolución final (Validada o Descartada).
+- No se registra ningún dato de contacto del reportante.
+
+Requiere antecedentes:
+- No significa pedirle información al reportante: el Inspector confirma en terreno el estado del árbol.
+- El Usuario municipal crea una OT de Inspección del árbol vinculada a la incidencia mediante `id_incidencia`; elige la `Accion_solicitada` entre las de Inspección (no se fija). Con el resultado de esa inspección registra Validada o Descartada.
+- Si la incidencia validada requiere mantenimiento, la OT de Mantenimiento también se vincula con `id_incidencia`.
+
+Borrado (CC-079):
+- Solo el Usuario municipal miembro del proyecto puede borrar una incidencia, en cualquier estado, indicando un motivo (3 a 300 caracteres). Pensado para reportes de prueba o ingresados por error; no reemplaza la revisión (Validada, Descartada).
+- El borrado es real: se eliminan la incidencia, sus fotografías (filas y archivos), el nombre y el RUT del reportante y las OT vinculadas por `id_incidencia`. El código de seguimiento deja de funcionar.
+- No se borra nada si alguna OT vinculada ya tiene una inspección, una mantención o una evaluación registrada: ese trabajo pudo cambiar los datos vigentes del árbol y su historial se conserva.
+- Trazabilidad: cada borrado deja una línea en el registro de incidencias borradas con el proyecto, el código de la incidencia, el árbol (`tree_code`), el tipo, el origen, el estado y el resultado de revisión que tenía, la fecha del reporte, las OT borradas (código, tipo y estado), la cantidad de fotos borradas, el motivo, quién borró y cuándo. No guarda nombre, RUT ni descripción.
+- El registro lo leen el Administrador y los miembros del proyecto; nadie lo edita ni lo borra.
+- Un proyecto Cerrado no admite borrados (solo consulta).
 
 Valpo Verde Conecta (CC-062):
 - No existen cuentas ni un rol ciudadano.
