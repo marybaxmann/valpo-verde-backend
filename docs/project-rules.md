@@ -1433,8 +1433,8 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-009 — Inspecciones (v6.0)
-Estado: vigente
+## PR-009 — Inspecciones (v6.0 — REEMPLAZADA)
+Estado: reemplazada por PR-009 v7.0 (CC-077)
 Versión: 6.0
 Reemplaza: PR-009 v5.0 (texto anterior: «Solo el Inspector anula inspecciones»)
 Origen: CC-040, CC-041, CC-067
@@ -1484,10 +1484,10 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-009 — Inspecciones (v7.0 — CANDIDATA)
-Estado: candidata; aprobada funcionalmente, pendiente de publicación del paquete 3.1.0
+## PR-009 — Inspecciones (v7.0)
+Estado: vigente
 Versión: 7.0
-Reemplazará: PR-009 v6.0 al entrar en vigencia
+Reemplaza: PR-009 v6.0
 Origen: CC-077
 
 - pertenecen a un árbol y a una OT de Inspección (Evaluación inicial, Reevaluación, Evaluación instrumental, Monitoreo o Levantamiento). Una OT de Levantamiento puede abarcar varios árboles aún no identificados al crearla; su alcance es el proyecto y el área de trabajo descrita en la OT;
@@ -1495,7 +1495,7 @@ Origen: CC-077
 - tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado **dentro del alcance de su tipo** (ver "Alcance"); `Finalizado` cuando están completas; `Anulado` cuando el Usuario municipal anula una inspección finalizada (CC-031; CC-067). Preguardado y Finalizado equivalen a `borrador` y `completada` de ADR-007;
 - admiten guardado parcial;
 - "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
-- Evaluación inicial, Reevaluación y Levantamiento requieren un mínimo de dos fotografías válidas, físicamente distintas, asociadas a esta inspección. Las vistas árbol completo, base, tronco y copa son recomendadas. La falta de categorías genera una advertencia informativa. Evaluación instrumental y Monitoreo conservan su tratamiento (PR-010 v5.0 candidata).
+- Evaluación inicial, Reevaluación y Levantamiento requieren un mínimo de dos fotografías válidas, físicamente distintas, asociadas a esta inspección. Las vistas árbol completo, base, tronco y copa son recomendadas. La falta de categorías genera una advertencia informativa. Evaluación instrumental y Monitoreo conservan su tratamiento (PR-010 v5.0).
 - al finalizar quedan inmutables y conservan `rule_version`;
 - sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
 - `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
@@ -1603,8 +1603,8 @@ Afecta:
 - storage
 - base de datos
 
-## PR-010 — Fotografías (v4.0)
-Estado: vigente
+## PR-010 — Fotografías (v4.0 — REEMPLAZADA)
+Estado: reemplazada por PR-010 v5.0 (CC-077)
 Versión: 4.0
 Reemplaza: PR-010 v3.0
 Origen: CC-040
@@ -1625,10 +1625,10 @@ Afecta:
 - storage
 - base de datos
 
-## PR-010 — Fotografías (v5.0 — CANDIDATA)
-Estado: candidata; aprobada funcionalmente, pendiente de publicación del paquete 3.1.0
+## PR-010 — Fotografías (v5.0)
+Estado: vigente
 Versión: 5.0
-Reemplazará: PR-010 v4.0 al entrar en vigencia
+Reemplaza: PR-010 v4.0
 Origen: CC-077
 
 - Se permiten varias fotografías por árbol y por inspección, sin un límite fijo (CC-028 P9).
