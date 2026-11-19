@@ -205,7 +205,7 @@ TRADUCCIONES_CC056 = {
         "k": "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. "
              "No aplica en la Evaluación instrumental; en el Monitoreo no es obligatoria.",
         "exigido": True, "activacion": SIEMPRE, "exigencia": "fotos_d27",
-        "nota": "D-27: las cuatro vistas (árbol completo, base, tronco y copa), fotos nuevas de esta inspección."},
+        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección; vistas informativas."},
     # --- REGISTRO_EVALUACION ---
     ("REGISTRO_EVALUACION", "direccion_inclinacion"): {
         "i": "Condicional", "k": "angulo_inclinacion ≥ 15°", "exigido": True,
@@ -504,7 +504,7 @@ def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion):
         "  quienIngresa: string;",
         "  obligatoriedadExcel: string;",
         "  condicionExcel: string;",
-        "  /** `valor`: con valor; `valor_o_marca`: con valor o `marca` = true; `fotos_d27`: las cuatro vistas. */",
+        "  /** `valor`: con valor; `valor_o_marca`: con valor o `marca` = true; `fotos_d27`: dos fotos válidas y distintas de esta inspección. */",
         '  exigencia: "valor" | "valor_o_marca" | "fotos_d27";',
         "  marca?: string;",
         "  /** ARBOLES: «Inspector / Usuario Municipal» puede venir de lo vigente (CC-056 punto 3). */",

@@ -29,7 +29,7 @@ export interface ReglaCompletitud {
   quienIngresa: string;
   obligatoriedadExcel: string;
   condicionExcel: string;
-  /** `valor`: con valor; `valor_o_marca`: con valor o `marca` = true; `fotos_d27`: las cuatro vistas. */
+  /** `valor`: con valor; `valor_o_marca`: con valor o `marca` = true; `fotos_d27`: dos fotos válidas y distintas de esta inspección. */
   exigencia: "valor" | "valor_o_marca" | "fotos_d27";
   marca?: string;
   /** ARBOLES: «Inspector / Usuario Municipal» puede venir de lo vigente (CC-056 punto 3). */
@@ -266,7 +266,7 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "siempre"},
     traduccion: "cc056",
-    nota: "D-27: las cuatro vistas (árbol completo, base, tronco y copa), fotos nuevas de esta inspección.",
+    nota: "D-27: mínimo de dos fotografías válidas y distintas de esta inspección; vistas informativas.",
   },
   {
     fila: 33,

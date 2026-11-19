@@ -37,8 +37,16 @@ export interface EntradaCompletitud {
   camposRegistradosArbol: readonly string[];
   /** Valores vigentes del árbol (`trees`). */
   arbolVigente: Readonly<Record<string, unknown>>;
-  /** `photos.vista` de las fotos de esta inspección. */
-  vistasFotos: readonly (string | null)[];
+  inspeccionId: string;
+  fotos: readonly FotoD27[];
+}
+
+interface FotoD27 {
+  id: string;
+  inspection_id: string | null;
+  storage_path: string;
+  sha256: string | null;
+  vista: string | null;
 }
 
 export interface CampoFaltante {
@@ -51,12 +59,14 @@ export interface CampoFaltante {
 export interface ResultadoCompletitud {
   completa: boolean;
   campos_faltantes: CampoFaltante[];
+  fotos_validas_d27: number | null;
+  vistas_recomendadas_faltantes: string[];
 }
 
 /** Tipos con evaluación completa (CC-056). También habilitan los indicadores biométricos de B19. */
 export const TIPOS_EVALUACION_COMPLETA: ReadonlySet<string> = new Set(["evaluacion_inicial", "reevaluacion", "levantamiento"]);
 
-/** D-27: las cuatro vistas obligatorias. */
+/** D-27: las cuatro vistas recomendadas. */
 export const VISTAS_D27 = ["arbol_completo", "base", "tronco", "copa"] as const;
 
 export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud {
@@ -79,10 +89,11 @@ export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud 
     completa ? true : r.hoja === "REGISTRO_EVALUACION" && enAlcance.has(r.campo)
   );
 
+  const evidencia = completa ? evaluarFotosD27(e.inspeccionId, e.fotos) : null;
   const faltantes: CampoFaltante[] = [];
   for (const regla of reglas) {
     if (!cumple(regla.activacion, efectivo)) continue;
-    const motivo = motivoFaltante(regla, { registrado, estaRegistrado, efectivo, vistasFotos: e.vistasFotos });
+    const motivo = motivoFaltante(regla, { registrado, estaRegistrado, efectivo, fotosValidas: evidencia?.cantidad ?? 0 });
     if (motivo !== null) {
       faltantes.push({ campo: regla.campo, hoja: regla.hoja, fila: regla.fila, motivo });
     }
@@ -100,7 +111,33 @@ export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud 
     }
   }
 
-  return { completa: faltantes.length === 0, campos_faltantes: faltantes };
+  return {
+    completa: faltantes.length === 0,
+    campos_faltantes: faltantes,
+    fotos_validas_d27: evidencia?.cantidad ?? null,
+    vistas_recomendadas_faltantes: evidencia?.vistasFaltantes ?? [],
+  };
+}
+
+function evaluarFotosD27(inspeccionId: string, fotos: readonly FotoD27[]) {
+  // Elegir una huella por ruta y luego deduplicar por huella cuando existe.
+  // El PK de photos garantiza un solo registro por ID.
+  const huellasPorRuta = new Map<string, string | null>();
+  const vistas = new Set<string | null>();
+  for (const foto of fotos) {
+    if (foto.inspection_id !== inspeccionId || !/[^ \t\n\r\f\v]/.test(foto.storage_path)) continue;
+    const anterior = huellasPorRuta.get(foto.storage_path);
+    const huella = foto.sha256;
+    if (anterior === undefined || (huella !== null && (anterior === null || huella < anterior))) {
+      huellasPorRuta.set(foto.storage_path, huella);
+    }
+    vistas.add(foto.vista);
+  }
+  const archivos = new Set<string>();
+  for (const [ruta, huella] of huellasPorRuta) {
+    archivos.add(huella === null ? `ruta:${ruta}` : `huella:${huella}`);
+  }
+  return { cantidad: archivos.size, vistasFaltantes: VISTAS_D27.filter((vista) => !vistas.has(vista)) };
 }
 
 function motivoFaltante(
@@ -109,15 +146,13 @@ function motivoFaltante(
     registrado: Record<string, unknown>;
     estaRegistrado: (campo: string) => boolean;
     efectivo: (campo: string) => unknown;
-    vistasFotos: readonly (string | null)[];
+    fotosValidas: number;
   }
 ): string | null {
   const referencia = `D-${regla.fila}, ${regla.obligatoriedadExcel}`;
 
   if (regla.exigencia === "fotos_d27") {
-    const presentes = new Set(ctx.vistasFotos);
-    const faltan = VISTAS_D27.filter((v) => !presentes.has(v));
-    return faltan.length === 0 ? null : `Faltan fotos nuevas de esta inspección con las vistas: ${faltan.join(", ")} (${referencia})`;
+    return ctx.fotosValidas >= 2 ? null : `Se requieren al menos dos fotos válidas y distintas de esta inspección (${referencia})`;
   }
 
   if (regla.origen === "vigente_o_registrado") {
