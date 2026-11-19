@@ -2,7 +2,7 @@
 
 > **Leer esto primero.** Es lo único que una sesión nueva necesita para empezar. Lo demás se consulta **por sección** cuando la tarea lo pide (tabla «Qué leer y cuándo»). Este archivo se **reemplaza, no se alarga**: máximo ~120 líneas. El detalle de un trabajo va en `docs/relevo/RELEVO_<fecha>_<tema>.md` o en el CC correspondiente.
 >
-> Última actualización: 2026-11-18. Estado de ramas verificado contra `origin` ese día.
+> Última actualización: 2026-11-19. Estado de ramas verificado contra `origin` ese día.
 
 ## Qué es
 
@@ -25,14 +25,20 @@ Backend de **SIVU** (antes «Valpo Verde»): API REST Node/Express/TypeScript so
 - Las migraciones 035 y 036 que exige la 3.0 están aplicadas **solo en la base de pruebas**.
 - Versión y transición siempre en `docs/methodology/00-index.md`.
 
-## Trabajo en curso (ramas activas al 2026-11-18)
+## Trabajo en curso (al 2026-11-19)
 
-| Rama | Tema |
+**CC-077 (D-27, dos fotos) aún no está activo en sivu.cl.** Fusionado en la integración (PR #77 estacionalidad y #79 D-27), pero falta:
+
+| Paso | Estado |
 |---|---|
-| `integration/cc077-d27-backend` | CC-077: aplicar D-27 (fotos) en la API y PostgreSQL |
-| `integration/cc077-metodologia` | CC-077: paquete metodológico 3.1.0 |
-| `integration/f4d-estacionalidad` | Validar estacionalidad y porcentajes de copa en la inspección |
-| `docs/demo-ia-dudas-2026-11-17` | Dudas abiertas de la demo de estimación con IA (AV_000014–020) |
+| 1. Aplicar 040 (guardián de cierre: dos fotos) y 041 (no quitar fotos de una inspección finalizada) en la base de pruebas, con el ciclo aplicar → `pruebas_040` → revertir → reaplicar | Pendiente, requiere autorización. Ambas solo cambian funciones y un trigger: no tocan registros y tienen su `.down.sql`. La base aún exige cuatro vistas. |
+| 2. Publicar el backend: `feature/fase6-backend-api` → `release/demo` (7 commits adelante de `dd4d8f5`) | Pendiente. Va **después** del paso 1: si la API pasa primero a dos fotos, la base sigue rechazando el cierre (SV064). |
+| 3. Frontend: fusionar #19 (porcentajes de copa) en `feature/fase7-maqueta-lab` y después #20 (cierre con dos fotos), que hoy apunta a la rama de #19 | Pendiente. Vercel publica esa rama directo en sivu.cl. |
+| 4. Probar en sivu.cl el cierre de una evaluación con dos fotos sin etiqueta | Pendiente |
+
+El plan Free de Supabase no tiene copias programadas. El flujo del proyecto no exige un respaldo completo para migraciones que no tocan datos, pero se puede tomar uno manual con `supabase db dump` antes del paso 1.
+
+Otras ramas activas: `docs/demo-ia-dudas-2026-11-17` (dudas de la demo de estimación con IA, AV_000014–020) y `docs/inventario-reglas-bloqueantes` (propuesta de qué reglas flexibilizar, para decidir).
 
 Pendientes conocidos fuera de esas ramas:
 - **Conecta** (ficha pública editable, fotos por árbol): `docs/relevo/RELEVO_2026-11-15_mari.md` §3. Requiere CC, filas del Excel aprobadas y autorización para migrar.
