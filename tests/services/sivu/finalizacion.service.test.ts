@@ -171,6 +171,52 @@ async function huellaActual(): Promise<string> {
 beforeEach(() => jest.clearAllMocks());
 
 describe("POST /calcular (#59/#72; CC-054)", () => {
+  it("rechaza porcentajes registrados con copa ausente y no permite cerrar el borrador", async () => {
+    preparar({ variables: { ...variablesCompletas(), sin_follaje_estacional: null, defoliacion_estimada_pct: 20 } });
+    const arbol = { ...ARBOL_REGISTRADO, copa_no_presenta: true };
+    mockVersionArbol.mockResolvedValue({ campos: arbol, camposRegistrados: Object.keys(arbol) });
+
+    const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(calculo.resultado.indicadores.defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
+    expect(calculo.valores_no_permitidos).toContainEqual(expect.stringContaining("defoliacion_estimada_pct"));
+    expect(calculo.puede_finalizar).toBe(false);
+    await expect(finalizarInspeccion(usuario(), INSPECTION_ID, { huella: calculo.huella }, TOKEN))
+      .rejects.toMatchObject({ statusCode: 422 });
+    expect(mockFinalizarRpc).not.toHaveBeenCalled();
+  });
+
+  it.each([{}, { sin_follaje_estacional: null }])("no usa una casilla vigente para activar un porcentaje nuevo (%p)", async (casilla) => {
+    const variables = variablesCompletas();
+    delete variables.sin_follaje_estacional;
+    preparar({
+      variables: { ...variables, ...casilla, defoliacion_estimada_pct: 20 },
+      vigentes: { sin_follaje_estacional: false },
+    });
+    const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(calculo.resultado.indicadores.defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
+    expect(calculo.puede_finalizar).toBe(false);
+  });
+
+  it("distingue el receso confirmado de la copa ausente y conserva los resultados válidos", async () => {
+    preparar({
+      variables: {
+        ...variablesCompletas(),
+        sin_follaje_estacional: true,
+        defoliacion_estimada_pct: null,
+        clorosis_pct: null,
+        necrosis_pct: null,
+      },
+    });
+    const receso = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(receso.resultado.indicadores.defoliacion).toMatchObject({ categoria: "no_aplica", reglaId: "CR-DEF-06" });
+    expect(receso.puede_finalizar).toBe(true);
+
+    preparar({ variables: { ...variablesCompletas(), defoliacion_estimada_pct: 20 } });
+    const sinReceso = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(sinReceso.resultado.indicadores.defoliacion).toMatchObject({ categoria: "leve", reglaId: "CR-DEF-02" });
+    expect(sinReceso.puede_finalizar).toBe(true);
+  });
+
   it("calcula sin escribir nada y permite finalizar una evaluación completa", async () => {
     preparar();
     const r = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);

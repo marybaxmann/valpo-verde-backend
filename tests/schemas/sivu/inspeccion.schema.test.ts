@@ -9,7 +9,7 @@ describe("crearBorradorInspeccionSchema (#58)", () => {
   it("acepta una evaluación inicial con variables libres (sin alcance cerrado, CC-040)", () => {
     const resultado = crearBorradorInspeccionSchema.safeParse({
       tipo_inspeccion_realizada: "evaluacion_inicial",
-      variables: { raices_expuestas: true, defoliacion_estimada_pct: 10 },
+      variables: { raices_expuestas: true, sin_follaje_estacional: false, defoliacion_estimada_pct: 10 },
     });
     expect(resultado.success).toBe(true);
   });
@@ -69,7 +69,7 @@ describe("crearBorradorInspeccionSchema (#58)", () => {
     const ok = crearBorradorInspeccionSchema.safeParse({
       tipo_inspeccion_realizada: "monitoreo",
       subtipo_inspeccion: "fitosanitario",
-      variables: { defoliacion_estimada_pct: 20, presenta_exudaciones: false },
+      variables: { sin_follaje_estacional: false, defoliacion_estimada_pct: 20, presenta_exudaciones: false },
     });
     expect(ok.success).toBe(true);
 
@@ -150,6 +150,42 @@ describe("guardarBorradorInspeccionSchema (#58) — sin tree_id", () => {
       tree_id: TREE_ID,
     });
     expect(resultado.success).toBe(false);
+  });
+});
+
+describe.each([crearBorradorInspeccionSchema, guardarBorradorInspeccionSchema])("fisiología de copa en el borrador", (schema) => {
+  const parsear = (variables: Record<string, unknown>, copaAusente = false) =>
+    schema.safeParse({
+      tipo_inspeccion_realizada: "evaluacion_inicial",
+      variables,
+      campos_arbol: { copa_no_presenta: copaAusente },
+    });
+
+  it.each([{}, { sin_follaje_estacional: null }, { sin_follaje_estacional: true }])(
+    "rechaza un porcentaje informado sin No explícito (%p)",
+    (variables) => {
+      expect(parsear({ ...variables, defoliacion_estimada_pct: 0 }).success).toBe(false);
+      expect(parsear({ ...variables, clorosis_pct: 0 }).success).toBe(false);
+      expect(parsear({ ...variables, necrosis_pct: 0 }).success).toBe(false);
+    },
+  );
+
+  it("distingue receso, ausencia de copa y nulos sin valor", () => {
+    expect(parsear({ sin_follaje_estacional: true, defoliacion_estimada_pct: null }).success).toBe(true);
+    expect(parsear({ sin_follaje_estacional: null }).success).toBe(true);
+    expect(parsear({}, true).success).toBe(true);
+    expect(parsear({ sin_follaje_estacional: true }, true).success).toBe(false);
+    expect(parsear({ sin_follaje_estacional: false, defoliacion_estimada_pct: 20 }, true).success).toBe(false);
+  });
+
+  it("conserva ceros numéricos y comprueba dominio y suma", () => {
+    const no = { sin_follaje_estacional: false };
+    const validos = { ...no, defoliacion_estimada_pct: 0, clorosis_pct: 40, necrosis_pct: 60 };
+    const resultado = parsear(validos);
+    expect(resultado.success && resultado.data.variables).toEqual(validos);
+    expect(parsear({ ...no, defoliacion_estimada_pct: "20" }).success).toBe(false);
+    expect(parsear({ ...no, necrosis_pct: 101 }).success).toBe(false);
+    expect(parsear({ ...no, clorosis_pct: 60, necrosis_pct: 50 }).success).toBe(false);
   });
 });
 

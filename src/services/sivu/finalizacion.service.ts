@@ -31,6 +31,7 @@ import { SubtipoInspeccionCodigo, TipoInspeccionRealizadaCodigo } from "../rules
 import { FechaSugeridaResultado } from "../rules/engine/fechas-sugeridas";
 import { RULE_VERSION } from "../rules/engine/version";
 import { CampoFaltante, evaluarCompletitud } from "./completitud";
+import { validarFisiologiaCopa } from "./fisiologiaCopa";
 import { mensajeCheck } from "../../utils/mensajesBase";
 
 /**
@@ -281,12 +282,20 @@ async function calcular(
     throw new AppError("El árbol de la inspección no existe", 404);
   }
 
+  const copaAusente = (versionArbol?.camposRegistrados.includes("copa_no_presenta")
+    ? versionArbol.campos.copa_no_presenta
+    : arbolVigente.copa_no_presenta) === true;
+  const incidenciasFisiologia = validarFisiologiaCopa(variablesRegistradas, copaAusente);
   const variablesCalculo = componerVariablesCalculo(
     variablesVigentes,
     variablesRegistradas,
     resolverDapCm(versionArbol, arbolVigente),
     resolverDatosLcr(versionArbol, arbolVigente)
   );
+  if (copaAusente) variablesCalculo.sin_follaje_estacional = null;
+  if (copaAusente || incidenciasFisiologia.some(({ campo }) => campo === "defoliacion_estimada_pct")) {
+    variablesCalculo.defoliacion_estimada_pct = null;
+  }
   const huella = huellaCalculo({
     variablesCalculo,
     tipo,
@@ -319,7 +328,10 @@ async function calcular(
     vistasFotos: fotos.map((f) => f.vista),
   });
 
-  const valoresNoPermitidos = resultado.alcance.valoresNoPermitidosEnAlcance;
+  const valoresNoPermitidos = [
+    ...resultado.alcance.valoresNoPermitidosEnAlcance,
+    ...incidenciasFisiologia.map(({ motivo }) => motivo),
+  ];
   const { variables: _v, inspeccion: _i, alcance: _a, ajustesDescartados: _d, ...columnas } = resultado;
 
   return {
