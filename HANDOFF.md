@@ -1,5 +1,7 @@
 # 🔄 Active Handoff — Valpo Verde Backend
 
+> **HISTORIAL — no leer entero (~166 KB).** Desde el 2026-11-18 el estado vigente está en **`docs/ESTADO.md`**, y los relevos nuevos van en `docs/relevo/`. Este archivo se conserva para consultar bloques anteriores: busca por fecha o tema (`grep -n "^## " HANDOFF.md`) y lee solo esa sección. No se agregan novedades aquí.
+
 > **Este archivo es un documento de relevo operativo y contexto para agentes. No constituye fuente metodológica. Ante contradicción, prevalecen las fuentes vigentes definidas por PR-002 y docs/workflow.md.**
 >
 > Fuentes que prevalecen sobre este archivo: Excel metodológico (DICCIONARIO_CAMPOS y demás hojas del paquete), `docs/project-rules.md`, `docs/architecture-decisions.md` (ADR), `docs/methodology/`, `docs/registro-cambios.md` y `docs/workflow.md`. Si algo de este archivo las contradice, el agente debe detenerse y consultar esas fuentes.
