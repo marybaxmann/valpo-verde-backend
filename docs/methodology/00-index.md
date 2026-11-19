@@ -17,6 +17,10 @@ No inferir ni completar metodología faltante.
 
 ---
 
+## Candidato 3.1.0 — CC-077
+
+Aprobado funcionalmente por la investigadora el 2026-11-18. Pendiente de publicación y entrada en vigor. Incremento MINOR según §14.10 por cambio en la condición documental de cierre D-27 sin cambio estructural. `rule_version` propuesto: 3.1. PR-009 v7.0 y PR-010 v5.0 son candidatas. La publicación, el tag, la vigencia en plataforma y el despliegue requieren autorización aparte.
+
 ## Versión vigente
 
 Versión vigente del paquete metodológico: **3.0.0** (`rule_version` **3.0**), publicada el 2026-11-09, tag `metodologia-v3.0.0` (CC-071). Versión anterior: 2.1.0, publicada el 2026-10-21, tag `metodologia-v2.1.0` (CC-040, CC-042).

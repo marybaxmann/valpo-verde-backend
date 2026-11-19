@@ -3228,3 +3228,12 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-11-16 | APROBADO EN PRINCIPIO | Valej | Decisión 5: proteger INS-000333 y los demás borradores. Mecanismo por confirmar en el ensayo. |
+
+
+### CC-077 — Mínimo fotográfico D-27 en el cierre de inspecciones
+
+- Fecha y aprobación funcional: 2026-11-18, investigadora responsable, instrucción escrita de Fase 5C. Antecedente: decisiones de Fase 5B y D-27 vigente de CC-040/CC-071.
+- Estado: aprobado funcionalmente; candidato 3.1.0 pendiente de publicación. Versión MINOR (tipo 2, §14.10), `rule_version` propuesta 3.1. PR-009 v7.0 y PR-010 v5.0 candidatas.
+- Cambio: dos fotografías válidas, físicamente distintas y asociadas a la inspección para finalizar Evaluación inicial, Reevaluación y Levantamiento. Las cuatro vistas son recomendaciones y las etiquetas informativas. Una misma foto aporta a varias secciones y se contabiliza una sola vez. Sin cierre excepcional por vistas faltantes.
+- Alcance: D-27, REGLAS_GENERALES, VERSION e índice y exportaciones asociadas. Se mantienen el protocolo IA VTA-01 v2, cálculos y demás validaciones técnicas, de integridad y permisos. Monitoreo, Evaluación instrumental, Mantenimiento e Incidencias conservan su tratamiento.
+- Publicación, tag y despliegue pendientes de autorización. La versión vigente continúa siendo 3.0.0 (CC-071).
