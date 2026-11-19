@@ -36,9 +36,9 @@ Backend de **SIVU** (antes «Valpo Verde»): API REST Node/Express/TypeScript so
 | 040 y 041 en `gmlbmyreoxgoqrolhyxo` con `apply_migration` | Aplicadas (versiones `20261119035144` y `20261119035206`). Cierre con dos fotos válidas; trigger de la 041 instalado; permisos y datos sin cambios |
 | Backend: #81 → `release/demo` | Fusionado (`6851333`); Vercel `success` |
 | Frontend: #19 y #20 → `feature/fase7-maqueta-lab` | Fusionados (`51eff0d`, `06036f4`); Vercel `success`; el formulario publicado ya pide «al menos dos fotos válidas y distintas» |
-| **Prueba de cierre con dos fotos en sivu.cl** | **Pendiente:** requiere entrar como Inspector con una OT de prueba en ejecución |
+| Prueba en sivu.cl (Inspector, OT-I-000409 / INS-000382, Piloto, A-000546) | **D-27 verificado:** «Fotografías válidas y distintas: 2 (mínimo 2)» con dos fotos de la misma vista (antes bloqueaba). La inspección aún no se puede finalizar porque le faltan 30 datos de terreno ajenos a las fotos (DAP, altura, copa, riesgo, consecuencias, infraestructura; regla de completitud, C1 del inventario #83). El cierre completo queda para cuando el Inspector registre esos datos. |
 
-Siguiente en el frontend: PR #22 (rediseño de Infraestructura, borrador) después de la prueba de D-27.
+Siguiente en el frontend: PR #22 (rediseño de Infraestructura, borrador).
 
 Otras ramas activas: `docs/demo-ia-dudas-2026-11-17` (dudas de la demo de estimación con IA, AV_000014–020) y `docs/inventario-reglas-bloqueantes` (propuesta de qué reglas flexibilizar, para decidir).
 
