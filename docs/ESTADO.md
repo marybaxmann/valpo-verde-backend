@@ -43,7 +43,7 @@ Frontend: el rediseño de Infraestructura también se publicó en sivu.cl el 202
 Otras ramas activas: `docs/demo-ia-dudas-2026-11-17` (dudas de la demo de estimación con IA, AV_000014–020) y `docs/inventario-reglas-bloqueantes` (propuesta de qué reglas flexibilizar, para decidir).
 
 Pendientes conocidos fuera de esas ramas:
-- **Conecta** (ficha pública editable, fotos por árbol): `docs/relevo/RELEVO_2026-11-15_mari.md` §3. Requiere CC, filas del Excel aprobadas y autorización para migrar.
+- **Conecta — ficha pública editable (CC-078, antes CC-073 en el borrador de Mari)**: integrada el 2026-11-19 en la rama `feature/conecta-ficha-editable` (PR a `feature/fase6-backend-api`). 037 y 038 ya estaban aplicadas en la base de pruebas (2026-11-16) y conservan «CC-073» en sus comentarios. Excel: D-280 a D-307, columnas de CATALOGO_ESPECIES, hoja FICHAS_PUBLICAS y LISTAS sobre 3.1.0; falta registrar el PATCH (3.1.1) en VERSION, `00-index.md` y tag para FUENTE SINCRONIZADA. Siguen: publicar en `release/demo` (con autorización) y el editor del frontend (interruptores D-25/D-19/D-18/D-22/D-26, «Mi historia», foto propia). Contexto: `docs/relevo/RELEVO_2026-11-15_mari.md` §3.
 - **Carbono** (CC-068/069): bloqueado, al 2026-11-01, por no poder leer Pillsbury et al. 1998.
 - **Frontend Infraestructura** (rediseño publicado, PR #22): para fotos por componente hace falta un CC (hoy `photos.vista` solo tiene las vistas de D-27 y «detalle»).
 
