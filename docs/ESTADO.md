@@ -38,14 +38,14 @@ Backend de **SIVU** (antes «Valpo Verde»): API REST Node/Express/TypeScript so
 | Frontend: #19 y #20 → `feature/fase7-maqueta-lab` | Fusionados (`51eff0d`, `06036f4`); Vercel `success`; el formulario publicado ya pide «al menos dos fotos válidas y distintas» |
 | Prueba en sivu.cl (Inspector, OT-I-000409 / INS-000382, Piloto, A-000546) | **D-27 verificado:** «Fotografías válidas y distintas: 2 (mínimo 2)» con dos fotos de la misma vista (antes bloqueaba). La inspección aún no se puede finalizar porque le faltan 30 datos de terreno ajenos a las fotos (DAP, altura, copa, riesgo, consecuencias, infraestructura; regla de completitud, C1 del inventario #83). El cierre completo queda para cuando el Inspector registre esos datos. |
 
-Siguiente en el frontend: PR #22 (rediseño de Infraestructura, borrador).
+Frontend: el rediseño de Infraestructura también se publicó en sivu.cl el 2026-11-19 (PR #22).
 
 Otras ramas activas: `docs/demo-ia-dudas-2026-11-17` (dudas de la demo de estimación con IA, AV_000014–020) y `docs/inventario-reglas-bloqueantes` (propuesta de qué reglas flexibilizar, para decidir).
 
 Pendientes conocidos fuera de esas ramas:
 - **Conecta** (ficha pública editable, fotos por árbol): `docs/relevo/RELEVO_2026-11-15_mari.md` §3. Requiere CC, filas del Excel aprobadas y autorización para migrar.
 - **Carbono** (CC-068/069): bloqueado, al 2026-11-01, por no poder leer Pillsbury et al. 1998.
-- **Frontend Infraestructura** (rediseño aprobado, rama del frontend `feature/infraestructura-componentes`): para fotos por componente hace falta un CC (hoy `photos.vista` solo tiene las vistas de D-27 y «detalle»).
+- **Frontend Infraestructura** (rediseño publicado, PR #22): para fotos por componente hace falta un CC (hoy `photos.vista` solo tiene las vistas de D-27 y «detalle»).
 
 ## Cuándo hay que documentar (obligatorio, desde cualquier cuenta)
 
