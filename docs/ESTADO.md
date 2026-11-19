@@ -39,6 +39,20 @@ Pendientes conocidos fuera de esas ramas:
 - **Carbono** (CC-068/069): bloqueado, al 2026-11-01, por no poder leer Pillsbury et al. 1998.
 - **Frontend Infraestructura** (rediseño aprobado, rama del frontend `feature/infraestructura-componentes`): para fotos por componente hace falta un CC (hoy `photos.vista` solo tiene las vistas de D-27 y «detalle»).
 
+## Si cargas evaluaciones de árboles (desde cualquier cuenta)
+
+Una carga cambia lo que ven todas las sesiones y la API publicada. Al terminar:
+
+1. **Una línea en este archivo**, en «Trabajo en curso» o en «Datos cargados»: fecha, base (`gmlbmyreoxgoqrolhyxo` o real), proyecto, lote y enlace al relevo.
+2. **Un relevo** en `docs/relevo/RELEVO_<fecha>_carga-<lote>.md` con:
+   - **qué**: lote (p. ej. AV_000013–020), cantidad de árboles y sus códigos, inspecciones creadas (INS-…), OT asociadas y tipo de inspección;
+   - **cómo**: por la API (borrador → calcular → finalizar → completar OT) o por SQL/script; el script y su commit; `rule_version` con que se calculó;
+   - **fotos**: cuántas por árbol y qué vistas (D-27, «detalle»);
+   - **verificación**: conteos antes y después (B8 `cobertura`, diagnósticos B18), árboles omitidos o con error y el motivo, componentes «No determinado» y ajustes del Inspector;
+   - **decisiones y pendientes**: CC relacionados, datos que faltaron y quién debe decidir;
+   - **cómo revertir** la carga si hace falta.
+3. Si la carga trajo campos, catálogos o reglas nuevas: **CC primero** (`docs/workflow.md` §14). Nunca se cargan datos que el Excel no define.
+
 ## Personas y decisiones
 
 - **Valej**: metodología, evaluación y medidas. Decide los CC metodológicos.
