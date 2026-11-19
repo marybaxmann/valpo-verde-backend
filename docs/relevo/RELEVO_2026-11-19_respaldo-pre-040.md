@@ -65,3 +65,12 @@ Si el equipo del backend necesita cotejar los `.dump`, la responsable genera un 
 ## Siguiente paso
 
 Con autorización de la responsable, aplicar 040 y 041 en `gmlbmyreoxgoqrolhyxo` con el ciclo del proyecto: aplicar → `database/fase6/pruebas_040_d27_minimo_fotografico.sql` → revertir → reaplicar → probar. Después, publicar `release/demo` (PR #81) y el frontend (#19, #20), y probar en sivu.cl un cierre con dos fotos sin etiqueta.
+
+## Resultado: 040 y 041 aplicadas y CC-077 publicado (2026-11-19)
+
+1. **Ciclo completo en una copia aislada** del respaldo (`sivu_f5d_local`, la base que exige `pruebas_040`): aplicar 040 y 041, `pruebas_040`, revertir, comprobar, reaplicar y `pruebas_040` otra vez. **Aprobado:** 6 de 6 casos en las dos rondas (cero, una, dos y varias fotos; Monitoreo; Evaluación instrumental). La reversión vuelve a exigir cuatro vistas sin el trigger, y los conteos no cambian. Registro: `evidencia/2026-11-19_respaldo-pre-040/ciclo_040_041_local.txt`; script: `scripts/respaldo/ciclo_040_041_local.ps1`.
+   - Ajuste de procedimiento: al restaurar, los privilegios por defecto de Supabase daban permiso de ejecución de más sobre la función de cierre. La copia se dejó con la ACL de la base real, `{postgres, service_role}`, verificada antes de probar.
+2. **Aplicadas en `gmlbmyreoxgoqrolhyxo`** con `apply_migration`, con los mismos archivos del repositorio: `040_d27_minimo_fotografico` (`20261119035144`) y `041_d27_serializar_retiro_foto` (`20261119035206`). Verificado después: la función exige dos fotos válidas y ya no cuatro vistas; el trigger de la 041 está instalado; `service_role` ejecuta y `anon`/`authenticated` no; datos sin cambios (109 árboles, 60 inspecciones, 921 fotos).
+3. **Backend:** #81 fusionado en `release/demo` (`6851333`); Vercel `success`.
+4. **Frontend:** #19 (`51eff0d`) y #20 (`06036f4`) fusionados en `feature/fase7-maqueta-lab`; Vercel `success`. El bloque publicado del formulario de inspección ya muestra el texto de CC-077.
+5. **Pendiente:** la prueba de cierre con dos fotos en sivu.cl, con un Inspector y una OT de prueba en ejecución.
