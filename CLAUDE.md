@@ -94,6 +94,7 @@ Fronteras:
 ## Protocolo de Handoff entre Agentes (Claude ↔ AGY ↔ GPT)
  
 - **Lectura obligatoria:** al iniciar cualquier sesión, lee `docs/ESTADO.md` (no `HANDOFF.md` entero).
+- **Documentar en el momento:** cada registro de árboles, carga de evaluaciones o fotos, migración aplicada, publicación o CC decidido se anota en `docs/ESTADO.md` apenas ocurre (tabla «Cuándo hay que documentar»). Las cargas de datos llevan además su relevo en `docs/relevo/`.
 - **Preparar relevo:** cuando el usuario diga "prepara handoff para [AGY/GPT]" o cuando termines un bloque de trabajo:
   1. **Actualiza `docs/ESTADO.md`**: reemplaza lo que cambió (ramas, trabajo en curso, bloqueos). No lo alargues: si una línea ya no es cierta, bórrala.
   2. Si el bloque necesita más detalle (qué se hizo, archivos, resultado de `npm test`, decisiones pendientes y el prompt exacto para el siguiente agente), escríbelo en `docs/relevo/RELEVO_<fecha>_<tema>.md` y enlázalo desde `docs/ESTADO.md`.

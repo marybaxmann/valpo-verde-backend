@@ -39,13 +39,35 @@ Pendientes conocidos fuera de esas ramas:
 - **Carbono** (CC-068/069): bloqueado, al 2026-11-01, por no poder leer Pillsbury et al. 1998.
 - **Frontend Infraestructura** (rediseño aprobado, rama del frontend `feature/infraestructura-componentes`): para fotos por componente hace falta un CC (hoy `photos.vista` solo tiene las vistas de D-27 y «detalle»).
 
-## Si cargas evaluaciones de árboles (desde cualquier cuenta)
+## Cuándo hay que documentar (obligatorio, desde cualquier cuenta)
+
+Se documenta **en el momento**, no al final de la semana, cada vez que pasa una de estas cosas:
+
+| Evento | Qué actualizar |
+|---|---|
+| Se registran árboles nuevos (alta, levantamiento, importación) | Línea en «Datos cargados» + relevo de la carga |
+| Se cargan o finalizan evaluaciones, inspecciones u OT en lote | Línea en «Datos cargados» + relevo de la carga |
+| Se suben o corrigen fotos, ubicaciones o especies en lote | Línea en «Datos cargados» + relevo de la carga |
+| Se aplica o revierte una migración (en cualquier base) | «Ramas, despliegue y bases de datos» + el CC o relevo |
+| Se publica en `release/demo` o en el frontend | «Ramas y despliegue» |
+| Se aprueba o descarta un CC | «Metodología» o «Trabajo en curso» + `docs/registro-cambios.md` |
+| Termina una sesión de trabajo | «Trabajo en curso» (qué quedó hecho y qué falta) |
+
+Un cambio de datos sin registro no existe para la sesión siguiente: no sabrá qué árboles ni qué evaluaciones son nuevos.
+
+## Datos cargados
+
+| Fecha | Base | Proyecto | Qué | Relevo |
+|---|---|---|---|---|
+| 2026-11-16 | pruebas | Piloto Valparaíso | Integración AV_000001–012 (CC-073, CC-075, CC-076) | PR #76 |
+
+## Si cargas árboles o evaluaciones
 
 Una carga cambia lo que ven todas las sesiones y la API publicada. Al terminar:
 
-1. **Una línea en este archivo**, en «Trabajo en curso» o en «Datos cargados»: fecha, base (`gmlbmyreoxgoqrolhyxo` o real), proyecto, lote y enlace al relevo.
+1. **Una línea en «Datos cargados»**: fecha, base (`gmlbmyreoxgoqrolhyxo` o real), proyecto, qué se cargó y enlace al relevo.
 2. **Un relevo** en `docs/relevo/RELEVO_<fecha>_carga-<lote>.md` con:
-   - **qué**: lote (p. ej. AV_000013–020), cantidad de árboles y sus códigos, inspecciones creadas (INS-…), OT asociadas y tipo de inspección;
+   - **qué**: lote (p. ej. AV_000013–020), cantidad de árboles y sus códigos (nuevos o existentes), inspecciones creadas (INS-…), OT asociadas y tipo de inspección;
    - **cómo**: por la API (borrador → calcular → finalizar → completar OT) o por SQL/script; el script y su commit; `rule_version` con que se calculó;
    - **fotos**: cuántas por árbol y qué vistas (D-27, «detalle»);
    - **verificación**: conteos antes y después (B8 `cobertura`, diagnósticos B18), árboles omitidos o con error y el motivo, componentes «No determinado» y ajustes del Inspector;
