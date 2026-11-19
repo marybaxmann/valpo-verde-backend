@@ -390,6 +390,24 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "estado_presencia", codigo: "presente", etiqueta: "Presente", orden: 0, estado: "vigente", cc: "AM-22" },
   { catalogo: "estado_presencia", codigo: "talado", etiqueta: "Talado", orden: 1, estado: "vigente", cc: "AM-22" },
   { catalogo: "estado_presencia", codigo: "retirado", etiqueta: "Retirado", orden: 2, estado: "vigente", cc: "AM-22" },
+  // icono_aporte: D-283, LISTAS «Icono_aporte» (CC-078).
+  { catalogo: "icono_aporte", codigo: "sombra", etiqueta: "Sombra", orden: 0, estado: "vigente", cc: "CC-078" },
+  { catalogo: "icono_aporte", codigo: "frescor", etiqueta: "Frescor", orden: 1, estado: "vigente", cc: "CC-078" },
+  { catalogo: "icono_aporte", codigo: "aves", etiqueta: "Aves", orden: 2, estado: "vigente", cc: "CC-078" },
+  { catalogo: "icono_aporte", codigo: "polinizadores", etiqueta: "Polinizadores", orden: 3, estado: "vigente", cc: "CC-078" },
+  { catalogo: "icono_aporte", codigo: "flores", etiqueta: "Flores", orden: 4, estado: "vigente", cc: "CC-078" },
+  { catalogo: "icono_aporte", codigo: "siempreverde", etiqueta: "Siempreverde", orden: 5, estado: "vigente", cc: "CC-078" },
+  { catalogo: "icono_aporte", codigo: "hito", etiqueta: "Hito", orden: 6, estado: "vigente", cc: "CC-078" },
+  { catalogo: "icono_aporte", codigo: "generaciones", etiqueta: "Generaciones", orden: 7, estado: "vigente", cc: "CC-078" },
+  // bloque_contenido: D-290, LISTAS «Bloque_contenido» (CC-078).
+  { catalogo: "bloque_contenido", codigo: "curiosidad", etiqueta: "Curiosidad", orden: 0, estado: "vigente", cc: "CC-078" },
+  { catalogo: "bloque_contenido", codigo: "aportes", etiqueta: "Aportes", orden: 1, estado: "vigente", cc: "CC-078" },
+  { catalogo: "bloque_contenido", codigo: "quien_soy", etiqueta: "Quién soy", orden: 2, estado: "vigente", cc: "CC-078" },
+  { catalogo: "bloque_contenido", codigo: "reconoceme", etiqueta: "Reconóceme", orden: 3, estado: "vigente", cc: "CC-078" },
+  { catalogo: "bloque_contenido", codigo: "mi_anio", etiqueta: "Mi año", orden: 4, estado: "vigente", cc: "CC-078" },
+  { catalogo: "bloque_contenido", codigo: "historia_especie", etiqueta: "Historia de la especie", orden: 5, estado: "vigente", cc: "CC-078" },
+  { catalogo: "bloque_contenido", codigo: "consejo", etiqueta: "Consejo", orden: 6, estado: "vigente", cc: "CC-078" },
+  { catalogo: "bloque_contenido", codigo: "general", etiqueta: "General", orden: 7, estado: "vigente", cc: "CC-078" },
 ] as const;
 
 export function etiquetaDe(catalogo: string, codigo: string): string {
