@@ -2,7 +2,7 @@
 
 > **Leer esto primero.** Es lo único que una sesión nueva necesita para empezar. Lo demás se consulta **por sección** cuando la tarea lo pide (tabla «Qué leer y cuándo»). Este archivo se **reemplaza, no se alarga**: máximo ~120 líneas. El detalle de un trabajo va en `docs/relevo/RELEVO_<fecha>_<tema>.md` o en el CC correspondiente.
 >
-> Última actualización: 2026-11-19. Estado de ramas verificado contra `origin` ese día.
+> Última actualización: 2026-11-19 (publicación de CC-077). Estado de ramas verificado contra `origin` ese día.
 
 ## Qué es
 
@@ -27,16 +27,18 @@ Backend de **SIVU** (antes «Valpo Verde»): API REST Node/Express/TypeScript so
 
 ## Trabajo en curso (al 2026-11-19)
 
-**CC-077 (D-27, dos fotos) aún no está activo en sivu.cl.** Fusionado en la integración (PR #77 estacionalidad y #79 D-27), pero falta:
+**CC-077 (D-27, dos fotos) publicado en sivu.cl el 2026-11-19** (madrugada, hora de Chile):
 
 | Paso | Estado |
 |---|---|
-| 1. Aplicar 040 (guardián de cierre: dos fotos) y 041 (no quitar fotos de una inspección finalizada) en la base de pruebas, con el ciclo aplicar → `pruebas_040` → revertir → reaplicar | Pendiente, requiere autorización. Ambas solo cambian funciones y un trigger: no tocan registros y tienen su `.down.sql`. La base aún exige cuatro vistas. |
-| 2. Publicar el backend: `feature/fase6-backend-api` → `release/demo` (7 commits adelante de `dd4d8f5`) | Pendiente. Va **después** del paso 1: si la API pasa primero a dos fotos, la base sigue rechazando el cierre (SV064). |
-| 3. Frontend: fusionar #19 (porcentajes de copa) en `feature/fase7-maqueta-lab` y después #20 (cierre con dos fotos), que hoy apunta a la rama de #19 | Pendiente. Vercel publica esa rama directo en sivu.cl. |
-| 4. Probar en sivu.cl el cierre de una evaluación con dos fotos sin etiqueta | Pendiente |
+| Respaldo de la base de pruebas y restauración conjunta verificada | Hecho, PR #82 (`docs/relevo/RELEVO_2026-11-19_respaldo-pre-040.md`) |
+| 040 y 041: ciclo completo (aplicar → `pruebas_040` → revertir → reaplicar → probar) en una copia aislada del respaldo | Aprobado: 6/6 casos en dos rondas, la reversión vuelve al estado anterior y no cambian los datos |
+| 040 y 041 en `gmlbmyreoxgoqrolhyxo` con `apply_migration` | Aplicadas (versiones `20261119035144` y `20261119035206`). Cierre con dos fotos válidas; trigger de la 041 instalado; permisos y datos sin cambios |
+| Backend: #81 → `release/demo` | Fusionado (`6851333`); Vercel `success` |
+| Frontend: #19 y #20 → `feature/fase7-maqueta-lab` | Fusionados (`51eff0d`, `06036f4`); Vercel `success`; el formulario publicado ya pide «al menos dos fotos válidas y distintas» |
+| **Prueba de cierre con dos fotos en sivu.cl** | **Pendiente:** requiere entrar como Inspector con una OT de prueba en ejecución |
 
-El plan Free de Supabase no tiene copias programadas. El flujo del proyecto no exige un respaldo completo para migraciones que no tocan datos, pero se puede tomar uno manual con `supabase db dump` antes del paso 1.
+Siguiente en el frontend: PR #22 (rediseño de Infraestructura, borrador) después de la prueba de D-27.
 
 Otras ramas activas: `docs/demo-ia-dudas-2026-11-17` (dudas de la demo de estimación con IA, AV_000014–020) y `docs/inventario-reglas-bloqueantes` (propuesta de qué reglas flexibilizar, para decidir).
 
@@ -66,6 +68,7 @@ Un cambio de datos sin registro no existe para la sesión siguiente: no sabrá q
 | Fecha | Base | Proyecto | Qué | Relevo |
 |---|---|---|---|---|
 | 2026-11-16 | pruebas | Piloto Valparaíso | Integración AV_000001–012 (CC-073, CC-075, CC-076) | PR #76 |
+| 2026-11-19 | pruebas | (todos) | Migraciones 040 y 041 (CC-077); sin cambios de datos | PR #82 |
 
 ## Si cargas árboles o evaluaciones
 
