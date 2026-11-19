@@ -32,6 +32,22 @@ Restaurado `public.dump` en una base temporal PostgreSQL 17 + PostGIS 3.5 (Docke
 
 Registro completo: `evidencia/2026-11-19_respaldo-pre-040/restauracion_prueba.txt`.
 
+## Restauración conjunta (auth + storage + public): APROBADA
+
+Validación pedida por el equipo del backend: restaurar juntos `auth_storage.dump` y `public.dump`, respetando las dependencias, y comprobar `user_profiles_id_fkey`.
+
+**Procedimiento** (`scripts/respaldo/probar_restauracion.ps1`, reproducible y sin credenciales de Supabase):
+1. PostgreSQL 17 + PostGIS 3.5 en un contenedor temporal, con los roles y extensiones que Supabase trae por defecto.
+2. Estructura de `auth` y `storage` (`scripts/respaldo/auth_storage_estructura.sql`): columnas, tipos y la secuencia `auth.refresh_tokens_id_seq`, leídas de `pg_catalog` del proyecto (sin datos). `auth_storage.dump` es solo de datos porque Supabase administra esos esquemas; en una recuperación real, el proyecto nuevo ya los trae.
+3. Datos de `auth` y `storage`.
+4. `public` completo, incluidas sus restricciones.
+
+**Resultado** (dos corridas consecutivas desde cero, ambas aprobadas; `evidencia/2026-11-19_respaldo-pre-040/resultado_restauracion_conjunta.txt`):
+- `user_profiles_id_fkey` **existe y está validada**; **0 referencias huérfanas**. Es la única FK hacia `auth.users` y está validada.
+- **Sin diferencias de conteo:** `public` 35 tablas y 9 988 filas; `auth` y `storage` 37 tablas y 1 305 filas, contadas en el propio dump (entre ellas 9 cuentas y 932 objetos de Storage).
+- Un solo error, esperado: `schema "public" already exists`.
+- Corrección de procedimiento durante la prueba: la primera corrida falló porque faltaba crear `auth.refresh_tokens_id_seq` (el dump de datos restaura su valor). Se agregó a la estructura; el respaldo no cambió.
+
 ## Comprobación previa de la 040
 
 La función guardada contiene **exactamente una vez** el bloque que la 040 reemplaza (el guardián de cuatro vistas) y la declaración `v_vistas_presentes integer;`. Por lo tanto, la 040 aplicará sin detenerse por «la definición de fn_finalizar_inspeccion no coincide con la esperada».
