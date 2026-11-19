@@ -66,7 +66,8 @@ function evaluacionCompleta(overrides: Partial<EntradaCompletitud> = {}): Entrad
       especie_cientifica: "Quillaja saponaria",
       nombre_comun: "Quillay",
     },
-    vistasFotos: ["arbol_completo", "base", "tronco", "copa"],
+    inspeccionId: "inspeccion",
+    fotos: fotosD27(["arbol_completo", "base", "tronco", "copa"]),
     ...overrides,
   };
 }
@@ -75,7 +76,7 @@ const faltantesDe = (e: EntradaCompletitud) => evaluarCompletitud(e).campos_falt
 
 describe("evaluación completa (Evaluación inicial, Reevaluación, Levantamiento)", () => {
   it.each(["evaluacion_inicial", "reevaluacion", "levantamiento"])("%s: la evaluación de base está completa", (tipo) => {
-    expect(evaluarCompletitud(evaluacionCompleta({ tipo }))).toEqual({ completa: true, campos_faltantes: [] });
+    expect(evaluarCompletitud(evaluacionCompleta({ tipo }))).toEqual({ completa: true, campos_faltantes: [], fotos_validas_d27: 4, vistas_recomendadas_faltantes: [] });
   });
 
   it("un Obligatorio sin registrar queda como faltante y la inspección sigue incompleta (CC-054)", () => {
@@ -133,11 +134,26 @@ describe("evaluación completa (Evaluación inicial, Reevaluación, Levantamient
     expect(evaluarCompletitud(evaluacionCompleta({ arbolRegistrado, arbolVigente })).completa).toBe(true);
   });
 
-  it("D-27: falta una de las cuatro vistas", () => {
-    const r = evaluarCompletitud(evaluacionCompleta({ vistasFotos: ["arbol_completo", "base", "tronco", null] }));
-    expect(r.campos_faltantes).toEqual([
-      expect.objectContaining({ campo: "fotografias_arbol", motivo: expect.stringMatching(/copa/) }),
-    ]);
+  it.each([0, 1, 2, 3])("D-27: %i fotos distintas sin clasificar", (cantidad) => {
+    const r = evaluarCompletitud(evaluacionCompleta({ fotos: fotosD27(Array(cantidad).fill(null)) }));
+    expect(r.completa).toBe(cantidad >= 2);
+    expect(r.fotos_validas_d27).toBe(cantidad);
+    expect(r.vistas_recomendadas_faltantes).toEqual(["arbol_completo", "base", "tronco", "copa"]);
+  });
+
+  it("D-27: excluye duplicados, archivos sin ruta y fotos de otra inspección", () => {
+    const [foto] = fotosD27(["base"]);
+    const r = evaluarCompletitud(evaluacionCompleta({ fotos: [
+      foto,
+      { ...foto, storage_path: "otra-ruta" },
+      { ...foto, id: "otro-id" },
+      { ...foto, id: "copia", storage_path: "copia" },
+      { ...foto, id: "ajena", sha256: null, storage_path: "ajena", inspection_id: "otra" },
+      { ...foto, id: "sin-ruta", sha256: null, storage_path: "" },
+    ] }));
+    expect(r.fotos_validas_d27).toBe(1);
+    expect(r.completa).toBe(false);
+    expect(r.vistas_recomendadas_faltantes).toEqual(["arbol_completo", "tronco", "copa"]);
   });
 
   it("«Obligatorio responder»: basta la marca *_no_presenta = Sí", () => {
@@ -238,7 +254,8 @@ describe("inspecciones parciales (CC-040; CC-056 punto 2)", () => {
       arbolRegistrado: {},
       camposRegistradosArbol: [],
       arbolVigente: { especie_cientifica: "Schinus sp." },
-      vistasFotos: [],
+      inspeccionId: "inspeccion",
+      fotos: [],
       ...extra,
     });
   }
@@ -246,7 +263,7 @@ describe("inspecciones parciales (CC-040; CC-056 punto 2)", () => {
   it("Instrumental con las dos cavidades = No: completa (D-39; fila 28)", () => {
     expect(
       parcial("evaluacion_instrumental", "resistografia", { cavidad_pudricion_basal: false, presenta_cavidad_pudricion_tronco: false })
-    ).toEqual({ completa: true, campos_faltantes: [] });
+    ).toEqual({ completa: true, campos_faltantes: [], fotos_validas_d27: null, vistas_recomendadas_faltantes: [] });
   });
 
   it("Instrumental con cavidad basal = Sí: exige su cadena de condicionales", () => {
@@ -323,3 +340,13 @@ describe("especieValidaD13 (D-13; CC-056 decisión r)", () => {
     expect(faltantesDe(evaluacionCompleta({ arbolVigente }))).toEqual(["especie_cientifica"]);
   });
 });
+
+function fotosD27(vistas: (string | null)[]) {
+  return vistas.map((vista, n) => ({
+    id: `foto-${n}`,
+    inspection_id: "inspeccion",
+    storage_path: `archivo-${n}.jpg`,
+    sha256: `huella-${n}`,
+    vista,
+  }));
+}

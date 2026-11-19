@@ -34,9 +34,6 @@ import {
 /** D-27: la Evaluación instrumental no admite fotos. */
 const TIPO_SIN_FOTOS = "evaluacion_instrumental";
 
-/** D-27: en Monitoreo, la vista es opcional; en el resto (salvo el de arriba), obligatoria. */
-const TIPO_VISTA_OPCIONAL = "monitoreo";
-
 /** Roles que asocian fotos de registro al árbol (039): quien registra el inventario y quien inspecciona. */
 const ROLES_FOTO_REGISTRO = ["usuario_municipal", "inspector"] as const;
 
@@ -119,7 +116,6 @@ function mensajeDuplicada(foto: PhotoRow): string {
 async function autorizarSubidaInspeccion(
   user: AuthenticatedUser,
   inspectionId: string,
-  vista: VistaFoto | undefined,
   accessToken: string
 ): Promise<DestinoFoto> {
   const inspeccion = await obtenerInspeccionPorId(inspectionId);
@@ -157,9 +153,6 @@ async function autorizarSubidaInspeccion(
   const tipo = inspeccion.tipo_inspeccion_realizada;
   if (tipo === TIPO_SIN_FOTOS) {
     throw new AppError("La Evaluación instrumental no admite fotos (D-27)", 422);
-  }
-  if (tipo !== TIPO_VISTA_OPCIONAL && vista === undefined) {
-    throw new AppError("vista es obligatoria para este tipo de inspección (D-27)", 422);
   }
 
   return { projectId: ot.project_id, treeId: inspeccion.tree_id, inspectionId, origen: "inspeccion" };
@@ -263,7 +256,7 @@ export async function subirFotoInspeccion(
   archivo: ArchivoSubido,
   accessToken: string
 ): Promise<PhotoRow> {
-  const destino = await autorizarSubidaInspeccion(user, inspectionId, body.vista, accessToken);
+  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken);
   return registrarFotoDirecta(user, destino, body.vista ?? null, archivo);
 }
 
@@ -340,7 +333,7 @@ export async function solicitarSubidaInspeccion(
   body: SolicitarSubidaBody,
   accessToken: string
 ): Promise<SubidaFirmada> {
-  const destino = await autorizarSubidaInspeccion(user, inspectionId, body.vista, accessToken);
+  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken);
   return solicitarSubida(user, destino, body);
 }
 
@@ -351,7 +344,7 @@ export async function confirmarSubidaInspeccion(
   body: ConfirmarSubidaBody,
   accessToken: string
 ): Promise<PhotoRow> {
-  const destino = await autorizarSubidaInspeccion(user, inspectionId, body.vista, accessToken);
+  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken);
   return confirmarSubida(user, destino, body);
 }
 
@@ -526,6 +519,13 @@ export async function eliminarFotoInspeccion(
     throw new AppError("La foto no existe en esta inspección", 404);
   }
 
-  await eliminarFotoRegistro(photoId, inspectionId);
+  try {
+    await eliminarFotoRegistro(photoId, inspectionId);
+  } catch (error) {
+    if (error instanceof Error && error.cause === "SV041") {
+      throw new AppError("La inspección ya finalizó y la fotografía sigue asociada", 409);
+    }
+    throw error;
+  }
   await eliminarArchivoDeStorage(foto.storage_path);
 }

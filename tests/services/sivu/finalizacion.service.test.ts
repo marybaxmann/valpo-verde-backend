@@ -155,7 +155,7 @@ function preparar(e: Escenario = {}) {
   mockArbolVigente.mockResolvedValue(ARBOL_VIGENTE);
   mockEntradasVigentes.mockResolvedValue(e.vigentes ?? {});
   mockFechaVigente.mockResolvedValue(e.fechaVigente ?? null);
-  mockFotos.mockResolvedValue((e.vistas ?? ["arbol_completo", "base", "tronco", "copa"]).map((vista) => ({ vista })));
+  mockFotos.mockResolvedValue((e.vistas ?? ["arbol_completo", "base", "tronco", "copa"]).map((vista, n) => ({ vista, id: `id-${n}`, inspection_id: INSPECTION_ID, storage_path: `foto-${n}`, sha256: null })));
   mockFinalizarRpc.mockResolvedValue({
     inspection_id: INSPECTION_ID,
     evaluation_id: "ev-1",
@@ -215,6 +215,24 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
     const sinReceso = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
     expect(sinReceso.resultado.indicadores.defoliacion).toMatchObject({ categoria: "leve", reglaId: "CR-DEF-02" });
     expect(sinReceso.puede_finalizar).toBe(true);
+  });
+
+  it("permite dos fotos sin etiqueta y distingue la advertencia del bloqueo D-27", async () => {
+    preparar({ vistas: [null, null] });
+    const suficiente = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(suficiente).toMatchObject({
+      puede_finalizar: true,
+      fotos_validas_d27: 2,
+      vistas_recomendadas_faltantes: ["arbol_completo", "base", "tronco", "copa"],
+    });
+
+    preparar({ vistas: [null] });
+    const insuficiente = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(insuficiente.puede_finalizar).toBe(false);
+    expect(insuficiente.campos_faltantes).toEqual([expect.objectContaining({ campo: "fotografias_arbol" })]);
+    const cierre = await finalizarInspeccion(usuario(), INSPECTION_ID, { huella: insuficiente.huella }, TOKEN);
+    expect(cierre.finalizada).toBe(false);
+    expect(mockFinalizarRpc).not.toHaveBeenCalled();
   });
 
   it("calcula sin escribir nada y permite finalizar una evaluación completa", async () => {
