@@ -26,6 +26,29 @@ export interface FichaPublica {
     persistencia_follaje: string | null;
     tipo_hoja: string | null;
   };
+  // --- Agregado por la 037 (CC-078). Opcional: la 028 no lo trae. ---
+  nombre_visualizacion?: string | null;
+  articulo?: "el" | "la" | null;
+  contenido_especie?: {
+    curiosidad?: string;
+    aportes?: Array<{ icono: string; titulo: string }>;
+    quien_soy?: string;
+    rasgos?: Array<{ etiqueta: string; texto: string; foto_path?: string | null; credito?: string | null }>;
+    anio_estacional?: Record<"prim" | "ver" | "oto" | "inv", string>;
+    ciclo?: { titulo: string; pasos: Array<{ etiqueta: string; texto: string }> };
+    historia_especie?: string;
+    consejo?: string;
+    fuentes?: Array<{ bloques: string[]; tema: string; referencia: string; enlace?: string }>;
+  } | null;
+  ejemplar?: { historia?: string; historia_fuente?: string };
+  foto_principal?: { tipo: "ejemplar" | "referencial_especie"; ruta: string; credito?: string | null } | null;
+  medidas?: Partial<{
+    clase_edad: { codigo: string; naturaleza: string };
+    altura_total_m: { valor: number; unidad: string; naturaleza: string };
+    dap_cm: { valor: number; unidad: string; naturaleza: string };
+    diametro_copa_m: { valor: number; unidad: string; naturaleza: string };
+    rango_edad_estimada_anios: { codigo: string; naturaleza: string };
+  }>;
 }
 
 export async function obtenerFichaPublica(qrToken: string): Promise<FichaPublica | null> {

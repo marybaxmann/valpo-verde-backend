@@ -11,14 +11,14 @@
 ---
 
 ## 📌 Metadatos del Relevo
-- **Última actualización:** 2026-10-29, bloque 15 (025, 026 y 027 aplicadas y probadas en `valpo-verde-conecta-pruebas`; ver su novedad). Antes, 2026-10-26, bloque 10 (migración 022 aplicada en pruebas; CC-063 implementado en `wip/cc063-alcance`, en revisión); bloque 9 (CC-057 a CC-062 de la Fase 7, APROBADOS, en `wip/cc057-frontend`; PR-016 v7.0, PR-018 v4.0, PR-022 v2.0); bloque 8 (CC-056 y capa TS de #59 + #72 en `wip/cc056-completitud`, ver su novedad); antes, 2026-10-25, bloque 7 (ciclo completo de la 021 y regresión de `fn_refresh_tree_current`, 57/57 dos rondas); bloque 6 (ciclo completo de la 020); antes, bloque 5: ciclo de la 018h con `apply_migration`, pruebas de la 018h con notación con nombre, regla del md5). Lo que sigue en esta línea es el estado del bloque 4, que el bloque 5 actualiza. Sesión que cambia de cuenta (relevo en caliente, ver el bloque 4 abajo con la instrucción exacta para quien siga). **Estado exacto al cortar:** el plan de #59+#72 (finalizar una inspección) está APROBADO por la responsable; la migración **020** (`fn_finalizar_inspeccion`, SQLSTATE `SV064`) y su script de pruebas (F1–F9) están ESCRITOS pero **NO aplicados todavía** — la sesión anterior terminó preguntándole a la responsable si aplicar con el ciclo de siempre, sin respuesta todavía. Antes de eso, en esta misma sesión: corregida la deriva de la 018g (commit `49a2cfd`, **comiteado pero NO empujado todavía** — confirmar con la responsable antes de `git push`, aunque solo corrige un archivo, no cambia comportamiento). Antes de esto, ya comiteado y empujado (`a1b2011`, `215dc6e`): issue [#73](https://github.com/marybaxmann/valpo-verde-backend/issues/73), migración **018i** (catálogo de especies, CC-053, `fn_rename_species`/`fn_complete_species`/`fn_resolve_or_create_species`, SQLSTATE `SV061`/`SV062`/`SV063`) aplicada y probada (E1–E10, 10/10, dos rondas apply→revert→reapply) en `valpo-verde-conecta-pruebas`, con su capa backend (búsqueda/completar/corregir) implementada, probada y comiteada. Antes de esto: issue #58, migración **018h** (crear OT de Inspección, D-238/D-244/CC-036, `fn_create_work_order_inspeccion`, SQLSTATE `SV060`) aplicada y probada (H1–H13, 14/14) en `valpo-verde-conecta-pruebas`. **Capa backend del #58 implementada:** `POST /api/sivu/projects/:id/work-orders` (crear OT), `PATCH /api/sivu/work-orders/:workOrderId/estado` (transición 018g), `POST /api/sivu/work-orders/:workOrderId/inspections` (crear borrador) y `PATCH /api/sivu/inspections/:inspectionId` (guardar borrador) — repository/service/controller/schema Zod con alcance por tipo/subtipo (CC-040), 44 suites/904 tests de Jest, `tsc` limpio. Fuera de alcance, como se acordó: árbol nuevo en Levantamiento (CC-052/018f, endpoint propio pendiente de la búsqueda de árboles cercanos), fotos (CC-049), completar/cancelar/reasignar la OT (CC-050, issue propio) y notificaciones (CC-051). **AM-17 cerrado:** agregado el catálogo de `clasificacion_vitalidad` (D-169) a `catalogs.ts` y validado — no era un vacío metodológico, era falta de implementación (corrección de la responsable). **Evaluación completa (Evaluación inicial/Reevaluación/Levantamiento) ya no es permisiva:** 118 campos de REGISTRO_EVALUACION generados desde el .xlsx con un script nuevo (`campos_evaluacion_completa.py`), con una prueba que los compara contra el Excel para no desincronizarse. **CC-053 registrada y diseño del punto 5 aprobado** (catálogo de especies incorporado por el Inspector; `species_id` para que un renombre se propague — se implementa en el issue [#73](https://github.com/marybaxmann/valpo-verde-backend/issues/73), después del #58, con la migración mostrada antes de aplicar). **Historial de migraciones sincronizado:** `list_migrations` vs. estado real 018a–018h, cero diferencias (ver la lección de arriba). **018e/018f/018g previas** (D-193, CC-052, CC-050) ya aplicadas y probadas dos rondas cada una; **K1–K7 (018b) ya con fixtures propias del repositorio**, sin depender de archivos externos. #57 (018d) ya cerrado y empujado antes; #56 cerrado; Fase 5 cerrada y fusionada en `main`, PR #71)
+- **Última actualización:** 2026-11-16, bloque 39 (fotos del equipo, sin créditos en la plataforma; ver su novedad). Antes, bloque 38 (araucaria y ginkgo; ficha sin créditos; ver su novedad). Antes, bloque 37 (fotos referenciales cargadas; ver su novedad). Antes, bloque 36 (038 aplicada en pruebas; ver su novedad). Antes, bloque 35 (recorrido de los endpoints; defecto de la 037 y 038 propuesta; ver su novedad). Antes, bloque 34 (endpoints de la ficha pública editable; ver su novedad). Antes, bloque 33 (037 en pruebas y carga inicial). Antes, bloque 32 (CC-078 aprobado y registrado; filas D-280 a D-307 en el Excel; ver su novedad). Antes, 2026-11-16, bloque 31 (borrador final del CC y filas de la ficha pública editable, para la revisión de Mari; ver su novedad). Antes, 2026-11-16, bloque 30 (robustez de la API en rama local; respuestas de Mari; carga de *Acer negundo* y *Lagerstroemia indica* en pruebas; ver su novedad). Antes, 2026-11-16, bloque 29 (`release/demo` reconciliada con `feature/fase6-backend-api` y publicada: metodología 3.0 en la API; ver su novedad). Antes, 2026-11-15, bloque 28 (relevo de Mari: propuesta de ficha pública editable, solo local; ver su novedad). Antes, 2026-10-29, bloque 15 (025, 026 y 027 aplicadas y probadas en `valpo-verde-conecta-pruebas`; ver su novedad). Antes, 2026-10-26, bloque 10 (migración 022 aplicada en pruebas; CC-063 implementado en `wip/cc063-alcance`, en revisión); bloque 9 (CC-057 a CC-062 de la Fase 7, APROBADOS, en `wip/cc057-frontend`; PR-016 v7.0, PR-018 v4.0, PR-022 v2.0); bloque 8 (CC-056 y capa TS de #59 + #72 en `wip/cc056-completitud`, ver su novedad); antes, 2026-10-25, bloque 7 (ciclo completo de la 021 y regresión de `fn_refresh_tree_current`, 57/57 dos rondas); bloque 6 (ciclo completo de la 020); antes, bloque 5: ciclo de la 018h con `apply_migration`, pruebas de la 018h con notación con nombre, regla del md5). Lo que sigue en esta línea es el estado del bloque 4, que el bloque 5 actualiza. Sesión que cambia de cuenta (relevo en caliente, ver el bloque 4 abajo con la instrucción exacta para quien siga). **Estado exacto al cortar:** el plan de #59+#72 (finalizar una inspección) está APROBADO por la responsable; la migración **020** (`fn_finalizar_inspeccion`, SQLSTATE `SV064`) y su script de pruebas (F1–F9) están ESCRITOS pero **NO aplicados todavía** — la sesión anterior terminó preguntándole a la responsable si aplicar con el ciclo de siempre, sin respuesta todavía. Antes de eso, en esta misma sesión: corregida la deriva de la 018g (commit `49a2cfd`, **comiteado pero NO empujado todavía** — confirmar con la responsable antes de `git push`, aunque solo corrige un archivo, no cambia comportamiento). Antes de esto, ya comiteado y empujado (`a1b2011`, `215dc6e`): issue [#73](https://github.com/marybaxmann/valpo-verde-backend/issues/73), migración **018i** (catálogo de especies, CC-053, `fn_rename_species`/`fn_complete_species`/`fn_resolve_or_create_species`, SQLSTATE `SV061`/`SV062`/`SV063`) aplicada y probada (E1–E10, 10/10, dos rondas apply→revert→reapply) en `valpo-verde-conecta-pruebas`, con su capa backend (búsqueda/completar/corregir) implementada, probada y comiteada. Antes de esto: issue #58, migración **018h** (crear OT de Inspección, D-238/D-244/CC-036, `fn_create_work_order_inspeccion`, SQLSTATE `SV060`) aplicada y probada (H1–H13, 14/14) en `valpo-verde-conecta-pruebas`. **Capa backend del #58 implementada:** `POST /api/sivu/projects/:id/work-orders` (crear OT), `PATCH /api/sivu/work-orders/:workOrderId/estado` (transición 018g), `POST /api/sivu/work-orders/:workOrderId/inspections` (crear borrador) y `PATCH /api/sivu/inspections/:inspectionId` (guardar borrador) — repository/service/controller/schema Zod con alcance por tipo/subtipo (CC-040), 44 suites/904 tests de Jest, `tsc` limpio. Fuera de alcance, como se acordó: árbol nuevo en Levantamiento (CC-052/018f, endpoint propio pendiente de la búsqueda de árboles cercanos), fotos (CC-049), completar/cancelar/reasignar la OT (CC-050, issue propio) y notificaciones (CC-051). **AM-17 cerrado:** agregado el catálogo de `clasificacion_vitalidad` (D-169) a `catalogs.ts` y validado — no era un vacío metodológico, era falta de implementación (corrección de la responsable). **Evaluación completa (Evaluación inicial/Reevaluación/Levantamiento) ya no es permisiva:** 118 campos de REGISTRO_EVALUACION generados desde el .xlsx con un script nuevo (`campos_evaluacion_completa.py`), con una prueba que los compara contra el Excel para no desincronizarse. **CC-053 registrada y diseño del punto 5 aprobado** (catálogo de especies incorporado por el Inspector; `species_id` para que un renombre se propague — se implementa en el issue [#73](https://github.com/marybaxmann/valpo-verde-backend/issues/73), después del #58, con la migración mostrada antes de aplicar). **Historial de migraciones sincronizado:** `list_migrations` vs. estado real 018a–018h, cero diferencias (ver la lección de arriba). **018e/018f/018g previas** (D-193, CC-052, CC-050) ya aplicadas y probadas dos rondas cada una; **K1–K7 (018b) ya con fixtures propias del repositorio**, sin depender de archivos externos. #57 (018d) ya cerrado y empujado antes; #56 cerrado; Fase 5 cerrada y fusionada en `main`, PR #71)
 - **Agente emisor:** Claude Code
 - **Agente receptor sugerido:** Claude Code
 - **Base documental oficial:** `main` (decisión K1, 2026-10-11). Backend `main` = `a87292a` (PR #71 fusionado: cierre documental de la Fase 5, sobre `3a5be8b`/PR #68 y `874c938`/PR #70); frontend `main` = `187a90d` (PR #5). Fase 6 en la rama `feature/fase6-backend-api` (sin PR todavía).
 - **Ramas de trabajo:** `feature/fase6-backend-api` (backend/API, en curso, ver la novedad del 2026-10-23 más abajo). `feature/demo-sivu` en ambos repos (+1 commit sobre `main`: `601e9d6` backend / `8956d6f` frontend, fechas en hora de Chile, `GET /api/species`, optimizaciones de mapa y consultas). **K4 verificado por la autora el 2026-10-20** (P1–P5 y P7 OK; P6 con falla parcial ya existente en `main`, PA-43; fluidez de P3–P4, PA-44); fusionado en `main` (PR #23 backend, #9 frontend). Documentación postauditoría en `docs/postauditoria-2026-10` (worktree `../valpo-verde-backend-docs`).
 - **Rutas:** `C:\Users\usuario\code\valpo-verde-backend` y `C:\Users\usuario\code\valpo-verde-frontend`
 - **Pendiente después de la presentación:** Valpo Verde Conecta (#62, CC-062): tarea completa en `docs/plan/conecta-62-backend.md` (2026-10-30).
-- **Resumen:** 033 aplicada en pruebas (N1–N9 OK, ciclo completo). CC-052, B8, B6, avisos y recordatorios publicados en feature y wip (8e0c3ee); release/demo sin cambios (3d717ce).
+- **Resumen:** 2026-11-16: fotos del equipo con crédito «SIVU», sin créditos en la plataforma; docs/conecta-fotos.md; todo local, sin push.
 
 > La línea **Resumen** se muestra en la barra de estado de Claude Code. Mantenerla en una sola línea corta y actualizarla en cada relevo.
 
@@ -36,6 +36,197 @@
 - **`execute_sql` no queda en el historial de migraciones de Supabase (`list_migrations`); `apply_migration`, sí.** La herramienta `apply_migration` del MCP falló dos veces consecutivas con `Invalid or expired requestState` al revertir la 018f (2026-10-24, justo al cruzar la medianoche de la sesión) — se reemplazó por `execute_sql` para no bloquear el trabajo, y eso dejó el historial de migraciones desincronizado del estado real de la base durante casi un día (`fn_transition_work_order_estado` viva con la corrección de D-241, pero el historial marcándola como borrada). **Corregido el 2026-10-25:** revertida y reaplicada la 018g otra vez, esta vez solo con `apply_migration` (falló una vez más con el mismo error transitorio, el reintento funcionó) — `list_migrations` vs. estado real 018a–018h, cero diferencias. **Regla correcta: `execute_sql` es solo para pruebas y consultas de solo lectura — nunca para aplicar o revertir una migración.** Si `apply_migration` falla, **reintentar `apply_migration`**; nunca sustituirlo por `execute_sql` para que el cambio quede en el historial.
 
 ---
+
+## ▶ Novedad 2026-11-16 (bloque 39) — Fotos: del equipo, sin créditos en la plataforma
+
+- **Indicación de la responsable (2026-11-16):** el crédito no se ve en la plataforma; solo se documenta en un md que las fotos pertenecen al equipo. **Nunca se acreditan fotos a personas.**
+- **Base de pruebas:** `database/cargas/2026-11-16_creditos_sivu.sql` (aplicada con `apply_migration`, md5 `4188b54b…` = archivo en LF) deja todas las fotos propias con crédito «SIVU». Las temporales de terceros (olmo, crespón) conservan el crédito fijo de D-293. Sin reversión: no se vuelve a acreditar a personas. Verificado: en `species_public_content` no queda ningún nombre de persona.
+- **API:** ni la ficha pública ni la edición entregan créditos (`foto_referencial` = `{ url, temporal }`, `rasgos[].foto` = `{ url }`). Subir una foto ya no pide crédito: el servicio guarda «SIVU» (`CREDITO_EQUIPO` en `fichaPublica.service.ts`), o el de terceros si es temporal; mandar `credito` → 400. Contrato §8 ter actualizado.
+- **Documento:** `docs/conecta-fotos.md` registra el origen de cada foto (levantamiento o fecha, carpeta AV y árbol), su uso, su autoría («Equipo SIVU» o «Terceros») y lo que falta reemplazar. Actualizarlo con cada foto nueva.
+- Scripts de carga, registro de pendientes y este HANDOFF: sin atribuciones de fotos a personas (las menciones a Mari que quedan son de aprobaciones).
+- **Pruebas:** Jest 1739/1739, `tsc` limpio; recorrido 19/19 contra pruebas (el bloque de foto referencial se omite porque el negundo ya tiene la suya). Todo quedó como estaba.
+- **Pendiente (CC):** D-285 (Excel, CC-078) dice que las fotos propias se acreditan «Valpo Verde, levantamiento 2026-10-01», y D-285/D-292 piden «ingreso» del autor y la licencia. Ahora el sistema guarda «SIVU» sin pedirlo. Hay que alinear el texto de esas filas con un CC (decide Mari).
+
+## ▶ Novedad 2026-11-16 (bloque 38) — Araucaria y ginkgo cargadas; la ficha pública no muestra créditos
+
+- **Indicación de la responsable (2026-11-16):** el crédito de las fotos propias es «SIVU», y **no se muestra en la ficha**: a la ciudadanía no le interesa y al terminar el proyecto todas las fotos serán del equipo.
+- **Reglas:** D-285, D-292 y PR-022 v3.0 piden **guardar** autor y licencia, no mostrarlos. Por eso: el crédito se sigue guardando y exigiendo al subir, y se ve en los endpoints de edición; `GET /api/sivu/conecta/arboles/:qrToken` ya no lo entrega (`foto_principal` = `{ tipo, url }`, `rasgos[].foto` = `{ url }`). Contrato §8 ter actualizado. No requiere CC: la ficha nunca tuvo la obligación de mostrarlo.
+- **Carga** `database/cargas/2026-11-16_fotos_sivu.mjs` (fotos del equipo del 2026-11-11, frontend `98f2940` y `b92d499`): araucaria (referencial y rasgo «Silueta», la misma foto, como en `contenidoEspecie.ts`) y ginkgo (referencial), crédito «SIVU», no temporales.
+- **Verificado** con el backend local contra pruebas: las 6 especies tienen foto principal (200) y la respuesta no contiene créditos. Jest 1738/1738, `tsc` limpio. En el bucket hay 11 archivos.
+- (Bloque 39: todos los créditos de fotos propias pasaron a «SIVU».)
+
+## ▶ Novedad 2026-11-16 (bloque 37) — Fotos referenciales cargadas en la base de pruebas
+
+- **Pedido de la responsable** (2026-11-16; confirmado «Sí, cárgalas»). `database/cargas/2026-11-16_fotos_referenciales.mjs`, desde el commit `9549d39` del frontend (`feature/fichas-especies-v5`):
+  - Arce negundo y Falso plátano: fotos del equipo (AV_000009/IMG_9984, A-000425; AV_000007/IMG_9947, A-000423), no temporales (crédito «SIVU» desde el bloque 39).
+  - Crespón: temporal de terceros (crédito fijo de la base), hasta tener una foto propia con flores.
+  - Olmo: sin cambios (ya era temporal de terceros).
+  - **Araucaria y Ginkgo: no cargadas** en este bloque (se cargaron en el 38).
+- Recodificadas como el backend (WebP sin metadatos, caché 300 s). Verificado en la ficha pública (backend local contra pruebas): las tres salen como «referencial_especie» con su crédito y responden 200. En el bucket hay 8 archivos.
+- Nota de entorno: `TaskStop` no cierra el proceso de Node de un `npx tsx` en segundo plano; quedó un servidor local escuchando en 4011 y se cerró con `Stop-Process`.
+
+## ▶ Novedad 2026-11-16 (bloque 36) — 038 aplicada en la base de pruebas (crédito de las fotos de rasgos)
+
+- **Autorización:** la responsable, 2026-11-16 («sí, aplica la 038 en la base de pruebas»). Solo `gmlbmyreoxgoqrolhyxo`.
+- **Ciclo completo:** aplicar (`20261116181425`) → `pruebas_038_credito_rasgos.sql` G1–G3 OK → revertir → `fn_guardar_contenido_especie` idéntica a la de la 037 (md5 de la definición `70014deb…` y privilegios) → reaplicar → G1–G3 OK. md5 de up `0bddf4a6…` y down `0439ad96…` iguales a los archivos en LF.
+- **Recorrido de los endpoints repetido:** 23/23 OK, incluido «la foto del rasgo conserva su crédito». Todo quedó como estaba (contenido del negundo idéntico al respaldo; sin fila de ficha en A-000352; en el bucket, solo los 5 archivos de la carga).
+- El recorrido ahora comprueba el borrado de fotos en el bucket (no por la URL pública, que la CDN puede seguir sirviendo) y **omite el bloque de foto referencial si la especie ya tiene una**, para no borrarla.
+- **Pendiente:** actualización de créditos de fotos referenciales recibida (negundo y falso plátano, fotos del equipo en el commit `9549d39` del frontend; olmo y crespón, temporales de terceros; araucaria y ginkgo, propias): sin cargar, a la espera de confirmación y del texto exacto del crédito de la araucaria y el ginkgo.
+
+## ▶ Novedad 2026-11-16 (bloque 35) — Recorrido de los endpoints contra la base de pruebas; defecto en la 037 y propuesta 038 (solo local)
+
+- **Recorrido** `database/fase6/recorrido_ficha_publica.ts`: los 8 endpoints por la capa de servicio, contra `gmlbmyreoxgoqrolhyxo`, con las identidades de las cuentas de QA (proyecto «QA Fase 7», árbol A-000352). **Sin inicio de sesión** (no se usan contraseñas): no cubre la validación del JWT ni la RLS de lectura con el JWT de cada usuario; las lecturas van con service_role. Resultado: permisos (Inspector, Encargado y municipal no miembro → 403; municipal miembro y Administrador editan), fotos (WebP 1600 px sin metadatos, ruta aleatoria, temporal solo en la referencial, rasgo inexistente → 404), ficha del árbol (vista previa con historia y consejo personalizado, sin medidas sin valor) y borrado de archivos: todo OK. Al terminar se dejó todo como estaba (fila del árbol borrada; contenido del negundo idéntico al respaldo, comparado campo por campo; en el bucket solo los 5 archivos de la carga).
+- **Defecto encontrado (037):** `fn_guardar_contenido_especie` conserva la foto de cada rasgo que sigue pero **descarta su crédito**. Reproducido en pruebas (con ROLLBACK). El recorrido lo dejó así en el negundo y se restauró a mano. **Propuesta 038** `database/migrations/038_credito_rasgos_al_guardar.sql` (+ `.down.sql`; md5 LF up `0bddf4a6…`, down `0439ad96…`): solo `CREATE OR REPLACE` de esa función; el crédito sale de la fila actual y el cliente no puede fijarlo. Pruebas `database/fase6/pruebas_038_credito_rasgos.sql` (G1–G3). **No aplicada: requiere autorización.** Mientras no se aplique, guardar el contenido de una especie con fotos de rasgos borra sus créditos.
+- **Caché de la CDN:** el bucket público servía cada foto con `max-age=3600`: al quitar una foto, el archivo se borra al instante pero la URL puede responder hasta una hora. Las subidas del backend ahora usan `cacheControl` 300 s (`fichaPublica.repository.ts`). Las 5 fotos de la carga inicial conservan la hora.
+
+## ▶ Novedad 2026-11-16 (bloque 34) — Endpoints de la ficha pública editable (CC-078; solo local)
+
+Rama `docs/ficha-publica-editable`, sin push. Requiere la 037 (ya en pruebas).
+
+- **Ficha pública ampliada** (`GET /api/sivu/conecta/arboles/:qrToken`, `conecta.service.ts`): conserva las claves de la 028 y agrega `nombre_visualizacion`, `articulo`, `contenido_especie` (ícono y bloques con etiqueta), `ejemplar`, `foto_principal` y `medidas` (con `naturaleza` y su rótulo). Fotos como URL pública de `conecta-publico`; nunca rutas internas.
+- **8 endpoints internos** (`fichaPublica.controller/service/repository`, `schemas/sivu/fichaPublica.schema.ts`, rutas en `routes/sivu/project.routes.ts`): ver/guardar el contenido de la especie, fijar/quitar sus fotos por ranura (`referencial` o id de rasgo, `temporal` solo en la referencial), ver/guardar la ficha del árbol (con medidas vigentes y vista previa) y fijar/quitar su foto. Ver: miembros y Administrador; editar: Usuario municipal miembro y Administrador. Errores: SV080/SV081 → 400/403/404, 42501 → 403, 23514 → 400, proyecto cerrado → 409.
+- **Fotos** (`procesarFotoPublica` en `photo.service.ts`): JPG/PNG/WebP por contenido, `.rotate()`, 1600 px, WebP q80 sin metadatos (comprobado). Orden seguro: subir → función → si falla, borrar lo subido; si funciona, borrar la anterior.
+- **Catálogos** `icono_aporte` y `bloque_contenido` en `catalogs.ts` (CC-078); salen en `GET /api/sivu/catalogs`.
+- **Contrato:** `docs/api/contrato-frontend.md` §8 ter.
+- **Pruebas:** `tsc` limpio; Jest **1738/1738** (89 suites; nuevo `tests/integration/sivuFichaPublica.routes.test.ts` y dos casos en `sivuConecta`). Contra la base de pruebas, backend local: la ficha pública del olmo, el falso plátano, la araucaria y un árbol sin especie sale completa, sin datos internos, y las fotos responden 200 WebP desde el bucket. **No probado con sesión real:** los 8 endpoints internos (faltan las contraseñas de QA; la guía `docs/plan/validacion-local-powershell.md` las pide a la responsable).
+
+**Siguiente:** probar los endpoints internos con una cuenta de QA; conectar el frontend (hoy lee `contenidoEspecie.ts`); fotos referenciales (resuelto en los bloques 37 a 39); publicar 3.0.1; push y PR con autorización.
+
+## ▶ Novedad 2026-11-16 (bloque 33) — 037 aplicada en la base de pruebas y carga inicial de Conecta (solo local)
+
+**Autorización:** Mari, 2026-11-16 («Sí, autoriza»), solo para `gmlbmyreoxgoqrolhyxo`. Nada en la base real. Nada publicado: rama `docs/ficha-publica-editable` sin push.
+
+- **037** movida a `database/migrations/037_ficha_publica_editable.sql` (+ `.down.sql`); encabezado actualizado. Ciclo completo en pruebas: aplicar (`20261116173222`) → pruebas → revertir (`…173521`) → reaplicar (`…173708`) → pruebas. md5 de up `9ee06c8d…` y down `2819630e…` iguales a los archivos en LF. La reversión deja `fn_ficha_publica_arbol` idéntica a la 028 (md5 de la definición y privilegios).
+- **Pruebas** `database/fase6/pruebas_037_ficha_publica.sql`, F1 a F7 OK: permisos (Inspector, Encargado, inactivo, no miembro y suplantación rechazados; Administrador transversal), CHECK, fotos de rasgos conservadas, foto temporal con crédito fijo, ficha con claves de la 028 y medidas solo activadas con valor, proyecto cerrado, privilegios y bucket. `diametro_copa_m` es columna generada en `trees` (no se puede escribir).
+- **Carga inicial** `database/cargas/2026-11-16_contenido_conecta.mjs` + `.json` (se niega a correr fuera de pruebas; `--revertir` la deshace). Textos aprobados y fuentes por bloque (06) de las 6 especies, con `updated_by` = «Usuario Admin Prueba». Fotos recodificadas sin metadatos (verificado en la URL pública): 4 de «Reconóceme» («Valpo Verde, levantamiento 2026-10-01») y la del olmo como temporal.
+- **Códigos** en los JSONB (snake_case): íconos `sombra, frescor, aves, polinizadores, flores, siempreverde, hito, generaciones`; bloques `curiosidad, aportes, quien_soy, reconoceme, mi_anio, historia_especie, consejo, general`. Aportes `{icono, titulo}`, rasgos `{id, etiqueta, texto, foto_path, credito}`, fuentes `{bloques, tema, referencia, enlace?}`. El Zod de los endpoints debe seguir esto.
+
+**Pendiente:**
+1. **Pregunta para Mari:** autor y licencia de las fotos referenciales de arce negundo, falso plátano, crespón, araucaria y ginkgo, y de la «Silueta» de la araucaria (hoy «origen no documentado»). Sin eso no se cargan (D-292).
+2. Endpoints y Zod de `03-migracion-y-endpoints.md` §5 (no escritos). El frontend sigue leyendo `contenidoEspecie.ts`; no borrar nada del frontend hasta que la ficha desplegada lea todo de la API.
+3. VERSION 3.0.1, `00-index.md`, PR con el CC y tag `metodologia-v3.0.1` (FUENTE SINCRONIZADA).
+
+## ▶ Novedad 2026-11-16 (bloque 32) — CC-078 aprobado: filas en el Excel, reglas nuevas (solo local)
+
+- **Aprobación de Mari (2026-11-16):** CC-078 y filas aprobados, con un cambio: la foto actual del olmo (terceros, con marca de agua) queda como **referencial temporal**, con crédito «Foto de terceros, uso referencial temporal» y una marca de reemplazo → campo nuevo **`foto_referencial_temporal`** (CATALOGO_ESPECIES, **D-293**). Total: **28 filas, D-280 a D-307**. Fuentes: P10 no se carga; consejo del olmo y bloques sin fuente quedan así.
+- **Hecho** (rama `docs/ficha-publica-editable`, commit `e0afc64`, rebasada sobre `origin/feature/fase6-backend-api` `88cef45`, **sin push**):
+  - `docs/registro-cambios.md`: ficha **CC-078** en APROBADO METODOLÓGICAMENTE (aprobó marybaxmann; medidas, Valej). CC-072 queda reservado (rama local `wip/fichas-qr-especies`).
+  - Excel: D-n verificados contra el `.xlsx` (terminaba en D-279; **CC-068 no entró**). 28 filas en DICCIONARIO_CAMPOS con el formato de D-279; 16 columnas nuevas en CATALOGO_ESPECIES; hoja nueva FICHAS_PUBLICAS (12 columnas); LISTAS N `Icono_aporte` y O `Bloque_contenido` con nombres definidos. **Editado con Excel por COM**, no con openpyxl: openpyxl convertía los comentarios en hilo en notas y perdía la configuración de impresión. Verificado: 0 celdas existentes cambiadas, filas = CSV aprobado, `fila_diccionario.py` D-280/D-293/D-296/D-307 correctos.
+  - Export regenerado (solo cambian `DICCIONARIO_CAMPOS.csv` y `LISTAS.csv`); `verificar_14_9.py` 0 hallazgos; Jest 1705/1705.
+  - `docs/project-rules.md`: **PR-003 v9.0**, **PR-004 v8.0** (única excepción a la solo lectura: contenido ciudadano) y **PR-022 v3.0**; las anteriores quedan REEMPLAZADAS.
+  - `docs/registro-pendientes.md` §9: **fotos oficiales de Conecta** antes de retirar «Prototipo» (bloquea el cierre de Conecta); especies P9 cargadas.
+  - 037 (propuesta): columna `foto_referencial_temporal` + `chk_spc_temporal_con_foto`; `fn_fijar_foto_especie(..., p_temporal BOOLEAN DEFAULT false)` fija el crédito temporal y solo lo admite para la foto referencial; grants y down actualizados. **No aplicada.**
+- **Falta para FUENTE SINCRONIZADA:** fila 3.0.1 en VERSION, `docs/methodology/00-index.md`, PR que cite el CC y tag `metodologia-v3.0.1` (§14.7).
+- **Falta autorización explícita** para aplicar la 037 en `gmlbmyreoxgoqrolhyxo` (el mensaje de Mari traía la frase de autorización como plantilla condicional, no como autorización dada).
+
+**Prompt para el siguiente agente:**
+
+```
+Lee HANDOFF.md (bloque 32). CC-078 aprobado; filas D-280 a D-307 ya en el Excel (rama local
+docs/ficha-publica-editable, e0afc64). Pendiente: VERSION 3.0.1 + 00-index.md + PR + tag para
+FUENTE SINCRONIZADA; con autorización explícita, aplicar la 037 en gmlbmyreoxgoqrolhyxo con el
+ciclo completo y luego la carga inicial (06-fuentes-por-bloque.md). Edita el Excel con Excel
+(COM), no con openpyxl. Nunca en la base real.
+```
+
+## ▶ Novedad 2026-11-16 (bloque 31) — Ficha pública editable: borrador final del CC y de las filas (solo local)
+
+- **Origen:** mensaje con todas las respuestas a `05-preguntas-para-mari.md`: **Valej** (1 y 4, medidas) y **Mari** (2, 3, 5 a 12). Instrucción: cerrar el borrador del CC y las filas para la revisión final de Mari; **no aplicar la 037**.
+- **Decisiones incorporadas:**
+  - Valej 1: opción (b). Sin campo de método; la (a) queda **descartada, no postergada**. DAP, altura y copa = «medida en terreno o estimada con escala»; D-26 = «estimación»; D-25 = «clasificación del Inspector».
+  - Valej 4: las cinco medidas empiezan en «No».
+  - Mari: PR-004 v8.0 solo para contenido ciudadano de especies y fichas públicas; textos de especie editables por cualquier Usuario municipal activo o el Administrador; fuentes **por bloque**; árbol personaliza curiosidad, «quién soy» y consejo; créditos con autor y licencia, sin la foto del olmo con marca de agua (el olmo queda sin foto); límites, íconos y árboles sin especie como se propusieron; la numeración D-n no frena el CC.
+- **Archivos** (`docs/plan/propuestas/ficha-publica-editable/`, commit `7b92180`, rama `docs/ficha-publica-editable`, sin push):
+  - `generar_filas.py` → `01-filas-diccionario.md/.csv` regenerados (27 filas, D-280 a D-306 provisionales). Cambios: rótulos de D-18, D-19 y D-22; interruptores en «No»; `fuentes_contenido_especie` con uno o más bloques, tema y una obra por fuente (referencia hasta 300), «General» solo sin bloque claro y sin contar para Curiosidad ni Historia; créditos con autor y licencia.
+  - `06-fuentes-por-bloque.md` (nuevo): asignación tema → bloques de las seis especies, desde `FICHAS_SEIS_ESPECIES.md` v5. Las seis tienen fuente en Curiosidad e Historia; ninguna en «General». Tres puntos menores para Mari: «tu P10» como fuente (propuesta: no cargarla), Consejo del olmo sin obra, y bloques sin fuente que no la exigen.
+  - `02-CC-borrador.md`: CC-078 provisional, **EN REVISIÓN (borrador final)**, puntos 8, 11 y 12, dependencias y observaciones actualizadas; **no registrado** en `registro-cambios.md`.
+  - `037_ficha_publica_editable.sql`: copa `naturaleza` = `medicion_o_estimacion` (antes `calculado`) y comentarios. **No aplicada.** `03-migracion-y-endpoints.md`, `05-preguntas-para-mari.md` (respuestas de Valej) y `00-LEEME.md` alineados.
+- **No se tocó:** Excel, `registro-cambios.md`, base de pruebas (aparte de la carga de especies del bloque 30), base real ni frontend.
+
+**Prompt para el siguiente agente:**
+
+```
+Lee HANDOFF.md (bloque 31) y docs/plan/propuestas/ficha-publica-editable/00-LEEME.md
+(rama local docs/ficha-publica-editable). Espera la revisión final de Mari del CC (02) y
+las filas (01, generadas con generar_filas.py). Con su aprobación: registrar el CC en
+docs/registro-cambios.md, copiar las filas al Excel verificando D-n con fila_diccionario.py,
+y pedir autorización antes de aplicar la 037 en gmlbmyreoxgoqrolhyxo. Nunca en la base real.
+```
+
+## ▶ Novedad 2026-11-16 (bloque 30) — Robustez de la API (local), respuestas de Mari y carga de dos especies
+
+### Robustez de la API (PA-29 y PA-38) — rama local `feature/robustez-api`, sin push
+- Worktree `../valpo-verde-backend-robustez`, desde `origin/feature/fase6-backend-api` `e23e8df`; commit `88cef45`.
+- **PA-29 (lado backend del hallazgo F2):** `src/config/fetchConTiempoMaximo.ts` envuelve el `fetch` de los dos clientes de Supabase (datos, Auth y Storage). Variable nueva `SUPABASE_TIEMPO_MAXIMO_MS` (1000–60000, por defecto 15000). El tiempo cubre la respuesta completa; al agotarse aborta (`AbortError`, supabase-js no reintenta) y marca la petición. El middleware de errores responde **504** con «La base de datos no respondió a tiempo…» aunque el service haya traducido el fallo a otro error (p. ej., el 401 de un `getUser` sin respuesta). La marca vive en `src/utils/contextoPeticion.ts` (AsyncLocalStorage), no en el texto del error. El lado del frontend de F2 queda pendiente.
+- **PA-38 (hallazgo T3):** `src/middlewares/registroPeticiones.middleware.ts`, primero en `app.ts`. Cada petición tiene `request_id` (reutiliza un `X-Request-Id` válido del cliente) en la cabecera `X-Request-Id` (expuesta por CORS) y una línea JSON al terminar: método, ruta sin datos (sin consulta; segmentos con dígitos → `:param`, así no quedan ID ni `qr_token`), estado, duración y `tiempo_agotado_bd`. No registra cuerpo, cabeceras, IP, token ni usuario. Las respuestas **5xx** agregan `request_id` al cuerpo (campo nuevo, compatible: `error` no cambia); las 4xx no cambian. Sin registro en NODE_ENV=test.
+- Pruebas nuevas: `tests/config/fetchConTiempoMaximo.test.ts` (incluye supabase-js real con un fetch colgado: 1 sola llamada, error devuelto, petición marcada) y `tests/middlewares/registroPeticiones.test.ts`. Ajustadas 2 expectativas de `tree.routes.test.ts` (500 con `request_id`). `tsc` limpio; Jest 88 suites / **1705** OK.
+- **PA-35 (errores tipados) no se hizo:** el `msg.includes(...)` que queda está en los módulos de la demo antigua (`tree.service.ts`, `moduleRecords.service.ts`, `treeRiskAssessment.service.ts`) y en `project.service.ts`; tiparlo exige que las funciones SQL lancen SQLSTATE propios (migración, depende de PA-04). Los repositorios SIVU ya propagan `cause: error.code`.
+- **Publicado con autorización de la usuaria (2026-11-16):** `feature/fase6-backend-api` `e23e8df..88cef45`; `release/demo` `69d75cc..9fc0039` (fusión, árbol = `88cef45`). Vercel `success` en GitHub. Verificado en `https://sivu-api.vercel.app`: `/health` y `/api/sivu/conecta/catalogos` 200 con `X-Request-Id` (nuevo, o el del cliente si es válido) y `Access-Control-Expose-Headers: X-Request-Id`; QR sin sesión sigue en 401. **Sin ver:** las líneas del registro en Vercel (el MCP no tiene acceso al equipo) y un 504 real.
+
+### Respuestas de Mari (ficha pública editable)
+- Registradas en `docs/plan/propuestas/ficha-publica-editable/05-preguntas-para-mari.md` (§ Respuestas recibidas, commit `0b75917`). Aprobadas 2, 3, 6, 8, 9, 10 y 11. **Cambio en la 5:** fuentes **por bloque** desde ya, según «Fuentes por bloque» de cada especie en `C:/Users/usuario/code/FICHAS_SEIS_ESPECIES.md` (v5); «General» solo si no hay bloque claro → hay que ajustar `fuentes_contenido_especie` en `generar_filas.py`, el CC y la 037. La 1 y la 4 (medidas) son de **Valej**: sin ellas el CC no se registra.
+- Regla nueva (memoria): evaluación y medidas → Valej; Conecta, fichas, textos y fotos → Mari.
+
+### Carga de dos especies en la base de pruebas (autorizada por Mari, respuesta 7)
+- `database/cargas/2026-11-16_especies_p9.sql` (+ `.down.sql`, commit `16c43c0`), aplicada en `gmlbmyreoxgoqrolhyxo` con `apply_migration` (`carga_especies_p9_2026_11_16`); md5 aplicado = archivo en LF `b2e4138cf5272e5f9145a4dc768f9f79`. Inserta *Acer negundo* (Acer, Sapindaceae) y *Lagerstroemia indica* (Lagerstroemia, Lythraceae), ambas introducida, caducifolia, latifoliada (P9), con `created_by` nulo; idempotente. Catálogo: 4 → 6 especies. **No vincula árboles** (siguen por texto) ni se aplicó en la base real. Sin ciclo de revertir y reaplicar (es una carga de datos; la reversión borra solo esas dos filas si nada las referencia).
+
+**Prompt para el siguiente agente:**
+
+```
+Lee HANDOFF.md (bloques 30 y 29). release/demo (9fc0039) = feature (88cef45), con tiempo
+máximo de Supabase y registro de peticiones publicados. Ficha pública: ajusta
+las fuentes por bloque (respuesta 5 de Mari, FICHAS_SEIS_ESPECIES.md v5) y espera a Valej
+(preguntas 1 y 4) antes de registrar el CC. No toques la base real.
+```
+
+## ▶ Novedad 2026-11-16 (bloque 29) — `release/demo` reconciliada y publicada (metodología 3.0 en la API)
+
+- **Origen:** relevo de Mari §3.5 (ramas separadas). Antes de este bloque, `release/demo` (`20a2526`) no tenía nada propio fuera de `feature/fase6-backend-api` (el QR 3D y las fuentes de pdfkit estaban en las dos, con archivos idénticos); le faltaban 19 commits de `feature`: metodología 3.0.0 (CC-071, antes CC-070), motor con `rule_version` 3.0 (R01, R02, R03, M04), migraciones 035 y 036, retiro del `POST /api/trees/:treeId/risk-assessments` y el relevo de Mari.
+- **Qué se hizo:** rama `integrar/demo-con-feature` (worktree `../valpo-verde-backend-reconcilia`) desde `origin/release/demo`, fusión `--no-ff` de `origin/feature/fase6-backend-api` sin conflictos → `9b31293`, árbol idéntico a `feature` `1ba307e`. `tsc` limpio; Jest 86 suites / 1688 tests OK. **Publicado con autorización de la usuaria** (2026-11-16): `git push origin HEAD:release/demo`, avance rápido `20a2526..9b31293`.
+- **Verificaciones previas:** `list_migrations` de `gmlbmyreoxgoqrolhyxo` (solo lectura): 035 y 036 aplicadas (última entrada = reaplicación). El frontend publicado (`feature/fase7-maqueta-lab` `edb7e9b`) no usa `risk-assessments`.
+- **Verificación del despliegue** en `https://sivu-api.vercel.app`: `/health` 200; `/api/sivu/conecta/catalogos` 200 con datos; `POST /api/trees/:id/risk-assessments` pasó de 401 a 404 (ruta retirada = versión nueva en línea). **Sin probar:** rutas con sesión (formulario, resultados de riesgo) — conviene usarlas una vez desde el frontend. El MCP de Vercel no tiene acceso al equipo `marybaxmanns-projects` (403), así que no se vio el log del build.
+- **Reversión, si hace falta:** volver a publicar `20a2526` en `release/demo`.
+- **Pendiente:**
+  - ~~Corrección del SVG del QR sin fondo~~ **Publicada el mismo día** (ver la actualización de abajo).
+  - Aplicar la 035 y la 036 en la base real (Fase 8).
+  - Este bloque del HANDOFF es **solo local** (rama `docs/ficha-publica-editable`), igual que el 28.
+
+- **Actualización (2026-11-16, mismo bloque) — SVG del QR sin fondo publicado** (autorizado por la usuaria):
+  - Qué cambia (`src/services/sivu/qrGeometria.ts`, `e23e8df`): el SVG ya no lleva `<rect id="placa">` (OpenSCAD lo importaba como losa sólida); trae solo `svg`, `title` y un `path` con los módulos en negro. El margen de 4 módulos queda vacío dentro del `viewBox`. Cada módulo se reduce 0,005 módulos por lado (~0,009 mm en 80 mm) para que dos módulos en diagonal no compartan esquina: con eso OpenSCAD 2021.01 ya no da «The given mesh is not closed». El PDF de placas y el STL no cambian; las URL y los identificadores tampoco.
+  - Validación: jsQR lee la URL exacta del SVG y del render de OpenSCAD; `modelo placa.scad` de Mari (sin cambios) renderiza en `completo` y `detalles`. Jest 1691/1691, `tsc` limpio.
+  - Ramas: `feature/fase6-backend-api` avanzó `1ba307e..e23e8df`; `release/demo` `9b31293..69d75cc` (fusión, árbol = `e23e8df`). Vercel marcó `69d75cc` como `success` en GitHub; `/health` 200. **Validado por la usuaria (2026-11-16):** SVG de A-000504 descargado desde `sivu.cl`, sin `<rect>`, con la holgura nueva (coordenadas ,005/,995) y margen vacío; el de la araucaria importado en su modelo de OpenSCAD sin errores. `sivu.cl` es el dominio real del frontend: `CONECTA_URL_BASE` está bien. Falta solo escanear una placa impresa (P21).
+  - `Desktop/plataforma/placa/qr-A-000504.svg` se regeneró con la misma URL (original respaldado en el scratchpad de la sesión). Su URL usa `https://sivu.cl/arbol/…` (revisar `CONECTA_URL_BASE` con P22).
+
+**Prompt para el siguiente agente:**
+
+```
+Lee HANDOFF.md (bloques 29 y 28). release/demo (69d75cc) ya está igual a
+feature/fase6-backend-api (e23e8df) y desplegada, con la metodología 3.0 y el QR SVG sin fondo.
+Pendiente: probar con sesión las rutas de evaluación (la descarga del SVG ya se validó); esperar las
+respuestas de Mari a la ficha pública editable. No toques la base real.
+```
+
+## ▶ Novedad 2026-11-15 (bloque 28) — Relevo de Mari: propuesta de ficha pública editable (solo local)
+
+- **Origen:** `docs/relevo/RELEVO_2026-11-15_mari.md` (relevo personal de Mari, separado de este HANDOFF; está en `origin/feature/fase6-backend-api` `1ba307e`). La rama local `feature/fase6-backend-api` del checkout principal está atrasada respecto del remoto.
+- **Qué se hizo:** paquete de propuesta en `docs/plan/propuestas/ficha-publica-editable/` (rama `docs/ficha-publica-editable`, worktree `../valpo-verde-backend-fichapub`, commit `d18dfce`, **solo local, sin push**):
+  - 27 filas para DICCIONARIO_CAMPOS (15 de CATALOGO_ESPECIES y 12 de la hoja nueva FICHAS_PUBLICAS), D-280 a D-306 provisionales, en `.md` y `.csv` de 12 columnas. Excel verificado: D-2 a D-279, CATALOGO_ESPECIES = D-257 a D-262.
+  - Borrador de CC (CC-078 provisional, **no registrado** en `registro-cambios.md`).
+  - Migración 037 propuesta y su reversión (tablas `species_public_content` y `tree_public_content`, RLS de solo lectura, bucket público `conecta-publico` WebP sin EXIF, funciones de escritura SV080/SV081 solo `service_role`, `fn_ficha_publica_arbol` ampliada compatible con la 028). **No aplicada ni ejecutada en ninguna base.**
+  - Endpoints propuestos y 12 preguntas para Mari (la 1: medido vs estimado de D-18/D-19).
+- **No se tocó:** Excel, `registro-cambios.md`, base de pruebas, base real, frontend ni `release/demo`. Sin código de backend nuevo; Jest no se corrió (solo documentos).
+- **Bloqueos / decisiones pendientes:** P4 (el Administrador edita) contradice PR-004 v7.0 → PR-004 v8.0 propuesta. CC-072 ya usado en `wip/fichas-qr-especies`; CC-068 tiene 4 filas de catálogo pendientes que correrían la numeración D-n; SV073–SV077 en uso en otras ramas. Ver `05-preguntas-para-mari.md`.
+- **Frontend:** la sesión del frontend también tiene trabajo solo local (no publicado).
+- **Siguiente:** respuestas de Mari → registrar el CC → filas al Excel → autorización para aplicar la 037 en `gmlbmyreoxgoqrolhyxo`. En paralelo: corrección de los SVG del QR para impresión 3D (sin rectángulo de fondo).
+
+**Prompt para el siguiente agente:**
+
+```
+Lee HANDOFF.md (bloque 28) y docs/plan/propuestas/ficha-publica-editable/00-LEEME.md
+(rama local docs/ficha-publica-editable). No apliques nada: espera las respuestas de Mari a
+05-preguntas-para-mari.md. Con ellas, ajusta las filas (generar_filas.py), el CC y la 037,
+y pide autorización antes de registrar el CC, tocar el Excel o migrar.
+```
 
 ## ▶ Novedad 2026-11-02 (bloque 27) — Validación: bloqueo de credenciales y migración 034
 
