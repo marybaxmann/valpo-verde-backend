@@ -1433,8 +1433,8 @@ Afecta:
 - frontend
 - rules-engine
 
-## PR-009 — Inspecciones (v6.0)
-Estado: vigente
+## PR-009 — Inspecciones (v6.0 — REEMPLAZADA)
+Estado: reemplazada por PR-009 v7.0 (CC-077)
 Versión: 6.0
 Reemplaza: PR-009 v5.0 (texto anterior: «Solo el Inspector anula inspecciones»)
 Origen: CC-040, CC-041, CC-067
@@ -1447,6 +1447,55 @@ Las inspecciones:
 - admiten guardado parcial;
 - "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
 - las de Evaluación inicial, Reevaluación y Levantamiento exigen las cuatro vistas fotográficas del árbol; la Evaluación instrumental no considera fotografías y en el Monitoreo son opcionales (PR-010 v4.0, CC-040);
+- al finalizar quedan inmutables y conservan `rule_version`;
+- sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
+- `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
+- la plataforma sugiere `fecha_proxima_inspeccion` y `fecha_proximo_monitoreo` según `nivel_riesgo` (inicio del rango — inspección: Bajo 24 meses, Moderado 12 meses, Alto 1 a 3 meses, Extremo 1 a 4 semanas; monitoreo: Bajo 12 meses, Moderado 3 a 6 meses, Alto 2 a 4 semanas, Extremo inmediato y continuo). El Inspector puede ajustarlas registrando `justificacion_ajuste_fecha`.
+
+Recordatorio (CC-037): SIVU no agenda automáticamente. Al llegar el inicio del rango, la fecha (la ajustada, si existe) aparece como recordatorio en la lista de próximas inspecciones y monitoreos del proyecto, con el inicio y el término del rango. Desde esa lista el Usuario municipal crea y programa la OT.
+
+Corrección y anulación (CC-031):
+- Mientras la inspección está Preguardado, el Inspector modifica libremente todos sus datos, incluidos los datos técnicos del árbol registrados en ella.
+- Una inspección Finalizado no se modifica. Si contiene un error, el Usuario municipal miembro del proyecto la anula registrando el motivo (el Inspector puede pedírselo, fuera del sistema); el Sistema registra quién y cuándo (CC-067).
+- La inspección anulada se conserva en el historial con todos sus valores y deja de considerarse para la vigencia.
+- Los datos correctos se registran en una nueva inspección: en la misma OT si todavía no está completada; si lo está, en una nueva OT.
+- Solo el Usuario municipal anula inspecciones (CC-067). El Inspector, el Administrador y el Encargado de mantención no anulan; el Inspector puede solicitar la anulación al Usuario municipal, sin registro en el sistema.
+
+Alcance de la evaluación según el tipo de inspección (CC-040):
+- **Evaluación inicial, Reevaluación y Levantamiento:** evaluación completa (todos los datos obligatorios y condicionales activados de ARBOLES y REGISTRO_EVALUACION).
+- **Evaluación instrumental:** solo los campos de cavidad basal y de tronco. Resuelve el "No determinado" de "Requiere evaluación instrumental".
+- **Monitoreo:** solo los campos de su subtipo (CC-040): *Fitosanitario* = `defoliacion_estimada_pct` (D-83), `clorosis_pct` (D-84), `necrosis_pct` (D-85), `muerte_regresiva_copa_pct` (D-89) y `presenta_exudaciones` (D-65); *Estructural* = las entradas de R01, R02 y R03 (D-33 a D-82 y D-86); *Vitalidad* = `clasificacion_vitalidad` (D-169).
+- En la Evaluación instrumental, `cavidad_basal_interna` y `cavidad_interna_tronco` solo admiten Sí o No.
+- Si falta un valor vigente que una clasificación necesita, esa clasificación queda No determinado (CC-024); la prioridad sigue CC-029.
+- En la evaluación vigente recalculada, el ajuste del Inspector se mantiene solo si el valor recalculado coincide con el valor calculado sobre el que se hizo; si no, se descarta y queda una marca de revisión para el Inspector.
+- En una inspección parcial, los datos registrados reemplazan el valor vigente del árbol al completar la OT; los demás conservan su valor vigente anterior. El historial no se sobrescribe: cada valor queda en la inspección que lo registró.
+- Las clasificaciones de una inspección parcial se calculan con los valores vigentes resultantes: los registrados en ella más los vigentes del árbol.
+- **La evaluación vigente del árbol se compone campo por campo:** para cada campo, el último valor entre las inspecciones no anuladas de OT completadas. Al completarse una OT, o al anularse una inspección, el riesgo y las demás clasificaciones se recalculan con esa composición y el resultado queda registrado como evaluación vigente del árbol (por ejemplo, después de una Evaluación instrumental).
+
+Ajuste de clasificaciones (CC-041): el Inspector ajusta `clasificacion_riesgo`, `clasificacion_infraestructura` o `clasificacion_prioridad` solo mientras la inspección está Preguardado. Después de finalizar, para cambiarlas se anula la inspección y se registra una nueva.
+
+En el Excel auditado la entidad se llama INSPECCION.
+
+Una inspección finalizada no se modifica retroactivamente.
+
+Afecta:
+- base de datos
+- backend
+- frontend
+- rules-engine
+
+## PR-009 — Inspecciones (v7.0)
+Estado: vigente
+Versión: 7.0
+Reemplaza: PR-009 v6.0
+Origen: CC-077
+
+- pertenecen a un árbol y a una OT de Inspección (Evaluación inicial, Reevaluación, Evaluación instrumental, Monitoreo o Levantamiento). Una OT de Levantamiento puede abarcar varios árboles aún no identificados al crearla; su alcance es el proyecto y el área de trabajo descrita en la OT;
+- las realiza el Inspector (PR-019 v1.1); no las realizan el Administrador ni el Usuario municipal;
+- tienen `estado_registro`, asignado por el Sistema: `Preguardado` mientras falte un dato obligatorio o un dato condicional activado **dentro del alcance de su tipo** (ver "Alcance"); `Finalizado` cuando están completas; `Anulado` cuando el Usuario municipal anula una inspección finalizada (CC-031; CC-067). Preguardado y Finalizado equivalen a `borrador` y `completada` de ADR-007;
+- admiten guardado parcial;
+- "Requiere evaluación instrumental" permite finalizar la inspección visual; si la base está cubierta y no permite observar raíces o cuello, la inspección queda preguardada;
+- Evaluación inicial, Reevaluación y Levantamiento requieren un mínimo de dos fotografías válidas, físicamente distintas, asociadas a esta inspección. Las vistas árbol completo, base, tronco y copa son recomendadas. La falta de categorías genera una advertencia informativa. Evaluación instrumental y Monitoreo conservan su tratamiento (PR-010 v5.0).
 - al finalizar quedan inmutables y conservan `rule_version`;
 - sus valores se hacen vigentes solo cuando la OT pasa a Completada. La OT no puede completarse mientras alguna de sus inspecciones esté preguardada;
 - `nivel_riesgo` se hereda de `clasificacion_riesgo` de su evaluación (incluido el ajuste del Inspector, PR-008 v2.0), con la escala Bajo / Moderado / Alto / Extremo;
@@ -1554,8 +1603,8 @@ Afecta:
 - storage
 - base de datos
 
-## PR-010 — Fotografías (v4.0)
-Estado: vigente
+## PR-010 — Fotografías (v4.0 — REEMPLAZADA)
+Estado: reemplazada por PR-010 v5.0 (CC-077)
 Versión: 4.0
 Reemplaza: PR-010 v3.0
 Origen: CC-040
@@ -1563,6 +1612,27 @@ Motivo: las cuatro vistas son parte de los datos dendrométricos del árbol (`fo
 
 - Se permiten varias fotografías por árbol y por inspección, sin un límite fijo (CC-028 P9).
 - Las cuatro vistas (árbol completo, base, tronco y copa) son parte de los datos dendrométricos del árbol (`fotografias_arbol`, D-27). Se exigen, nuevas, para finalizar las inspecciones de **Evaluación inicial, Reevaluación y Levantamiento**. Las fotografías anteriores no cumplen las vistas obligatorias de una nueva inspección.
+- La **Evaluación instrumental** no considera fotografías.
+- En el **Monitoreo** las fotografías no son obligatorias (`evidencia_fotografica` de la inspección, D-206, opcional).
+- Se conserva el historial fotográfico vinculado a cada inspección.
+- Mantenimiento: la evidencia fotográfica de la ejecución es obligatoria para completar la OT (PR-020 v1.1).
+- Incidencias: el reportante carga al menos una fotografía (jpg o png) en el formulario ciudadano público (PR-022 v1.0).
+- Las imágenes viven en Supabase Storage; PostgreSQL almacena metadatos (ADR-011).
+
+Afecta:
+- frontend
+- backend
+- storage
+- base de datos
+
+## PR-010 — Fotografías (v5.0)
+Estado: vigente
+Versión: 5.0
+Reemplaza: PR-010 v4.0
+Origen: CC-077
+
+- Se permiten varias fotografías por árbol y por inspección, sin un límite fijo (CC-028 P9).
+- Evaluación inicial, Reevaluación y Levantamiento requieren un mínimo de dos fotografías válidas, físicamente distintas, asociadas a esta inspección. Las vistas árbol completo, base, tronco y copa son recomendadas. La falta de categorías genera una advertencia informativa. Cada archivo cuenta una sola vez y puede respaldar varias secciones del diagnóstico. No se exige autorización excepcional ni justificación adicional por vistas faltantes.
 - La **Evaluación instrumental** no considera fotografías.
 - En el **Monitoreo** las fotografías no son obligatorias (`evidencia_fotografica` de la inspección, D-206, opcional).
 - Se conserva el historial fotográfico vinculado a cada inspección.

@@ -19,7 +19,7 @@ No inferir ni completar metodología faltante.
 
 ## Versión vigente
 
-Versión vigente del paquete metodológico: **3.0.0** (`rule_version` **3.0**), publicada el 2026-11-09, tag `metodologia-v3.0.0` (CC-071). Versión anterior: 2.1.0, publicada el 2026-10-21, tag `metodologia-v2.1.0` (CC-040, CC-042).
+Versión vigente del paquete metodológico: **3.1.0** (`rule_version` **3.1**), publicada el 2026-11-18, tag `metodologia-v3.1.0` (CC-077). Versión anterior: 3.0.0, publicada el 2026-11-09, tag `metodologia-v3.0.0` (CC-071).
 
 **Antes de desplegar:** el backend de la 3.0 exige las migraciones 035 y 036, aplicadas por ahora solo en la base de pruebas. Las evaluaciones anteriores conservan su `rule_version` y no se recalculan.
 
