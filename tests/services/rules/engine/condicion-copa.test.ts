@@ -11,6 +11,10 @@ function base(): CondicionCopaInput {
 }
 
 describe("CR-DEF — Defoliación (clases ICP Forests)", () => {
+  it("deja indeterminada la defoliación con casilla desconocida aunque exista un porcentaje", () => {
+    expect(evaluarDefoliacion({ ...base(), sin_follaje_estacional: null, defoliacion_estimada_pct: 20 }))
+      .toMatchObject({ categoria: null, reglaId: null, noDeterminado: true });
+  });
   it.each([
     [0, "despreciable", "CR-DEF-01"],
     [10, "despreciable", "CR-DEF-01"],

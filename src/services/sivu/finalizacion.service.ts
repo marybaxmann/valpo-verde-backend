@@ -31,6 +31,7 @@ import { SubtipoInspeccionCodigo, TipoInspeccionRealizadaCodigo } from "../rules
 import { FechaSugeridaResultado } from "../rules/engine/fechas-sugeridas";
 import { RULE_VERSION } from "../rules/engine/version";
 import { CampoFaltante, evaluarCompletitud } from "./completitud";
+import { validarFisiologiaCopa } from "./fisiologiaCopa";
 import { mensajeCheck } from "../../utils/mensajesBase";
 
 /**
@@ -112,6 +113,8 @@ export interface CalculoRespuesta {
   fecha_proxima_inspeccion_vigente: string | null;
   valores_no_permitidos: string[];
   campos_faltantes: CampoFaltante[];
+  fotos_validas_d27: number | null;
+  vistas_recomendadas_faltantes: string[];
   puede_finalizar: boolean;
   huella: string;
 }
@@ -281,12 +284,20 @@ async function calcular(
     throw new AppError("El árbol de la inspección no existe", 404);
   }
 
+  const copaAusente = (versionArbol?.camposRegistrados.includes("copa_no_presenta")
+    ? versionArbol.campos.copa_no_presenta
+    : arbolVigente.copa_no_presenta) === true;
+  const incidenciasFisiologia = validarFisiologiaCopa(variablesRegistradas, copaAusente);
   const variablesCalculo = componerVariablesCalculo(
     variablesVigentes,
     variablesRegistradas,
     resolverDapCm(versionArbol, arbolVigente),
     resolverDatosLcr(versionArbol, arbolVigente)
   );
+  if (copaAusente) variablesCalculo.sin_follaje_estacional = null;
+  if (copaAusente || incidenciasFisiologia.some(({ campo }) => campo === "defoliacion_estimada_pct")) {
+    variablesCalculo.defoliacion_estimada_pct = null;
+  }
   const huella = huellaCalculo({
     variablesCalculo,
     tipo,
@@ -316,10 +327,14 @@ async function calcular(
     arbolRegistrado: versionArbol?.campos ?? {},
     camposRegistradosArbol: versionArbol?.camposRegistrados ?? [],
     arbolVigente,
-    vistasFotos: fotos.map((f) => f.vista),
+    inspeccionId: inspeccion.id,
+    fotos,
   });
 
-  const valoresNoPermitidos = resultado.alcance.valoresNoPermitidosEnAlcance;
+  const valoresNoPermitidos = [
+    ...resultado.alcance.valoresNoPermitidosEnAlcance,
+    ...incidenciasFisiologia.map(({ motivo }) => motivo),
+  ];
   const { variables: _v, inspeccion: _i, alcance: _a, ajustesDescartados: _d, ...columnas } = resultado;
 
   return {
@@ -338,6 +353,8 @@ async function calcular(
       fecha_proxima_inspeccion_vigente: fechaVigente,
       valores_no_permitidos: valoresNoPermitidos,
       campos_faltantes: completitud.campos_faltantes,
+      fotos_validas_d27: completitud.fotos_validas_d27,
+      vistas_recomendadas_faltantes: completitud.vistas_recomendadas_faltantes,
       puede_finalizar: completitud.completa && valoresNoPermitidos.length === 0,
       huella,
     },

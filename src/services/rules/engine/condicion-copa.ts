@@ -36,12 +36,14 @@ function sinDeterminar<T extends string>(motivo: string): IndicadorCondicion<T> 
 
 /** CR-DEF-01 a 06 (clases ICP Forests). */
 export function evaluarDefoliacion(input: CondicionCopaInput): IndicadorCondicion<CategoriaDefoliacion> {
-  if (input.sin_follaje_estacional !== null) {
-    if (!esBooleanoValido(input.sin_follaje_estacional)) {
-      return sinDeterminar(motivoFueraDominioSiNo("sin_follaje_estacional", input.sin_follaje_estacional, "CC-071"));
-    }
-    if (input.sin_follaje_estacional) return resultado("no_aplica", "CR-DEF-06");
+  const estacional = input.sin_follaje_estacional;
+  if (estacional == null) {
+    return sinDeterminar("sin_follaje_estacional sin valor (CC-071)");
   }
+  if (!esBooleanoValido(estacional)) {
+    return sinDeterminar(motivoFueraDominioSiNo("sin_follaje_estacional", estacional, "CC-071"));
+  }
+  if (estacional) return resultado("no_aplica", "CR-DEF-06");
 
   const pct = input.defoliacion_estimada_pct;
   if (pct === null) return sinDeterminar("defoliacion_estimada_pct sin valor (CR-DEF)");

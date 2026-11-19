@@ -200,14 +200,9 @@ describe("subirFotoInspeccion (CC-049, mismas reglas de CC-048/CC-050)", () => {
     expect(mockSubirArchivo).not.toHaveBeenCalled();
   });
 
-  it("Evaluación inicial sin vista → rechazada (D-27: vista obligatoria salvo en Monitoreo)", async () => {
-    await expect(subirConFixtures({}, {}, {})).rejects.toMatchObject({ statusCode: 422 });
-    expect(mockSubirArchivo).not.toHaveBeenCalled();
-  });
-
-  it("Monitoreo SIN vista → aceptado (D-27: vista opcional en Monitoreo)", async () => {
+  it.each(["evaluacion_inicial", "reevaluacion", "levantamiento", "monitoreo"])("%s sin vista → aceptado (D-27)", async (tipo) => {
     const buffer = await jpegConExif();
-    mockObtenerInspeccion.mockResolvedValueOnce(inspeccionBase({ tipo_inspeccion_realizada: "monitoreo" }));
+    mockObtenerInspeccion.mockResolvedValueOnce(inspeccionBase({ tipo_inspeccion_realizada: tipo }));
     mockObtenerOt.mockResolvedValueOnce(otBase());
     const fotoCreada: PhotoRow = {
       id: "foto-1",
@@ -406,6 +401,13 @@ describe("eliminarFotoInspeccion (solo en Preguardado, solo el Inspector respons
     mockObtenerFoto.mockResolvedValueOnce(null);
     await expect(eliminarConFixtures()).rejects.toMatchObject({ statusCode: 404 });
     expect(mockEliminarFotoRegistro).not.toHaveBeenCalled();
+  });
+
+  it("devuelve 409 y conserva el archivo si el cierre ganó la carrera", async () => {
+    mockObtenerFoto.mockResolvedValueOnce(fotoBase());
+    mockEliminarFotoRegistro.mockRejectedValueOnce(new Error("retiro rechazado", { cause: "SV041" }));
+    await expect(eliminarConFixtures()).rejects.toMatchObject({ statusCode: 409 });
+    expect(mockEliminarArchivo).not.toHaveBeenCalled();
   });
 
   it("404 si la foto es de otra inspección", async () => {
