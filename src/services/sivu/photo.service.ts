@@ -104,6 +104,39 @@ function mensajeDuplicada(foto: PhotoRow): string {
 // Autorización por destino
 // ---------------------------------------------------------------------------
 
+/** Lado mayor de las fotos de la ficha pública (CC-078, 03 §3). */
+const LADO_MAYOR_FOTO_PUBLICA = 1600;
+
+/**
+ * Fotos de la ficha pública (CC-078; D-285, D-291, D-304): verifica el
+ * formato real (JPG, PNG o WebP), aplica la orientación EXIF ANTES de
+ * descartarla (sin `.rotate()` una foto vertical de teléfono puede quedar
+ * girada), reduce a 1600 px de lado mayor y recodifica a WebP SIN
+ * metadatos (EXIF, GPS, cámara, ICC). Comprueba el resultado: si quedara
+ * algún metadato, no se sube.
+ */
+export async function procesarFotoPublica(buffer: Buffer): Promise<Buffer> {
+  let metadata;
+  try {
+    metadata = await sharp(buffer).metadata();
+  } catch {
+    throw new AppError("El archivo no es una imagen válida", 400);
+  }
+  if (metadata.format !== "jpeg" && metadata.format !== "png" && metadata.format !== "webp") {
+    throw new AppError("La foto debe ser JPG, PNG o WebP (verificado por su contenido, no por la extensión)", 400);
+  }
+  const salida = await sharp(buffer)
+    .rotate()
+    .resize({ width: LADO_MAYOR_FOTO_PUBLICA, height: LADO_MAYOR_FOTO_PUBLICA, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toBuffer();
+  const final = await sharp(salida).metadata();
+  if (final.exif || final.icc || final.xmp || final.iptc) {
+    throw new Error("La foto recodificada conserva metadatos; no se sube");
+  }
+  return salida;
+}
+
 /**
  * Reglas de subida a una inspección (CC-048/CC-050; D-27), comunes a la
  * subida directa y a la firmada. Todo se valida ANTES de tocar Storage.

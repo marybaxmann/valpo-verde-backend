@@ -1,0 +1,34 @@
+Permisos de fn_finalizar_inspeccion antes de 040: service_role t, anon f, authenticated f
+Copia restaurada: 109 árboles, 60 inspecciones
+== Aplicar 040
+   código: 0
+== Aplicar 041
+   código: 0
+== pruebas_040 (1.ª ronda)
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso cero correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso una correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso dos correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso varias correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso monitoreo correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso instrumental correcto
+   código: 0
+== Revertir 041
+   código: 0
+== Revertir 040
+   código: 0
+Tras revertir, vuelve a exigir cuatro vistas y sin trigger: t
+== Reaplicar 040
+   código: 0
+== Reaplicar 041
+   código: 0
+== pruebas_040 (2.ª ronda)
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso cero correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso una correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso dos correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso varias correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso monitoreo correcto
+pruebas_040_d27_minimo_fotografico.sql:272: NOTICE:  040: caso instrumental correcto
+   código: 0
+Estado final con 040 y 041: t
+Conteos sin cambios tras el ciclo: árboles 109, inspecciones 60, fotos 921
+CICLO APROBADO

@@ -4,15 +4,16 @@ Punto de entrada. Deliberadamente corto: indica qué leer y qué fuente manda. N
 
 ## Antes de trabajar — orden de lectura
 
-Siempre:
+Siempre, y nada más al arrancar:
 
 1. `CLAUDE.md` (este archivo);
-2. `HANDOFF.md` — memoria de relevo entre agentes (estado actual, cambios recientes y bloqueos);
-3. `docs/project-rules.md` — reglas y decisiones vigentes (`PR-*`);
-4. `docs/workflow.md` — procedimiento obligatorio para cualquier cambio.
+2. **`docs/ESTADO.md`** — estado actual en menos de 120 líneas: ramas, despliegue, bases de datos, versión metodológica, trabajo en curso, reglas que más se olvidan y qué leer para cada tarea.
 
-Condicional:
+**No leas completos** al arrancar `HANDOFF.md` (~166 KB, historial), `docs/project-rules.md` (~158 KB, dos tercios reemplazados) ni `docs/registro-cambios.md` (~420 KB): consumen buena parte del contexto antes de empezar. Busca la sección que necesitas (`docs/ESTADO.md` § «Cómo leer project-rules») y lee solo esas líneas. `docs/workflow.md` se consulta por sección antes de hacer un cambio (§1, §8, §11, §14).
 
+Condicional (solo la sección pertinente):
+
+3. `docs/project-rules.md` — la regla vigente (`PR-*`) que toca la tarea;
 4. `docs/architecture-decisions.md` (ADR) — si la tarea afecta arquitectura, datos, autenticación, permisos, infraestructura técnica o decisiones transversales;
 5. el paquete metodológico vigente (PR-002), con `docs/methodology/00-index.md` como punto de entrada — si la tarea afecta evaluación técnica / metodológica; si además implica un cambio, `docs/workflow.md` §14 y `docs/registro-cambios.md`;
 6. el código / `database/schema.sql` actual — según la tarea, después de comprender las decisiones documentadas;
@@ -92,9 +93,9 @@ Fronteras:
  
 ## Protocolo de Handoff entre Agentes (Claude ↔ AGY ↔ GPT)
  
-- **Lectura obligatoria:** Al iniciar cualquier sesión, lee `HANDOFF.md` para conocer el estado dejado por otros agentes.
-- **Preparar Relevo:** Cuando el usuario diga "prepara handoff para [AGY/GPT]" o cuando termines un bloque de trabajo, actualiza `HANDOFF.md` con:
-  1. **Objetivo activo** y **Agente receptor sugerido**.
-  2. **Qué se hizo en este turno:** archivos creados/modificados y resultado de tests (`npm test`).
-  3. **Bloqueos / decisiones pendientes:** reglas que falten o discrepancias detectadas.
-  4. **Instrucción directa para el siguiente agente:** redacta el prompt exacto y listo para copiar para que el siguiente agente empiece sin fricción.
+- **Lectura obligatoria:** al iniciar cualquier sesión, lee `docs/ESTADO.md` (no `HANDOFF.md` entero).
+- **Documentar en el momento:** cada registro de árboles, carga de evaluaciones o fotos, migración aplicada, publicación o CC decidido se anota en `docs/ESTADO.md` apenas ocurre (tabla «Cuándo hay que documentar»). Las cargas de datos llevan además su relevo en `docs/relevo/`.
+- **Preparar relevo:** cuando el usuario diga "prepara handoff para [AGY/GPT]" o cuando termines un bloque de trabajo:
+  1. **Actualiza `docs/ESTADO.md`**: reemplaza lo que cambió (ramas, trabajo en curso, bloqueos). No lo alargues: si una línea ya no es cierta, bórrala.
+  2. Si el bloque necesita más detalle (qué se hizo, archivos, resultado de `npm test`, decisiones pendientes y el prompt exacto para el siguiente agente), escríbelo en `docs/relevo/RELEVO_<fecha>_<tema>.md` y enlázalo desde `docs/ESTADO.md`.
+  3. `HANDOFF.md` queda como **historial**: no se agregan novedades nuevas; se conserva para consultar bloques anteriores por fecha o tema.

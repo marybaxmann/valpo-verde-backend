@@ -1,0 +1,7 @@
+﻿pg_restore: error: could not execute query: ERROR:  schema "public" already exists
+Command was: CREATE SCHEMA public;
+pg_restore: error: could not execute query: ERROR:  insert or update on table "user_profiles" violates foreign key constraint "user_profiles_id_fkey"
+DETAIL:  Key (id)=(<uuid de un perfil>) is not present in table "users".
+Command was: ALTER TABLE ONLY public.user_profiles
+    ADD CONSTRAINT user_profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+pg_restore: warning: errors ignored on restore: 2
