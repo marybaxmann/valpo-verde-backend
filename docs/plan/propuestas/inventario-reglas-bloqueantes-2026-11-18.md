@@ -12,8 +12,8 @@ Una regla bloquea cuando impide uno de estos pasos: **guardar** el borrador, **f
 
 | # | Regla | Estado | Peso en el trabajo diario |
 |---|---|---|---|
-| A1 | Cuatro vistas de foto obligatorias para finalizar | **Ya cambiada** por CC-077 (dos fotos); falta publicarla | Alto |
-| A2 | Vista obligatoria al subir cada foto | Debería caer con CC-077; verificar | Medio |
+| A1 | Cuatro vistas de foto obligatorias para finalizar | **Resuelta:** CC-077 (dos fotos), publicada en sivu.cl el 2026-11-19 | — |
+| A2 | Vista obligatoria al subir cada foto | **Resuelta** con CC-077 (#20: subir sin etiqueta), publicada el 2026-11-19 | — |
 | A3 | Fotos de inspecciones anteriores no cuentan | Vigente | Medio |
 | A4 | Protocolo IA VTA-01 v2 («árbol completo visible») | Vigente, **fuera del repositorio** | Alto (en cargas con IA) |
 | B1 | Especie «Género sp.» o «No determinado» no permite finalizar | Vigente | Alto |
