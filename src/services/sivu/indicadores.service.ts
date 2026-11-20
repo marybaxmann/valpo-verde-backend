@@ -1,6 +1,7 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
-import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, obtenerSuperficieProyecto } from "../../repositories/sivu/indicadores.repository";
+import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, listarVariablesCrecimiento, obtenerSuperficieProyecto } from "../../repositories/sivu/indicadores.repository";
+import { agregarSecuestro } from "../rules/carbono/secuestro";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
 import {
@@ -39,10 +40,12 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     barrio === undefined ? obtenerSuperficieProyecto(token, projectId) : Promise.resolve(null),
   ]);
   const presentesIds = new Set(presencias.filter((p) => p.estado_presencia === "presente").map((p) => p.tree_id));
-  const [rasgos, evaluadosIds] = await Promise.all([
+  const [rasgos, evaluadosIds, crecimiento] = await Promise.all([
     listarRasgosEspecie(token, [...presentesIds]),
     arbolesConEvaluacionCompletaVigente(token, projectId, [...presentesIds]),
+    listarVariablesCrecimiento(token, [...presentesIds]),
   ]);
+  const crecimientoPorArbol = new Map(crecimiento.map((c) => [c.tree_id, c]));
   const rasgoPorArbol = new Map(rasgos.map((r) => [r.tree_id, r]));
   const especies: ArbolEspecie[] = delAmbito
     .filter((f) => presentesIds.has(f.id))
@@ -110,5 +113,14 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     proporcion_origen: proporcionOrigen(especies),
     // Separados: biomasa aérea leñosa, carbono aéreo leñoso y CO₂ equivalente (total en t), con cobertura y motivos.
     estimacion_carbono_aereo_lenoso: agregarCarbono(arbolesCarbono),
+    // Secuestro anual (decisiones A a C, 2026-11-20): cobertura por tipo de resultado; el total suma solo
+    // estimaciones fundamentadas, nunca simulaciones.
+    estimacion_secuestro_anual: agregarSecuestro(
+      arbolesCarbono.map((a) => ({
+        ...a,
+        cle: crecimientoPorArbol.get(a.id)?.cle ?? null,
+        muerte_regresiva_pct: crecimientoPorArbol.get(a.id)?.muerte_regresiva_pct ?? null,
+      }))
+    ),
   };
 }
