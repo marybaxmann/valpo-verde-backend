@@ -3290,7 +3290,7 @@ motivo)
 | Fecha | 2026-11-19 |
 | Origen | Pedido de la responsable (2026-11-19): poder borrar desde el rol municipal las incidencias de prueba. |
 | Tipo | 3 — modelo de datos y permisos (+4, endpoint) |
-| Estado | APROBADO (implementación en rama; migración 042 pendiente de autorización para la base de pruebas) |
+| Estado | IMPLEMENTADO (publicado en sivu.cl el 2026-11-19; 042 aplicada en la base de pruebas) |
 | Regla / campo afectado | PR-022 v3.0 (incidencias: solo revisión, sin borrado); PR-003 v9.0 (Usuario municipal); `incidents`, `photos`, `incident_reporters`, `work_orders`. |
 | Versión anterior | Una incidencia no se borra: solo se revisa (Validada, Descartada, Requiere antecedentes). «Descartada» borra las fotos y el nombre y RUT, pero la incidencia queda. |
 | Versión nueva | **(1)** El Usuario municipal miembro del proyecto borra una incidencia en cualquier estado, con un motivo (3 a 300 caracteres). **(2)** Borrado real: incidencia, fotos (filas y archivos), nombre y RUT del reportante y OT vinculadas por `incident_id`; el código de seguimiento deja de funcionar. **(3)** Límite: no se borra nada si alguna OT vinculada tiene inspección, mantención o evaluación registrada (`inspections`, `maintenance_records`, `tree_assessments`). **(4)** Trazabilidad: tabla `incident_deletions` con proyecto, código, árbol (`tree_code`), tipo, origen, estado y resultado de revisión que tenía, fecha del reporte, OT borradas (código, tipo, estado), cantidad de fotos, motivo, quién y cuándo; sin nombre, RUT ni descripción. La leen el Administrador y los miembros del proyecto; nadie la escribe directo. **(5)** Proyecto Cerrado: no se borra (trigger existente). |
@@ -3307,8 +3307,8 @@ motivo)
 | rule_version | sin cambio |
 | Aprobado por | marybaxmann (Mari) |
 | Fecha de aprobación | 2026-11-19 |
-| Fecha de implementación | — |
-| Commits / PR asociados | — |
+| Fecha de implementación | 2026-11-19 |
+| Commits / PR asociados | Backend #87, #88; frontend #28 |
 | Observaciones | En la base de pruebas, al 2026-11-19, hay 6 incidencias; solo INC-000017 (QA) tiene OT (OT-I-000358, pendiente y sin inspección). |
 
 **Historial de estados**
@@ -3316,4 +3316,4 @@ motivo)
 | Fecha | Estado | Por | Nota |
 |---|---|---|---|
 | 2026-11-19 | APROBADO | marybaxmann | Decide borrado real con registro y borrado conjunto de la OT con trazabilidad. |
-
+| 2026-11-19 | IMPLEMENTADO | Claude (autorizado por marybaxmann) | 042 aplicada en pruebas (`20261120001059`) tras ensayo revertido 8/8; publicado (backend #88, frontend #28). |
