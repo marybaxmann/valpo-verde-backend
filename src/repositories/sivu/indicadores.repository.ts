@@ -108,22 +108,21 @@ const numeroDeTexto = (v: unknown): number | null => {
 
 /**
  * Secuestro anual (decisiones A a C, 2026-11-20): CLE y muerte regresiva de
- * la evaluación vigente de cada árbol. La vigente es la más reciente de
- * tree_assessments (CC-050), la misma que usan B18 y la ficha. Árboles sin
- * evaluación vigente no aparecen en la salida.
+ * la evaluación de la inspección que da vigencia al árbol
+ * (trees.vigente_desde_inspection_id, la que compone el DAP y la altura
+ * vigentes en fn_refresh_tree_current). Árboles sin esa inspección no
+ * aparecen en la salida.
  */
 export async function listarVariablesCrecimiento(accessToken: string, treeIds: string[]): Promise<VariablesCrecimientoRow[]> {
   const inspeccionPorArbol = new Map<string, string>();
   for (let i = 0; i < treeIds.length; i += 150) {
     const { data, error } = await createUserScopedClient(accessToken)
-      .from("tree_assessments")
-      .select("tree_id, inspection_id, created_at")
-      .in("tree_id", treeIds.slice(i, i + 150))
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: true });
+      .from("trees")
+      .select("id, vigente_desde_inspection_id")
+      .in("id", treeIds.slice(i, i + 150));
     if (error) lanzar(error);
-    for (const f of (data ?? []) as Array<{ tree_id: string; inspection_id: string | null }>) {
-      if (!inspeccionPorArbol.has(f.tree_id) && f.inspection_id) inspeccionPorArbol.set(f.tree_id, f.inspection_id);
+    for (const f of (data ?? []) as Array<{ id: string; vigente_desde_inspection_id: string | null }>) {
+      if (f.vigente_desde_inspection_id) inspeccionPorArbol.set(f.id, f.vigente_desde_inspection_id);
     }
   }
   const inspecciones = [...new Set(inspeccionPorArbol.values())];
