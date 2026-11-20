@@ -288,6 +288,7 @@ Resultado de la revisión: `validada`, `requiere_antecedentes`, `descartada`.
 | `GET /api/sivu/projects/:id/incidencias` | Miembros y Administrador | `estado?` (D-184), `origen?` (D-177), `tipo?` (D-180), `limit`, `offset` | 200 `{ data: [incidencia], total, limit, offset }` |
 | `GET /api/sivu/projects/:id/incidencias/:incidentId` | Miembros y Administrador | — | 200 `{ data }`: la incidencia y `fotos: [{ id, url, created_at }]` (enlaces de 10 minutos) |
 | `PATCH /api/sivu/projects/:id/incidencias/:incidentId/revision` | Usuario municipal | `{ estado_incidencia, resultado_revision?, observaciones_revision?, prioridad_municipal? }` | 200 `{ data }` (incidencia actualizada y `fotos_borradas`); 422 si la base rechaza la regla |
+| `DELETE /api/sivu/projects/:id/incidencias/:incidentId` (CC-079, **requiere la migración 042**) | Usuario municipal | `{ motivo }` (3 a 300) | 200 `{ data: { codigo_incidencia, ots_borradas: [{ codigo_ot, tipo_ot, estado_ot }], fotos_borradas } }`. Borra la incidencia, sus fotos, nombre y RUT y sus OT, y deja la línea en el registro de borrados. 400 sin motivo; 403 otro rol; 404 no existe en el proyecto; 409 si una OT ya tiene inspección, mantención o evaluación, o el proyecto está cerrado |
 
 **Incidencia:** `{ id, codigo_incidencia, arbol: { id, tree_code, especie_cientifica, nombre_comun }, tipo_incidencia, descripcion,
 ubicacion, fecha_reporte, origen_reporte, estado_incidencia, fecha_actualizacion_estado, resultado_revision,

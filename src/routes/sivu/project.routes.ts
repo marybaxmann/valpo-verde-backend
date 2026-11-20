@@ -29,6 +29,7 @@ import { inspectionFormSchemaController } from "../../controllers/sivu/inspectio
 import { crearOtMantenimientoController } from "../../controllers/sivu/mantenimiento.controller";
 import { listarDiagnosticosController, listarMiembrosAsignablesController, proximasInspeccionesController, resumenProyectoController } from "../../controllers/sivu/diagnostico.controller";
 import {
+  borrarIncidenciaController,
   detalleIncidenciaController,
   listarIncidenciasController,
   placasQrController,
@@ -126,6 +127,8 @@ router.patch("/:id/species/:speciesId/nombre", authMiddleware, renombrarEspecieC
 router.get("/:id/incidencias", authMiddleware, listarIncidenciasController);
 router.get("/:id/incidencias/:incidentId", authMiddleware, detalleIncidenciaController);
 router.patch("/:id/incidencias/:incidentId/revision", authMiddleware, revisarIncidenciaController);
+// Borrar una incidencia con su registro de trazabilidad (CC-079): solo el Usuario municipal.
+router.delete("/:id/incidencias/:incidentId", authMiddleware, borrarIncidenciaController);
 router.get("/:id/placas-qr", authMiddleware, placasQrController);
 // QR de un árbol en SVG o STL, para modelar o imprimir en 3D: solo el Usuario municipal.
 router.get("/:id/trees/:treeId/qr", authMiddleware, qrArbolController);

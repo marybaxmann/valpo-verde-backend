@@ -4,6 +4,7 @@ import { assertProjectAccess, assertProjectRole } from "../authorization.service
 import { etiquetaDe } from "../rules/engine/catalogs";
 import { eliminarArchivoDeStorage, generarUrlFirmada } from "../../repositories/sivu/photo.repository";
 import {
+  borrarIncidencia,
   IncidenciaRow,
   listarFotosIncidencia,
   listarIncidenciasProyecto,
@@ -11,7 +12,7 @@ import {
   revisarIncidencia,
 } from "../../repositories/sivu/conecta.repository";
 import { obtenerMiembrosDeProyecto } from "../../repositories/sivu/workOrder.repository";
-import { ListarIncidenciasQuery, RevisionIncidenciaBody } from "../../schemas/sivu/conecta.schema";
+import { BorradoIncidenciaBody, ListarIncidenciasQuery, RevisionIncidenciaBody } from "../../schemas/sivu/conecta.schema";
 
 /**
  * Incidencias del proyecto, parte interna (#62): B9 (listado y detalle)
@@ -142,4 +143,32 @@ export async function revisar(user: AuthenticatedUser, projectId: string, incide
   const actualizada = await obtenerIncidencia(token, projectId, incidentId);
   const miembros = await miembrosSiHaceFalta([actualizada!], projectId, token);
   return { ...incidencia(actualizada!, user, miembros), fotos_borradas: r.fotos_borradas.length };
+}
+
+/**
+ * DELETE /api/sivu/projects/:id/incidencias/:incidentId — solo el Usuario
+ * municipal miembro (CC-079, PR-022 v4.0). Borra la incidencia con sus
+ * fotos, datos del reportante y OT vinculadas, y deja la trazabilidad en
+ * `incident_deletions`. Si una OT ya tiene inspección, mantención o
+ * evaluación, no se borra nada (409).
+ */
+export async function borrar(user: AuthenticatedUser, projectId: string, incidentId: string, body: BorradoIncidenciaBody, token: string) {
+  await assertProjectRole(user, projectId, ["usuario_municipal"], token);
+  const fila = await obtenerIncidencia(token, projectId, incidentId);
+  if (!fila) throw new AppError("La incidencia no existe en este proyecto", 404);
+
+  let r;
+  try {
+    r = await borrarIncidencia({ incidentId, usuario: user.id, motivo: body.motivo });
+  } catch (err) {
+    const error = err as Error;
+    const codigo = (error as { cause?: unknown }).cause;
+    if (codigo === "SV083") throw new AppError(error.message, 409);
+    if (codigo === "SV082") throw new AppError(error.message, 422);
+    if (/está cerrado/.test(error.message)) throw new AppError("El proyecto está cerrado: solo consulta", 409);
+    throw error;
+  }
+
+  await Promise.all(r.fotos_borradas.map((ruta) => eliminarArchivoDeStorage(ruta)));
+  return { codigo_incidencia: r.codigo_incidencia, ots_borradas: r.ots_borradas, fotos_borradas: r.fotos_borradas.length };
 }

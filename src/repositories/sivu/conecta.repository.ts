@@ -203,6 +203,27 @@ export async function revisarIncidencia(input: {
   return data as RevisionResultado;
 }
 
+export interface BorradoResultado {
+  codigo_incidencia: string;
+  ots_borradas: Array<{ codigo_ot: string; tipo_ot: string; estado_ot: string }>;
+  fotos_borradas: string[];
+}
+
+/**
+ * Borra la incidencia, sus fotos (filas), sus datos del reportante y sus OT
+ * sin trabajo técnico, y deja la línea en `incident_deletions` (042; CC-079).
+ * Devuelve las rutas de las fotos para borrar los archivos.
+ */
+export async function borrarIncidencia(input: { incidentId: string; usuario: string; motivo: string }): Promise<BorradoResultado> {
+  const { data, error } = await supabaseAdmin.rpc("fn_borrar_incidencia", {
+    p_incident_id: input.incidentId,
+    p_usuario: input.usuario,
+    p_motivo: input.motivo,
+  });
+  if (error) lanzar(error);
+  return data as BorradoResultado;
+}
+
 /**
  * Un árbol del proyecto para su QR individual (SVG/STL), con el JWT del
  * usuario. `null` si no existe en ese proyecto o la RLS no lo deja ver.

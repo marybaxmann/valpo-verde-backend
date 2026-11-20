@@ -137,3 +137,19 @@ export const qrArbolQuerySchema = z
   .strict();
 
 export type QrArbolQuery = z.infer<typeof qrArbolQuerySchema>;
+
+/**
+ * DELETE …/incidencias/:incidentId — borrado por el Usuario municipal
+ * (CC-079, PR-022 v4.0). El motivo queda en el registro de borrados.
+ */
+export const borradoIncidenciaSchema = z
+  .object({
+    motivo: z
+      .string({ required_error: "El motivo del borrado es obligatorio", invalid_type_error: "El motivo del borrado es obligatorio" })
+      .trim()
+      .min(3, "El motivo del borrado debe tener al menos 3 caracteres")
+      .max(300, "El motivo del borrado admite hasta 300 caracteres"),
+  })
+  .strict();
+
+export type BorradoIncidenciaBody = z.infer<typeof borradoIncidenciaSchema>;
