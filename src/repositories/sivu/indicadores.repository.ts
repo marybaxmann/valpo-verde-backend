@@ -14,6 +14,8 @@ const aNumero = (v: unknown): number | null => (v === null || v === undefined ? 
 
 export interface ArbolIndicadorRow {
   id: string;
+  /** Código del árbol: solo para el aviso de medición en revisión (propuesta experimental). */
+  tree_code?: string | null;
   sector: string | null;
   especie_cientifica: string | null;
   species_id: string | null;
@@ -37,7 +39,7 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
   for (let desde = 0; ; desde += 1000) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("trees")
-      .select("id, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, multifustal, dap_fustes_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta")
+      .select("id, tree_code, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, multifustal, dap_fustes_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta")
       .eq("project_id", projectId)
       .order("id", { ascending: true })
       .range(desde, desde + 999);
@@ -46,6 +48,7 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
     for (const f of pagina) {
       filas.push({
         id: f.id as string,
+        tree_code: (f.tree_code as string | null) ?? null,
         sector: (f.sector as string | null) ?? null,
         especie_cientifica: (f.especie_cientifica as string | null) ?? null,
         species_id: (f.species_id as string | null) ?? null,

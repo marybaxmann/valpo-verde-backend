@@ -148,6 +148,7 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     cle: crecimiento[0]?.cle ?? null,
     muerte_regresiva_pct: crecimiento[0]?.muerte_regresiva_pct ?? null,
     poda_intensa: crecimiento[0]?.poda_intensa ?? null,
+    tree_code: (fila.tree_code as string | null | undefined) ?? null,
   };
   const secuestro = calcularSecuestroArbol(entradaSecuestro);
   const sinEspecie = fila.especie_cientifica === null;

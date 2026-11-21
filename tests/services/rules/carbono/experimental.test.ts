@@ -237,3 +237,17 @@ describe("comprobaciones científicas del catálogo completo", () => {
     expect(MODELOS_VOLUMEN.every((m) => m.componente === "aerea_lenosa")).toBe(true);
   });
 });
+
+describe("mediciones en revisión (propuesta experimental, decisión D7)", () => {
+  it("A-000505 y A-000534 se calculan como simulación con el aviso «no validado», sin corregir datos, y se cuentan aparte", () => {
+    const g = arbol("A-000505", "Ginkgo biloba", 84, 6.5, { tree_code: "A-000505" });
+    const r = calcularSecuestroArbol(g);
+    expect(r.tipo).toBe("simulacion_exploratoria");
+    if (r.tipo !== "simulacion_exploratoria") return;
+    expect(r.advertencias.join(" ")).toMatch(/Medición en revisión, resultado no validado/);
+    expect(r.entradas).toEqual(expect.objectContaining({ dap_cm: 84, altura_total_m: 6.5 }));
+    const f = arbol("A-000534", "Ficus elastica", 80.1, 17.2, { tree_code: "A-000534" });
+    const o = arbol("A-000544", "Olea europaea", 17, 5.8, { tree_code: "A-000544" });
+    expect(agregarSecuestro([g, f, o]).cobertura).toEqual(expect.objectContaining({ simulacion_exploratoria: 3, simulacion_medicion_en_revision: 2 }));
+  });
+});

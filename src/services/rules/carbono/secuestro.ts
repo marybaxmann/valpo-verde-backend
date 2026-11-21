@@ -82,7 +82,20 @@ export interface ArbolSecuestro extends ArbolCarbono {
    * intensa o desmoche). Solo genera una advertencia; no cambia el cálculo.
    */
   poda_intensa?: boolean | null;
+  /** Código del árbol, solo para el aviso de medición en revisión. */
+  tree_code?: string | null;
 }
+
+/**
+ * Propuesta experimental (2026-11-21): árboles cuya medición vigente debe
+ * verificarse en terreno (decisión pendiente D7 de la propuesta). Se calculan,
+ * siguen siendo simulaciones y llevan el aviso «no validado»; no se corrige
+ * ningún dato. Clave: código del árbol (tree_code).
+ */
+export const MEDICIONES_EN_REVISION: Readonly<Record<string, string>> = {
+  "A-000505": "altura de 6,5 m con DAP de 84 cm, muy baja para ese diámetro (posible desmoche o error de registro)",
+  "A-000534": "DAP de 80,1 cm, el mayor valor del Piloto con ecuación general",
+};
 
 export const MOTIVOS_SECUESTRO_PROPIOS = {
   falta_cle: "dato_faltante_o_inconsistente",
@@ -219,6 +232,8 @@ export function calcularSecuestroArbol(
   if (a.poda_intensa === true) {
     advertencias.push("Copa con poda intensa o desmoche (vitalidad no evaluable por poda): el modelo puede no representar su arquitectura.");
   }
+  const revision = a.tree_code ? MEDICIONES_EN_REVISION[a.tree_code] : undefined;
+  if (revision) advertencias.push(`Medición en revisión, resultado no validado: ${revision}. Verificar en terreno.`);
 
   const comun: Comun = {
     unidad: "kg CO₂/árbol/año",
@@ -279,6 +294,7 @@ export function agregarSecuestro(
   let simulaciones = 0;
   let noEstimables = 0;
   let fueraUniverso = 0;
+  let enRevision = 0;
   let totalCo2 = 0;
   for (const a of presentes) {
     const r = calcularSecuestroArbol(a, aprobadas);
@@ -287,6 +303,7 @@ export function agregarSecuestro(
       totalCo2 += r.valor.co2_kg_anio;
     } else if (r.tipo === "simulacion_exploratoria") {
       simulaciones++;
+      if (a.tree_code && MEDICIONES_EN_REVISION[a.tree_code]) enRevision++;
     } else {
       if (r.tipo === "fuera_del_universo") fueraUniverso++;
       else noEstimables++;
@@ -303,6 +320,8 @@ export function agregarSecuestro(
       estimacion_fundamentada: fundamentadas,
       simulacion_exploratoria: simulaciones,
       no_estimable: noEstimables,
+      /** Propuesta experimental: simulaciones con la medición en revisión (no validadas). */
+      simulacion_medicion_en_revision: enRevision,
       motivos,
     },
     /** Solo estimaciones fundamentadas. Las simulaciones no se suman. */

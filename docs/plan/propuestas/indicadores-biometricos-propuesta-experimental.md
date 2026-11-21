@@ -169,6 +169,19 @@ La instrucción era usar sus tasas chilenas como escenarios exploratorios para q
 | Trazabilidad del crecimiento | Las tasas y los factores son los de Nowak 2024 (pp. 44-45), sin modificar. No se aplica el ajuste por días libres de heladas (decisión B) |
 | Unidades y extremos | kg C y kg CO₂ por árbol y año. Ningún árbol supera los 7.500 kg C |
 
+### 5.5 Verificación final antes de la integración experimental (2026-11-21)
+
+Hecha con la API local contra la base de pruebas (49 árboles evaluados) y con las 1.922 pruebas del backend. **Ninguna verificación encontró errores que invaliden los cálculos.**
+
+| Verificación | Evidencia | Resultado |
+|---|---|---|
+| 1. Volumen de UGEB y UGEC frente a densidad | UTD, tabla 9 (notas a y b, p. 71): V es el volumen aéreo en m³ por árbol; DW density es la biomasa seca en kg por m³. La p. 73 dice que las ecuaciones generales predicen volumen de madera fresca, que se multiplica por la densidad de peso seco para obtener biomasa aérea seca. La GWDD v1 define la densidad como masa seca en estufa por volumen fresco; los g/cm³ se multiplican por 1.000 para obtener kg/m³. Componente leñoso: las ecuaciones de volumen no incluyen follaje, y la UTD marca aparte las ecuaciones rurales a las que resta el follaje (tabla 10). | **Pasa** |
+| 2. DAP a 1,30 m frente a 1,37 m | Las ecuaciones de la UTD y de McHale usan 1,37 m; SIVU y Cruz et al., 1,30 m. Ninguna fuente publica una corrección para estas especies. Es la misma limitación que la metodología vigente ya declara para CC-069 y CC-070. Por la conicidad del fuste, el sesgo esperado es una leve sobrestimación. | **Pasa, con limitación declarada.** Sin factor de corrección |
+| 3. Dobles conversiones y conteos | La suma de los resultados aprobados es igual al total oficial (140,670 kg C). Ningún árbol tiene a la vez carbono leñoso y aéreo total. No se usan los factores 1,28 (raíces) ni 0,5 de la UTD. El carbono directo no se multiplica por 0,47. | **Pasa** |
+| 4. Variación anual con carbono directo | En los 4 árboles y sus 3 categorías, el valor de la API es igual a [a·(D+ΔD)^b − a·D^b] × 44/12 (diferencia < 10⁻⁹), con D + ΔD dentro de 5 a 41 cm (quillay) o 5 a 37 cm (peumo). | **Pasa** |
+| 5. Separación de resultados | 0 fundamentadas; 36 simulaciones leñosas y 4 de carbono aéreo total, sin total; 9 no estimables, cada uno con motivo. Ningún DAP proyectado sale de su rango. | **Pasa** |
+| 6. Mediciones cuestionables | A-000505 (*Ginkgo biloba*: 6,5 m de altura con DAP de 84 cm) y A-000534 (*Ficus elastica*: DAP de 80,1 cm) siguen como simulación, con el aviso «Medición en revisión, resultado no validado» en la ficha, y se cuentan aparte (`simulacion_medicion_en_revision`). No se corrige ningún dato. | **Pasa, identificados como no validados** |
+
 ## 6. Referencias
 
 1. McPherson, E. G., van Doorn, N. S. y Peper, P. J. (2016). *Urban Tree Database and Allometric Equations*. USDA Forest Service, General Technical Report PSW-GTR-253. https://doi.org/10.2737/PSW-GTR-253
@@ -231,7 +244,7 @@ La instrucción era usar sus tasas chilenas como escenarios exploratorios para q
 | Frontend | #37 | Ficha con carbono aéreo total |
 | Frontend | #38, sobre #37 | «Secuestro anual» explicado como variación proyectada, variación del carbono aéreo total, rótulos por origen de la ecuación y multifustal |
 
-**Pruebas del backend:** `npx jest` pasa completo (94 suites, 1.921 pruebas). Cubren:
+**Pruebas del backend:** `npx jest` pasa completo (94 suites, 1.922 pruebas). Cubren:
 - valores por árbol calculados a mano;
 - límites de rango;
 - especies sin densidad;
