@@ -147,4 +147,13 @@ export const ETIQUETAS_FORMULARIO: Readonly<Record<string, string>> = {
   "REGISTRO_EVALUACION:consecuencia_tronco": "Consecuencia tronco",
   "REGISTRO_EVALUACION:consecuencia_copa_ramas": "Consecuencia copa ramas",
   "REGISTRO_EVALUACION:clasificacion_vitalidad": "Clasificación vitalidad",
+  // CC-081 (PALM-01): aprobadas por la responsable el 2026-11-21, con el criterio de las del 2026-10-28.
+  "REGISTRO_EVALUACION:inclinacion_corregida": "Inclinación corregida",
+  "REGISTRO_EVALUACION:estrechamiento_estipite": "Estrechamiento estípite",
+  "REGISTRO_EVALUACION:angulacion_grave_estipite": "Angulación grave estípite",
+  "REGISTRO_EVALUACION:raices_adventicias_altura": "Raíces adventicias en altura",
+  "REGISTRO_EVALUACION:indicios_plaga_palmera": "Indicios plaga palmera",
+  "REGISTRO_EVALUACION:anomalia_cogollo": "Anomalía cogollo",
+  "REGISTRO_EVALUACION:calidad_copa_palmera": "Calidad copa palmera",
+  "REGISTRO_EVALUACION:proporcion_frondas_vivas": "Proporción frondas vivas",
 };

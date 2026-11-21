@@ -43,15 +43,16 @@ export type PlagaPalmeraCodigo = (typeof CODIGOS_PLAGA_PALMERA)[number];
 export const CODIGOS_RAICES_ADVENTICIAS = ["si", "no", "no_aplica_especie"] as const;
 export type RaicesAdventiciasCodigo = (typeof CODIGOS_RAICES_ADVENTICIAS)[number];
 
-/** D-308 y D-309: clases 0 a 6; 6 = no determinable. */
-export const CLASES_COPA_PALMERA = [0, 1, 2, 3, 4, 5, 6] as const;
+/** D-308 y D-309: clases 0 a 6 (catálogo clase_copa_palmera, códigos "0" a "6"); 6 = no determinable. */
+export const CLASES_COPA_PALMERA = ["0", "1", "2", "3", "4", "5", "6"] as const;
+export type ClaseCopaPalmeraCodigo = (typeof CLASES_COPA_PALMERA)[number];
 
 export const ALERTA_FITOSANITARIA = "Indicios de plaga: evaluación fitosanitaria especializada";
 export const ALERTA_RAICES_ADVENTICIAS = "Raíces adventicias en altura: revisar Base y raíces";
 
 export interface EntradasPalmera {
-  calidad_copa_palmera?: number | null;
-  proporcion_frondas_vivas?: number | null;
+  calidad_copa_palmera?: ClaseCopaPalmeraCodigo | null;
+  proporcion_frondas_vivas?: ClaseCopaPalmeraCodigo | null;
   anomalia_cogollo?: AnomaliaCogolloCodigo | null;
   indicios_plaga_palmera?: PlagaPalmeraCodigo[] | null;
   estrechamiento_estipite?: SiNoNoDeterminadoCodigo | null;
@@ -144,7 +145,7 @@ function evaluarPlaga(
 ): IndicadorPalmera {
   const valor = input.indicios_plaga_palmera;
   if (valor === null || valor === undefined) return nd(`indicios_plaga_palmera sin valor (${prefijo}-PLA, D-312)`);
-  if (!Array.isArray(valor) || valor.length === 0 || !valor.every((c) => (CODIGOS_PLAGA_PALMERA as readonly string[]).includes(c))) {
+  if (!Array.isArray(valor) || valor.length === 0 || new Set(valor).size !== valor.length || !valor.every((c) => typeof c === "string" && esCodigoVigente("plaga_palmera", c))) {
     return nd(`indicios_plaga_palmera fuera de dominio (D-312): ${JSON.stringify(valor)}`);
   }
   const exclusivo = valor.includes("no") || valor.includes("no_determinado");
@@ -399,7 +400,7 @@ function evaluarFrondasQuebradas(input: PalmeraInput): IndicadorPalmera {
 function evaluarCogollo(input: PalmeraInput): IndicadorPalmera {
   const v = input.anomalia_cogollo;
   if (v === null || v === undefined) return nd("anomalia_cogollo sin valor (PC-COG, D-311)");
-  if (!(CODIGOS_ANOMALIA_COGOLLO as readonly string[]).includes(v)) return nd(`anomalia_cogollo fuera de dominio ("${v}") (D-311)`);
+  if (!esCodigoVigente("anomalia_cogollo", v)) return nd(`anomalia_cogollo fuera de dominio ("${v}") (D-311)`);
   if (v === "ninguna" || v === "desviacion") return ind("despreciable", "PC-COG-01");
   if (v === "no_determinado") return nd("anomalia_cogollo = No determinado", "PC-COG-03");
   return piso("probable", "PC-COG-02");
@@ -433,8 +434,8 @@ export type VitalidadPalmera = 0 | 1 | 2 | 3 | 4 | 5 | "no_determinado";
 export function calcularVitalidadPalmera(input: EntradasPalmera): VitalidadPalmera | null {
   const c = input.calidad_copa_palmera;
   const p = input.proporcion_frondas_vivas;
-  const valida = (x: unknown): x is number => typeof x === "number" && (CLASES_COPA_PALMERA as readonly number[]).includes(x);
+  const valida = (x: unknown): x is ClaseCopaPalmeraCodigo => typeof x === "string" && esCodigoVigente("clase_copa_palmera", x);
   if (!valida(c) || !valida(p)) return null;
-  if (c === 6 || p === 6) return "no_determinado";
-  return Math.min(c, p) as VitalidadPalmera;
+  if (c === "6" || p === "6") return "no_determinado";
+  return Math.min(Number(c), Number(p)) as VitalidadPalmera;
 }

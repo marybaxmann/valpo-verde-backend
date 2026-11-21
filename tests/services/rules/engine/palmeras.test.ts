@@ -38,8 +38,8 @@ function palmeraSana(): PalmeraInput {
     ramas_secas_pct_copa: null,
     ramas_quebradas: false,
     permanece_suspendida: null,
-    calidad_copa_palmera: 5,
-    proporcion_frondas_vivas: 4,
+    calidad_copa_palmera: "5",
+    proporcion_frondas_vivas: "4",
     anomalia_cogollo: "ninguna",
     indicios_plaga_palmera: ["no"],
     estrechamiento_estipite: "no",
@@ -201,12 +201,12 @@ describe("R03-P · Corona", () => {
 
 describe("vitalidad de palmera (D-310)", () => {
   it.each([
-    [5, 4, 4],
-    [2, 6, "no_determinado"],
-    [null, 3, null],
-    [7, 3, null],
+    ["5", "4", 4],
+    ["2", "6", "no_determinado"],
+    [null, "3", null],
+    ["7", "3", null],
   ] as const)("calidad %s y proporción %s → %s", (c, p, esperado) => {
-    expect(calcularVitalidadPalmera({ calidad_copa_palmera: c, proporcion_frondas_vivas: p })).toBe(esperado);
+    expect(calcularVitalidadPalmera({ calidad_copa_palmera: c as never, proporcion_frondas_vivas: p as never })).toBe(esperado);
   });
 });
 

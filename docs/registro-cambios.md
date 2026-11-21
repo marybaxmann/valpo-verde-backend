@@ -3371,3 +3371,32 @@ motivo)
   - desactivar los de la hoja PALMERAS, sección B;
   - formulario del frontend;
   - pasar `RULE_VERSION_OPERATIVA` a "3.3".
+
+**Borrador, completitud y formulario (2026-11-21, misma rama)**
+- **Excel, solo en filas y columnas nuevas:**
+  - REGISTRO_EVALUACION tiene 9 columnas nuevas (EV a FD), una por campo de palmeras, como hizo CC-071;
+  - D-309 lleva el dominio literal de las clases;
+  - D-312 cambia el tipo a «Categoría» y deja la selección múltiple en la columna L.
+  - Verificado: ninguna celda existente con valor cambió.
+- **Generador `obligatoriedad_campos.py`.** Con el Excel anterior fallaba («tipo_hoja» no está en el diccionario). Ahora tiene:
+  - traducciones de los 8 campos que ingresa el Inspector: activación `tipo_hoja = palmera` y `desdeVersion: "3.3"`;
+  - la colocación de las columnas nuevas en su sección del formulario;
+  - `CAMPOS_NO_APLICAN_PALMERA`, leído de la hoja PALMERAS, sección B.
+  - La tabla de completitud vuelve a ser la salida exacta del generador. Se corrige la edición manual del primer commit de este CC.
+  - Las entradas de árboles son idénticas: reglas, no exigidos, metadatos, y sección y orden relativo.
+- **`completitud.ts`:**
+  - una regla con `desdeVersion` solo se exige desde esa versión (por omisión, la operativa);
+  - desde la 3.3, una palmera no responde los campos de la sección B (REGLAS_GENERALES fila 30).
+- **Borrador:**
+  - los 8 campos entran en `CAMPOS_EVALUACION_COMPLETA` y en los monitoreos de REGLAS_GENERALES fila 32;
+  - se quitaron las exclusiones temporales;
+  - hay catálogos nuevos (`clase_copa_palmera`, `anomalia_cogollo`, `plaga_palmera` de selección múltiple y `raices_adventicias`);
+  - las etiquetas siguen el criterio de las aprobadas el 2026-10-28; la responsable las aprobó el 2026-11-21.
+- **Formulario:** cada campo informa `desde_version` y `no_aplica_palmera`.
+- **Finalización:** las entradas de palmeras solo se componen para una palmera cuando la versión operativa incluye palmeras. Con la 3.2, ni árboles ni palmeras reciben claves nuevas.
+- **Pruebas:** `tests/services/sivu/palmerasBorrador.test.ts`, con 14 casos. Se actualizó el recuento de campos Sí / No (59). Total: 1913 de 1913. §14.9: sin hallazgos.
+- **Pendiente para publicar:**
+  - formulario del frontend;
+  - `tipo_hoja` de las palmeras en el catálogo;
+  - AV_000087;
+  - pasar `RULE_VERSION_OPERATIVA` a "3.3".
