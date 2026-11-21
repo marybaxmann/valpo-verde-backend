@@ -1,5 +1,7 @@
 # Carbono aéreo total de quillay y peumo: resumen para la revisión del equipo
 
+> **Integrado en la propuesta consolidada** `indicadores-biometricos-propuesta-experimental.md` (2026-11-21). Este documento queda como antecedente del PR #94.
+
 | | |
 |---|---|
 | **Estado** | **Propuesta experimental.** No forma parte de la metodología vigente. |

@@ -107,7 +107,33 @@ Cada cálculo selecciona sus modelos por **componente**, **especie** y **estado*
 Con resultado (monofustales con evaluación completa vigente): A-000543 (quillay, DAP 6,9 cm: 5,69 kg C), A-000554 (quillay, 8,9 cm: 10,09 kg C), A-000568 (quillay, 18,4 cm: 51,76 kg C) y A-000537 (peumo, 7,8 cm: 8,46 kg C).
 Excluidos: multifustales A-000538, A-000540 y A-000558; sin medidas vigentes (OT de inspección en ejecución) A-000562 a A-000565.
 
-## 5. Lo que queda pendiente
+## 5. PROPUESTA EXPERIMENTAL · Modelos de volumen de la Urban Tree Database por especie (2026-11-21)
+
+> **No es metodología vigente.** Rama `feature/indicadores-experimental`, pendiente de revisión del equipo. Propuesta consolidada: `docs/plan/propuestas/indicadores-biometricos-propuesta-experimental.md`. Componente: **carbono aéreo leñoso** (misma cadena de la sección 1); por eso el secuestro anual vigente se aplica sin cambios y sus resultados son simulaciones exploratorias que no suman.
+
+**Fuente.** McPherson, E. G., van Doorn, N. S. y Peper, P. J. (2016). *Urban Tree Database and Allometric Equations*. USDA Forest Service, PSW-GTR-253. https://doi.org/10.2737/PSW-GTR-253 — tabla 9 (p. 70), ecuaciones; tabla 11 (pp. 73-82), ecuación asignada y densidad por especie; p. 73, uso de las ecuaciones generales con la densidad de la Global Wood Density Database cuando la especie no está listada. Densidades complementarias: Global Wood Density Database v2.2 (https://zenodo.org/records/18262736, `gwddagg_v2.2_binomial.csv`, `wsg_est` en g/cm³ × 1000).
+
+| Modelo | Especie | Ecuación (V en m³; D en cm; H en m) | DAP (cm) | Densidad (kg/m³) y fuente | Confianza |
+|---|---|---|---|---|---|
+| `UTD-T9-UGEB-DH-GIBI` | *Ginkgo biloba* | UGEB: 0,0001967 · D^1,951853 · H^0,664255 | 6–135 | 520, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-LAIN` | *Lagerstroemia indica* | UGEB | 6–135 | 571, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-OLEU` | *Olea europaea* | UGEB | 6–135 | 700, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-PIUN` | *Pittosporum undulatum* | UGEB | 6–135 | 745, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-SCMO` | *Schinus molle* | UGEB | 6–135 | 650, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-FIEL` | *Ficus elastica* | UGEB | 6–135 | 500, GWDD v2.2 (no está en la tabla 11) | `generica_urbana` |
+| `UTD-T9-UGEB-DH-PITO` | *Pittosporum tobira* | UGEB | 6–135 | 650, GWDD v2.2 (no está en la tabla 11) | `generica_urbana` |
+| `UTD-T9-UGEC-DH-ARAN` | *Araucaria angustifolia* | UGEC: 0,0000426 · D^2,24358 · H^0,64956 | 16–147 | 450, GWDD v2.2 (no está en la tabla 11) | `generica_urbana` |
+| `MCH09-T1-ACPL-D-ACPL` | *Acer platanoides* | 0,0019 · D^1,785 (McHale et al. 2009, igual que CC-070) | 9,7–102,1 | 520, tablas 9 y 11 | `propia_urbana` |
+
+**Componentes:** volumen exterior a la corteza de tronco y ramas (madera verde) × densidad básica = biomasa aérea leñosa; sin hojas ni raíces. **No se usan** los factores de la UTD para raíces (1,28) ni su fracción 0,5: se mantiene la cadena de SIVU (× 0,47).
+
+**Limitaciones:** las ecuaciones generales no son de la especie ni del género (árboles urbanos de EE. UU.); sin rango de altura publicado (la altura no se controla); densidad de madera aplicada al volumen con corteza; DAP a 1,30 m frente a 4,5 ft. Sin densidad de la especie no hay modelo (*Beilschmiedia miersii*, *Araucaria heterophylla*): no se usan promedios de género.
+
+## 6. PROPUESTA EXPERIMENTAL · Variación anual del carbono aéreo total (2026-11-21)
+
+Para las especies con carbono directo (sección 4): ΔDAP con el crecimiento de i-Tree Eco del secuestro anual (sin cambios) y variación = (C(DAP + ΔDAP) − C(DAP)) × 44/12 con la ecuación de Cruz et al. 2015. Incluye hojas: **no** es el secuestro leñoso de SIVU ni la captura fotosintética. Siempre simulación, sin total. Código: `rules/carbono/variacionAereoTotal.ts`.
+
+## 7. Lo que queda pendiente
 
 - Leer el apéndice 11 de Nowak 2020 y la tabla B.1 de CARB 2010 cuando se puedan descargar, y anotar su verificación aquí.
 - Confirmar en el original la tabla 4.3 del IPCC 2006 (fracción 0,47), como pide CC-069.
