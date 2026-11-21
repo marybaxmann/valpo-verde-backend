@@ -223,7 +223,8 @@ export function diagnosticoDescriptivo(arboles: ArbolDescriptivo[], medicionesEn
       base_copa_viva_mayor_que_altura: ev.filter((a) => finito(a.altura_total_m) && finito(a.altura_base_copa_viva_m) && a.altura_base_copa_viva_m > a.altura_total_m).length,
       multifustales_sin_fustes: ev.filter((a) => a.multifustal === true && (a.dap_fustes_cm?.length ?? 0) < 2).length,
       presentes_sin_especie: presentes.filter((a) => !a.especie_cientifica).length,
-      presentes_sin_vinculo_catalogo: presentes.filter((a) => a.especie_cientifica && !a.especie_en_catalogo).length,
+      /** Con especie registrada, pero sin género, familia ni origen en el catálogo de especies. */
+      presentes_especie_sin_rasgos: presentes.filter((a) => a.especie_cientifica && !a.genero).length,
       especies_sin_origen_en_catalogo: especiesSinOrigen,
       mediciones_en_revision: presentes
         .filter((a) => a.tree_code && medicionesEnRevision[a.tree_code])

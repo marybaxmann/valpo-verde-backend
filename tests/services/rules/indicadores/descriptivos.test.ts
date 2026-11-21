@@ -91,7 +91,7 @@ describe("diagnóstico descriptivo del ámbito", () => {
   it("completitud y calidad: faltantes, inconsistencias, catálogo y mediciones en revisión", () => {
     expect(d.completitud.presentes_sin_evaluacion_vigente).toBe(1);
     expect(d.completitud.base_copa_viva_mayor_que_altura).toBe(1);
-    expect(d.completitud.presentes_sin_vinculo_catalogo).toBe(1);
+    expect(d.completitud.presentes_especie_sin_rasgos).toBe(1);
     expect(d.completitud.especies_sin_origen_en_catalogo).toEqual(["Quillaja saponaria"]);
     expect(d.completitud.mediciones_en_revision).toEqual([{ tree_code: "a2", motivo: "medición a verificar" }]);
   });
