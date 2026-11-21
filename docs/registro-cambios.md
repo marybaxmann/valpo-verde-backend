@@ -3351,4 +3351,23 @@ motivo)
   - completar AV_000087.
 
 - [x] Verificación §14.9 (fuente): sin hallazgos en los puntos automatizables.
-- [ ] Verificación §14.9 (implementación): pendiente (motor, completitud y frontend).
+- [ ] Verificación §14.9 (implementación): motor hecho; faltan la composición, la completitud y el frontend.
+
+**Motor de palmeras (2026-11-21, misma rama)**
+- `src/services/rules/engine/palmeras.ts` implementa:
+  - R01-P, R02-P y R03-P, con las reglas PB-, PE- y PC-;
+  - pisos antes de propagar No determinado;
+  - bandas 0 / 1–3 / ≥ 4 en base y estípite, y 0 / 1–2 / ≥ 3 en la corona;
+  - la vitalidad de palmera (D-310), solo en `calculados`.
+- `version.ts`: la 3.3 es la versión **candidata** (`RULE_VERSION`) y la 3.2 sigue **operativa** (`RULE_VERSION_OPERATIVA`). Los servicios calculan con la operativa, así que la plataforma no cambia hasta publicar. Las comparaciones de versión pasan a `usaEscala32` e `incluyePalmeras`. El ensamblaje sin versión explícita usa la operativa.
+- `ensamblaje.ts`: la rama de palmeras solo se activa con `incluyePalmeras(version)` y `tipo_hoja = "palmera"`. Los indicadores pasan a ser `IndicadoresArbol | IndicadoresPalmera`, con el guardián de tipo `sonIndicadoresArbol`. La consecuencia, M01 a M03, R04 y M04 son comunes.
+- Pruebas: `tests/services/rules/engine/palmeras.test.ts`, con 34 casos.
+  - Regresión con 600 árboles aleatorios (semilla fija) que cubren todos los niveles de riesgo: idénticos con la 3.3 y con la 3.2, salvo `rule_version`.
+  - Dos pruebas existentes solo se ajustaron en el tipo (`IndicadoresArbol`).
+  - Total: 1886 de 1886.
+- Pendiente para publicar:
+  - componer los 9 campos en la finalización (`CLAVES_NUCLEO`);
+  - admitirlos en el borrador y en la completitud, con catálogos y etiquetas;
+  - desactivar los de la hoja PALMERAS, sección B;
+  - formulario del frontend;
+  - pasar `RULE_VERSION_OPERATIVA` a "3.3".
