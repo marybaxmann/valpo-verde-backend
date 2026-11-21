@@ -152,7 +152,7 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
         "fecha_consulta", "ambito", "barrios", "cobertura", "numero_total_arboles", "densidad_arborea", "clases_diametricas",
         "diametro_medio_copa", "area_proyectada_copa", "cobertura_taxonomica", "riqueza_especies", "abundancia_relativa",
         "diversidad_shannon", "diversidad_taxonomica_10_20_30", "proporcion_origen", "estimacion_carbono_aereo_lenoso",
-        "estimacion_carbono_aereo_total", "estimacion_secuestro_anual",
+        "estimacion_carbono_aereo_total", "estimacion_secuestro_anual", "estimacion_variacion_anual_carbono_aereo_total",
       ].sort()
     );
     expect(d.estimacion_carbono_aereo_lenoso.cobertura.presentes).toBe(d.cobertura.arboles_presentes);
@@ -212,6 +212,7 @@ describe("GET /api/sivu/projects/:id/indicadores: secuestro anual (decisiones A 
       estimacion_fundamentada: 0,
       simulacion_exploratoria: 2,
       no_estimable: 3,
+      simulacion_medicion_en_revision: 0,
       motivos: { multifustal_no_admitido: 1, sin_modelo: 1, falta_cle: 1 },
     });
     expect(s.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });
@@ -267,5 +268,26 @@ describe("GET /api/sivu/projects/:id/indicadores: carbono aéreo total (carbono 
     expect(con.estimacion_carbono_aereo_lenoso.cobertura.con_resultado_exploratorio).toBe(0);
     expect(con.estimacion_secuestro_anual.cobertura.simulacion_exploratoria).toBe(sin.estimacion_secuestro_anual.cobertura.simulacion_exploratoria);
     expect(con.estimacion_secuestro_anual.cobertura.estimacion_fundamentada).toBe(0);
+  });
+});
+
+describe("GET /api/sivu/projects/:id/indicadores: propuesta experimental (2026-11-21)", () => {
+  it("modelos UTD experimentales: amplían las simulaciones del secuestro leñoso sin tocar los totales oficiales; la variación del carbono aéreo total va aparte", async () => {
+    (listarArbolesIndicadores as jest.Mock).mockResolvedValue([
+      fila("j1", { especie_cientifica: "Jacaranda mimosifolia", dap_cm: 30, altura_total_m: 10 }),
+      fila("g1", { especie_cientifica: "Ginkgo biloba", dap_cm: 84, altura_total_m: 6.5 }),
+      fila("o1", { especie_cientifica: "Olea europaea", dap_cm: 17, altura_total_m: 5.8 }),
+      fila("b1", { especie_cientifica: "Beilschmiedia miersii", dap_cm: 39.1, altura_total_m: 14.4 }),
+      fila("q1", { especie_cientifica: "Quillaja saponaria", dap_cm: 18.4, altura_total_m: 8.3 }),
+    ]);
+    const d = (await request(app).get(RUTA).set(auth)).body.data;
+    expect(d.estimacion_carbono_aereo_lenoso.cobertura).toEqual(expect.objectContaining({ con_resultado: 1, con_resultado_exploratorio: 2 }));
+    expect(d.estimacion_carbono_aereo_lenoso.total.carbono_t).toBeCloseTo(110.3147 / 1000, 6);
+    expect(d.estimacion_secuestro_anual.cobertura).toEqual(expect.objectContaining({ estimacion_fundamentada: 0, simulacion_exploratoria: 3, no_estimable: 2 }));
+    expect(d.estimacion_secuestro_anual.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });
+    const v = d.estimacion_variacion_anual_carbono_aereo_total;
+    expect(v.cobertura).toEqual(expect.objectContaining({ simulacion_exploratoria: 1, no_estimable: 4 }));
+    expect(v.total).toBeNull();
+    expect(v.metodo.estado).toMatch(/propuesta experimental/);
   });
 });

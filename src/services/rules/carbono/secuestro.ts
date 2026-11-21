@@ -82,7 +82,20 @@ export interface ArbolSecuestro extends ArbolCarbono {
    * intensa o desmoche). Solo genera una advertencia; no cambia el cálculo.
    */
   poda_intensa?: boolean | null;
+  /** Código del árbol, solo para el aviso de medición en revisión. */
+  tree_code?: string | null;
 }
+
+/**
+ * Propuesta experimental (2026-11-21): árboles cuya medición vigente debe
+ * verificarse en terreno (decisión pendiente D7 de la propuesta). Se calculan,
+ * siguen siendo simulaciones y llevan el aviso «no validado»; no se corrige
+ * ningún dato. Clave: código del árbol (tree_code).
+ */
+export const MEDICIONES_EN_REVISION: Readonly<Record<string, string>> = {
+  "A-000505": "altura de 6,5 m con DAP de 84 cm, muy baja para ese diámetro (posible desmoche o error de registro)",
+  "A-000534": "DAP de 80,1 cm, el mayor valor del Piloto con ecuación general",
+};
 
 export const MOTIVOS_SECUESTRO_PROPIOS = {
   falta_cle: "dato_faltante_o_inconsistente",
@@ -180,7 +193,7 @@ export function calcularSecuestroArbol(
   for (const cat of CRECIMIENTO_ITREE.categorias) {
     const delta = cat.tasa_cm_anio * fCle * fCond;
     const dap1 = c0.entradas.dap_cm + delta;
-    const r1 = calcularCarbonoArbol({ ...a, dap_cm: dap1 });
+    const r1 = calcularCarbonoArbol({ ...a, dap_cm: dap1, proyeccion_dap: true });
     if (r1.valor === null || r1.valor.modelo.id !== c0.modelo.id) {
       return sinSecuestro(
         "dap_proyectado_fuera_de_rango",
@@ -199,7 +212,19 @@ export function calcularSecuestroArbol(
   const advertencias: string[] = [];
   if (c0.modelo.estado === "exploratorio") {
     const especieEcuacion = c0.modelo.especie_ecuacion.charAt(0).toUpperCase() + c0.modelo.especie_ecuacion.slice(1);
-    advertencias.push(`Modelo de biomasa exploratorio: ecuación de ${especieEcuacion}, otra especie del mismo género, no calibrada para Valparaíso.`);
+    // Propuesta experimental (2026-11-21): el aviso depende del origen de la ecuación.
+    if (c0.modelo.confianza === "generica_urbana") {
+      advertencias.push(`Modelo de biomasa exploratorio: ${c0.modelo.especie_ecuacion} de la Urban Tree Database, no específica de la especie ni calibrada para Valparaíso.`);
+    } else if (c0.modelo.confianza === "propia_urbana") {
+      advertencias.push("Modelo de biomasa exploratorio: ecuación de la propia especie, aún no revisada por el equipo ni calibrada para Valparaíso.");
+    } else {
+      advertencias.push(`Modelo de biomasa exploratorio: ecuación de ${especieEcuacion}, otra especie del mismo género, no calibrada para Valparaíso.`);
+    }
+  }
+  if (c0.tratamiento_multifustal) {
+    advertencias.push(
+      "Multifustal (propuesta experimental): DAP equivalente por área basal, como en i-Tree Eco (Nowak 2024, p. 22); su compatibilidad con la ecuación no está demostrada."
+    );
   }
   if (c0.modelo.variante === "dap_altura" && c0.modelo.rango.altura_min_m === null) {
     advertencias.push("La fuente no publica el rango de altura del modelo: la altura del árbol no se pudo comprobar.");
@@ -207,6 +232,8 @@ export function calcularSecuestroArbol(
   if (a.poda_intensa === true) {
     advertencias.push("Copa con poda intensa o desmoche (vitalidad no evaluable por poda): el modelo puede no representar su arquitectura.");
   }
+  const revision = a.tree_code ? MEDICIONES_EN_REVISION[a.tree_code] : undefined;
+  if (revision) advertencias.push(`Medición en revisión, resultado no validado: ${revision}. Verificar en terreno.`);
 
   const comun: Comun = {
     unidad: "kg CO₂/árbol/año",
@@ -226,7 +253,7 @@ export function calcularSecuestroArbol(
 
   const clave = claveEspecie(a.especie_cientifica);
   // Con un modelo de biomasa exploratorio el resultado nunca es fundamentado.
-  const aprobada = clave === null || c0.modelo.estado === "exploratorio" ? undefined : aprobadas[clave];
+  const aprobada = clave === null || c0.estado_resultado === "exploratorio" ? undefined : aprobadas[clave];
   if (aprobada) {
     const valor = porCategoria.find((p) => p.categoria === aprobada.categoria)!;
     return {
@@ -267,6 +294,7 @@ export function agregarSecuestro(
   let simulaciones = 0;
   let noEstimables = 0;
   let fueraUniverso = 0;
+  let enRevision = 0;
   let totalCo2 = 0;
   for (const a of presentes) {
     const r = calcularSecuestroArbol(a, aprobadas);
@@ -275,6 +303,7 @@ export function agregarSecuestro(
       totalCo2 += r.valor.co2_kg_anio;
     } else if (r.tipo === "simulacion_exploratoria") {
       simulaciones++;
+      if (a.tree_code && MEDICIONES_EN_REVISION[a.tree_code]) enRevision++;
     } else {
       if (r.tipo === "fuera_del_universo") fueraUniverso++;
       else noEstimables++;
@@ -291,6 +320,8 @@ export function agregarSecuestro(
       estimacion_fundamentada: fundamentadas,
       simulacion_exploratoria: simulaciones,
       no_estimable: noEstimables,
+      /** Propuesta experimental: simulaciones con la medición en revisión (no validadas). */
+      simulacion_medicion_en_revision: enRevision,
       motivos,
     },
     /** Solo estimaciones fundamentadas. Las simulaciones no se suman. */

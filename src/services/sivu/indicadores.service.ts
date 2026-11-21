@@ -5,6 +5,7 @@ import { agregarSecuestro } from "../rules/carbono/secuestro";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
 import { agregarCarbonoAereoTotal } from "../rules/carbono/carbonoAereoTotal";
+import { agregarVariacionAereoTotal } from "../rules/carbono/variacionAereoTotal";
 import {
   ArbolEspecie,
   abundanciaRelativa,
@@ -86,9 +87,18 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
       especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
       tipo_hoja: rasgoPorArbol.get(f.id)?.tipo_hoja ?? null,
       multifustal: f.multifustal,
+      dap_fustes_cm: f.dap_fustes_cm ?? null,
       dap_cm: f.dap_cm,
       altura_total_m: f.altura_total_m,
     }));
+
+  const arbolesSecuestro = arbolesCarbono.map((a) => ({
+    ...a,
+    cle: crecimientoPorArbol.get(a.id)?.cle ?? null,
+    muerte_regresiva_pct: crecimientoPorArbol.get(a.id)?.muerte_regresiva_pct ?? null,
+    poda_intensa: crecimientoPorArbol.get(a.id)?.poda_intensa ?? null,
+    tree_code: delAmbito.find((f) => f.id === a.id)?.tree_code ?? null,
+  }));
 
   return {
     fecha_consulta: fechaConsulta,
@@ -119,13 +129,9 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     estimacion_carbono_aereo_total: agregarCarbonoAereoTotal(arbolesCarbono),
     // Secuestro anual (decisiones A a C, 2026-11-20): cobertura por tipo de resultado; el total suma solo
     // estimaciones fundamentadas, nunca simulaciones.
-    estimacion_secuestro_anual: agregarSecuestro(
-      arbolesCarbono.map((a) => ({
-        ...a,
-        cle: crecimientoPorArbol.get(a.id)?.cle ?? null,
-        muerte_regresiva_pct: crecimientoPorArbol.get(a.id)?.muerte_regresiva_pct ?? null,
-        poda_intensa: crecimientoPorArbol.get(a.id)?.poda_intensa ?? null,
-      }))
-    ),
+    estimacion_secuestro_anual: agregarSecuestro(arbolesSecuestro),
+    // Propuesta experimental (2026-11-21): variación anual proyectada del carbono aéreo total (con hojas) de las
+    // especies con carbono directo. Solo cobertura; no es secuestro leñoso ni captura fotosintética.
+    estimacion_variacion_anual_carbono_aereo_total: agregarVariacionAereoTotal(arbolesSecuestro),
   };
 }

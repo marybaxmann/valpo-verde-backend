@@ -14,6 +14,8 @@ const aNumero = (v: unknown): number | null => (v === null || v === undefined ? 
 
 export interface ArbolIndicadorRow {
   id: string;
+  /** Código del árbol: solo para el aviso de medición en revisión (propuesta experimental). */
+  tree_code?: string | null;
   sector: string | null;
   especie_cientifica: string | null;
   species_id: string | null;
@@ -22,6 +24,8 @@ export interface ArbolIndicadorRow {
   dap_cm: number | null;
   /** D-15 y D-19: solo los usa el carbono (CC-069). */
   multifustal: boolean | null;
+  /** D-16: diámetros de cada fuste (multifustales); propuesta experimental del DAP equivalente. */
+  dap_fustes_cm: number[] | null;
   altura_total_m: number | null;
   diametro_copa_ns_m: number | null;
   diametro_copa_eo_m: number | null;
@@ -35,7 +39,7 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
   for (let desde = 0; ; desde += 1000) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("trees")
-      .select("id, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, multifustal, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta")
+      .select("id, tree_code, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, multifustal, dap_fustes_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta")
       .eq("project_id", projectId)
       .order("id", { ascending: true })
       .range(desde, desde + 999);
@@ -44,12 +48,14 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
     for (const f of pagina) {
       filas.push({
         id: f.id as string,
+        tree_code: (f.tree_code as string | null) ?? null,
         sector: (f.sector as string | null) ?? null,
         especie_cientifica: (f.especie_cientifica as string | null) ?? null,
         species_id: (f.species_id as string | null) ?? null,
         especie_catalogo: ((f.species as { especie_cientifica?: string } | null)?.especie_cientifica as string | undefined) ?? null,
         dap_cm: aNumero(f.dap_cm),
         multifustal: (f.multifustal as boolean | null) ?? null,
+        dap_fustes_cm: Array.isArray(f.dap_fustes_cm) ? (f.dap_fustes_cm as unknown[]).map(aNumero).filter((x): x is number => x !== null) : null,
         altura_total_m: aNumero(f.altura_total_m),
         diametro_copa_ns_m: aNumero(f.diametro_copa_ns_m),
         diametro_copa_eo_m: aNumero(f.diametro_copa_eo_m),

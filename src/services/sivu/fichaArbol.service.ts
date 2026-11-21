@@ -19,6 +19,7 @@ import { areaCopaArbol } from "../rules/indicadores/inventario";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { calcularCarbonoArbol, METODO_CARBONO } from "../rules/carbono/calculo";
 import { calcularCarbonoAereoTotalArbol, METODO_CARBONO_AEREO_TOTAL } from "../rules/carbono/carbonoAereoTotal";
+import { calcularVariacionAereoTotalArbol, METODO_VARIACION_AEREO_TOTAL } from "../rules/carbono/variacionAereoTotal";
 import { LIMITACIONES, LIMITACIONES_AEREO_TOTAL } from "../rules/carbono/modelos";
 import { calcularSecuestroArbol, METODO_SECUESTRO } from "../rules/carbono/secuestro";
 import { listarVariablesCrecimiento } from "../../repositories/sivu/indicadores.repository";
@@ -137,16 +138,19 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     especie_cientifica: fila.especie_cientifica,
     tipo_hoja: rasgos?.tipo_hoja ?? null,
     multifustal: fila.multifustal ?? null,
+    dap_fustes_cm: Array.isArray(fila.dap_fustes_cm) ? (fila.dap_fustes_cm as unknown[]).map(Number).filter((x) => Number.isFinite(x)) : null,
     dap_cm: numero(fila.dap_cm),
     altura_total_m: numero(fila.altura_total_m),
   };
   const carbono = calcularCarbonoArbol(entradaCarbono);
-  const secuestro = calcularSecuestroArbol({
+  const entradaSecuestro = {
     ...entradaCarbono,
     cle: crecimiento[0]?.cle ?? null,
     muerte_regresiva_pct: crecimiento[0]?.muerte_regresiva_pct ?? null,
     poda_intensa: crecimiento[0]?.poda_intensa ?? null,
-  });
+    tree_code: (fila.tree_code as string | null | undefined) ?? null,
+  };
+  const secuestro = calcularSecuestroArbol(entradaSecuestro);
   const sinEspecie = fila.especie_cientifica === null;
 
   return {
@@ -163,6 +167,9 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     // Secuestro anual (decisiones A a C, 2026-11-20): estimación fundamentada, simulación exploratoria (rango
     // con las tres categorías de i-Tree Eco) o no estimable con su motivo.
     secuestro_anual: { ...secuestro, metodo: METODO_SECUESTRO },
+    // Propuesta experimental (2026-11-21): variación anual proyectada del carbono aéreo total (con hojas), solo
+    // para especies con carbono directo. Siempre simulación; no es secuestro leñoso ni captura fotosintética.
+    variacion_anual_carbono_aereo_total: { ...calcularVariacionAereoTotalArbol(entradaSecuestro), metodo: METODO_VARIACION_AEREO_TOTAL },
     // D-28/D-29 (AM-22): Presente, Talado o Retirado, y desde cuándo.
     presencia: presencia
       ? { ...conEtiqueta("estado_presencia", presencia.estado_presencia)!, desde: presencia.fecha_cambio_estado_presencia }
