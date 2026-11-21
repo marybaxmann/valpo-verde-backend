@@ -19,7 +19,7 @@
 import { CategoriaSinCarbono } from "./calculo";
 import { calcularCarbonoAereoTotalArbol } from "./carbonoAereoTotal";
 import { FACTOR_CO2_POR_C } from "./modelos";
-import { ArbolSecuestro, CodigoCategoria, CRECIMIENTO_ITREE, factorCle, MotivoSinSecuestro } from "./secuestro";
+import { ArbolSecuestro, calcularSecuestroArbol, CodigoCategoria, CRECIMIENTO_ITREE, factorCle, MotivoSinSecuestro } from "./secuestro";
 
 export const SUPUESTOS_VARIACION_AEREO_TOTAL = [
   "Propuesta experimental, no vigente: simulación basada en supuestos, no es una medición ni una estimación validada.",
@@ -164,5 +164,52 @@ export function agregarVariacionAereoTotal(arboles: ArbolSecuestro[]) {
     },
     /** Sin total: las simulaciones experimentales no se suman. */
     total: null,
+  };
+}
+
+/**
+ * Propuesta experimental (2026-11-21): resumen por árbol de la proyección
+ * anual, combinando el secuestro leñoso y la variación del carbono aéreo
+ * total (componentes distintos, que no se suman). Cada árbol del universo
+ * cae en una sola clase. Un árbol no estimable lleva el motivo del cálculo
+ * que le corresponde: el del carbono directo si su especie tiene ese modelo
+ * (p. ej., multifustal de quillay), y el del secuestro leñoso si no.
+ */
+export function resumirProyeccionAnual(arboles: ArbolSecuestro[]) {
+  const universo = arboles.filter((a) => a.presente && a.evaluacion_completa_vigente);
+  const motivos: Partial<Record<MotivoSinSecuestro, number>> = {};
+  let fundamentada = 0;
+  let lenoso = 0;
+  let aereoTotal = 0;
+  let noEstimable = 0;
+  for (const a of universo) {
+    const s = calcularSecuestroArbol(a);
+    if (s.tipo === "estimacion_fundamentada") {
+      fundamentada++;
+      continue;
+    }
+    if (s.tipo === "simulacion_exploratoria") {
+      lenoso++;
+      continue;
+    }
+    const v = calcularVariacionAereoTotalArbol(a);
+    if (v.tipo === "simulacion_exploratoria") {
+      aereoTotal++;
+      continue;
+    }
+    noEstimable++;
+    const motivo = s.motivo === "sin_modelo" && v.motivo !== "sin_modelo" ? v.motivo : s.motivo;
+    motivos[motivo] = (motivos[motivo] ?? 0) + 1;
+  }
+  return {
+    indicador: "resumen_proyeccion_anual" as const,
+    estado: "propuesta experimental: no es metodología vigente; ninguna simulación suma a un total",
+    universo_calculo: universo.length,
+    con_proyeccion: fundamentada + lenoso + aereoTotal,
+    estimacion_fundamentada: fundamentada,
+    simulacion_secuestro_lenoso: lenoso,
+    simulacion_variacion_aereo_total: aereoTotal,
+    no_estimable: noEstimable,
+    motivos_no_estimable: motivos,
   };
 }

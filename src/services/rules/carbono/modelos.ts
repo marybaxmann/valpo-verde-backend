@@ -381,6 +381,17 @@ const ACER_PLATANOIDES_PROPIA = {
   ],
 } as const;
 
+/**
+ * Propuesta experimental (2026-11-21): especies del Piloto sin densidad de la
+ * especie en las fuentes revisadas (PSW-GTR-253 tabla 11; GWDD v1, Zanne et
+ * al. 2009; GWDD v2.2). Sin densidad no hay biomasa; no se usan promedios de
+ * género. Solo cambia el texto del motivo «sin_modelo».
+ */
+export const ESPECIES_SIN_DENSIDAD: Readonly<Record<string, string>> = {
+  "beilschmiedia miersii": "No hay densidad de madera de la especie en las fuentes revisadas (UTD tabla 11; GWDD v1 y v2.2): sin ella no se puede convertir el volumen en biomasa, y no se usan promedios de género.",
+  "araucaria heterophylla": "No hay densidad de madera de la especie en las fuentes revisadas (UTD tabla 11; GWDD v1 y v2.2): sin ella no se puede convertir el volumen en biomasa, y no se usan promedios de género.",
+};
+
 export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-DH", variante: "dap_altura", a: 0.0000801, b: 2.18578, c: 0.548045, fuente: FUENTE_JAME_DH },
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-D", variante: "dap", a: 0.0001005, b: 2.486248, c: 0, fuente: FUENTE_JAME_D },

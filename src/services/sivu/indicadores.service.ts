@@ -5,7 +5,7 @@ import { agregarSecuestro } from "../rules/carbono/secuestro";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
 import { agregarCarbonoAereoTotal } from "../rules/carbono/carbonoAereoTotal";
-import { agregarVariacionAereoTotal } from "../rules/carbono/variacionAereoTotal";
+import { agregarVariacionAereoTotal, resumirProyeccionAnual } from "../rules/carbono/variacionAereoTotal";
 import {
   ArbolEspecie,
   abundanciaRelativa,
@@ -133,5 +133,7 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     // Propuesta experimental (2026-11-21): variación anual proyectada del carbono aéreo total (con hojas) de las
     // especies con carbono directo. Solo cobertura; no es secuestro leñoso ni captura fotosintética.
     estimacion_variacion_anual_carbono_aereo_total: agregarVariacionAereoTotal(arbolesSecuestro),
+    // Propuesta experimental: una sola clase por árbol (secuestro leñoso, variación aérea total o no estimable).
+    resumen_proyeccion_anual: resumirProyeccionAnual(arbolesSecuestro),
   };
 }

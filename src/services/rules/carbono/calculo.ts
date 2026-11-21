@@ -6,7 +6,7 @@
  * es null con su motivo.
  */
 import { claveEspecie } from "../indicadores/especies";
-import { FACTOR_CO2_POR_C, FRACCION_CARBONO, LIMITACIONES, ModeloVolumen, seleccionarModelos, TRATAMIENTO_MULTIFUSTAL_ITREE } from "./modelos";
+import { ESPECIES_SIN_DENSIDAD, FACTOR_CO2_POR_C, FRACCION_CARBONO, LIMITACIONES, ModeloVolumen, seleccionarModelos, TRATAMIENTO_MULTIFUSTAL_ITREE } from "./modelos";
 
 export interface ArbolCarbono {
   id: string;
@@ -157,7 +157,7 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
     clave,
     modelos.length > 0,
     {
-      sinModelo: "No hay un modelo aprobado para esta especie.",
+      sinModelo: (clave !== null && ESPECIES_SIN_DENSIDAD[clave]) || "No hay un modelo aprobado para esta especie.",
       multifustal: "El modelo se ajustó con árboles de un fuste a la altura del DAP; los multifustales no se estiman.",
     },
     admiteMultifustal

@@ -251,3 +251,39 @@ describe("mediciones en revisión (propuesta experimental, decisión D7)", () =>
     expect(agregarSecuestro([g, f, o]).cobertura).toEqual(expect.objectContaining({ simulacion_exploratoria: 3, simulacion_medicion_en_revision: 2 }));
   });
 });
+
+describe("resumen de la proyección anual (una clase por árbol)", () => {
+  it("combina secuestro leñoso y variación del carbono aéreo total sin duplicar árboles, con el motivo que corresponde", async () => {
+    const { resumirProyeccionAnual } = await import("../../../../src/services/rules/carbono/variacionAereoTotal");
+    const r = resumirProyeccionAnual([
+      arbol("j", "Jacaranda mimosifolia", 30, 10),
+      arbol("q", "Quillaja saponaria", 18.4, 8.3),
+      arbol("qm", "Quillaja saponaria", 25.59, 7.6, { multifustal: true, dap_fustes_cm: [21, 11.6, 8.9] }),
+      arbol("b", "Beilschmiedia miersii", 39.1, 14.4),
+      arbol("l", "Lagerstroemia indica", 3.4, 2.9),
+      arbol("x", "Ginkgo biloba", 30, 8, { evaluacion_completa_vigente: false }),
+    ]);
+    expect(r).toEqual(
+      expect.objectContaining({
+        universo_calculo: 5,
+        con_proyeccion: 2,
+        estimacion_fundamentada: 0,
+        simulacion_secuestro_lenoso: 1,
+        simulacion_variacion_aereo_total: 1,
+        no_estimable: 3,
+        motivos_no_estimable: { multifustal_no_admitido: 1, sin_modelo: 1, fuera_de_rango: 1 },
+      })
+    );
+  });
+});
+
+describe("motivo explícito para especies sin densidad", () => {
+  it("Beilschmiedia miersii y Araucaria heterophylla: sin_modelo con el motivo de la densidad", () => {
+    for (const e of ["Beilschmiedia miersii", "Araucaria heterophylla"]) {
+      const r = calcularCarbonoArbol(arbol("x", e, 40, 15));
+      expect(r.motivo).toBe("sin_modelo");
+      expect(r.detalle).toMatch(/No hay densidad de madera de la especie/);
+    }
+    expect(calcularCarbonoArbol(arbol("x", "Persea americana", 40, 15)).detalle).toBe("No hay un modelo aprobado para esta especie.");
+  });
+});
