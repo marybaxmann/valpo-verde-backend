@@ -2,7 +2,7 @@
 
 > **Leer esto primero.** Es lo único que una sesión nueva necesita para empezar. Lo demás se consulta **por sección** cuando la tarea lo pide (tabla «Qué leer y cuándo»). Este archivo se **reemplaza, no se alarga**: máximo ~120 líneas. El detalle de un trabajo va en `docs/relevo/RELEVO_<fecha>_<tema>.md` o en el CC correspondiente.
 >
-> Última actualización: 2026-11-19 (publicación de CC-077). Estado de ramas verificado contra `origin` ese día.
+> Última actualización: 2026-11-20 (publicación del secuestro anual). Estado de ramas verificado contra `origin` ese día.
 
 ## Qué es
 
@@ -43,6 +43,7 @@ Frontend: el rediseño de Infraestructura también se publicó en sivu.cl el 202
 Otras ramas activas: `docs/demo-ia-dudas-2026-11-17` (dudas de la demo de estimación con IA, AV_000014–020) y `docs/inventario-reglas-bloqueantes` (propuesta de qué reglas flexibilizar, para decidir).
 
 Pendientes conocidos fuera de esas ramas:
+- **Secuestro bruto anual de CO₂ (decisiones A, B y C de la responsable, 2026-11-20): PUBLICADO en sivu.cl el 2026-11-20** como excepción documentada: la **decisión D** (registrar el método en el Excel, fila 15 de INDICES) sigue pendiente; propuesta en `docs/plan/propuestas/secuestro-anual-cambios-excel.md`. `rules/carbono/secuestro.ts`: C₀ y C₁ con el modelo del carbono almacenado (sin cambios), categorías y factores de i-Tree Eco sin ajuste por heladas; resultados fundamentados (hoy ninguno: no hay categorías aprobadas por especie), simulaciones exploratorias (no se suman) o no estimables. Modelos **exploratorios** de *Acer negundo* (ecuación de *A. platanoides*) y *Ulmus minor* (ecuación de *U. pumila* con altura; densidad 570 kg/m³ de la Global Wood Density Database v2.2): en el carbono almacenado se cuentan aparte (`con_resultado_exploratorio`) y no suman. Piloto: 25 de 49 evaluados con simulación. PR #90 (frontend #34 y #35). Sin migraciones.
 - **Conecta — ficha pública editable (CC-078, antes CC-073 en el borrador de Mari): PUBLICADA en sivu.cl el 2026-11-19** con autorización de la responsable. Backend: #84 → `feature/fase6-backend-api` (`801612e`) y #85 → `release/demo` (`864dd13`); frontend: #26 → `feature/fase7-maqueta-lab` (`2e02adf`). Vercel `success` en ambos. Sin migraciones nuevas: 037 y 038 ya estaban aplicadas en la base de pruebas (2026-11-16) y conservan «CC-073» en sus comentarios. Probado antes en local contra la base de pruebas: guardar escribe solo en `tree_public_content`; la huella completa de `trees` no cambió. Pendiente: registrar el PATCH 3.1.1 en VERSION, `00-index.md` y tag (FUENTE SINCRONIZADA). En `tree_public_content` hay una ficha de prueba de A-000417 (Piloto, «lo plante yo») que la responsable debe decidir si se queda.
 - **Borrar incidencias (CC-079, PR-022 v4.0, PR-003 v10.0): PUBLICADO en sivu.cl el 2026-11-19** con autorización de la responsable. El Usuario municipal borra una incidencia con motivo; se borran fotos, reportante y OT sin trabajo técnico, y queda una línea en `incident_deletions`. Backend #87 → fase6 (`b3e820e`), #88 → `release/demo` (`24c0b26`); frontend #28 (`0fe4d31`). Vercel `success`. 042 aplicada en pruebas (`20261120001059`). Pendiente: decidir si el registro de borrados entra a DICCIONARIO_CAMPOS.
 - **Carbono** (CC-068/069): bloqueado, al 2026-11-01, por no poder leer Pillsbury et al. 1998.

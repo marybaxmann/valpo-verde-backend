@@ -92,6 +92,65 @@ export async function listarRasgosEspecie(
   return salida;
 }
 
+export interface VariablesCrecimientoRow {
+  tree_id: string;
+  /** D-88 (0 a 5), de la evaluación vigente. */
+  cle: number | null;
+  /** D-89 (%), de la evaluación vigente. */
+  muerte_regresiva_pct: number | null;
+  /** clasificacion_vitalidad = «no_evaluable_poda» en la evaluación vigente. */
+  poda_intensa: boolean | null;
+}
+
+const numeroDeTexto = (v: unknown): number | null => {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+/**
+ * Secuestro anual (decisiones A a C, 2026-11-20): CLE y muerte regresiva de
+ * la evaluación de la inspección que da vigencia al árbol
+ * (trees.vigente_desde_inspection_id, la que compone el DAP y la altura
+ * vigentes en fn_refresh_tree_current). Árboles sin esa inspección no
+ * aparecen en la salida.
+ */
+export async function listarVariablesCrecimiento(accessToken: string, treeIds: string[]): Promise<VariablesCrecimientoRow[]> {
+  const inspeccionPorArbol = new Map<string, string>();
+  for (let i = 0; i < treeIds.length; i += 150) {
+    const { data, error } = await createUserScopedClient(accessToken)
+      .from("trees")
+      .select("id, vigente_desde_inspection_id")
+      .in("id", treeIds.slice(i, i + 150));
+    if (error) lanzar(error);
+    for (const f of (data ?? []) as Array<{ id: string; vigente_desde_inspection_id: string | null }>) {
+      if (f.vigente_desde_inspection_id) inspeccionPorArbol.set(f.id, f.vigente_desde_inspection_id);
+    }
+  }
+  const inspecciones = [...new Set(inspeccionPorArbol.values())];
+  const porInspeccion = new Map<string, { cle: number | null; muerte_regresiva_pct: number | null; poda_intensa: boolean | null }>();
+  for (let i = 0; i < inspecciones.length; i += 100) {
+    const { data, error } = await createUserScopedClient(accessToken)
+      .from("evaluations")
+      .select("inspection_id, cle:variables->>exposicion_luminica_copa_cle, mr:variables->>muerte_regresiva_copa_pct, vit:variables->>clasificacion_vitalidad")
+      .in("inspection_id", inspecciones.slice(i, i + 100));
+    if (error) lanzar(error);
+    for (const f of (data ?? []) as Array<{ inspection_id: string; cle: unknown; mr: unknown; vit: unknown }>) {
+      porInspeccion.set(f.inspection_id, {
+        cle: numeroDeTexto(f.cle),
+        muerte_regresiva_pct: numeroDeTexto(f.mr),
+        poda_intensa: f.vit === null || f.vit === undefined || f.vit === "" ? null : f.vit === "no_evaluable_poda",
+      });
+    }
+  }
+  return [...inspeccionPorArbol.entries()].map(([tree_id, inspection_id]) => ({
+    tree_id,
+    cle: porInspeccion.get(inspection_id)?.cle ?? null,
+    muerte_regresiva_pct: porInspeccion.get(inspection_id)?.muerte_regresiva_pct ?? null,
+    poda_intensa: porInspeccion.get(inspection_id)?.poda_intensa ?? null,
+  }));
+}
+
 /** Superficie de la delimitación del proyecto (SECTORES.superficie_sector_m2, D-256); null si no hay sector. */
 export async function obtenerSuperficieProyecto(accessToken: string, projectId: string): Promise<number | null> {
   const { data, error } = await createUserScopedClient(accessToken)

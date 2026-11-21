@@ -19,6 +19,8 @@ import { areaCopaArbol } from "../rules/indicadores/inventario";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { calcularCarbonoArbol, METODO_CARBONO } from "../rules/carbono/calculo";
 import { LIMITACIONES } from "../rules/carbono/modelos";
+import { calcularSecuestroArbol, METODO_SECUESTRO } from "../rules/carbono/secuestro";
+import { listarVariablesCrecimiento } from "../../repositories/sivu/indicadores.repository";
 
 /**
  * B2 — GET /api/sivu/projects/:id/trees/:treeId: ficha del árbol
@@ -116,7 +118,7 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
   const fila = await obtenerArbolFicha(token, projectId, treeId);
   if (!fila) throw new AppError("El árbol no existe en este proyecto", 404);
 
-  const [rasgos, versiones, diagnostico, ordenes, incidencias, presencia, evaluados] = await Promise.all([
+  const [rasgos, versiones, diagnostico, ordenes, incidencias, presencia, evaluados, crecimiento] = await Promise.all([
     obtenerRasgosEspecie(token, treeId),
     listarVersionesMedicion(token, treeId),
     diagnosticoDeArbol(token, projectId, treeId),
@@ -124,9 +126,10 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     listarIncidenciasDeArbol(user, projectId, treeId, token),
     obtenerPresencia(token, treeId),
     arbolesConEvaluacionCompletaVigente(token, projectId, [treeId]),
+    listarVariablesCrecimiento(token, [treeId]),
   ]);
   const evaluacionCompletaVigente = evaluados.has(treeId);
-  const carbono = calcularCarbonoArbol({
+  const entradaCarbono = {
     id: treeId,
     presente: presencia?.estado_presencia === "presente",
     evaluacion_completa_vigente: evaluacionCompletaVigente,
@@ -135,6 +138,13 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     multifustal: fila.multifustal ?? null,
     dap_cm: numero(fila.dap_cm),
     altura_total_m: numero(fila.altura_total_m),
+  };
+  const carbono = calcularCarbonoArbol(entradaCarbono);
+  const secuestro = calcularSecuestroArbol({
+    ...entradaCarbono,
+    cle: crecimiento[0]?.cle ?? null,
+    muerte_regresiva_pct: crecimiento[0]?.muerte_regresiva_pct ?? null,
+    poda_intensa: crecimiento[0]?.poda_intensa ?? null,
   });
   const sinEspecie = fila.especie_cientifica === null;
 
@@ -146,6 +156,9 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     // CC-069 v1 (pendiente de sincronización con el Excel): valor (biomasa, carbono y CO₂e por separado, con el modelo)
     // o null con categoría, motivo y detalle.
     estimacion_carbono_aereo_lenoso: { ...carbono, metodo: METODO_CARBONO, limitaciones: [...LIMITACIONES] },
+    // Secuestro anual (decisiones A a C, 2026-11-20): estimación fundamentada, simulación exploratoria (rango
+    // con las tres categorías de i-Tree Eco) o no estimable con su motivo.
+    secuestro_anual: { ...secuestro, metodo: METODO_SECUESTRO },
     // D-28/D-29 (AM-22): Presente, Talado o Retirado, y desde cuándo.
     presencia: presencia
       ? { ...conEtiqueta("estado_presencia", presencia.estado_presencia)!, desde: presencia.fecha_cambio_estado_presencia }

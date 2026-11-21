@@ -50,7 +50,11 @@ export interface ModeloVolumen {
    */
   dap_min_cm: number;
   dap_max_cm: number;
-  /** Solo se controla en la variante con altura; null en un modelo que solo tiene variante con DAP. */
+  /**
+   * Solo se controla en la variante con altura; null en un modelo que solo
+   * tiene variante con DAP, o cuando la fuente no publica el rango de altura
+   * (entonces la altura no se controla y el resultado lo advierte).
+   */
   altura_min_m: number | null;
   altura_max_m: number | null;
   densidad: { valor: number; unidad: "kg/m3"; tipo: "masa seca / volumen verde"; fuente: string; version: string };
@@ -62,6 +66,13 @@ export interface ModeloVolumen {
    * ecuación de otra especie del mismo género (estimación indirecta).
    */
   confianza: "propia_urbana" | "sustituta_mismo_genero";
+  /**
+   * «aprobado»: aprobado por la responsable de la metodología (CC-069,
+   * CC-070); sus resultados suman al total. «exploratorio» (2026-11-20):
+   * incorporado para ampliar la cobertura con carácter exploratorio; sus
+   * resultados se muestran rotulados y NUNCA suman a los totales.
+   */
+  estado: "aprobado" | "exploratorio";
   /** Especie con la que se ajustó la ecuación (igual a `especie` si es propia). */
   especie_ecuacion: string;
   /** Fuente del rango de DAP (y de altura) aplicado. */
@@ -109,7 +120,7 @@ const LIQUIDAMBAR = {
   n_muestra: 50,
 } as const;
 
-const comun = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, apto_palmeras: false } as const;
+const comun = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, apto_palmeras: false, estado: "aprobado" } as const;
 const PILLSBURY = { confianza: "propia_urbana", fuente_rango: RANGO_PILLSBURY, limitaciones_modelo: LIMITACIONES_PILLSBURY } as const;
 
 /**
@@ -149,12 +160,92 @@ const ACER_PSEUDOPLATANUS_SUSTITUTA = {
 const FUENTE_ACPL_D =
   "McHale, Burke, Lefsky, Peper y McPherson 2009, Urban Ecosystems 12: 95-113, tabla 1 (Acer platanoides, ACPL). Coeficientes del artículo (CC-070); CARB 2010, tabla B.1, publica a = 0,0019421";
 
+/**
+ * Modelos EXPLORATORIOS (autorización de la responsable, 2026-11-20): amplían
+ * la cobertura con ecuaciones de otra especie del mismo género. No son
+ * ecuaciones calibradas para los árboles de Valparaíso y sus resultados no
+ * suman a los totales (estado «exploratorio»).
+ */
+const exploratorio = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, apto_palmeras: false, estado: "exploratorio", confianza: "sustituta_mismo_genero" } as const;
+
+/**
+ * Acer negundo: la misma ecuación de Acer platanoides (McHale et al. 2009)
+ * que ya usa Acer pseudoplatanus (CC-070). El Urban Tree Database asigna a
+ * Acer negundo la ecuación de A. platanoides (PSW-GTR-253, tabla 11:
+ * ACNE → ACPL) con densidad de 420 kg/m³. Comprobación del 2026-11-20: con
+ * los árboles del Piloto, la variante solo con DAP implica alturas de 6,6 a
+ * 9,5 m, coherentes con las medidas (5,4 a 10,7 m).
+ */
+const ACER_NEGUNDO_SUSTITUTA = {
+  especie: "acer negundo",
+  especie_ecuacion: "acer platanoides",
+  dap_min_cm: 9.7,
+  dap_max_cm: 102.1,
+  altura_min_m: null,
+  altura_max_m: null,
+  densidad: {
+    valor: 420,
+    unidad: "kg/m3",
+    tipo: "masa seca / volumen verde",
+    fuente: "McPherson, van Doorn y Peper 2016, PSW-GTR-253, tabla 11 (Acer negundo, ACNE: 420 kg/m³; ecuación asignada ACPL). La Global Wood Density Database v2.2 da 0,44 g/cm³",
+    version: "2016",
+  },
+  n_muestra: null,
+  fuente_rango: "California Air Resources Board 2010, Compliance Offset Protocol Urban Forest Projects, tabla B.1 (Acer platanoides)",
+  limitaciones_modelo: [
+    "Exploratorio: ecuación de otra especie del mismo género (Acer platanoides), no de Acer negundo ni calibrada para Valparaíso.",
+    "Ecuación ajustada con árboles de calle de Fort Collins, Colorado (EE. UU.), con volumen medido por LiDAR terrestre (McHale et al. 2009).",
+    "Solo usa el DAP: en copas desmochadas o con poda intensa puede sobrestimar el volumen.",
+    "DAP de SIVU a 1,30 m; el de la ecuación, a 4,5 ft (1,37 m). Sin corrección.",
+  ],
+} as const;
+
+/**
+ * Ulmus minor: ecuación de Ulmus pumila con DAP y altura (Lefsky y McHale
+ * 2008, según PSW-GTR-253, tabla 9: V = 0,000338 · D^0,855 · H^2,041, en m³
+ * por árbol; D en cm, H en m; rango de DAP 16-132 cm). Densidad básica
+ * propia de Ulmus minor: 0,57 g/cm³ (Global Wood Density Database v2.2).
+ * Comprobación del 2026-11-20: la variante solo con DAP de la misma tabla
+ * implica alturas de 14 a 18 m y da 2 a 4 veces la biomasa de otros modelos
+ * para los olmos del Piloto (7 a 12,6 m); la variante con altura queda en el
+ * mismo orden de magnitud. Por eso solo se incorpora la variante con altura.
+ */
+const ULMUS_MINOR_SUSTITUTA = {
+  especie: "ulmus minor",
+  especie_ecuacion: "ulmus pumila",
+  dap_min_cm: 16,
+  dap_max_cm: 132,
+  altura_min_m: null,
+  altura_max_m: null,
+  densidad: {
+    valor: 570,
+    unidad: "kg/m3",
+    tipo: "masa seca / volumen verde",
+    fuente: "Global Wood Density Database v2.2 (Zenodo, 2026-01-15; https://zenodo.org/records/18262736), gwddagg_v2.2_binomial.csv: Ulmus minor, wsg_est 0,57 (11 registros, 7 fuentes, 5 países; media sin ajustar 0,54)",
+    version: "v2.2",
+  },
+  n_muestra: null,
+  fuente_rango: "McPherson, van Doorn y Peper 2016, PSW-GTR-253, tabla 9 (Ulmus pumila, rango de DAP 16-132 cm; la tabla no publica el rango de altura)",
+  limitaciones_modelo: [
+    "Exploratorio: ecuación de otra especie del mismo género (Ulmus pumila), no de Ulmus minor ni calibrada para Valparaíso.",
+    "Ecuación de árboles urbanos de EE. UU. (Lefsky y McHale 2008, recopilada en el Urban Tree Database); fuente original no revisada.",
+    "La fuente no publica el rango de altura: la altura no se controla.",
+    "DAP de SIVU a 1,30 m; el de la ecuación, a 4,5 ft (1,37 m). Sin corrección.",
+  ],
+} as const;
+
+const FUENTE_ULPU_DH =
+  "Lefsky y McHale 2008, según McPherson, van Doorn y Peper 2016 (PSW-GTR-253), tabla 9 (Ulmus pumila, ULPU, d.b.h. y altura). Fuente original no revisada";
+
 export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-DH", variante: "dap_altura", a: 0.0000801, b: 2.18578, c: 0.548045, fuente: FUENTE_JAME_DH },
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-D", variante: "dap", a: 0.0001005, b: 2.486248, c: 0, fuente: FUENTE_JAME_D },
   { ...comun, ...LIQUIDAMBAR, ...PILLSBURY, id: "UTD-TS7-LIST-DH", variante: "dap_altura", a: 0.0000631, b: 2.31582, c: 0.41571, fuente: FUENTE_LIST_DH },
   { ...comun, ...LIQUIDAMBAR, ...PILLSBURY, id: "UTD-TS7-LIST-D", variante: "dap", a: 0.0000799, b: 2.560469, c: 0, fuente: FUENTE_LIST_D },
   { ...comun, ...ACER_PSEUDOPLATANUS_SUSTITUTA, id: "MCH09-T1-ACPL-D-ACPS", variante: "dap", a: 0.0019, b: 1.785, c: 0, fuente: FUENTE_ACPL_D },
+  // Exploratorios (2026-11-20): no suman a los totales.
+  { ...exploratorio, ...ACER_NEGUNDO_SUSTITUTA, id: "MCH09-T1-ACPL-D-ACNE", variante: "dap", a: 0.0019, b: 1.785, c: 0, fuente: FUENTE_ACPL_D },
+  { ...exploratorio, ...ULMUS_MINOR_SUSTITUTA, id: "UTD-T9-ULPU-DH-ULMI", variante: "dap_altura", a: 0.000338, b: 0.855, c: 2.041, fuente: FUENTE_ULPU_DH },
 ];
 
 /**

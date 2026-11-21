@@ -14,7 +14,7 @@ import app from "../../src/app";
 import { getAuthUserByToken } from "../../src/repositories/auth.repository";
 import { findUserProfileById } from "../../src/repositories/userProfile.repository";
 import { findMembership } from "../../src/repositories/projectMember.repository";
-import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, obtenerSuperficieProyecto } from "../../src/repositories/sivu/indicadores.repository";
+import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, listarVariablesCrecimiento, obtenerSuperficieProyecto } from "../../src/repositories/sivu/indicadores.repository";
 import { arbolesConEvaluacionCompletaVigente } from "../../src/services/sivu/habilitacionBiometrica";
 import { FAKE_TOKEN, INSPECTOR_ID, fakeAuthUser, inspectorProfileRow } from "../helpers/authFixtures";
 
@@ -44,6 +44,8 @@ beforeEach(() => {
   (obtenerSuperficieProyecto as jest.Mock).mockResolvedValue(30000);
   // Por defecto todos los presentes tienen evaluación completa válida y vigente.
   (arbolesConEvaluacionCompletaVigente as jest.Mock).mockImplementation(async (_t: string, _p: string, ids: string[]) => new Set(ids));
+  // Secuestro anual: por defecto todos los presentes con CLE 4 y sin muerte regresiva.
+  (listarVariablesCrecimiento as jest.Mock).mockImplementation(async (_t: string, ids: string[]) => ids.map((id) => ({ tree_id: id, cle: 4, muerte_regresiva_pct: 0 })));
   (listarRasgosEspecie as jest.Mock).mockImplementation(async (_t: string, ids: string[]) =>
     ids.map((id) => ({ tree_id: id, genero: id === "a1" ? "Acer" : null, familia: null, origen_biogeografico: id === "a1" ? "introducida" : "no_determinado" }))
   );
@@ -134,20 +136,23 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
       expect(d[k]).toEqual(sinCarbono[k]);
     }
     const c = d.estimacion_carbono_aereo_lenoso;
-    // a4 está talado; a1-a3 son Acer negundo, sin modelo aprobado.
-    expect(c.cobertura).toEqual(expect.objectContaining({ presentes: 3, universo_calculo: 3, con_resultado: 0 }));
-    expect(c.cobertura.motivos.sin_modelo).toBe(3);
+    // a4 está talado; a1-a3 son Acer negundo, con modelo exploratorio (2026-11-20): a1 (25 cm) tiene resultado
+    // exploratorio, que no suma; a2 no tiene DAP y a3 (120 cm) queda fuera del rango (9,7-102,1 cm).
+    expect(c.cobertura).toEqual(expect.objectContaining({ presentes: 3, universo_calculo: 3, con_resultado: 0, con_resultado_exploratorio: 1 }));
+    expect(c.cobertura.motivos.falta_dap).toBe(1);
+    expect(c.cobertura.motivos.fuera_de_rango).toBe(1);
     expect(c.total).toEqual({ biomasa_aerea_lenosa_t: null, carbono_t: null, co2e_t: null });
     expect(c.metodo.estado_cc).toMatch(/pendiente de sincronización con el Excel/);
   });
 
-  it("compatibilidad: B19 solo agrega estimacion_carbono_aereo_lenoso; universo de carbono = universo biométrico", async () => {
+  it("compatibilidad: B19 solo agrega estimacion_carbono_aereo_lenoso y estimacion_secuestro_anual; universo de carbono = universo biométrico", async () => {
     const d = (await request(app).get(RUTA).set(auth)).body.data;
     expect(Object.keys(d).sort()).toEqual(
       [
         "fecha_consulta", "ambito", "barrios", "cobertura", "numero_total_arboles", "densidad_arborea", "clases_diametricas",
         "diametro_medio_copa", "area_proyectada_copa", "cobertura_taxonomica", "riqueza_especies", "abundancia_relativa",
         "diversidad_shannon", "diversidad_taxonomica_10_20_30", "proporcion_origen", "estimacion_carbono_aereo_lenoso",
+        "estimacion_secuestro_anual",
       ].sort()
     );
     expect(d.estimacion_carbono_aereo_lenoso.cobertura.presentes).toBe(d.cobertura.arboles_presentes);
@@ -182,5 +187,38 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
 
   it("query desconocida: 400", async () => {
     expect((await request(app).get(RUTA).query({ especie: "x" }).set(auth)).status).toBe(400);
+  });
+});
+
+describe("GET /api/sivu/projects/:id/indicadores: secuestro anual (decisiones A a C, 2026-11-20)", () => {
+  it("cuenta simulaciones y no estimables; el total fundamentado queda null; los demás indicadores no cambian", async () => {
+    const antes = (await request(app).get(RUTA).set(auth)).body.data;
+    (listarArbolesIndicadores as jest.Mock).mockResolvedValue([
+      fila("j1", { especie_cientifica: "Jacaranda mimosifolia", dap_cm: 24.3, altura_total_m: 7.6 }),
+      fila("p1", { especie_cientifica: "Acer pseudoplatanus", dap_cm: 13.4, altura_total_m: 7.1 }),
+      fila("p2", { especie_cientifica: "Acer pseudoplatanus", dap_cm: 13.5, multifustal: true }),
+      fila("u1", { especie_cientifica: "Ulmus minor", dap_cm: 45 }),
+      fila("x1", { especie_cientifica: "Jacaranda mimosifolia", dap_cm: 30, altura_total_m: 10 }),
+    ]);
+    (listarVariablesCrecimiento as jest.Mock).mockImplementation(async (_t: string, ids: string[]) =>
+      ids.map((id) => ({ tree_id: id, cle: id === "x1" ? null : 4, muerte_regresiva_pct: 0 }))
+    );
+    const d = (await request(app).get(RUTA).set(auth)).body.data;
+    const s = d.estimacion_secuestro_anual;
+    expect(s.indicador).toBe("estimacion_secuestro_anual");
+    expect(s.cobertura).toEqual({
+      presentes: 5,
+      universo_calculo: 5,
+      estimacion_fundamentada: 0,
+      simulacion_exploratoria: 2,
+      no_estimable: 3,
+      motivos: { multifustal_no_admitido: 1, sin_modelo: 1, falta_cle: 1 },
+    });
+    expect(s.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });
+    expect(s.supuestos_simulacion.join(" ")).toMatch(/Simulación basada en supuestos/);
+    // El carbono almacenado sigue igual: las simulaciones no lo tocan.
+    expect(d.estimacion_carbono_aereo_lenoso.cobertura.con_resultado).toBe(3);
+    expect(listarVariablesCrecimiento).toHaveBeenCalledWith(FAKE_TOKEN, ["j1", "p1", "p2", "u1", "x1"]);
+    expect(Object.keys(antes)).toEqual(Object.keys(d));
   });
 });
