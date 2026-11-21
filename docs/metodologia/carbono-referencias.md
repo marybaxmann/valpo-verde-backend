@@ -133,7 +133,11 @@ Excluidos: multifustales A-000538, A-000540 y A-000558; sin medidas vigentes (OT
 
 Para las especies con carbono directo (sección 4): ΔDAP con el crecimiento de i-Tree Eco del secuestro anual (sin cambios) y variación = (C(DAP + ΔDAP) − C(DAP)) × 44/12 con la ecuación de Cruz et al. 2015. Incluye hojas: **no** es el secuestro leñoso de SIVU ni la captura fotosintética. Siempre simulación, sin total. Código: `rules/carbono/variacionAereoTotal.ts`.
 
-## 7. Lo que queda pendiente
+## 7. PROPUESTA EXPERIMENTAL · Multifustales con el DAP equivalente de i-Tree Eco (2026-11-21)
+
+Solo para las ecuaciones de volumen urbano (secciones 3 y 5), nunca para el carbono directo. Un multifustal con los diámetros de al menos dos fustes usa el DAP único de i-Tree Eco: DAP = (AB / 0,00007854)^0,5 = √Σdᵢ² (Nowak, D. J. 2024, *Understanding i-Tree: 2023 Summary of Programs and Methods*, GTR NRS-200-2023, p. 22), que debe coincidir con el DAP equivalente registrado (D-18) con una tolerancia de 0,05 cm. El resultado es siempre exploratorio (`estado_resultado`), aunque el modelo esté aprobado: no suma al total ni puede ser estimación fundamentada. Limitación: el protocolo de la UTD mide los multifustales bajo la bifurcación cuando es posible (PSW-GTR-253, p. 49), así que la compatibilidad con cada ecuación no está demostrada. Sin diámetros de fustes, o con un DAP que no coincide, no se estima.
+
+## 8. Lo que queda pendiente
 
 - Leer el apéndice 11 de Nowak 2020 y la tabla B.1 de CARB 2010 cuando se puedan descargar, y anotar su verificación aquí.
 - Confirmar en el original la tabla 4.3 del IPCC 2006 (fracción 0,47), como pide CC-069.
