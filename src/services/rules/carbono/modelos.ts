@@ -37,10 +37,11 @@ export const FACTOR_CO2_POR_C = 44 / 12;
  * 2026-11-21): «propia_urbana», ecuación urbana de la misma especie;
  * «sustituta_mismo_genero», ecuación de otra especie del mismo género;
  * «propia_no_urbana», ecuación de la misma especie ajustada fuera de la
- * ciudad. Es independiente del estado metodológico en SIVU (aprobado o
- * exploratorio).
+ * ciudad; «generica_urbana», ecuación general urbana de latifoliadas o
+ * coníferas (UTD), sin ecuación de la especie ni del género. Es independiente
+ * del estado metodológico en SIVU (aprobado o exploratorio).
  */
-export type NivelConfianza = "propia_urbana" | "sustituta_mismo_genero" | "propia_no_urbana";
+export type NivelConfianza = "propia_urbana" | "sustituta_mismo_genero" | "propia_no_urbana" | "generica_urbana";
 
 /** Estado metodológico del modelo en SIVU: solo «aprobado» suma a los totales. */
 export type EstadoModelo = "aprobado" | "exploratorio";
@@ -86,7 +87,7 @@ export interface ModeloVolumen {
    * urbana ajustada para la misma especie; «sustituta_mismo_genero»,
    * ecuación de otra especie del mismo género (estimación indirecta).
    */
-  confianza: Extract<NivelConfianza, "propia_urbana" | "sustituta_mismo_genero">;
+  confianza: Extract<NivelConfianza, "propia_urbana" | "sustituta_mismo_genero" | "generica_urbana">;
   /**
    * «aprobado»: aprobado por la responsable de la metodología (CC-069,
    * CC-070); sus resultados suman al total. «exploratorio» (2026-11-20):
@@ -258,6 +259,107 @@ const ULMUS_MINOR_SUSTITUTA = {
 const FUENTE_ULPU_DH =
   "Lefsky y McHale 2008, según McPherson, van Doorn y Peper 2016 (PSW-GTR-253), tabla 9 (Ulmus pumila, ULPU, d.b.h. y altura). Fuente original no revisada";
 
+/**
+ * PROPUESTA EXPERIMENTAL (2026-11-21), no vigente: modelos de volumen de la
+ * Urban Tree Database para las especies del Piloto sin ecuación, según la
+ * asignación que la propia UTD publica (McPherson, van Doorn y Peper 2016,
+ * PSW-GTR-253; tabla 9: ecuaciones; tabla 11: ecuación asignada y densidad por
+ * especie). Si la especie no está en la tabla 11, se usa la ecuación general
+ * urbana con la densidad de la especie de la Global Wood Density Database
+ * v2.2, como recomienda la misma UTD (p. 73). Mismos coeficientes y rangos
+ * que publica la fuente; sin densidad de la especie, no hay modelo.
+ * Exploratorios: no suman a ningún total oficial.
+ */
+const UTD_GTR253 = "McPherson, E. G.; van Doorn, N. S.; Peper, P. J. 2016. Urban Tree Database and Allometric Equations. USDA Forest Service, PSW-GTR-253 (https://doi.org/10.2737/PSW-GTR-253)";
+const FUENTE_UGEB = `${UTD_GTR253}, tabla 9 (Urban Gen broadleaf, UGEB, d.b.h. y altura; p. 70)`;
+const FUENTE_UGEC = `${UTD_GTR253}, tabla 9 (Urban Gen conifer, UGEC, d.b.h. y altura; p. 70)`;
+const GWDD_22 = "Global Wood Density Database v2.2 (Zenodo, 2026-01-15; https://zenodo.org/records/18262736), gwddagg_v2.2_binomial.csv";
+const densidadTabla11 = (valor: number, codigo: string) => ({
+  valor,
+  unidad: "kg/m3" as const,
+  tipo: "masa seca / volumen verde" as const,
+  fuente: `${UTD_GTR253}, tabla 11 (${codigo}: ${valor} kg/m³; ecuación asignada UGEB)`,
+  version: "2016",
+});
+const densidadGwdd = (valor: number, detalle: string) => ({
+  valor,
+  unidad: "kg/m3" as const,
+  tipo: "masa seca / volumen verde" as const,
+  fuente: `${GWDD_22}: ${detalle}`,
+  version: "v2.2",
+});
+const LIMITACIONES_GENERICA = [
+  "Exploratorio: ecuación general urbana de la UTD, ajustada con las especies urbanas de EE. UU.; no es una ecuación de la especie ni de su género, ni está calibrada para Valparaíso.",
+  "La fuente no publica el rango de altura de la ecuación general: la altura no se controla.",
+  "DAP de SIVU a 1,30 m; el de la ecuación, a 4,5 ft (1,37 m). Sin corrección.",
+] as const;
+const generica = {
+  version: 1,
+  componente: "aerea_lenosa",
+  admite_multifustal: false,
+  apto_palmeras: false,
+  estado: "exploratorio",
+  confianza: "generica_urbana",
+  variante: "dap_altura",
+  altura_min_m: null,
+  altura_max_m: null,
+  n_muestra: null,
+  limitaciones_modelo: LIMITACIONES_GENERICA,
+} as const;
+/** UGEB: V = 0,0001967 · D^1,951853 · H^0,664255; DAP 6-135 cm (tabla 9). */
+const UGEB = {
+  ...generica,
+  especie_ecuacion: "ecuación general urbana de latifoliadas (UGEB)",
+  a: 0.0001967,
+  b: 1.951853,
+  c: 0.664255,
+  dap_min_cm: 6,
+  dap_max_cm: 135,
+  fuente_rango: `${UTD_GTR253}, tabla 9 (UGEB: d.b.h. 6 a 135 cm)`,
+  fuente: FUENTE_UGEB,
+} as const;
+/** UGEC: V = 0,0000426 · D^2,24358 · H^0,64956; DAP 16-147 cm (tabla 9). */
+const UGEC = {
+  ...generica,
+  especie_ecuacion: "ecuación general urbana de coníferas (UGEC)",
+  a: 0.0000426,
+  b: 2.24358,
+  c: 0.64956,
+  dap_min_cm: 16,
+  dap_max_cm: 147,
+  fuente_rango: `${UTD_GTR253}, tabla 9 (UGEC: d.b.h. 16 a 147 cm)`,
+  fuente: FUENTE_UGEC,
+} as const;
+
+/**
+ * Acer platanoides: su propia ecuación (McHale et al. 2009), la misma que ya
+ * usan como sustituta Acer pseudoplatanus (CC-070) y Acer negundo, con los
+ * mismos coeficientes y rango. Densidad de la especie: 520 kg/m³ (PSW-GTR-253,
+ * tablas 9 y 11). Exploratorio hasta que el equipo lo apruebe.
+ */
+const ACER_PLATANOIDES_PROPIA = {
+  especie: "acer platanoides",
+  especie_ecuacion: "acer platanoides",
+  dap_min_cm: 9.7,
+  dap_max_cm: 102.1,
+  altura_min_m: null,
+  altura_max_m: null,
+  densidad: {
+    valor: 520,
+    unidad: "kg/m3",
+    tipo: "masa seca / volumen verde",
+    fuente: "McPherson, van Doorn y Peper 2016, PSW-GTR-253, tablas 9 y 11 (Acer platanoides, ACPL: 520 kg/m³)",
+    version: "2016",
+  },
+  n_muestra: null,
+  fuente_rango: "California Air Resources Board 2010, Compliance Offset Protocol Urban Forest Projects, tabla B.1 (Acer platanoides)",
+  limitaciones_modelo: [
+    "Exploratorio: ecuación de la propia especie, aún no revisada por el equipo para SIVU.",
+    "Ecuación ajustada con árboles de calle de Fort Collins, Colorado (EE. UU.), con volumen medido por LiDAR terrestre (McHale et al. 2009).",
+    "DAP de SIVU a 1,30 m; el de la ecuación, a 4,5 ft (1,37 m). Sin corrección.",
+  ],
+} as const;
+
 export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-DH", variante: "dap_altura", a: 0.0000801, b: 2.18578, c: 0.548045, fuente: FUENTE_JAME_DH },
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-D", variante: "dap", a: 0.0001005, b: 2.486248, c: 0, fuente: FUENTE_JAME_D },
@@ -267,6 +369,16 @@ export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
   // Exploratorios (2026-11-20): no suman a los totales.
   { ...exploratorio, ...ACER_NEGUNDO_SUSTITUTA, id: "MCH09-T1-ACPL-D-ACNE", variante: "dap", a: 0.0019, b: 1.785, c: 0, fuente: FUENTE_ACPL_D },
   { ...exploratorio, ...ULMUS_MINOR_SUSTITUTA, id: "UTD-T9-ULPU-DH-ULMI", variante: "dap_altura", a: 0.000338, b: 0.855, c: 2.041, fuente: FUENTE_ULPU_DH },
+  // Propuesta experimental (2026-11-21): no suman a los totales.
+  { ...exploratorio, ...ACER_PLATANOIDES_PROPIA, confianza: "propia_urbana", id: "MCH09-T1-ACPL-D-ACPL", variante: "dap", a: 0.0019, b: 1.785, c: 0, fuente: FUENTE_ACPL_D },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-GIBI", especie: "ginkgo biloba", densidad: densidadTabla11(520, "GIBI") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-LAIN", especie: "lagerstroemia indica", densidad: densidadTabla11(571, "LAIN") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-OLEU", especie: "olea europaea", densidad: densidadTabla11(700, "OLEU") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-PIUN", especie: "pittosporum undulatum", densidad: densidadTabla11(745, "PIUN") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-SCMO", especie: "schinus molle", densidad: densidadTabla11(650, "SCMO") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-FIEL", especie: "ficus elastica", densidad: densidadGwdd(500, "Ficus elastica, wsg_est 0,50 (8 registros, 8 fuentes, 5 países); no está en la tabla 11 de la UTD") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-PITO", especie: "pittosporum tobira", densidad: densidadGwdd(650, "Pittosporum tobira, wsg_est 0,65 (8 registros, 3 fuentes, 2 países); no está en la tabla 11 de la UTD") },
+  { ...UGEC, id: "UTD-T9-UGEC-DH-ARAN", especie: "araucaria angustifolia", densidad: densidadGwdd(450, "Araucaria angustifolia, wsg_est 0,45 (37 registros, 11 fuentes, 3 países); no está en la tabla 11 de la UTD") },
 ];
 
 /**

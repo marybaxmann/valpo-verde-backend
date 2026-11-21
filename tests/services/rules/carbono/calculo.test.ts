@@ -21,11 +21,11 @@ const arbol = (id: string, p: Partial<ArbolCarbono> = {}): ArbolCarbono => ({
 const LIQ = "Liquidambar styraciflua";
 
 describe("catálogo de modelos (Pillsbury 1998 / UTD)", () => {
-  it("siete modelos: los cinco aprobados sin cambios (Pillsbury/UTD y CC-070) y dos exploratorios (2026-11-20)", () => {
+  it("los siete modelos previos siguen: cinco aprobados sin cambios (Pillsbury/UTD y CC-070) y dos exploratorios (2026-11-20); el resto es propuesta experimental", () => {
     const porId = Object.fromEntries(MODELOS_VOLUMEN.map((m) => [m.id, m]));
-    expect(Object.keys(porId).sort()).toEqual([
-      "MCH09-T1-ACPL-D-ACNE", "MCH09-T1-ACPL-D-ACPS", "UTD-T9-ULPU-DH-ULMI", "UTD-TS7-JAME-D", "UTD-TS7-JAME-DH", "UTD-TS7-LIST-D", "UTD-TS7-LIST-DH",
-    ]);
+    const previos = ["MCH09-T1-ACPL-D-ACNE", "MCH09-T1-ACPL-D-ACPS", "UTD-T9-ULPU-DH-ULMI", "UTD-TS7-JAME-D", "UTD-TS7-JAME-DH", "UTD-TS7-LIST-D", "UTD-TS7-LIST-DH"];
+    expect(Object.keys(porId)).toEqual(expect.arrayContaining(previos));
+    expect(MODELOS_VOLUMEN.filter((m) => !previos.includes(m.id)).every((m) => m.estado === "exploratorio")).toBe(true);
     const aprobados = ["MCH09-T1-ACPL-D-ACPS", "UTD-TS7-JAME-D", "UTD-TS7-JAME-DH", "UTD-TS7-LIST-D", "UTD-TS7-LIST-DH"];
     expect(MODELOS_VOLUMEN.filter((m) => m.estado === "aprobado").map((m) => m.id).sort()).toEqual(aprobados);
     expect(MODELOS_VOLUMEN.filter((m) => m.id.startsWith("UTD-TS7")).every((m) => m.confianza === "propia_urbana" && m.especie === m.especie_ecuacion)).toBe(true);
@@ -78,7 +78,7 @@ describe("calcularCarbonoArbol — motivos de null (nunca extrapola ni rellena)"
     ["multifustal desconocido", { multifustal: null }, "configuracion_fuste_no_determinada"],
     ["sin DAP", { dap_cm: null }, "falta_dap"],
     ["palmera", { especie_cientifica: "Jacaranda mimosifolia", tipo_hoja: "palmera" }, "palmera_sin_modelo"],
-    ["especie sin modelo (Ginkgo)", { especie_cientifica: "Ginkgo biloba" }, "sin_modelo"],
+    ["especie sin modelo (Beilschmiedia miersii)", { especie_cientifica: "Beilschmiedia miersii" }, "sin_modelo"],
     ["solo género", { especie_cientifica: "Quercus sp." }, "sin_modelo"],
     ["sin especie", { especie_cientifica: null }, "sin_modelo"],
     ["no presente", { presente: false }, "no_presente"],
@@ -164,7 +164,7 @@ describe("agregarCarbono — árboles ficticios de QA Fase 7 (fixtures; no se to
     arbol("QA-F-07", { especie_cientifica: LIQ, dap_cm: 25, altura_total_m: null }), // E6
     arbol("QA-F-08", { multifustal: true }),
     arbol("QA-F-09", { especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" }), // sin modelo para la especie
-    arbol("QA-F-10", { especie_cientifica: "Ginkgo biloba" }),
+    arbol("QA-F-10", { especie_cientifica: "Beilschmiedia miersii" }),
     arbol("QA-F-11", { especie_cientifica: "Quercus sp." }),
     arbol("QA-F-12", { dap_cm: null }),
     arbol("QA-F-13", { especie_cientifica: "Jacaranda mimosifolia var. alba" }), // como E1
@@ -290,8 +290,10 @@ describe("CC-070, opción C2: Acer pseudoplatanus con la ecuación de Acer plata
     expect(calcularCarbonoArbol({ ...a419, multifustal: null }).motivo).toBe("configuracion_fuste_no_determinada");
   });
 
-  it("C2 no se extiende sola: Acer platanoides sigue sin modelo; Acer negundo tiene uno propio y exploratorio", () => {
-    expect(calcularCarbonoArbol({ ...a419, especie_cientifica: "Acer platanoides" }).motivo).toBe("sin_modelo");
+  it("C2 no se extiende sola: Acer platanoides tiene su propia ecuación solo como propuesta experimental; Acer negundo tiene uno propio y exploratorio", () => {
+    expect(calcularCarbonoArbol({ ...a419, especie_cientifica: "Acer platanoides" }).valor!.modelo).toEqual(
+      expect.objectContaining({ id: "MCH09-T1-ACPL-D-ACPL", estado: "exploratorio", confianza: "propia_urbana", especie_ecuacion: "acer platanoides" })
+    );
     expect(calcularCarbonoArbol({ ...a419, especie_cientifica: "Acer negundo" }).valor!.modelo).toEqual(
       expect.objectContaining({ id: "MCH09-T1-ACPL-D-ACNE", estado: "exploratorio", confianza: "sustituta_mismo_genero", especie_ecuacion: "acer platanoides" })
     );

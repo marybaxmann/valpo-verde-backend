@@ -199,7 +199,14 @@ export function calcularSecuestroArbol(
   const advertencias: string[] = [];
   if (c0.modelo.estado === "exploratorio") {
     const especieEcuacion = c0.modelo.especie_ecuacion.charAt(0).toUpperCase() + c0.modelo.especie_ecuacion.slice(1);
-    advertencias.push(`Modelo de biomasa exploratorio: ecuación de ${especieEcuacion}, otra especie del mismo género, no calibrada para Valparaíso.`);
+    // Propuesta experimental (2026-11-21): el aviso depende del origen de la ecuación.
+    if (c0.modelo.confianza === "generica_urbana") {
+      advertencias.push(`Modelo de biomasa exploratorio: ${c0.modelo.especie_ecuacion} de la Urban Tree Database, no específica de la especie ni calibrada para Valparaíso.`);
+    } else if (c0.modelo.confianza === "propia_urbana") {
+      advertencias.push("Modelo de biomasa exploratorio: ecuación de la propia especie, aún no revisada por el equipo ni calibrada para Valparaíso.");
+    } else {
+      advertencias.push(`Modelo de biomasa exploratorio: ecuación de ${especieEcuacion}, otra especie del mismo género, no calibrada para Valparaíso.`);
+    }
   }
   if (c0.modelo.variante === "dap_altura" && c0.modelo.rango.altura_min_m === null) {
     advertencias.push("La fuente no publica el rango de altura del modelo: la altura del árbol no se pudo comprobar.");

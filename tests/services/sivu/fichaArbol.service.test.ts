@@ -151,7 +151,7 @@ describe("obtenerFichaArbol (B2)", () => {
     it("compatibilidad: la ficha solo agrega estimacion_carbono_aereo_lenoso, estimacion_carbono_aereo_total y secuestro_anual; arbol no cambia", async () => {
       const f = await obtenerFichaArbol(user, P, T, "token");
       expect(Object.keys(f).sort()).toEqual(
-        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso", "estimacion_carbono_aereo_total", "secuestro_anual"].sort()
+        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso", "estimacion_carbono_aereo_total", "secuestro_anual", "variacion_anual_carbono_aereo_total"].sort()
       );
       expect(Object.keys(f.arbol)).not.toContain("estimacion_carbono_aereo_lenoso");
     });
@@ -199,6 +199,13 @@ describe("obtenerFichaArbol (B2)", () => {
       expect(t.limitaciones.join(" ")).toMatch(/nunca se suman/);
       expect(f.estimacion_carbono_aereo_lenoso).toEqual(expect.objectContaining({ valor: null, motivo: "sin_modelo" }));
       expect(f.secuestro_anual).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
+      // Propuesta experimental: variación anual del carbono aéreo total, aparte del secuestro leñoso.
+      const v = f.variacion_anual_carbono_aereo_total;
+      expect(v.tipo).toBe("simulacion_exploratoria");
+      if (v.tipo !== "simulacion_exploratoria") return;
+      expect(v.modelo.id).toBe("CRUZ15-C6-QUSA-D");
+      expect(v.rango.co2_kg_anio_min).toBeGreaterThan(0);
+      expect(v.metodo.es_captura_fotosintetica).toBe(false);
     });
 
     it("multifustal (A-000540, DAP equivalente 25,59 cm): no se estima", async () => {
