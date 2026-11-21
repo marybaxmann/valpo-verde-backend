@@ -32,6 +32,27 @@ export const FRACCION_CARBONO = {
 /** Razón de masas molares CO₂ / C. */
 export const FACTOR_CO2_POR_C = 44 / 12;
 
+/**
+ * Nivel de confianza por el ORIGEN de la ecuación (CC-069 decisión 1; CC-070;
+ * 2026-11-21): «propia_urbana», ecuación urbana de la misma especie;
+ * «sustituta_mismo_genero», ecuación de otra especie del mismo género;
+ * «propia_no_urbana», ecuación de la misma especie ajustada fuera de la
+ * ciudad. Es independiente del estado metodológico en SIVU (aprobado o
+ * exploratorio).
+ */
+export type NivelConfianza = "propia_urbana" | "sustituta_mismo_genero" | "propia_no_urbana";
+
+/** Estado metodológico del modelo en SIVU: solo «aprobado» suma a los totales. */
+export type EstadoModelo = "aprobado" | "exploratorio";
+
+/**
+ * Componente de carbono que estima un modelo (2026-11-21). Cada indicador
+ * agrega un solo componente y nunca se suman entre sí:
+ * - aerea_lenosa: tronco y ramas, sin follaje ni raíces (CC-069 v1).
+ * - aerea_total: tallo, ramas, ramillas y hojas, sin raíces.
+ */
+export type ComponenteCarbono = "aerea_lenosa" | "aerea_total";
+
 export interface ModeloVolumen {
   id: string;
   version: number;
@@ -65,14 +86,14 @@ export interface ModeloVolumen {
    * urbana ajustada para la misma especie; «sustituta_mismo_genero»,
    * ecuación de otra especie del mismo género (estimación indirecta).
    */
-  confianza: "propia_urbana" | "sustituta_mismo_genero";
+  confianza: Extract<NivelConfianza, "propia_urbana" | "sustituta_mismo_genero">;
   /**
    * «aprobado»: aprobado por la responsable de la metodología (CC-069,
    * CC-070); sus resultados suman al total. «exploratorio» (2026-11-20):
    * incorporado para ampliar la cobertura con carácter exploratorio; sus
    * resultados se muestran rotulados y NUNCA suman a los totales.
    */
-  estado: "aprobado" | "exploratorio";
+  estado: EstadoModelo;
   /** Especie con la que se ajustó la ecuación (igual a `especie` si es propia). */
   especie_ecuacion: string;
   /** Fuente del rango de DAP (y de altura) aplicado. */
@@ -261,3 +282,107 @@ export const LIMITACIONES = [
   "DAP de SIVU a 1,30 m; el de las ecuaciones, a 4,5 ft (1,37 m). Sin corrección.",
   "Fracción de carbono 0,47 por defecto (IPCC 2006), no específica de la especie.",
 ] as const;
+
+/**
+ * Modelos de CARBONO DIRECTO (autorización de la responsable, 2026-11-21):
+ * la ecuación entrega el carbono en kg sin pasar por volumen, densidad ni
+ * fracción de carbono. Estiman otro componente (carbono aéreo total, con
+ * hojas) y por eso se agregan en un indicador propio, nunca junto al carbono
+ * aéreo leñoso. Pendientes de sincronización con el Excel maestro
+ * (docs/plan/propuestas/carbono-directo-discrepancia-excel.md).
+ */
+export interface ModeloCarbonoDirecto {
+  id: string;
+  version: number;
+  tipo: "carbono_directo";
+  /** Clave de especie de B19 (claveEspecie). */
+  especie: string;
+  variante: "dap";
+  /** C (kg) = a · D(cm)^b. */
+  a: number;
+  b: number;
+  componente: "aerea_total";
+  /** Partes del árbol que incluye y excluye la ecuación. */
+  incluye: readonly string[];
+  excluye: readonly string[];
+  /** Rango de DAP de la muestra; límites incluidos. */
+  dap_min_cm: number;
+  dap_max_cm: number;
+  /** Altura de medición del DAP en la fuente. */
+  altura_medicion_dap_m: number;
+  n_muestra: number;
+  r2: number;
+  /**
+   * Contenido medio de carbono de la biomasa aérea seca en la fuente. SOLO
+   * informativo: la ecuación ya lo incorpora y nunca se vuelve a aplicar.
+   */
+  fraccion_carbono_fuente: number;
+  confianza: Extract<NivelConfianza, "propia_no_urbana">;
+  estado: EstadoModelo;
+  especie_ecuacion: string;
+  fuente_rango: string;
+  limitaciones_modelo: readonly string[];
+  admite_multifustal: false;
+  apto_palmeras: false;
+  fuente: string;
+  doi: string;
+}
+
+const FUENTE_CRUZ_2015 =
+  "Cruz, P., Bascuñan, A., Velozo, J. y Rodríguez, M. (2015). Funciones alométricas de contenido de carbono para quillay, peumo, espino y litre. Bosque, 36(3), 375-381 (componentes: p. 376; contenido de carbono por componente: p. 379, cuadro 5; ecuaciones, muestras y rangos: p. 379, cuadro 6)";
+const DOI_CRUZ_2015 = "https://doi.org/10.4067/S0717-92002015000300005";
+const RANGO_CRUZ_2015 = "Cruz et al. 2015, p. 379, cuadro 6";
+const LIMITACIONES_CRUZ_2015 = [
+  "Exploratorio en SIVU: ecuación de la misma especie ajustada en el bosque mediterráneo chileno, no en árboles urbanos; su transferencia a los árboles de Valparaíso no está validada.",
+  "Carbono aéreo total: incluye tallo, ramas, ramillas y hojas, y excluye raíces. No es comparable con el carbono aéreo leñoso ni se suma a él.",
+  "La ecuación entrega el carbono directamente: no se aplica densidad de madera ni la fracción de carbono 0,47.",
+  "Solo árboles de un fuste: la fuente no demuestra que el DAP equivalente de un multifustal pueda sustituir el DAP con que se ajustó la ecuación.",
+] as const;
+const carbonoDirecto = {
+  version: 1,
+  tipo: "carbono_directo",
+  variante: "dap",
+  componente: "aerea_total",
+  incluye: ["tallo", "ramas", "ramillas", "hojas"],
+  excluye: ["raíces"],
+  altura_medicion_dap_m: 1.3,
+  confianza: "propia_no_urbana",
+  estado: "exploratorio",
+  fuente_rango: RANGO_CRUZ_2015,
+  limitaciones_modelo: LIMITACIONES_CRUZ_2015,
+  admite_multifustal: false,
+  apto_palmeras: false,
+  fuente: FUENTE_CRUZ_2015,
+  doi: DOI_CRUZ_2015,
+} as const;
+
+export const MODELOS_CARBONO_DIRECTO: readonly ModeloCarbonoDirecto[] = [
+  { ...carbonoDirecto, id: "CRUZ15-C6-QUSA-D", especie: "quillaja saponaria", especie_ecuacion: "quillaja saponaria", a: 0.0736, b: 2.251, dap_min_cm: 5, dap_max_cm: 41, n_muestra: 80, r2: 0.95, fraccion_carbono_fuente: 0.493 },
+  { ...carbonoDirecto, id: "CRUZ15-C6-CRAL-D", especie: "cryptocarya alba", especie_ecuacion: "cryptocarya alba", a: 0.0675, b: 2.352, dap_min_cm: 5, dap_max_cm: 37, n_muestra: 82, r2: 0.95, fraccion_carbono_fuente: 0.495 },
+];
+
+/** Limitaciones generales del carbono aéreo total (2026-11-21). */
+export const LIMITACIONES_AEREO_TOTAL = [
+  "Estimación de carbono aéreo total almacenado (tallo, ramas, ramillas y hojas; sin raíces): no es carbono leñoso, carbono total ni secuestro anual.",
+  "Ecuaciones de carbono directo: el carbono sale de la ecuación, sin densidad de madera ni fracción de carbono adicional.",
+  "Modelos exploratorios para árboles urbanos: se muestran rotulados y no suman a ningún total oficial.",
+  "Indicador separado del carbono aéreo leñoso: sus resultados nunca se suman con él.",
+] as const;
+
+/**
+ * Selección explícita de modelos (2026-11-21): por componente, especie y
+ * estado metodológico. Una especie puede tener modelos de distintos
+ * componentes, y dentro de un componente, si hay un modelo aprobado, se
+ * descartan los exploratorios. Así cada árbol recibe a lo sumo un modelo
+ * por componente (con la variante que elige cada cálculo) y cada indicador
+ * agrega un solo componente.
+ */
+export function seleccionarModelos(componente: "aerea_lenosa", especie: string | null): ModeloVolumen[];
+export function seleccionarModelos(componente: "aerea_total", especie: string | null): ModeloCarbonoDirecto[];
+export function seleccionarModelos(componente: ComponenteCarbono, especie: string | null): (ModeloVolumen | ModeloCarbonoDirecto)[] {
+  if (especie === null) return [];
+  const catalogo: readonly (ModeloVolumen | ModeloCarbonoDirecto)[] = componente === "aerea_lenosa" ? MODELOS_VOLUMEN : MODELOS_CARBONO_DIRECTO;
+  const deEspecie = catalogo.filter((m) => m.componente === componente && m.especie === especie);
+  const aprobados = deEspecie.filter((m) => m.estado === "aprobado");
+  return aprobados.length > 0 ? aprobados : deEspecie;
+}

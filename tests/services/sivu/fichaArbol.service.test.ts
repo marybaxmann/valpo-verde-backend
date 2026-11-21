@@ -148,10 +148,10 @@ describe("obtenerFichaArbol (B2)", () => {
       expect(c.limitaciones.length).toBeGreaterThan(0);
     });
 
-    it("compatibilidad: la ficha solo agrega estimacion_carbono_aereo_lenoso y secuestro_anual; arbol no cambia", async () => {
+    it("compatibilidad: la ficha solo agrega estimacion_carbono_aereo_lenoso, estimacion_carbono_aereo_total y secuestro_anual; arbol no cambia", async () => {
       const f = await obtenerFichaArbol(user, P, T, "token");
       expect(Object.keys(f).sort()).toEqual(
-        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso", "secuestro_anual"].sort()
+        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso", "estimacion_carbono_aereo_total", "secuestro_anual"].sort()
       );
       expect(Object.keys(f.arbol)).not.toContain("estimacion_carbono_aereo_lenoso");
     });
@@ -171,11 +171,57 @@ describe("obtenerFichaArbol (B2)", () => {
     });
 
     it("especie sin modelo aprobado: no estimable (restriccion_modelo, sin_modelo)", async () => {
-      // Quillaja saponaria no tiene modelo (ni aprobado ni exploratorio).
+      // Quillaja saponaria no tiene modelo de carbono aéreo leñoso (su modelo de carbono directo es otro componente).
       (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, especie_cientifica: "Quillaja saponaria" });
       (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" });
       const c = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_lenoso;
       expect(c).toEqual(expect.objectContaining({ valor: null, categoria: "restriccion_modelo", motivo: "sin_modelo" }));
+    });
+  });
+
+  describe("estimacion_carbono_aereo_total (carbono directo, Cruz et al. 2015; árboles ficticios)", () => {
+    const presente = { estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" };
+    // Medidas vigentes de A-000568 (quillay monofustal con evaluación completa vigente).
+    const Q568 = { ...fila, especie_cientifica: "Quillaja saponaria", multifustal: false, dap_cm: "18.40", altura_total_m: "8.30" };
+
+    it("quillay monofustal evaluado: carbono aéreo total y CO₂e, con componente, modelo exploratorio y fuente; el leñoso y el secuestro no cambian", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue(Q568);
+      (obtenerPresencia as jest.Mock).mockResolvedValue(presente);
+      const f = await obtenerFichaArbol(user, P, T, "token");
+      const t = f.estimacion_carbono_aereo_total;
+      expect(t.categoria).toBeNull();
+      expect(t.valor!.carbono_kg).toBeCloseTo(51.76, 2);
+      expect(t.valor!.co2e_kg).toBeCloseTo(t.valor!.carbono_kg * (44 / 12), 10);
+      expect(t.valor!.componente.incluye).toEqual(["tallo", "ramas", "ramillas", "hojas"]);
+      expect(t.valor!.componente.excluye).toEqual(["raíces"]);
+      expect(t.valor!.modelo).toEqual(expect.objectContaining({ id: "CRUZ15-C6-QUSA-D", estado: "exploratorio", confianza: "propia_no_urbana", doi: "https://doi.org/10.4067/S0717-92002015000300005" }));
+      expect(t.metodo.alimenta_secuestro_anual).toBe(false);
+      expect(t.limitaciones.join(" ")).toMatch(/nunca se suman/);
+      expect(f.estimacion_carbono_aereo_lenoso).toEqual(expect.objectContaining({ valor: null, motivo: "sin_modelo" }));
+      expect(f.secuestro_anual).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
+    });
+
+    it("multifustal (A-000540, DAP equivalente 25,59 cm): no se estima", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...Q568, multifustal: true, numero_fustes: 3, dap_fustes_cm: [21, 11.6, 8.9], dap_cm: "25.59" });
+      (obtenerPresencia as jest.Mock).mockResolvedValue(presente);
+      const t = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_total;
+      expect(t).toEqual(expect.objectContaining({ valor: null, motivo: "multifustal_no_admitido" }));
+    });
+
+    it("sin evaluación completa vigente (OT de inspección en ejecución): fuera del universo", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...Q568, dap_cm: null, altura_total_m: null });
+      (obtenerPresencia as jest.Mock).mockResolvedValue(presente);
+      (arbolesConEvaluacionCompletaVigente as jest.Mock).mockResolvedValue(new Set());
+      const t = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_total;
+      expect(t).toEqual(expect.objectContaining({ valor: null, categoria: "fuera_del_universo", motivo: "sin_evaluacion_valida" }));
+    });
+
+    it("especie con modelo leñoso (Jacarandá): sin carbono aéreo total, y el leñoso calcula igual que antes", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, especie_cientifica: "Jacaranda mimosifolia", multifustal: false, dap_cm: "30.00", altura_total_m: "10.00" });
+      (obtenerPresencia as jest.Mock).mockResolvedValue(presente);
+      const f = await obtenerFichaArbol(user, P, T, "token");
+      expect(f.estimacion_carbono_aereo_total).toEqual(expect.objectContaining({ valor: null, motivo: "sin_modelo" }));
+      expect(f.estimacion_carbono_aereo_lenoso.valor!.carbono_kg).toBeCloseTo(110.3147, 4);
     });
   });
 

@@ -2,6 +2,8 @@
 
 > Documento de trazabilidad de la estimación de carbono de SIVU (B19 y ficha del árbol B2). Registra **de dónde sale cada número** y **cómo se usa en el cálculo**. Decisiones: CC-069 v1 (método general) y CC-070 (modelo sustituto para *Acer pseudoplatanus*). Código: `src/services/rules/carbono/modelos.ts` y `calculo.ts`.
 >
+> **Carbono aéreo total (sección 4):** desde el 2026-11-21, *Quillaja saponaria* y *Cryptocarya alba* tienen modelos exploratorios de carbono directo (Cruz et al. 2015) en un indicador aparte, que incluye hojas y nunca se suma con el leñoso.
+>
 > **Qué estima SIVU:** **carbono aéreo leñoso almacenado** en el árbol, con la medición vigente (tronco y ramas, sin raíces ni follaje). **No estima el secuestro anual** (carbono capturado por año; INDICES fila 15, «Pendiente»), porque requiere dos mediciones del mismo árbol separadas en el tiempo.
 
 ## 1. Cadena de cálculo (igual para todos los modelos)
@@ -60,8 +62,52 @@ Es una **estimación indirecta**: la ecuación es de *Acer platanoides*, otra es
 
 **Limitaciones de este modelo** (se entregan con cada resultado, en `modelo.limitaciones_modelo`): ecuación de otra especie del mismo género; ajustada en Fort Collins (clima semiárido continental, no mediterráneo); densidad de árboles de bosque de Croacia; DAP de SIVU a 1,30 m y el de la ecuación a 4,5 ft (1,37 m), sin corrección. Además, las limitaciones generales de CC-069.
 
-## 4. Lo que queda pendiente
+## 4. Carbono aéreo total con modelos de carbono directo (autorización de la responsable, 2026-11-21)
+
+> **Otro componente, otro indicador.** Estos modelos estiman el **carbono aéreo total** (tallo, ramas, ramillas y hojas; sin raíces), no el carbono aéreo leñoso de las secciones 1 a 3. Se calculan en `rules/carbono/carbonoAereoTotal.ts` y se exponen como `estimacion_carbono_aereo_total` (ficha B2 y B19), **nunca sumados** con `estimacion_carbono_aereo_lenoso`. Son **exploratorios** para el arbolado urbano de Valparaíso: se muestran rotulados y no generan total oficial. **No alimentan el secuestro anual**, ni como simulación (decisión del 2026-11-21, temporal). Pendientes de sincronización con el Excel maestro: `docs/plan/propuestas/carbono-directo-discrepancia-excel.md`.
+
+### 4.1 Cadena de cálculo
+
+| Paso | Fórmula | Unidad |
+|---|---|---|
+| 1. Carbono aéreo total | `C = a · DAP^b` | kg de C; DAP en cm, medido a 1,30 m |
+| 2. CO₂ equivalente | `CO₂e = C × 44/12` | kg de CO₂ |
+
+La ecuación entrega el carbono **directamente**: no se aplica densidad de madera ni la fracción 0,47, ni se vuelve a aplicar la fracción de carbono de la fuente. La altura no interviene. Fuera del rango de DAP el resultado es `null` con su motivo, sin extrapolar.
+
+### 4.2 Referencias
+
+1. **Fuente principal.** Cruz, P., Bascuñan, A., Velozo, J. y Rodríguez, M. (2015). Funciones alométricas de contenido de carbono para quillay, peumo, espino y litre. *Bosque*, 36(3), 375–381. https://doi.org/10.4067/S0717-92002015000300005 (PDF: https://www.scielo.cl/pdf/bosque/v36n3/art05.pdf). — Componentes considerados: p. 376. Contenido de carbono por componente: p. 379, cuadro 5. Ecuaciones, muestras y rangos: p. 379, cuadro 6.
+2. **Fuente metodológica complementaria.** Cruz, P., Bascuñán, A. y Velozo, J. (2014). *Funciones alométricas para el bosque mediterráneo chileno: modelos de biomasa y carbono para quillay, peumo, espino y litre.* Informe final OTERRA, Universidad Mayor. (PDF: https://gefmontanacurso.mma.gob.cl/wp-content/uploads/2021/01/modulos/clase_04/FUNCIONES_ALOMETRICAS_PARA_EL_BOSQUE_MED.pdf). — Selección de individuos monopódicos y simpódicos: p. 24. DAP a 1,30 m: p. 26, cuadro 3.2. Construcción de los modelos de biomasa y carbono: capítulos 7 y 8.
+
+Parámetros entregados y verificados por la responsable (2026-11-21); SIVU no los redefine.
+
+| Modelo | Especie | a | b | DAP (cm) | n | R² | Carbono de la biomasa aérea seca (solo informativo) |
+|---|---|---|---|---|---|---|---|
+| `CRUZ15-C6-QUSA-D` | *Quillaja saponaria* | 0,0736 | 2,251 | 5–41 | 80 | 0,95 | 49,3 % |
+| `CRUZ15-C6-CRAL-D` | *Cryptocarya alba* | 0,0675 | 2,352 | 5–37 | 82 | 0,95 | 49,5 % |
+
+Nivel de confianza: **`propia_no_urbana`** (ecuación de la misma especie ajustada fuera de la ciudad). Estado metodológico en SIVU: **exploratorio**. Son dos atributos distintos: el primero describe el origen de la ecuación; el segundo, su aplicación en SIVU.
+
+### 4.3 Limitaciones (se entregan con cada resultado)
+
+- **Transferencia a árboles urbanos no validada:** las ecuaciones se ajustaron en el bosque mediterráneo chileno; la arquitectura de copa de un árbol urbano (podas, competencia, espacio) puede diferir.
+- **Componente no comparable con el leñoso:** incluye hojas. Por eso va en un indicador aparte y nunca se suma con el carbono aéreo leñoso.
+- **Multifustales excluidos:** la fuente no demuestra que el DAP equivalente de un multifustal pueda sustituir el DAP con que se ajustó la ecuación. No se suma por fuste ni se usa el DAP equivalente hasta que se apruebe un tratamiento.
+- **Sin secuestro anual:** las tasas de crecimiento y su transferibilidad al entorno urbano requieren validación.
+
+### 4.4 Selección de modelos
+
+Cada cálculo selecciona sus modelos por **componente**, **especie** y **estado** (`seleccionarModelos` en `modelos.ts`): dentro de un componente, si hay un modelo aprobado se descartan los exploratorios. Una especie puede tener modelos en ambos componentes; cada indicador agrega un solo componente, por lo que un árbol nunca se cuenta dos veces en un mismo total. Una prueba exige que, dentro de un componente, no haya dos modelos con la misma especie, estado y variante.
+
+### 4.5 Ejemplares del Piloto (2026-11-21)
+
+Con resultado (monofustales con evaluación completa vigente): A-000543 (quillay, DAP 6,9 cm: 5,69 kg C), A-000554 (quillay, 8,9 cm: 10,09 kg C), A-000568 (quillay, 18,4 cm: 51,76 kg C) y A-000537 (peumo, 7,8 cm: 8,46 kg C).
+Excluidos: multifustales A-000538, A-000540 y A-000558; sin medidas vigentes (OT de inspección en ejecución) A-000562 a A-000565.
+
+## 5. Lo que queda pendiente
 
 - Leer el apéndice 11 de Nowak 2020 y la tabla B.1 de CARB 2010 cuando se puedan descargar, y anotar su verificación aquí.
 - Confirmar en el original la tabla 4.3 del IPCC 2006 (fracción 0,47), como pide CC-069.
-- Llevar los modelos al Excel maestro (hoja de modelos propuesta en CC-069), con estas mismas referencias.
+- Llevar los modelos al Excel maestro (hoja de modelos propuesta en CC-069), con estas mismas referencias, incluidos los de carbono directo (sección 4).
+- Carbono aéreo total: tratamiento de multifustales, validación urbana y secuestro anual de quillay y peumo (decisiones de la responsable).
