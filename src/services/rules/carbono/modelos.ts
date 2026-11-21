@@ -284,7 +284,9 @@ export const LIMITACIONES = [
 ] as const;
 
 /**
- * Modelos de CARBONO DIRECTO (autorización de la responsable, 2026-11-21):
+ * PROPUESTA EXPERIMENTAL, no forma parte de la metodología vigente (pendiente
+ * de revisión del equipo; docs/plan/propuestas/carbono-directo-revision-equipo.md).
+ * Modelos de CARBONO DIRECTO (implementación experimental, 2026-11-21):
  * la ecuación entrega el carbono en kg sin pasar por volumen, densidad ni
  * fracción de carbono. Estiman otro componente (carbono aéreo total, con
  * hojas) y por eso se agregan en un indicador propio, nunca junto al carbono

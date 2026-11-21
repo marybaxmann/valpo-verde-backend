@@ -2,7 +2,7 @@
 
 > Documento de trazabilidad de la estimación de carbono de SIVU (B19 y ficha del árbol B2). Registra **de dónde sale cada número** y **cómo se usa en el cálculo**. Decisiones: CC-069 v1 (método general) y CC-070 (modelo sustituto para *Acer pseudoplatanus*). Código: `src/services/rules/carbono/modelos.ts` y `calculo.ts`.
 >
-> **Carbono aéreo total (sección 4):** desde el 2026-11-21, *Quillaja saponaria* y *Cryptocarya alba* tienen modelos exploratorios de carbono directo (Cruz et al. 2015) en un indicador aparte, que incluye hojas y nunca se suma con el leñoso.
+> **Carbono aéreo total (sección 4, propuesta experimental, no vigente):** desde el 2026-11-21, en rama experimental, *Quillaja saponaria* y *Cryptocarya alba* tienen modelos exploratorios de carbono directo (Cruz et al. 2015) en un indicador aparte, que incluye hojas y nunca se suma con el leñoso.
 >
 > **Qué estima SIVU:** **carbono aéreo leñoso almacenado** en el árbol, con la medición vigente (tronco y ramas, sin raíces ni follaje). **No estima el secuestro anual** (carbono capturado por año; INDICES fila 15, «Pendiente»), porque requiere dos mediciones del mismo árbol separadas en el tiempo.
 
@@ -62,7 +62,9 @@ Es una **estimación indirecta**: la ecuación es de *Acer platanoides*, otra es
 
 **Limitaciones de este modelo** (se entregan con cada resultado, en `modelo.limitaciones_modelo`): ecuación de otra especie del mismo género; ajustada en Fort Collins (clima semiárido continental, no mediterráneo); densidad de árboles de bosque de Croacia; DAP de SIVU a 1,30 m y el de la ecuación a 4,5 ft (1,37 m), sin corrección. Además, las limitaciones generales de CC-069.
 
-## 4. Carbono aéreo total con modelos de carbono directo (autorización de la responsable, 2026-11-21)
+## 4. PROPUESTA EXPERIMENTAL · Carbono aéreo total con modelos de carbono directo (2026-11-21)
+
+> **No es metodología vigente.** Implementación experimental en la rama `feature/carbono-directo` (PR #94, borrador), pendiente de revisión y aprobación del equipo. No se fusiona ni se despliega hasta entonces. Resumen para la revisión: `docs/plan/propuestas/carbono-directo-revision-equipo.md`.
 
 > **Otro componente, otro indicador.** Estos modelos estiman el **carbono aéreo total** (tallo, ramas, ramillas y hojas; sin raíces), no el carbono aéreo leñoso de las secciones 1 a 3. Se calculan en `rules/carbono/carbonoAereoTotal.ts` y se exponen como `estimacion_carbono_aereo_total` (ficha B2 y B19), **nunca sumados** con `estimacion_carbono_aereo_lenoso`. Son **exploratorios** para el arbolado urbano de Valparaíso: se muestran rotulados y no generan total oficial. **No alimentan el secuestro anual**, ni como simulación (decisión del 2026-11-21, temporal). Pendientes de sincronización con el Excel maestro: `docs/plan/propuestas/carbono-directo-discrepancia-excel.md`.
 

@@ -1,6 +1,7 @@
 /**
  * Carbono aéreo TOTAL (tallo, ramas, ramillas y hojas; sin raíces) con
- * modelos de carbono directo (autorización de la responsable, 2026-11-21;
+ * modelos de carbono directo. PROPUESTA EXPERIMENTAL, no vigente: pendiente
+ * de revisión del equipo (implementación experimental del 2026-11-21;
  * Cruz et al. 2015 para Quillaja saponaria y Cryptocarya alba).
  *
  * Indicador separado del carbono aéreo leñoso (calculo.ts, CC-069 v1): otro
@@ -115,7 +116,7 @@ export function calcularCarbonoAereoTotalArbol(a: ArbolCarbono): ResultadoAereoT
 /** Descriptor del método, para la trazabilidad de cada respuesta. */
 export const METODO_CARBONO_AEREO_TOTAL = {
   version: "carbono directo v1 (2026-11-21)",
-  estado_cc: "autorizado por la responsable para desarrollo; pendiente de sincronización con el Excel maestro",
+  estado_cc: "propuesta experimental pendiente de revisión del equipo; no forma parte de la metodología vigente ni del Excel maestro",
   componente: "aerea_total",
   incluye: ["tallo", "ramas", "ramillas", "hojas"],
   excluye: ["raíces"],

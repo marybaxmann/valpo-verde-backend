@@ -1,6 +1,6 @@
 # Carbono aéreo total (carbono directo): discrepancia pendiente con el Excel maestro
 
-**Estado:** discrepancia metodológica **pendiente de sincronización** con el Excel maestro (DICCIONARIO_CAMPOS, REGLAS_INDICADORES y MATRICES_CALCULO). **No se modificó el Excel.** El código **no sustituye** la metodología documentada: mientras el Excel no lo recoja, la implementación es una excepción autorizada por la responsable para desarrollo (2026-11-21).
+**Estado:** discrepancia metodológica **pendiente de sincronización** con el Excel maestro (DICCIONARIO_CAMPOS, REGLAS_INDICADORES y MATRICES_CALCULO). **No se modificó el Excel.** El código **no sustituye** la metodología documentada: es una **propuesta experimental** pendiente de revisión del equipo (resumen: `carbono-directo-revision-equipo.md`); solo si se aprueba se registra un CC y se sincroniza el Excel.
 **Implementación:** rama `feature/carbono-directo` del backend y `feature/carbono-aereo-total` del frontend. Trazabilidad científica: `docs/metodologia/carbono-referencias.md`, sección 4.
 
 ## 1. Qué no está en el Excel
