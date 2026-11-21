@@ -89,7 +89,19 @@ describe("camposPermitidosPorTipo (CC-040)", () => {
  * catalogs.test.ts — nunca el .xlsx desde Jest.
  */
 describe("CAMPOS_EVALUACION_COMPLETA vs DICCIONARIO_CAMPOS (CC-040 punto 1)", () => {
-  const EXCLUSIONES_MANUALES = new Set(["justificacion_ajuste_clasificacion"]);
+  const EXCLUSIONES_MANUALES = new Set([
+    "justificacion_ajuste_clasificacion",
+    // PALM-01 (CC-081, 3.3.0 en preparación): D-308 a D-316, aún no implementados en el borrador.
+    // Se quitan de aquí al implementar el CC-081.
+    "calidad_copa_palmera",
+    "proporcion_frondas_vivas",
+    "anomalia_cogollo",
+    "indicios_plaga_palmera",
+    "estrechamiento_estipite",
+    "angulacion_grave_estipite",
+    "raices_adventicias_altura",
+    "inclinacion_corregida",
+  ]);
   // D-125 "Irregular → ingreso manual" (CC-056).
   const ADICIONES_MANUALES = { superficie_alcorque_m2_manual: ["superficie_alcorque_m2", "Irregular → ingreso manual"] };
 
