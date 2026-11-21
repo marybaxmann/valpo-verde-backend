@@ -1,3 +1,5 @@
+import { SEVERIDAD_CRITICA_CAVIDAD } from "./catalogs";
+import { tieneEspesorEnCavidadAbierta } from "./variables-calculo";
 /**
  * R02 — Tronco (REGLAS_INDICADORES: TR-CAV-01 a 11, TR-HER-01 a 04,
  * TR-COR-01 a 02, TR-GRI-01 a 06, TR-COD-01 a 04, TR-ADE-01 a 02,
@@ -88,7 +90,7 @@ export interface R02Input {
 }
 
 export interface IndicadorResultado {
-  severidad: SeveridadCodigo | null; // null = no_determinado
+  severidad: SeveridadCodigo | typeof SEVERIDAD_CRITICA_CAVIDAD.codigo | null; // null = no_determinado
   puntaje: number | null;
   reglaId: string | null; // el ID de REGLAS_INDICADORES que produjo el resultado; null si es un corte genérico
   noDeterminado: boolean;
@@ -105,8 +107,8 @@ const PUNTAJE_SEVERIDAD: Record<SeveridadCodigo, number> = {
 
 const ORDEN_SEVERIDAD: SeveridadCodigo[] = ["despreciable", "leve", "moderada", "severa"];
 
-function indicador(severidad: SeveridadCodigo, reglaId: string): IndicadorResultado {
-  return { severidad, puntaje: PUNTAJE_SEVERIDAD[severidad], reglaId, noDeterminado: false };
+function indicador(severidad: SeveridadCodigo | typeof SEVERIDAD_CRITICA_CAVIDAD.codigo, reglaId: string): IndicadorResultado {
+  return { severidad, puntaje: severidad === "critica" ? null : PUNTAJE_SEVERIDAD[severidad], reglaId, noDeterminado: false };
 }
 
 function noDeterminado(motivo: string, reglaId: string | null = null): IndicadorResultado {
@@ -118,19 +120,19 @@ function masSevera(a: SeveridadCodigo, b: SeveridadCodigo): SeveridadCodigo {
 }
 
 /** Rama SL (TR-CAV-02 a 05), aplicable cuando cavidad_externa_tronco = Sí. */
-function evaluarPorSL(sl: ResultadoCalculo): IndicadorResultado {
+function evaluarPorSL(sl: ResultadoCalculo, escalaNueva: boolean): IndicadorResultado {
   if (sl.valor === null) return noDeterminado(`SL_tronco_pct no calculable (TR-CAV-05): ${sl.motivo}`, "TR-CAV-05");
-  if (sl.valor < 20) return indicador("leve", "TR-CAV-02");
-  if (sl.valor < 33) return indicador("moderada", "TR-CAV-03");
-  return indicador("severa", "TR-CAV-04");
+  if (sl.valor < 20) return indicador(escalaNueva ? "moderada" : "leve", "TR-CAV-02");
+  if (sl.valor < 33) return indicador(escalaNueva ? "severa" : "moderada", "TR-CAV-03");
+  return indicador(escalaNueva ? "critica" : "severa", "TR-CAV-04");
 }
 
 /** Rama t/R (TR-CAV-06, 07, 08 y 11), aplicable cuando cavidad_interna_tronco = "si". */
-function evaluarPorTR(tR: ResultadoCalculo): IndicadorResultado {
+function evaluarPorTR(tR: ResultadoCalculo, escalaNueva: boolean): IndicadorResultado {
   if (tR.valor === null) return noDeterminado(`t_R_tronco no calculable (TR-CAV-08): ${tR.motivo}`, "TR-CAV-08");
-  if (tR.valor >= 0.42) return indicador("leve", "TR-CAV-06");
-  if (tR.valor >= 0.3) return indicador("moderada", "TR-CAV-11");
-  return indicador("severa", "TR-CAV-07");
+  if (tR.valor >= 0.42) return indicador(escalaNueva ? "moderada" : "leve", "TR-CAV-06");
+  if (tR.valor >= 0.3) return indicador(escalaNueva ? "severa" : "moderada", "TR-CAV-11");
+  return indicador(escalaNueva ? "critica" : "severa", "TR-CAV-07");
 }
 
 interface CavidadTroncoResultado {
@@ -142,7 +144,7 @@ interface CavidadTroncoResultado {
 }
 
 /** TR-CAV-01 a 11. */
-function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
+function evaluarCavidadTronco(input: R02Input, escalaNueva: boolean): CavidadTroncoResultado {
   if (input.presenta_cavidad_pudricion_tronco === null) {
     return { indicador: noDeterminado("presenta_cavidad_pudricion_tronco sin valor (TR-CAV, obligatorio)") };
   }
@@ -186,13 +188,14 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
       C_circunferencia_tronco_cm: input.C_circunferencia_tronco_cm,
     });
     abertura_cavidad_tronco_pct = calcularAberturaCavidadPct(input.Cc_longitud_abertura_tronco_cm, input.C_circunferencia_tronco_cm);
-    porSL = evaluarPorSL(SL_tronco_pct);
+    porSL = evaluarPorSL(SL_tronco_pct, escalaNueva);
   }
 
-  if (requiereInstrumental) {
+  const espesorEnCavidadAbierta = escalaNueva && tieneEspesorEnCavidadAbierta(input.cavidad_externa_tronco, input.t_pared_residual_tronco_cm);
+  if (requiereInstrumental && !espesorEnCavidadAbierta) {
     // TR-21: una cavidad externa Severa fija el piso aunque la interna esté sin resolver.
     return {
-      indicador: porSL?.severidad === "severa" ? porSL : noDeterminadoInstrumental(),
+      indicador: (porSL?.severidad === "severa" || porSL?.severidad === "critica") ? porSL : noDeterminadoInstrumental(),
       SL_tronco_pct,
       abertura_cavidad_tronco_pct,
     };
@@ -201,10 +204,10 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
   let R_radio_tronco_cm: ResultadoCalculo | undefined;
   let t_R_tronco: ResultadoCalculo | undefined;
   let porTR: IndicadorResultado | null = null;
-  if (input.cavidad_interna_tronco === "si") {
+  if (input.cavidad_interna_tronco === "si" || espesorEnCavidadAbierta) {
     R_radio_tronco_cm = calcularRRadioTroncoCm(input.D_diametro_tronco_cm);
     t_R_tronco = calcularTRTronco(input.t_pared_residual_tronco_cm, input.D_diametro_tronco_cm);
-    porTR = evaluarPorTR(t_R_tronco);
+    porTR = evaluarPorTR(t_R_tronco, escalaNueva);
   }
   const variables = { SL_tronco_pct, R_radio_tronco_cm, t_R_tronco, abertura_cavidad_tronco_pct };
 
@@ -224,9 +227,13 @@ function evaluarCavidadTronco(input: R02Input): CavidadTroncoResultado {
   }
 
   // Ambas vías activas: la más severa (TR-CAV-10). Una vía Severa fija el piso aunque la otra no se determine.
+  if (porSL.severidad === "critica" || porTR.severidad === "critica") {
+    return { indicador: indicador("critica", "TR-CAV-10"), ...variables };
+  }
   if (porSL.severidad === "severa" || porTR.severidad === "severa") {
     return { indicador: indicador("severa", "TR-CAV-10"), ...variables };
   }
+  if (requiereInstrumental) return { indicador: noDeterminadoInstrumental(), ...variables };
   if (porSL.noDeterminado || porTR.noDeterminado) {
     const motivos = [porSL, porTR].filter((p) => p.noDeterminado).map((p) => p.motivo);
     return { indicador: noDeterminado(`TR-CAV-10 (combinación externa+interna): ${motivos.join("; ")}`, "TR-CAV-10"), ...variables };
@@ -402,8 +409,8 @@ function clasificarPuntaje(puntaje: number): ProbabilidadFallaCodigo {
   return "probable"; // 4 o más
 }
 
-export function evaluarR02(input: R02Input): R02Resultado {
-  const cavidad = evaluarCavidadTronco(input);
+export function evaluarR02(input: R02Input, escalaNueva = false): R02Resultado {
+  const cavidad = evaluarCavidadTronco(input, escalaNueva);
   const heridas = evaluarHeridas(input);
   const cortezaMuertaAusente = evaluarCortezaMuertaAusente(input);
   const fisurasGrietas = evaluarFisurasGrietas(input);
@@ -420,7 +427,7 @@ export function evaluarR02(input: R02Input): R02Resultado {
   };
 
   // Los pisos se aplican antes de propagar No determinado (TR-19 e, TR-21).
-  if (codominancia.reglaId === "TR-COD-02" || fisurasGrietas.reglaId === "TR-GRI-04") {
+  if (cavidad.indicador.severidad === "critica" || (codominancia.reglaId === "TR-COD-02" || fisurasGrietas.reglaId === "TR-GRI-04")) {
     return { indicadores, variablesCalculo, puntaje: null, probabilidadFalla: "inminente" };
   }
   if (cavidad.indicador.severidad === "severa" || fisurasGrietas.reglaId === "TR-GRI-05") {

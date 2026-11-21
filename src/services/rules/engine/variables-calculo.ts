@@ -117,6 +117,11 @@ export function calcularAberturaCavidadPct(Cc: number | null, C: number | null):
 // Nombres exactos del Excel — raíces y cuello (sección basal)
 // ---------------------------------------------------------------------
 
+/** En 3.2 el espesor registrado para una cavidad abierta debe ser instrumental. */
+export function tieneEspesorEnCavidadAbierta(externa: boolean | null, espesorCm: number | null): boolean {
+  return externa === true && espesorCm != null;
+}
+
 export function calcularSLBasalPct(m: {
   D_diametro_basal_tronco_cm: number | null;
   d_diametro_cavidad_basal_cm: number | null;

@@ -34,7 +34,7 @@ import {
   obtenerUltimaInspeccionValidaSin,
   anularInspeccion,
 } from "../../src/repositories/sivu/cierreOt.repository";
-import { obtenerInspeccionPorId } from "../../src/repositories/sivu/inspection.repository";
+import { obtenerArbolVigente, obtenerInspeccionPorId, obtenerVersionArbolDeInspeccion } from "../../src/repositories/sivu/inspection.repository";
 import { FAKE_TOKEN, INSPECTOR_ID, MUNICIPAL_ID, fakeAuthUser, inspectorProfileRow, municipalProfileRow } from "../helpers/authFixtures";
 
 const mAuth = getAuthUserByToken as jest.Mock;
@@ -89,6 +89,28 @@ beforeEach(() => {
 const completar = () => request(app).post(`/api/sivu/work-orders/${OT_ID}/completar`).set(auth);
 
 describe("POST /api/sivu/work-orders/:id/completar (#60; ADR-017 v1.2)", () => {
+  it("env?a al motor 3.2 el di?metro del fuste mayor al cerrar la OT", async () => {
+    const version = jest.requireActual("../../src/services/rules/engine/version");
+    const operativa = jest.replaceProperty(version, "RULE_VERSION_OPERATIVA", "3.2");
+    try {
+      jest.mocked(obtenerVersionArbolDeInspeccion).mockResolvedValue({
+        campos: { dap_fustes_cm: [8, 9] },
+        camposRegistrados: ["dap_fustes_cm"],
+      });
+      jest.mocked(obtenerArbolVigente).mockResolvedValue({
+        multifustal: true, numero_fustes: 2, dap_fustes_cm: [30, 40], dap_cm: 12,
+      });
+      expect((await completar()).status).toBe(200);
+      expect(mCompletar.mock.calls[0][2][0].resultado.calculados.consecuencias).toMatchObject({
+        raicesCuello: { calculada: "significativa" },
+        tronco: { calculada: "menor" },
+        copaRamas: { calculada: "insignificante" },
+      });
+    } finally {
+      operativa.restore();
+    }
+  });
+
   it("exige JWT", async () => {
     expect((await request(app).post(`/api/sivu/work-orders/${OT_ID}/completar`)).status).toBe(401);
   });

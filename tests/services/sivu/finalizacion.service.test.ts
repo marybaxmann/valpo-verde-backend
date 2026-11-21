@@ -672,3 +672,37 @@ describe("ajuste de probabilidad de falla y datos de LCR (CC-071)", () => {
     expect(huellaCalculo({ ...base, variablesCalculo: a })).not.toBe(huellaCalculo({ ...base, variablesCalculo: b }));
   });
 });
+
+
+describe("insumos dendrom?tricos de consecuencia en 3.2", () => {
+  const version = jest.requireActual("../../../src/services/rules/engine/version");
+
+  beforeEach(() => {
+    jest.replaceProperty(version, "RULE_VERSION_OPERATIVA", "3.2");
+    preparar();
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it.each([
+    [true, [8, 9], "significativa", "menor", "insignificante"],
+    [true, null, "significativa", null, null],
+    [false, null, "significativa", "significativa", "menor"],
+  ])("resuelve los campos de la inspecci?n y del ?rbol vigente (multifustal=%s, fustes=%j)", async (
+    multifustal, fustes, raices, tronco, copa,
+  ) => {
+    mockVersionArbol.mockResolvedValue({
+      campos: { multifustal, dap_fustes_cm: fustes, dap_cm: 12 },
+      camposRegistrados: ["multifustal", "dap_fustes_cm", "dap_cm"],
+    });
+    mockArbolVigente.mockResolvedValue({ ...ARBOL_VIGENTE, multifustal: true, dap_fustes_cm: [40, 40], numero_fustes: 2, dap_cm: 56.57 });
+    const { resultado } = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(resultado.calculados.consecuencias).toMatchObject({
+      raicesCuello: { calculada: raices }, tronco: { calculada: tronco }, copaRamas: { calculada: copa },
+    });
+    if (multifustal && fustes === null) {
+      expect(resultado.clasificacion_tronco).toBe("no_determinado");
+      expect(resultado.clasificacion_copa_ramas).toBe("no_determinado");
+    }
+  });
+});

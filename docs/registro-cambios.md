@@ -3317,3 +3317,11 @@ motivo)
 |---|---|---|---|
 | 2026-11-19 | APROBADO | marybaxmann | Decide borrado real con registro y borrado conjunto de la OT con trazabilidad. |
 | 2026-11-19 | IMPLEMENTADO | Claude (autorizado por marybaxmann) | 042 aplicada en pruebas (`20261120001059`) tras ensayo revertido 8/8; publicado (backend #88, frontend #28). |
+
+### CC-080 — Publicación metodológica SIVU 3.2.0
+
+- Aprobación: autora e investigadora responsable SIVU, 2026-11-21. Paquete MINOR 3.2.0, `rule_version` 3.2, tag previsto para el commit de integración `metodologia-v3.2.0`.
+- Cavidades basal y de tronco: Moderada (2), Severa (3 y piso Probable), Crítica (piso Inminente, sin puntaje). El t/R instrumental también se activa en cavidades abiertas.
+- Consecuencias calculadas por el diámetro de la parte (Ellison, 2005). En multifustales se entrega el DAP equivalente para raíces y cuello y el fuste mayor para tronco. La copa baja un nivel respecto del tronco. El motor conserva los ajustes justificados.
+- IF-22: red aérea eléctrica bajo la referencia, Moderada sin daño y Severa con daño, con alerta visible en el resultado. IF-23: red subterránea comprometida sin afectación física, Moderada. Se conserva CC-043, la agregación de M04 y M05.
+- Excel, exportaciones, índice y motor se sincronizan en el mismo cambio. Las evaluaciones anteriores conservan su versión y no se recalculan automáticamente. PALM-01 queda para 3.3.0. Producción requiere confirmación independiente de la autora.
