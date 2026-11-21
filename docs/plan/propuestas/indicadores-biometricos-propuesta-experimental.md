@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Estado** | Propuesta experimental para revisión y aprobación del equipo. **No es metodología vigente.** |
+| **Estado** | Propuesta experimental. Se solicita al equipo **aprobar la integración experimental del backend en el entorno de pruebas** (sección 8.1), que es distinta de la aprobación metodológica definitiva (sección 8.2). **No es metodología vigente.** |
 | **Versión** | 2026-11-21. Reemplaza las versiones anteriores de esta propuesta y el resumen `carbono-directo-revision-equipo.md`. |
 | **Datos** | Piloto Valparaíso, base de pruebas: 98 árboles presentes, 49 con evaluación completa vigente y 18 especies identificadas. |
 | **Excel maestro, OT y mediciones** | Sin cambios. |
@@ -226,14 +226,48 @@ Hecha con la API local contra la base de pruebas (49 árboles evaluados) y con l
 
 ## 8. Decisiones que debe tomar el equipo
 
-1. Aprobar la separación de los tres indicadores y que «secuestro anual» se presente como variación proyectada del carbono, nunca como captura fotosintética.
-2. Aprobar el uso de la asignación de la UTD (tabla 11 y ecuaciones generales) como modelos exploratorios, y el nivel de confianza `generica_urbana`.
-3. Aprobar la regla de densidad: primero la tabla 11 de la UTD, luego la GWDD; sin densidad de la especie, no estimable.
-4. Aprobar el DAP equivalente de i-Tree Eco para multifustales en ecuaciones de volumen urbano, como resultado exploratorio.
-5. Aprobar el carbono directo de quillay y peumo y su variación anual del carbono aéreo total como indicador aparte.
-6. Aportar o aprobar fuentes de crecimiento por especie, empezando por el informe de Cruz et al. (2014) para quillay y peumo.
-7. Revisar en terreno A-000505 y A-000534.
-8. Al aprobar: registrar un CC, sincronizar el Excel (filas 14 y 15 de INDICES, hoja de modelos y VERSION) y, solo entonces, fusionar y desplegar.
+La propuesta pide **dos aprobaciones distintas**. La primera habilita el módulo como **versión experimental en el entorno de pruebas**. La segunda, que vendrá después, lo convertiría en **metodología oficial**. Aprobar la primera no implica la segunda.
+
+### 8.1 Aprobación de la integración experimental (la que se solicita ahora)
+
+**Qué se aprueba.** Integrar el backend experimental en la rama de integración `feature/fase6-backend-api`, que no es producción, para probarlo con los datos del Piloto:
+- el PR #94 primero;
+- después el PR #95, actualizando antes su rama base a `feature/fase6-backend-api`.
+
+**Condiciones que se mantienen después de integrar:**
+1. Todo resultado nuevo sigue rotulado como **exploratorio o experimental** y **no suma a ningún total oficial**. Los totales oficiales siguen siendo los de la metodología vigente: 141 kg C de carbono leñoso almacenado y secuestro fundamentado nulo.
+2. Los **40 árboles con proyección** se presentan como simulaciones, no como estimaciones fundamentadas:
+   - 36 de secuestro leñoso;
+   - 4 de variación del carbono aéreo total.
+3. Los **9 no estimables** se conservan como tales, con sus motivos (sección 5.1). No se busca completar el 100 %.
+4. Los **3 multifustales** siguen exploratorios. El DAP equivalente por área basal es una convención de i-Tree Eco, no una validación de su aplicación a cada ecuación de volumen.
+5. A-000505 y A-000534 siguen identificados con «Medición en revisión».
+6. El **frontend** (PR #37 y #38) **no se integra**, porque su rama de destino publica en sivu.cl. Se prueba con las vistas previas de Vercel hasta que su publicación se autorice aparte.
+7. No se modifican el Excel maestro, las OT, las mediciones originales ni los cálculos oficiales.
+
+**Puntos a confirmar para esta aprobación:**
+- (a) que «secuestro anual» se presente como variación proyectada del carbono, nunca como captura fotosintética (sección 2.1);
+- (b) que el carbono leñoso y el carbono aéreo total se muestren por separado y nunca se sumen;
+- (c) que los modelos exploratorios de la sección 3 se usen solo para estas simulaciones.
+
+### 8.2 Aprobación metodológica definitiva (posterior y separada)
+
+Para que algún resultado pase a ser oficial o fundamentado, el equipo debe resolver, en una aprobación aparte:
+1. La asignación de la UTD (tabla 11 y ecuaciones generales) y el nivel de confianza `generica_urbana`.
+2. La regla de densidad: primero la tabla 11 de la UTD y luego la GWDD; sin densidad de la especie, no estimable.
+3. El tratamiento de los multifustales, que requiere demostrar la compatibilidad con cada ecuación.
+4. El carbono directo de quillay y peumo y su variación anual del carbono aéreo total como indicador oficial.
+5. Las tasas o categorías de crecimiento por especie con fuente verificada, empezando por Cruz et al. (2014). Es la condición para que exista una estimación fundamentada.
+6. La revisión en terreno de A-000505 y A-000534.
+7. La formalización: registrar un CC, sincronizar el Excel (filas 14 y 15 de INDICES, hoja de modelos y VERSION) y solo entonces publicar en producción.
+
+### 8.3 Registro de las decisiones
+
+| Aprobación | Decisión del equipo | Fecha | Observaciones |
+|---|---|---|---|
+| 8.1 Integración experimental (backend #94 y #95 en `fase6`) | Pendiente | | |
+| 8.2 Aprobación metodológica definitiva | Pendiente | | |
+| Publicación del frontend (#37 y #38 en sivu.cl) | Pendiente | | |
 
 ## 9. Implementación, pruebas y PR
 
