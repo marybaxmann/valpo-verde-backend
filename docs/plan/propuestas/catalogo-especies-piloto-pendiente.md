@@ -1,8 +1,8 @@
 # Catálogo de especies del Piloto: datos pendientes (para verificación)
 
-**Estado:** la sección 2 se cargó en la **base de pruebas** el 2026-11-21, con la sesión de Inspector de la responsable y mediante el endpoint de la plataforma (PATCH `/api/sivu/projects/:id/species/:speciesId`, CC-053), que registra quién hizo el cambio. Quedaron sin dato, por falta de decisión, el origen de *Schinus molle* y la persistencia del follaje de *Jacaranda mimosifolia*. También se completó la persistencia de *Phoenix canariensis* (perennifolia). La base real no se tocó.
+**Estado:** la sección 2 se cargó en la **base de pruebas** el 2026-11-21, con la sesión de Inspector de la responsable y mediante el endpoint de la plataforma (PATCH `/api/sivu/projects/:id/species/:speciesId`, CC-053), que registra quién hizo el cambio. *Schinus molle* quedó como nativa por decisión de la responsable. Sigue sin dato la persistencia del follaje de *Jacaranda mimosifolia*. También se completó la persistencia de *Phoenix canariensis* (perennifolia). La base real no se tocó.
 
-**Resultado en el Piloto:** nativas 14 (14,3 %: quillay, peumo y belloto, todas endémicas); introducidas 76 (77,6 %); origen no determinado 8 (los 7 árboles sin especie y *Schinus molle*). La composición por género y familia queda completa, salvo los 7 árboles sin especie. El carbono no cambia.
+**Resultado en el Piloto:** nativas 15 (15,3 %: quillay, peumo y belloto, endémicos, y pimiento); introducidas 76 (77,6 %); origen no determinado 7 (los árboles sin especie identificada). La composición por género y familia queda completa, salvo los 7 árboles sin especie. El carbono no cambia.
 
 ## 1. Por qué importa
 
