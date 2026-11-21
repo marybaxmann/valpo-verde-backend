@@ -261,12 +261,12 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     campo: "fotografias_arbol",
     quienIngresa: "Inspector",
     obligatoriedadExcel: "Obligatorio para finalizar la Evaluación inicial, la Reevaluación y el Levantamiento",
-    condicionExcel: "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. No aplica en la Evaluación instrumental; en el Monitoreo no es obligatoria.",
+    condicionExcel: "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. En la Evaluación instrumental es opcional; en el Monitoreo no es obligatoria.",
     exigencia: "fotos_d27",
     origen: "registrado",
     activacion: {"op": "siempre"},
     traduccion: "cc056",
-    nota: "D-27: mínimo de dos fotografías válidas y distintas de esta inspección; vistas informativas.",
+    nota: "D-27: mínimo de dos fotografías válidas y distintas de esta inspección, excluida la vista Detalle.",
   },
   {
     fila: 33,
@@ -2268,7 +2268,7 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     hoja: "ARBOLES",
     campo: "fotografias_arbol",
     tipoDato: "Archivo de imagen",
-    unidadValores: "Varias fotografías por inspección",
+    unidadValores: "Varias fotografías por inspección Dominio informativo de vista_foto: Árbol completo / Base / Tronco / Copa / Detalle.",
   },
   {
     hoja: "ARBOLES",
@@ -3108,7 +3108,7 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     hoja: "REGISTRO_EVALUACION",
     campo: "clasificacion_riesgo",
     tipoDato: "Categoría",
-    unidadValores: "Bajo / Moderado / Alto / Extremo",
+    unidadValores: "Bajo / Moderado / Alto / Extremo / No determinado",
   },
   {
     hoja: "REGISTRO_EVALUACION",

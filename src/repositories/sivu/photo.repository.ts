@@ -10,11 +10,7 @@ export const BUCKET_FOTOS = "tree-photos";
  */
 export const SEGUNDOS_URL_FIRMADA = 10 * 60;
 
-/**
- * D-27: las cuatro vistas principales. 'detalle' (039) es una foto
- * complementaria: nunca completa D-27 (fn_finalizar_inspeccion y
- * completitud.ts cuentan solo las cuatro).
- */
+/** Detalle no aporta al conteo D-27. Las fotos visuales sin vista siguen siendo admisibles. */
 export type VistaFoto = "arbol_completo" | "base" | "tronco" | "copa" | "detalle";
 
 export interface PhotoRow {
@@ -114,6 +110,7 @@ export interface CrearFotoInput {
   uploadedBy: string;
   /** Huella del original (039); null u omitida cuando el archivo se recodificó. */
   sha256?: string | null;
+  descripcion?: string;
 }
 
 const PHOTO_COLUMNS =
@@ -140,6 +137,7 @@ export async function crearFotoRegistro(input: CrearFotoInput): Promise<PhotoRow
       incident_id: input.incidentId,
       uploaded_by: input.uploadedBy,
       sha256: input.sha256 ?? null,
+      ...(input.descripcion !== undefined && { description: input.descripcion }),
     })
     .select(PHOTO_COLUMNS)
     .single();

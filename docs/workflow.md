@@ -527,6 +527,8 @@ Los cambios tipo 4 empiezan en el paso 3, sobre una versión publicada.
 La excepción operativa de CC-008 (§14.12) quedó sin efecto por CC-035:
 toda implementación de la fuente parte de una versión publicada.
 
+Un CC con impacto en el Excel permanece abierto hasta figurar en cc_incluidos de VERSION. Antes de publicar, revisar en registro-cambios.md los compromisos «Pendiente: … en la próxima versión del paquete». Incorporar los que correspondan a la versión y documentar los que se difieran.
+
 Los cambios al Excel maestro se hacen en una rama y se integran mediante pull request que cita el CC; no se suben directo a `main`.
 
 ### 14.8 Matriz de impacto

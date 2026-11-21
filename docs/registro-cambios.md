@@ -1965,6 +1965,8 @@ motivo)
 
 ### CC-043 — M04: tratamiento de "Función no determinada" en `tipo_red_aerea` (IN-RAE)
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
+
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-22 |
@@ -2001,6 +2003,8 @@ motivo)
 ---
 
 ### CC-044 — Ajuste justificado sobre una clasificación calculada como No determinado / No aplica
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -2039,6 +2043,8 @@ motivo)
 
 ### CC-045 — Dos bloqueos del ensamblaje cerrados: ajustes ante una inspección anulada y fechas sugeridas sin riesgo determinado
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
+
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-22 |
@@ -2075,6 +2081,8 @@ motivo)
 ---
 
 ### CC-046 — El árbol debe quedar dentro del sector de su proyecto (D-255; D-9/D-10)
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -2235,6 +2243,8 @@ motivo)
 ---
 
 ### CC-050 — Estados de la orden de trabajo (OT)
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -2399,6 +2409,8 @@ motivo)
 
 ### CC-054 — Finalizar una inspección en dos pasos (calcular y finalizar)
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
+
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-25 |
@@ -2437,6 +2449,8 @@ motivo)
 ---
 
 ### CC-055 — Fechas de próxima inspección y próximo monitoreo según el tipo de inspección
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -2693,6 +2707,8 @@ motivo)
 
 ### CC-062 — Valpo Verde Conecta dentro de CC-036: formulario por QR, placas, ficha pública y código de seguimiento (PR-022 v2.0)
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
+
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-26 |
@@ -2893,6 +2909,8 @@ motivo)
 ---
 
 ### CC-067 — Anulación de una inspección finalizada: la registra el Usuario municipal
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -3108,6 +3126,8 @@ motivo)
 ---
 
 ### CC-073 — Fotografías: vista «detalle», fotos de registro del árbol, huella del original y carga firmada (enmienda de CC-049)
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -3325,3 +3345,11 @@ motivo)
 - Consecuencias calculadas por el diámetro de la parte (Ellison, 2005). En multifustales se entrega el DAP equivalente para raíces y cuello y el fuste mayor para tronco. La copa baja un nivel respecto del tronco. El motor conserva los ajustes justificados.
 - IF-22: red aérea eléctrica bajo la referencia, Moderada sin daño y Severa con daño, con alerta visible en el resultado. IF-23: red subterránea comprometida sin afectación física, Moderada. Se conserva CC-043, la agregación de M04 y M05.
 - Excel, exportaciones, índice y motor se sincronizan en el mismo cambio. Las evaluaciones anteriores conservan su versión y no se recalculan automáticamente. PALM-01 queda para 3.3.0. Producción requiere confirmación independiente de la autora.
+
+### CC-081 — Fotografías instrumentales opcionales y exclusión de Detalle del mínimo D-27
+
+- Decisión aprobada por la autora el 2026-11-21. Sincronizada en el Excel maestro, VERSION 3.2.1 (rule_version 3.2), D-27 y REGLAS_GENERALES fila 28. D-206 conserva su carácter opcional.
+- En Evaluación inicial, Reevaluación y Levantamiento se mantienen dos fotografías válidas y distintas. Las etiquetadas Detalle se excluyen del conteo y de las vistas recomendadas. Las fotografías válidas sin etiqueta siguen contando.
+- Evaluación instrumental admite evidencia opcional con vistas Base, Tronco o Detalle. No interviene en finalización, mínimos ni cálculo. El protocolo recomienda una fotografía del equipo en posición y otra del resultado.
+- Backend local: carga directa y firmada para instrumentales, con las validaciones de estado y responsabilidad existentes; la descripción opcional se conserva en la columna de fotos existente. Migración 043 reversible para el conteo transaccional, sin modificar 040 ni 041.
+- Las cuatro instrumentales de regularización se cargan después de desplegar este CC. Publicación autorizada por la autora el 2026-11-21. La regularización queda sujeta a su autorización independiente.

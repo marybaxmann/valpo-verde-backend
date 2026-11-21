@@ -31,8 +31,7 @@ import {
   SubirFotoInspeccionBody,
 } from "../../schemas/sivu/fotos.schema";
 
-/** D-27: la Evaluación instrumental no admite fotos. */
-const TIPO_SIN_FOTOS = "evaluacion_instrumental";
+const VISTAS_INSTRUMENTALES: readonly VistaFoto[] = ["base", "tronco", "detalle"];
 
 /** Roles que asocian fotos de registro al árbol (039): quien registra el inventario y quien inspecciona. */
 const ROLES_FOTO_REGISTRO = ["usuario_municipal", "inspector"] as const;
@@ -149,7 +148,8 @@ export async function procesarFotoPublica(buffer: Buffer): Promise<Buffer> {
 async function autorizarSubidaInspeccion(
   user: AuthenticatedUser,
   inspectionId: string,
-  accessToken: string
+  accessToken: string,
+  vista: VistaFoto | undefined
 ): Promise<DestinoFoto> {
   const inspeccion = await obtenerInspeccionPorId(inspectionId);
   if (!inspeccion) {
@@ -182,10 +182,9 @@ async function autorizarSubidaInspeccion(
     throw new AppError("La inspección ya no admite fotos nuevas (no está en Preguardado)", 422);
   }
 
-  // Tipo de inspección (D-27).
-  const tipo = inspeccion.tipo_inspeccion_realizada;
-  if (tipo === TIPO_SIN_FOTOS) {
-    throw new AppError("La Evaluación instrumental no admite fotos (D-27)", 422);
+  if (inspeccion.tipo_inspeccion_realizada === "evaluacion_instrumental" &&
+      (vista === undefined || !VISTAS_INSTRUMENTALES.includes(vista))) {
+    throw new AppError("La Evaluación instrumental admite vistas Base, Tronco o Detalle (CC-081)", 422);
   }
 
   return { projectId: ot.project_id, treeId: inspeccion.tree_id, inspectionId, origen: "inspeccion" };
@@ -228,7 +227,8 @@ async function insertarFila(
   photoId: string,
   storagePath: string,
   vista: VistaFoto | null,
-  sha256: string
+  sha256: string,
+  descripcion?: string
 ): Promise<PhotoRow> {
   try {
     return await crearFotoRegistro({
@@ -241,6 +241,7 @@ async function insertarFila(
       incidentId: null,
       uploadedBy: user.id,
       sha256,
+      ...(descripcion !== undefined && { descripcion }),
     });
   } catch (err) {
     await eliminarArchivoDeStorage(storagePath);
@@ -260,7 +261,8 @@ async function registrarFotoDirecta(
   user: AuthenticatedUser,
   destino: DestinoFoto,
   vista: VistaFoto | null,
-  archivo: ArchivoSubido
+  archivo: ArchivoSubido,
+  descripcion?: string
 ): Promise<PhotoRow> {
   const procesada = await verificarYProcesarFoto(archivo.buffer, false);
   const sha256 = huellaSha256(procesada.buffer);
@@ -269,7 +271,7 @@ async function registrarFotoDirecta(
   const photoId = randomUUID();
   const storagePath = rutaDefinitiva(destino, photoId, procesada.extension);
   await subirArchivoAStorage(storagePath, procesada.buffer, procesada.contentType);
-  return insertarFila(user, destino, photoId, storagePath, vista, sha256);
+  return insertarFila(user, destino, photoId, storagePath, vista, sha256, descripcion);
 }
 
 // ---------------------------------------------------------------------------
@@ -289,8 +291,8 @@ export async function subirFotoInspeccion(
   archivo: ArchivoSubido,
   accessToken: string
 ): Promise<PhotoRow> {
-  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken);
-  return registrarFotoDirecta(user, destino, body.vista ?? null, archivo);
+  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken, body.vista);
+  return registrarFotoDirecta(user, destino, body.vista ?? null, archivo, body.descripcion);
 }
 
 /** POST /api/sivu/projects/:id/trees/:treeId/photos — foto de registro del árbol (039). */
@@ -351,7 +353,7 @@ async function confirmarSubida(user: AuthenticatedUser, destino: DestinoFoto, bo
     const photoId = randomUUID();
     const storagePath = rutaDefinitiva(destino, photoId, procesada.extension);
     await moverArchivo(pendiente, storagePath);
-    return await insertarFila(user, destino, photoId, storagePath, body.vista ?? null, sha256);
+    return await insertarFila(user, destino, photoId, storagePath, body.vista ?? null, sha256, destino.origen === "inspeccion" ? body.descripcion : undefined);
   } catch (err) {
     // La carga pendiente nunca queda: o se movió a su ruta definitiva, o se descarta.
     await eliminarArchivoDeStorage(pendiente);
@@ -366,7 +368,7 @@ export async function solicitarSubidaInspeccion(
   body: SolicitarSubidaBody,
   accessToken: string
 ): Promise<SubidaFirmada> {
-  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken);
+  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken, body.vista);
   return solicitarSubida(user, destino, body);
 }
 
@@ -377,7 +379,7 @@ export async function confirmarSubidaInspeccion(
   body: ConfirmarSubidaBody,
   accessToken: string
 ): Promise<PhotoRow> {
-  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken);
+  const destino = await autorizarSubidaInspeccion(user, inspectionId, accessToken, body.vista);
   return confirmarSubida(user, destino, body);
 }
 
