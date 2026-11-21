@@ -4,6 +4,7 @@ import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, listarV
 import { agregarSecuestro } from "../rules/carbono/secuestro";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
+import { agregarCarbonoAereoTotal } from "../rules/carbono/carbonoAereoTotal";
 import {
   ArbolEspecie,
   abundanciaRelativa,
@@ -113,6 +114,9 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     proporcion_origen: proporcionOrigen(especies),
     // Separados: biomasa aérea leñosa, carbono aéreo leñoso y CO₂ equivalente (total en t), con cobertura y motivos.
     estimacion_carbono_aereo_lenoso: agregarCarbono(arbolesCarbono),
+    // Carbono aéreo total con follaje (carbono directo, 2026-11-21): indicador aparte, solo cobertura mientras
+    // los modelos sean exploratorios; nunca se suma con el carbono aéreo leñoso.
+    estimacion_carbono_aereo_total: agregarCarbonoAereoTotal(arbolesCarbono),
     // Secuestro anual (decisiones A a C, 2026-11-20): cobertura por tipo de resultado; el total suma solo
     // estimaciones fundamentadas, nunca simulaciones.
     estimacion_secuestro_anual: agregarSecuestro(

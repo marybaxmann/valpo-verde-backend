@@ -18,7 +18,8 @@ import { listarOtsDeArbol } from "./listadoOt.service";
 import { areaCopaArbol } from "../rules/indicadores/inventario";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { calcularCarbonoArbol, METODO_CARBONO } from "../rules/carbono/calculo";
-import { LIMITACIONES } from "../rules/carbono/modelos";
+import { calcularCarbonoAereoTotalArbol, METODO_CARBONO_AEREO_TOTAL } from "../rules/carbono/carbonoAereoTotal";
+import { LIMITACIONES, LIMITACIONES_AEREO_TOTAL } from "../rules/carbono/modelos";
 import { calcularSecuestroArbol, METODO_SECUESTRO } from "../rules/carbono/secuestro";
 import { listarVariablesCrecimiento } from "../../repositories/sivu/indicadores.repository";
 
@@ -156,6 +157,9 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     // CC-069 v1 (pendiente de sincronización con el Excel): valor (biomasa, carbono y CO₂e por separado, con el modelo)
     // o null con categoría, motivo y detalle.
     estimacion_carbono_aereo_lenoso: { ...carbono, metodo: METODO_CARBONO, limitaciones: [...LIMITACIONES] },
+    // Carbono aéreo total con follaje (carbono directo, 2026-11-21): otro componente, exploratorio; no se suma
+    // con el leñoso ni alimenta el secuestro anual.
+    estimacion_carbono_aereo_total: { ...calcularCarbonoAereoTotalArbol(entradaCarbono), metodo: METODO_CARBONO_AEREO_TOTAL, limitaciones: [...LIMITACIONES_AEREO_TOTAL] },
     // Secuestro anual (decisiones A a C, 2026-11-20): estimación fundamentada, simulación exploratoria (rango
     // con las tres categorías de i-Tree Eco) o no estimable con su motivo.
     secuestro_anual: { ...secuestro, metodo: METODO_SECUESTRO },

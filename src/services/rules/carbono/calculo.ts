@@ -6,7 +6,7 @@
  * es null con su motivo.
  */
 import { claveEspecie } from "../indicadores/especies";
-import { FACTOR_CO2_POR_C, FRACCION_CARBONO, LIMITACIONES, MODELOS_VOLUMEN, ModeloVolumen } from "./modelos";
+import { FACTOR_CO2_POR_C, FRACCION_CARBONO, LIMITACIONES, ModeloVolumen, seleccionarModelos } from "./modelos";
 
 export interface ArbolCarbono {
   id: string;
@@ -88,36 +88,58 @@ export type ResultadoArbol =
   | { valor: CarbonoArbol; categoria: null; motivo: null; detalle: null }
   | { valor: null; categoria: CategoriaSinCarbono; motivo: MotivoSinCarbono; detalle: string };
 
-const sinResultado = (motivo: MotivoSinCarbono, detalle: string): ResultadoArbol => ({
+export type SinResultado = Extract<ResultadoArbol, { valor: null }>;
+
+export const sinResultado = (motivo: MotivoSinCarbono, detalle: string): SinResultado => ({
   valor: null,
   categoria: CATEGORIA_DE_MOTIVO[motivo],
   motivo,
   detalle,
 });
-const dentro = (x: number, min: number, max: number) => x >= min && x <= max;
-const fmt = (x: number) => x.toFixed(4).replace(/\.?0+$/, "");
+export const dentro = (x: number, min: number, max: number) => x >= min && x <= max;
+export const fmt = (x: number) => x.toFixed(4).replace(/\.?0+$/, "");
 
-/** Calcula un árbol, empezando por su pertenencia al universo de cálculo. */
-export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
+/**
+ * Requisitos comunes a todos los modelos, en este orden: universo de
+ * cálculo, modelo para la especie, palmera, configuración de fustes y DAP.
+ * null si el árbol los cumple. Los textos de «sin modelo» y «multifustal»
+ * los pone cada cálculo, porque dependen de su catálogo y su fuente.
+ */
+export function comprobarRequisitosComunes(
+  a: ArbolCarbono,
+  clave: string | null,
+  hayModelo: boolean,
+  detalles: { sinModelo: string; multifustal: string }
+): SinResultado | null {
   if (!a.presente) return sinResultado("no_presente", "El árbol no está presente (D-28).");
   if (!a.evaluacion_completa_vigente) {
     return sinResultado("sin_evaluacion_valida", "El árbol no tiene una evaluación completa válida y vigente: queda fuera del universo de cálculo.");
   }
-  const clave = claveEspecie(a.especie_cientifica);
-  const modelos = clave === null ? [] : MODELOS_VOLUMEN.filter((m) => m.especie === clave);
-  if (modelos.length === 0) {
-    return sinResultado("sin_modelo", clave === null ? "Especie no determinada a nivel específico." : "No hay un modelo aprobado para esta especie.");
+  if (!hayModelo) {
+    return sinResultado("sin_modelo", clave === null ? "Especie no determinada a nivel específico." : detalles.sinModelo);
   }
   if (a.tipo_hoja === "palmera") return sinResultado("palmera_sin_modelo", "Las palmeras no tienen modelo aprobado.");
-  if (a.multifustal === true) {
-    return sinResultado("multifustal_no_admitido", "El modelo se ajustó con árboles de un fuste a la altura del DAP; los multifustales no se estiman.");
-  }
+  if (a.multifustal === true) return sinResultado("multifustal_no_admitido", detalles.multifustal);
   if (a.multifustal === null) {
     return sinResultado(
       "configuracion_fuste_no_determinada",
       "No está registrado si el árbol es multifustal (D-15): el DAP podría ser un diámetro equivalente y no la medición directa de un fuste."
     );
   }
+  if (a.dap_cm === null) return sinResultado("falta_dap", "Falta el DAP.");
+  return null;
+}
+
+/** Calcula un árbol, empezando por su pertenencia al universo de cálculo. */
+export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
+  const clave = claveEspecie(a.especie_cientifica);
+  // Solo modelos del componente aéreo leñoso (selección explícita por componente y estado, 2026-11-21).
+  const modelos = seleccionarModelos("aerea_lenosa", clave);
+  const requisito = comprobarRequisitosComunes(a, clave, modelos.length > 0, {
+    sinModelo: "No hay un modelo aprobado para esta especie.",
+    multifustal: "El modelo se ajustó con árboles de un fuste a la altura del DAP; los multifustales no se estiman.",
+  });
+  if (requisito) return requisito;
   if (a.dap_cm === null) return sinResultado("falta_dap", "Falta el DAP.");
 
   const conAltura = a.altura_total_m !== null;
