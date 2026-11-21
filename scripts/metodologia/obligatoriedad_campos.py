@@ -211,9 +211,9 @@ TRADUCCIONES_CC056 = {
     ("ARBOLES", "fotografias_arbol"): {
         "i": "Obligatorio para finalizar la Evaluación inicial, la Reevaluación y el Levantamiento",
         "k": "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. "
-             "No aplica en la Evaluación instrumental; en el Monitoreo no es obligatoria.",
+             "En la Evaluación instrumental es opcional; en el Monitoreo no es obligatoria.",
         "exigido": True, "activacion": SIEMPRE, "exigencia": "fotos_d27",
-        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección; vistas informativas."},
+        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección, excluida la vista Detalle."},
     # --- REGISTRO_EVALUACION ---
     ("REGISTRO_EVALUACION", "direccion_inclinacion"): {
         "i": "Condicional", "k": "angulo_inclinacion ≥ 15°", "exigido": True,
