@@ -13,7 +13,7 @@ import {
 } from "../../../../src/services/rules/engine/palmeras";
 import { incluyePalmeras, RULE_VERSION, RULE_VERSION_OPERATIVA } from "../../../../src/services/rules/engine/version";
 
-/** Palmera sin defectos (CC-081): todos los indicadores despreciables. */
+/** Palmera sin defectos (CC-082): todos los indicadores despreciables. */
 function palmeraSana(): PalmeraInput {
   return {
     levantamiento_del_plato_radicular: false,
@@ -49,7 +49,7 @@ function palmeraSana(): PalmeraInput {
   };
 }
 
-describe("versiones (CC-081)", () => {
+describe("versiones (CC-082)", () => {
   it("la 3.3 es candidata y la plataforma sigue en la 3.2", () => {
     expect(RULE_VERSION).toBe("3.3");
     expect(RULE_VERSION_OPERATIVA).toBe("3.2");
@@ -199,7 +199,7 @@ describe("R03-P · Corona", () => {
   });
 });
 
-describe("vitalidad de palmera (D-310)", () => {
+describe("vitalidad de palmera (D-311)", () => {
   it.each([
     ["5", "4", 4],
     ["2", "6", "no_determinado"],
@@ -250,7 +250,7 @@ function args(variablesCalculo: NucleoEntradas, ruleVersion: "3.2" | "3.3"): Arg
   };
 }
 
-describe("ensamblaje con palmeras (CC-081)", () => {
+describe("ensamblaje con palmeras (CC-082)", () => {
   it("una palmera con la 3.3 usa R01-P a R03-P, consecuencia por DAP y vitalidad de palmera", () => {
     const r = ensamblarResultadoEvaluacion(args({
       ...nucleoBase(), tipo_hoja: "palmera", presenta_heridas_tronco: true, estrechamiento_estipite: "si",
@@ -282,7 +282,7 @@ function aleatorio(semilla: number) {
   };
 }
 
-describe("regresión: los árboles dan lo mismo con la 3.3 que con la 3.2 (CC-081, superposición)", () => {
+describe("regresión: los árboles dan lo mismo con la 3.3 que con la 3.2 (CC-082, superposición)", () => {
   it("600 árboles aleatorios: resultado idéntico salvo rule_version", () => {
     const r = aleatorio(81);
     const elegir = <T,>(xs: readonly T[]): T => xs[Math.floor(r() * xs.length)];

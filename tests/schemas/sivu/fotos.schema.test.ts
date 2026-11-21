@@ -10,7 +10,7 @@ describe("inspectionIdParamSchema", () => {
   });
 });
 
-describe("subirFotoInspeccionSchema (D-27, las 4 vistas obligatorias)", () => {
+describe("subirFotoInspeccionSchema (D-27 y CC-081)", () => {
   it.each(["arbol_completo", "base", "tronco", "copa"])("acepta vista = %s", (vista) => {
     expect(subirFotoInspeccionSchema.safeParse({ vista }).success).toBe(true);
   });
@@ -23,7 +23,9 @@ describe("subirFotoInspeccionSchema (D-27, las 4 vistas obligatorias)", () => {
     expect(subirFotoInspeccionSchema.safeParse({}).success).toBe(true);
   });
 
-  it("rechaza campos extra (.strict())", () => {
-    expect(subirFotoInspeccionSchema.safeParse({ vista: "base", descripcion: "x" }).success).toBe(false);
+  it("acepta una descripcion de evidencia y rechaza propiedades fuera del contrato", () => {
+    expect(subirFotoInspeccionSchema.parse({ vista: "detalle", descripcion: "  tira 1  " }).descripcion).toBe("tira 1");
+    expect(subirFotoInspeccionSchema.safeParse({ vista: "base", descripcion: " " }).success).toBe(false);
+    expect(subirFotoInspeccionSchema.safeParse({ vista: "base", campoDesconocido: "x" }).success).toBe(false);
   });
 });

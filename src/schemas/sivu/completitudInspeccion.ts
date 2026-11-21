@@ -37,7 +37,7 @@ export interface ReglaCompletitud {
   activacion: CondicionActivacion;
   traduccion: "automatica" | "cc056";
   nota?: string;
-  /** CC-081: versión de rule_version desde la que se exige (palmeras: 3.3); sin ella, en todas. */
+  /** CC-082: versión de rule_version desde la que se exige (palmeras: 3.3); sin ella, en todas. */
   desdeVersion?: string;
 }
 
@@ -263,12 +263,12 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     campo: "fotografias_arbol",
     quienIngresa: "Inspector",
     obligatoriedadExcel: "Obligatorio para finalizar la Evaluación inicial, la Reevaluación y el Levantamiento",
-    condicionExcel: "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. No aplica en la Evaluación instrumental; en el Monitoreo no es obligatoria.",
+    condicionExcel: "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. En la Evaluación instrumental es opcional; en el Monitoreo no es obligatoria.",
     exigencia: "fotos_d27",
     origen: "registrado",
     activacion: {"op": "siempre"},
     traduccion: "cc056",
-    nota: "D-27: mínimo de dos fotografías válidas y distintas de esta inspección; vistas informativas.",
+    nota: "D-27: mínimo de dos fotografías válidas y distintas de esta inspección, excluida la vista Detalle.",
   },
   {
     fila: 33,
@@ -1674,7 +1674,7 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     traduccion: "automatica",
   },
   {
-    fila: 308,
+    fila: 309,
     hoja: "REGISTRO_EVALUACION",
     campo: "calidad_copa_palmera",
     quienIngresa: "Inspector",
@@ -1684,11 +1684,11 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "y", "condiciones": [{"op": "igual", "campo": "tipo_hoja", "valor": "palmera"}, {"op": "no_verdadero", "campo": "copa_no_presenta"}]},
     traduccion: "cc056",
-    nota: "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3.",
+    nota: "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3.",
     desdeVersion: "3.3",
   },
   {
-    fila: 309,
+    fila: 310,
     hoja: "REGISTRO_EVALUACION",
     campo: "proporcion_frondas_vivas",
     quienIngresa: "Inspector",
@@ -1698,11 +1698,11 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "y", "condiciones": [{"op": "igual", "campo": "tipo_hoja", "valor": "palmera"}, {"op": "no_verdadero", "campo": "copa_no_presenta"}]},
     traduccion: "cc056",
-    nota: "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3.",
+    nota: "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3.",
     desdeVersion: "3.3",
   },
   {
-    fila: 311,
+    fila: 312,
     hoja: "REGISTRO_EVALUACION",
     campo: "anomalia_cogollo",
     quienIngresa: "Inspector",
@@ -1712,11 +1712,11 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "y", "condiciones": [{"op": "igual", "campo": "tipo_hoja", "valor": "palmera"}, {"op": "no_verdadero", "campo": "copa_no_presenta"}]},
     traduccion: "cc056",
-    nota: "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3.",
+    nota: "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3.",
     desdeVersion: "3.3",
   },
   {
-    fila: 312,
+    fila: 313,
     hoja: "REGISTRO_EVALUACION",
     campo: "indicios_plaga_palmera",
     quienIngresa: "Inspector",
@@ -1726,11 +1726,11 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "igual", "campo": "tipo_hoja", "valor": "palmera"},
     traduccion: "cc056",
-    nota: "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3.",
+    nota: "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3.",
     desdeVersion: "3.3",
   },
   {
-    fila: 313,
+    fila: 314,
     hoja: "REGISTRO_EVALUACION",
     campo: "estrechamiento_estipite",
     quienIngresa: "Inspector",
@@ -1740,11 +1740,11 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "igual", "campo": "tipo_hoja", "valor": "palmera"},
     traduccion: "cc056",
-    nota: "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3.",
+    nota: "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3.",
     desdeVersion: "3.3",
   },
   {
-    fila: 314,
+    fila: 315,
     hoja: "REGISTRO_EVALUACION",
     campo: "angulacion_grave_estipite",
     quienIngresa: "Inspector",
@@ -1754,11 +1754,11 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "igual", "campo": "tipo_hoja", "valor": "palmera"},
     traduccion: "cc056",
-    nota: "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3.",
+    nota: "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3.",
     desdeVersion: "3.3",
   },
   {
-    fila: 315,
+    fila: 316,
     hoja: "REGISTRO_EVALUACION",
     campo: "raices_adventicias_altura",
     quienIngresa: "Inspector",
@@ -1768,11 +1768,11 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "igual", "campo": "tipo_hoja", "valor": "palmera"},
     traduccion: "cc056",
-    nota: "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3.",
+    nota: "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3.",
     desdeVersion: "3.3",
   },
   {
-    fila: 316,
+    fila: 317,
     hoja: "REGISTRO_EVALUACION",
     campo: "inclinacion_corregida",
     quienIngresa: "Inspector",
@@ -1782,7 +1782,7 @@ export const REGLAS_COMPLETITUD: readonly ReglaCompletitud[] = [
     origen: "registrado",
     activacion: {"op": "y", "condiciones": [{"op": "igual", "campo": "tipo_hoja", "valor": "palmera"}, {"op": "mayor_que", "campo": "angulo_inclinacion", "valor": 0}]},
     traduccion: "cc056",
-    nota: "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3.",
+    nota: "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3.",
     desdeVersion: "3.3",
   },
   {
@@ -2225,7 +2225,7 @@ export const CAMPOS_NO_EXIGIDOS: readonly CampoNoExigido[] = [
     motivo: "Lo asigna o calcula el Sistema.",
   },
   {
-    fila: 310,
+    fila: 311,
     hoja: "REGISTRO_EVALUACION",
     campo: "vitalidad_palmera",
     quienIngresa: "Sistema",
@@ -2391,7 +2391,7 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     hoja: "ARBOLES",
     campo: "fotografias_arbol",
     tipoDato: "Archivo de imagen",
-    unidadValores: "Varias fotografías por inspección",
+    unidadValores: "Varias fotografías por inspección Dominio informativo de vista_foto: Árbol completo / Base / Tronco / Copa / Detalle.",
   },
   {
     hoja: "ARBOLES",
@@ -3231,7 +3231,7 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     hoja: "REGISTRO_EVALUACION",
     campo: "clasificacion_riesgo",
     tipoDato: "Categoría",
-    unidadValores: "Bajo / Moderado / Alto / Extremo",
+    unidadValores: "Bajo / Moderado / Alto / Extremo / No determinado",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3373,7 +3373,7 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
   },
 ] as const;
 
-/** CC-081 (REGLAS_GENERALES fila 30; hoja PALMERAS, sección B): campos que no se exigen en una palmera desde la 3.3. */
+/** CC-082 (REGLAS_GENERALES fila 31; hoja PALMERAS, sección B): campos que no se exigen en una palmera desde la 3.3. */
 export const CAMPOS_NO_APLICAN_PALMERA: readonly string[] = ["defoliacion_estimada_pct", "clorosis_pct", "necrosis_pct", "copa_faltante_pct", "exposicion_luminica_copa_cle", "muerte_regresiva_copa_pct", "altura_punta_viva_m", "altura_primera_rama_m", "diametro_max_ramas_secas_cm", "numero_ramas_quebradas", "diametro_max_ramas_quebradas_cm", "D_diametro_tronco_cm", "d_diametro_cavidad_tronco_cm", "SL_tronco_pct", "t_pared_residual_tronco_cm", "R_radio_tronco_cm", "t_R_tronco", "d_diametro_cavidad_basal_cm", "SL_basal_pct", "t_pared_residual_basal_cm", "R_radio_basal_cm", "t_R_basal", "condicion_heridas_tronco", "corteza_muerta_ausente", "crecimiento_de_respuesta", "troncos_codominantes", "corteza_incluida", "grieta_union_codominante", "adelgazamiento_insuficiente_tronco"];
 
 /** Secciones del formulario (B16): orden de columnas de las hojas; propuesta = nombre por aprobar. */

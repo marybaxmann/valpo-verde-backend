@@ -1965,6 +1965,8 @@ motivo)
 
 ### CC-043 — M04: tratamiento de "Función no determinada" en `tipo_red_aerea` (IN-RAE)
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
+
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-22 |
@@ -2001,6 +2003,8 @@ motivo)
 ---
 
 ### CC-044 — Ajuste justificado sobre una clasificación calculada como No determinado / No aplica
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -2039,6 +2043,8 @@ motivo)
 
 ### CC-045 — Dos bloqueos del ensamblaje cerrados: ajustes ante una inspección anulada y fechas sugeridas sin riesgo determinado
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
+
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-22 |
@@ -2075,6 +2081,8 @@ motivo)
 ---
 
 ### CC-046 — El árbol debe quedar dentro del sector de su proyecto (D-255; D-9/D-10)
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -2235,6 +2243,8 @@ motivo)
 ---
 
 ### CC-050 — Estados de la orden de trabajo (OT)
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -2399,6 +2409,8 @@ motivo)
 
 ### CC-054 — Finalizar una inspección en dos pasos (calcular y finalizar)
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
+
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-25 |
@@ -2437,6 +2449,8 @@ motivo)
 ---
 
 ### CC-055 — Fechas de próxima inspección y próximo monitoreo según el tipo de inspección
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -2693,6 +2707,8 @@ motivo)
 
 ### CC-062 — Valpo Verde Conecta dentro de CC-036: formulario por QR, placas, ficha pública y código de seguimiento (PR-022 v2.0)
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
+
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-10-26 |
@@ -2893,6 +2909,8 @@ motivo)
 ---
 
 ### CC-067 — Anulación de una inspección finalizada: la registra el Usuario municipal
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -3108,6 +3126,8 @@ motivo)
 ---
 
 ### CC-073 — Fotografías: vista «detalle», fotos de registro del árbol, huella del original y carga firmada (enmienda de CC-049)
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.2.1 el 2026-11-21. Paquete documental 3.2.1; rule_version 3.2.
 
 | Campo | Valor |
 |---|---|
@@ -3326,16 +3346,24 @@ motivo)
 - IF-22: red aérea eléctrica bajo la referencia, Moderada sin daño y Severa con daño, con alerta visible en el resultado. IF-23: red subterránea comprometida sin afectación física, Moderada. Se conserva CC-043, la agregación de M04 y M05.
 - Excel, exportaciones, índice y motor se sincronizan en el mismo cambio. Las evaluaciones anteriores conservan su versión y no se recalculan automáticamente. PALM-01 queda para 3.3.0. Producción requiere confirmación independiente de la autora.
 
-### CC-081 — PALM-01: evaluación de palmeras (SIVU 3.3.0, en preparación)
+### CC-081 — Fotografías instrumentales opcionales y exclusión de Detalle del mínimo D-27
 
-- Aprobación del criterio: autora, 2026-11-21. Paquete MINOR 3.3.0 en preparación, `rule_version` 3.3 al publicar, sobre la 3.2.0 (CC-080). Fundamento: matriz E2e, protocolo E4e, diagrama v5 y propuesta E7 de PALM-01, en la carpeta de auditoría metodológica de la tesis.
+- Decisión aprobada por la autora el 2026-11-21. Sincronizada en el Excel maestro, VERSION 3.2.1 (rule_version 3.2), D-27 y REGLAS_GENERALES fila 28. D-206 conserva su carácter opcional.
+- En Evaluación inicial, Reevaluación y Levantamiento se mantienen dos fotografías válidas y distintas. Las etiquetadas Detalle se excluyen del conteo y de las vistas recomendadas. Las fotografías válidas sin etiqueta siguen contando.
+- Evaluación instrumental admite evidencia opcional con vistas Base, Tronco o Detalle. No interviene en finalización, mínimos ni cálculo. El protocolo recomienda una fotografía del equipo en posición y otra del resultado.
+- Backend local: carga directa y firmada para instrumentales, con las validaciones de estado y responsabilidad existentes; la descripción opcional se conserva en la columna de fotos existente. Migración 043 reversible para el conteo transaccional, sin modificar 040 ni 041.
+- Las cuatro instrumentales de regularización se cargan después de desplegar este CC. Publicación autorizada por la autora el 2026-11-21. La regularización queda sujeta a su autorización independiente.
+
+### CC-082 — PALM-01: evaluación de palmeras (SIVU 3.3.0, en preparación)
+
+- Aprobación del criterio: autora, 2026-11-21. Paquete MINOR 3.3.0 en preparación, `rule_version` 3.3 al publicar, sobre la 3.2.1 (CC-081). **Renumerado:** se registró primero como CC-081, pero ese número lo tomó la 3.2.1 (fotografías D-27, migración 043), publicada el mismo día. Al integrar `feature/fase6-backend-api` (2026-11-21) pasó a CC-082 y sus filas se corrieron una posición por la D-308 nueva de la 3.2.1. CC-082 no necesita migración: los campos de palmeras viven en `evaluations.variables` (jsonb). Fundamento: matriz E2e, protocolo E4e, diagrama v5 y propuesta E7 de PALM-01, en la carpeta de auditoría metodológica de la tesis.
 - **Superposición: no se modifica ninguna fila, celda o estilo existente del Excel.** Se agregan:
-  - D-308 a D-316, 9 campos de palmeras, Condicionales con `tipo_hoja = Palmera`;
-  - REGLAS_GENERALES, filas 29 a 32;
+  - D-309 a D-317, 9 campos de palmeras, Condicionales con `tipo_hoja = Palmera`;
+  - REGLAS_GENERALES, filas 30 a 33;
   - REGLAS_INDICADORES PB-, PE- y PC-, 57 reglas;
   - el bloque R01-P a R03-P de MATRICES_CALCULO, filas 20 a 33, con máximos 10, 12 y 5 y las bandas de los árboles;
   - la hoja PALMERAS: definiciones adaptadas (A), campos que no aplican (B) y nota (C);
-  - VERSION, fila 10.
+  - VERSION, fila 11.
 - **Árboles sin cambios.** Sus reglas, campos y resultados son los de la 3.2. Las inspecciones finalizadas conservan su versión. `tipo_hoja` nulo u otro valor usa las reglas de árboles. La plaga «No determinado» deja No determinado el componente, como en los árboles.
 - **Sincronización en este cambio:**
   - exportaciones, con PALMERAS agregada a `exportar_excel.py`;
@@ -3358,7 +3386,7 @@ motivo)
   - R01-P, R02-P y R03-P, con las reglas PB-, PE- y PC-;
   - pisos antes de propagar No determinado;
   - bandas 0 / 1–3 / ≥ 4 en base y estípite, y 0 / 1–2 / ≥ 3 en la corona;
-  - la vitalidad de palmera (D-310), solo en `calculados`.
+  - la vitalidad de palmera (D-311), solo en `calculados`.
 - `version.ts`: la 3.3 es la versión **candidata** (`RULE_VERSION`) y la 3.2 sigue **operativa** (`RULE_VERSION_OPERATIVA`). Los servicios calculan con la operativa, así que la plataforma no cambia hasta publicar. Las comparaciones de versión pasan a `usaEscala32` e `incluyePalmeras`. El ensamblaje sin versión explícita usa la operativa.
 - `ensamblaje.ts`: la rama de palmeras solo se activa con `incluyePalmeras(version)` y `tipo_hoja = "palmera"`. Los indicadores pasan a ser `IndicadoresArbol | IndicadoresPalmera`, con el guardián de tipo `sonIndicadoresArbol`. La consecuencia, M01 a M03, R04 y M04 son comunes.
 - Pruebas: `tests/services/rules/engine/palmeras.test.ts`, con 34 casos.
@@ -3375,8 +3403,8 @@ motivo)
 **Borrador, completitud y formulario (2026-11-21, misma rama)**
 - **Excel, solo en filas y columnas nuevas:**
   - REGISTRO_EVALUACION tiene 9 columnas nuevas (EV a FD), una por campo de palmeras, como hizo CC-071;
-  - D-309 lleva el dominio literal de las clases;
-  - D-312 cambia el tipo a «Categoría» y deja la selección múltiple en la columna L.
+  - D-310 lleva el dominio literal de las clases;
+  - D-313 cambia el tipo a «Categoría» y deja la selección múltiple en la columna L.
   - Verificado: ninguna celda existente con valor cambió.
 - **Generador `obligatoriedad_campos.py`.** Con el Excel anterior fallaba («tipo_hoja» no está en el diccionario). Ahora tiene:
   - traducciones de los 8 campos que ingresa el Inspector: activación `tipo_hoja = palmera` y `desdeVersion: "3.3"`;
@@ -3386,9 +3414,9 @@ motivo)
   - Las entradas de árboles son idénticas: reglas, no exigidos, metadatos, y sección y orden relativo.
 - **`completitud.ts`:**
   - una regla con `desdeVersion` solo se exige desde esa versión (por omisión, la operativa);
-  - desde la 3.3, una palmera no responde los campos de la sección B (REGLAS_GENERALES fila 30).
+  - desde la 3.3, una palmera no responde los campos de la sección B (REGLAS_GENERALES fila 31).
 - **Borrador:**
-  - los 8 campos entran en `CAMPOS_EVALUACION_COMPLETA` y en los monitoreos de REGLAS_GENERALES fila 32;
+  - los 8 campos entran en `CAMPOS_EVALUACION_COMPLETA` y en los monitoreos de REGLAS_GENERALES fila 33;
   - se quitaron las exclusiones temporales;
   - hay catálogos nuevos (`clase_copa_palmera`, `anomalia_cogollo`, `plaga_palmera` de selección múltiple y `raices_adventicias`);
   - las etiquetas siguen el criterio de las aprobadas el 2026-10-28; la responsable las aprobó el 2026-11-21.

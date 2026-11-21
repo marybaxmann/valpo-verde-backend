@@ -102,7 +102,7 @@ COLOCACION_CC070 = [
     ("adelgazamiento_insuficiente_tronco", "observaciones_tronco"),
     ("cuerpos_fructiferos_tronco", "observaciones_tronco"),
     ("sin_follaje_estacional", "defoliacion_estimada_pct"),
-    # CC-081 (PALM-01): columnas de palmeras, al final de la hoja.
+    # CC-082 (PALM-01): columnas de palmeras, al final de la hoja.
     ("inclinacion_corregida", "direccion_inclinacion"),
     ("estrechamiento_estipite", "observaciones_tronco"),
     ("angulacion_grave_estipite", "observaciones_tronco"),
@@ -155,7 +155,7 @@ def o(*conds):
 
 EXISTE_COPA = no_verdadero("copa_no_presenta")
 
-# CC-081: condición común de los campos de palmeras (texto literal de la columna K).
+# CC-082: condición común de los campos de palmeras (texto literal de la columna K).
 PALMERA_K = "tipo_hoja = Palmera (derivado de CATALOGO_ESPECIES)"
 ES_PALMERA = igual("tipo_hoja", "palmera")
 
@@ -225,9 +225,9 @@ TRADUCCIONES_CC056 = {
     ("ARBOLES", "fotografias_arbol"): {
         "i": "Obligatorio para finalizar la Evaluación inicial, la Reevaluación y el Levantamiento",
         "k": "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. "
-             "No aplica en la Evaluación instrumental; en el Monitoreo no es obligatoria.",
+             "En la Evaluación instrumental es opcional; en el Monitoreo no es obligatoria.",
         "exigido": True, "activacion": SIEMPRE, "exigencia": "fotos_d27",
-        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección; vistas informativas."},
+        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección, excluida la vista Detalle."},
     # --- REGISTRO_EVALUACION ---
     ("REGISTRO_EVALUACION", "direccion_inclinacion"): {
         "i": "Condicional", "k": "angulo_inclinacion ≥ 15°", "exigido": True,
@@ -284,11 +284,11 @@ TRADUCCIONES_CC056 = {
         "i": "Condicional", "k": "tipo_hoja ≠ Palmera (derivado de CATALOGO_ESPECIES), en cada evaluación de vitalidad.",
         "exigido": True, "activacion": {"op": "distinto", "campo": "tipo_hoja", "valor": "palmera"},
         "nota": "No aplica a palmeras, porque el método observa la ramificación (CC-071)."},
-    # --- CC-081 (PALM-01): solo palmeras y desde la 3.3 ("desde") ---
+    # --- CC-082 (PALM-01): solo palmeras y desde la 3.3 ("desde") ---
     **{("REGISTRO_EVALUACION", campo): {
         "i": "Condicional", "k": PALMERA_K + sufijo, "exigido": True, "desde": "3.3",
         "activacion": y(ES_PALMERA, *extra) if extra else ES_PALMERA,
-        "nota": "PALM-01 (CC-081): solo palmeras; se exige desde la 3.3."}
+        "nota": "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3."}
        for campo, sufijo, extra in [
            ("calidad_copa_palmera", " y existe corona.", [EXISTE_COPA]),
            ("proporcion_frondas_vivas", " y existe corona.", [EXISTE_COPA]),
@@ -329,7 +329,7 @@ ADICIONES_CC056 = [
 
 
 def leer_no_aplican_palmera(wb, campos_diccionario):
-    """CC-081, REGLAS_GENERALES fila 30: campos de la hoja PALMERAS, sección B (no aplican a palmeras)."""
+    """CC-082, REGLAS_GENERALES fila 31: campos de la hoja PALMERAS, sección B (no aplican a palmeras)."""
     if "PALMERAS" not in wb.sheetnames:
         return []
     campos = []
@@ -566,7 +566,7 @@ def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion, no_aplic
         "  activacion: CondicionActivacion;",
         '  traduccion: "automatica" | "cc056";',
         "  nota?: string;",
-        "  /** CC-081: versión de rule_version desde la que se exige (palmeras: 3.3); sin ella, en todas. */",
+        "  /** CC-082: versión de rule_version desde la que se exige (palmeras: 3.3); sin ella, en todas. */",
         "  desdeVersion?: string;",
         "}",
         "",
@@ -594,7 +594,7 @@ def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion, no_aplic
     for f in filas:
         lineas.append(entrada({k: f[k] for k in ("hoja", "campo", "tipoDato", "unidadValores")}))
     lineas += ["] as const;", ""]
-    lineas += ["/** CC-081 (REGLAS_GENERALES fila 30; hoja PALMERAS, sección B): campos que no se exigen en una palmera desde la 3.3. */",
+    lineas += ["/** CC-082 (REGLAS_GENERALES fila 31; hoja PALMERAS, sección B): campos que no se exigen en una palmera desde la 3.3. */",
                f"export const CAMPOS_NO_APLICAN_PALMERA: readonly string[] = {js(list(no_aplican_palmera))};", ""]
     lineas += ["/** Secciones del formulario (B16): orden de columnas de las hojas; propuesta = nombre por aprobar. */", "export const SECCIONES_FORMULARIO: readonly { codigo: string; etiqueta: string; orden: number; propuesta: boolean }[] = ["]
     for s in secciones:

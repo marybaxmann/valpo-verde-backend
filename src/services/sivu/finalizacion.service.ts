@@ -90,7 +90,7 @@ const CLAVES_NUCLEO = [
 // Las entradas dendrom?tricas vienen de ARBOLES, no de la composici?n de
 // REGISTRO_EVALUACION. resolverDatosConsecuencia exige resolver sus tres claves.
 /**
- * CC-081: entradas de palmeras (EntradasPalmera). Solo se componen para una palmera y cuando la
+ * CC-082: entradas de palmeras (EntradasPalmera). Solo se componen para una palmera y cuando la
  * versión operativa las calcula (3.3): los árboles no reciben claves nuevas en variables_calculo.
  */
 const CLAVES_PALMERA = [

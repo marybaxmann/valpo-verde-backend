@@ -41,7 +41,7 @@ export interface EntradaCompletitud {
   arbolVigente: Readonly<Record<string, unknown>>;
   inspeccionId: string;
   fotos: readonly FotoD27[];
-  /** Versión con que se calcula (por omisión, la operativa). CC-081: las palmeras dependen de ella. */
+  /** Versión con que se calcula (por omisión, la operativa). CC-082: las palmeras dependen de ella. */
   ruleVersion?: VersionMotor;
 }
 
@@ -69,7 +69,7 @@ export interface ResultadoCompletitud {
 
 const NO_APLICAN_PALMERA: ReadonlySet<string> = new Set(CAMPOS_NO_APLICAN_PALMERA);
 
-/** CC-081: una regla con `desdeVersion` solo se exige desde esa versión (comparación MAJOR.MINOR). */
+/** CC-082: una regla con `desdeVersion` solo se exige desde esa versión (comparación MAJOR.MINOR). */
 export function vigenteEnVersion(regla: Pick<ReglaCompletitud, "desdeVersion">, version: VersionMotor): boolean {
   if (!regla.desdeVersion) return true;
   const [a, b] = version.split(".").map(Number);
@@ -99,8 +99,8 @@ export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud 
   const estaRegistrado = (campo: string) => Object.prototype.hasOwnProperty.call(registrado, campo);
   const efectivo = (campo: string) => (estaRegistrado(campo) ? registrado[campo] : vigente[campo]);
 
-  // CC-081 (superposición): los campos de palmeras se exigen desde su versión, y con ella una
-  // palmera no responde los campos de la hoja PALMERAS, sección B (REGLAS_GENERALES fila 30).
+  // CC-082 (superposición): los campos de palmeras se exigen desde su versión, y con ella una
+  // palmera no responde los campos de la hoja PALMERAS, sección B (REGLAS_GENERALES fila 31).
   const version = e.ruleVersion ?? RULE_VERSION_OPERATIVA;
   const noAplicanPalmera = incluyePalmeras(version) && efectivo("tipo_hoja") === "palmera" ? NO_APLICAN_PALMERA : null;
   const reglas = REGLAS_COMPLETITUD.filter((r) =>
@@ -145,7 +145,7 @@ function evaluarFotosD27(inspeccionId: string, fotos: readonly FotoD27[]) {
   const huellasPorRuta = new Map<string, string | null>();
   const vistas = new Set<string | null>();
   for (const foto of fotos) {
-    if (foto.inspection_id !== inspeccionId || !/[^ \t\n\r\f\v]/.test(foto.storage_path)) continue;
+    if (foto.vista === "detalle" || foto.inspection_id !== inspeccionId || !/[^ \t\n\r\f\v]/.test(foto.storage_path)) continue;
     const anterior = huellasPorRuta.get(foto.storage_path);
     const huella = foto.sha256;
     if (anterior === undefined || (huella !== null && (anterior === null || huella < anterior))) {

@@ -87,7 +87,7 @@ print("\nMáximo por agregadora (suma de max_indicador):")
 for comp, m in agg.items():
     print(f"  {comp}: {m}")
 ESPERADO = {"R01": 11, "R02": 14, "R03": 4,  # paquete 3.0.0 (CC-071)
-            "R01-P": 10, "R02-P": 12, "R03-P": 5}  # palmeras, PALM-01 (CC-081)
+            "R01-P": 10, "R02-P": 12, "R03-P": 5}  # palmeras, PALM-01 (CC-082)
 for comp, m in agg.items():
     key = comp.split()[0] + ("-P" if "(palmera)" in comp else "")
     if key in ESPERADO and ESPERADO[key] != m:

@@ -47,7 +47,7 @@ export const CAMPOS_MONITOREO_FITOSANITARIO = [
   "necrosis_pct",
   "muerte_regresiva_copa_pct",
   "presenta_exudaciones",
-  // CC-081 (REGLAS_GENERALES fila 32): monitoreo fitosanitario de palmeras.
+  // CC-082 (REGLAS_GENERALES fila 33): monitoreo fitosanitario de palmeras.
   "calidad_copa_palmera",
   "proporcion_frondas_vivas",
   "indicios_plaga_palmera",
@@ -97,7 +97,7 @@ export const CAMPOS_MONITOREO_ESTRUCTURAL = [
   "diametro_max_ramas_quebradas_cm",
   "permanece_suspendida",
   "desequilibrio_copa",
-  // CC-081 (REGLAS_GENERALES fila 32): entradas de R01-P a R03-P propias de palmeras.
+  // CC-082 (REGLAS_GENERALES fila 33): entradas de R01-P a R03-P propias de palmeras.
   "inclinacion_corregida",
   "estrechamiento_estipite",
   "angulacion_grave_estipite",
@@ -118,7 +118,7 @@ export const CAMPOS_MONITOREO_ESTRUCTURAL = [
  */
 export const CAMPOS_MONITOREO_VITALIDAD = [
   "clasificacion_vitalidad",
-  // CC-081 (REGLAS_GENERALES fila 32): vitalidad de palmeras (Blair et al., 2019).
+  // CC-082 (REGLAS_GENERALES fila 33): vitalidad de palmeras (Blair et al., 2019).
   "calidad_copa_palmera",
   "proporcion_frondas_vivas",
 ] as const;
@@ -156,14 +156,14 @@ export const CAMPOS_EVALUACION_COMPLETA = [
   "afectacion_fisura_grieta", "direccion_grieta", "longitud_max_grieta_cm", "ancho_apertura_cm",
   "troncos_codominantes", "corteza_incluida", "grieta_union_codominante",
   "adelgazamiento_insuficiente_tronco", "cuerpos_fructiferos_tronco",
-  // CC-081 (PALM-01): campos de palmeras, en el orden del formulario (D-308 a D-316).
+  // CC-082 (PALM-01): campos de palmeras, en el orden del formulario (D-309 a D-317).
   "estrechamiento_estipite", "angulacion_grave_estipite", "raices_adventicias_altura", "indicios_plaga_palmera",
   "observaciones_tronco",
   "ramas_secas", "ramas_secas_pct_copa", "diametro_max_ramas_secas_cm",
   "ramas_quebradas", "numero_ramas_quebradas", "diametro_max_ramas_quebradas_cm", "permanece_suspendida",
   "sin_follaje_estacional", "defoliacion_estimada_pct", "clorosis_pct", "necrosis_pct", "desequilibrio_copa",
   "copa_faltante_pct", "exposicion_luminica_copa_cle", "muerte_regresiva_copa_pct",
-  "anomalia_cogollo", "calidad_copa_palmera", "proporcion_frondas_vivas", // CC-081 (PALM-01)
+  "anomalia_cogollo", "calidad_copa_palmera", "proporcion_frondas_vivas", // CC-082 (PALM-01)
   "observaciones_copa",
   "infraestructura_inmediata",
   "existe_vereda", "materialidad_vereda", "dano_interferencia_vereda",

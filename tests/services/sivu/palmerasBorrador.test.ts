@@ -5,7 +5,7 @@ import { componerVariablesCalculo } from "../../../src/services/sivu/finalizacio
 import { construirInspectionFormSchema } from "../../../src/services/sivu/inspectionFormSchema.service";
 
 /**
- * CC-081 (PALM-01): borrador, completitud y composición de los campos de
+ * CC-082 (PALM-01): borrador, completitud y composición de los campos de
  * palmeras. Superposición: con la versión operativa (3.2) nada cambia ni para
  * árboles ni para palmeras; con la 3.3 se exigen los campos de palmeras y una
  * palmera no responde los de la hoja PALMERAS, sección B.
@@ -49,7 +49,7 @@ function entrada(tipo_hoja: string | null, variablesRegistradas: Record<string, 
 
 const faltantes = (e: EntradaCompletitud) => evaluarCompletitud(e).campos_faltantes.map((f) => f.campo);
 
-describe("completitud de palmeras por versión (CC-081)", () => {
+describe("completitud de palmeras por versión (CC-082)", () => {
   it("vigenteEnVersion compara MAJOR.MINOR", () => {
     expect(vigenteEnVersion({}, "3.0")).toBe(true);
     expect(vigenteEnVersion({ desdeVersion: "3.3" }, "3.2")).toBe(false);
@@ -98,7 +98,7 @@ describe("completitud de palmeras por versión (CC-081)", () => {
   });
 });
 
-describe("borrador con campos de palmeras (CC-081)", () => {
+describe("borrador con campos de palmeras (CC-082)", () => {
   const borrador = (variables: Record<string, unknown>) =>
     crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "evaluacion_inicial", variables });
 
@@ -121,7 +121,7 @@ describe("borrador con campos de palmeras (CC-081)", () => {
   });
 });
 
-describe("formulario y composición (CC-081)", () => {
+describe("formulario y composición (CC-082)", () => {
   it("el formulario marca la versión de los campos de palmeras y los que no aplican a palmeras", () => {
     const f = construirInspectionFormSchema();
     const calidad = f.variables.find((c) => c.identificador === "calidad_copa_palmera")!;

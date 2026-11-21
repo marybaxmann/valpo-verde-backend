@@ -1,5 +1,5 @@
 /**
- * PALM-01 — Probabilidad de falla de palmeras (CC-081, SIVU 3.3.0).
+ * PALM-01 — Probabilidad de falla de palmeras (CC-082, SIVU 3.3.0).
  * Fuente: Excel maestro, REGLAS_INDICADORES PB-, PE- y PC- (filas 132 a
  * 188) y MATRICES_CALCULO R01-P, R02-P y R03-P (filas 20 a 33); hoja
  * PALMERAS para las definiciones adaptadas. No depende de treeRisk.ts.
@@ -7,7 +7,7 @@
  * Solo se usa cuando `tipo_hoja = "palmera"` y la versión del motor
  * incluye palmeras (ver `incluyePalmeras` en version.ts). Con cualquier
  * otro `tipo_hoja` (o nulo) se aplican R01, R02 y R03 de árboles, sin
- * cambios (superposición, REGLAS_GENERALES fila 29).
+ * cambios (superposición, REGLAS_GENERALES fila 30).
  *
  * Mismas reglas que los árboles:
  * - los pisos se aplican primero y un dato faltante en otro indicador no
@@ -28,22 +28,22 @@ import { esBooleanoValido, motivoFueraDominioSiNo } from "./dominio";
 import { ALERTA_MEDIR_PUDRICION } from "./r02-tronco";
 
 // ---------------------------------------------------------------------
-// Dominios de los campos nuevos (DICCIONARIO_CAMPOS D-308 a D-316)
+// Dominios de los campos nuevos (DICCIONARIO_CAMPOS D-309 a D-317)
 // ---------------------------------------------------------------------
 
-/** D-311. */
+/** D-312. */
 export const CODIGOS_ANOMALIA_COGOLLO = ["ninguna", "desviacion", "pudricion", "colapso", "ausencia", "no_determinado"] as const;
 export type AnomaliaCogolloCodigo = (typeof CODIGOS_ANOMALIA_COGOLLO)[number];
 
-/** D-312, selección múltiple. "no" y "no_determinado" son excluyentes. */
+/** D-313, selección múltiple. "no" y "no_determinado" son excluyentes. */
 export const CODIGOS_PLAGA_PALMERA = ["no", "corona", "estipite", "base", "no_determinado"] as const;
 export type PlagaPalmeraCodigo = (typeof CODIGOS_PLAGA_PALMERA)[number];
 
-/** D-315. */
+/** D-316. */
 export const CODIGOS_RAICES_ADVENTICIAS = ["si", "no", "no_aplica_especie"] as const;
 export type RaicesAdventiciasCodigo = (typeof CODIGOS_RAICES_ADVENTICIAS)[number];
 
-/** D-308 y D-309: clases 0 a 6 (catálogo clase_copa_palmera, códigos "0" a "6"); 6 = no determinable. */
+/** D-309 y D-310: clases 0 a 6 (catálogo clase_copa_palmera, códigos "0" a "6"); 6 = no determinable. */
 export const CLASES_COPA_PALMERA = ["0", "1", "2", "3", "4", "5", "6"] as const;
 export type ClaseCopaPalmeraCodigo = (typeof CLASES_COPA_PALMERA)[number];
 
@@ -144,13 +144,13 @@ function evaluarPlaga(
   cavidad?: boolean | null,
 ): IndicadorPalmera {
   const valor = input.indicios_plaga_palmera;
-  if (valor === null || valor === undefined) return nd(`indicios_plaga_palmera sin valor (${prefijo}-PLA, D-312)`);
+  if (valor === null || valor === undefined) return nd(`indicios_plaga_palmera sin valor (${prefijo}-PLA, D-313)`);
   if (!Array.isArray(valor) || valor.length === 0 || new Set(valor).size !== valor.length || !valor.every((c) => typeof c === "string" && esCodigoVigente("plaga_palmera", c))) {
-    return nd(`indicios_plaga_palmera fuera de dominio (D-312): ${JSON.stringify(valor)}`);
+    return nd(`indicios_plaga_palmera fuera de dominio (D-313): ${JSON.stringify(valor)}`);
   }
   const exclusivo = valor.includes("no") || valor.includes("no_determinado");
   if (exclusivo && valor.length > 1) {
-    return nd(`indicios_plaga_palmera combina «No» o «No determinado» con otras opciones (D-312): ${JSON.stringify(valor)}`);
+    return nd(`indicios_plaga_palmera combina «No» o «No determinado» con otras opciones (D-313): ${JSON.stringify(valor)}`);
   }
   const ultimo = prefijo === "PC" ? "03" : "04";
   if (valor.includes("no_determinado")) return nd("indicios_plaga_palmera = No determinado", `${prefijo}-PLA-${ultimo}`);
@@ -226,9 +226,9 @@ function evaluarInclinacion(input: PalmeraInput): IndicadorPalmera {
   if (angulo === 0) return ind("despreciable", "PB-INC-01");
   const corregida = input.inclinacion_corregida;
   if (corregida === null || corregida === undefined) {
-    return nd("inclinacion_corregida sin valor (PB-INC, condicional activado por angulo_inclinacion > 0°, D-316)");
+    return nd("inclinacion_corregida sin valor (PB-INC, condicional activado por angulo_inclinacion > 0°, D-317)");
   }
-  if (!esCodigoVigente("si_no_no_determinado", corregida)) return nd(`inclinacion_corregida fuera de dominio ("${corregida}") (D-316)`);
+  if (!esCodigoVigente("si_no_no_determinado", corregida)) return nd(`inclinacion_corregida fuera de dominio ("${corregida}") (D-317)`);
   if (corregida === "si") return ind("despreciable", "PB-INC-02");
   if (corregida === "no") return ind("moderada", "PB-INC-03");
   return nd("inclinacion_corregida = No determinado", "PB-INC-04");
@@ -344,9 +344,9 @@ export function evaluarR02Palmera(input: PalmeraInput): ComponentePalmeraResulta
       // En palmeras la herida no cicatriza: equivale a Abierta (PE-HER-02).
       return input.presenta_heridas_tronco ? ind("moderada", "PE-HER-02") : ind("despreciable", "PE-HER-01");
     })(),
-    estrechamiento: evaluarSiNoNd(input.estrechamiento_estipite, "estrechamiento_estipite", "PE-EST", "D-313"),
+    estrechamiento: evaluarSiNoNd(input.estrechamiento_estipite, "estrechamiento_estipite", "PE-EST", "D-314"),
     angulacion: (() => {
-      const falta = faltaSiNo("angulacion_grave_estipite", input.angulacion_grave_estipite, "D-314", "PE-ANG, condicional");
+      const falta = faltaSiNo("angulacion_grave_estipite", input.angulacion_grave_estipite, "D-315", "PE-ANG, condicional");
       if (falta) return nd(falta);
       return input.angulacion_grave_estipite ? ind("moderada", "PE-ANG-02") : ind("despreciable", "PE-ANG-01");
     })(),
@@ -399,8 +399,8 @@ function evaluarFrondasQuebradas(input: PalmeraInput): IndicadorPalmera {
 /** PC-COG-01 a 03: pudrición, colapso o ausencia fijan mínimo Probable; la desviación es solo observación. */
 function evaluarCogollo(input: PalmeraInput): IndicadorPalmera {
   const v = input.anomalia_cogollo;
-  if (v === null || v === undefined) return nd("anomalia_cogollo sin valor (PC-COG, D-311)");
-  if (!esCodigoVigente("anomalia_cogollo", v)) return nd(`anomalia_cogollo fuera de dominio ("${v}") (D-311)`);
+  if (v === null || v === undefined) return nd("anomalia_cogollo sin valor (PC-COG, D-312)");
+  if (!esCodigoVigente("anomalia_cogollo", v)) return nd(`anomalia_cogollo fuera de dominio ("${v}") (D-312)`);
   if (v === "ninguna" || v === "desviacion") return ind("despreciable", "PC-COG-01");
   if (v === "no_determinado") return nd("anomalia_cogollo = No determinado", "PC-COG-03");
   return piso("probable", "PC-COG-02");
@@ -430,7 +430,7 @@ export function evaluarR03Palmera(input: PalmeraInput): ComponentePalmeraResulta
 
 export type VitalidadPalmera = 0 | 1 | 2 | 3 | 4 | 5 | "no_determinado";
 
-/** D-310: la menor entre calidad y proporción; No determinado si alguna vale 6. null si falta un dato o está fuera de dominio. */
+/** D-311: la menor entre calidad y proporción; No determinado si alguna vale 6. null si falta un dato o está fuera de dominio. */
 export function calcularVitalidadPalmera(input: EntradasPalmera): VitalidadPalmera | null {
   const c = input.calidad_copa_palmera;
   const p = input.proporcion_frondas_vivas;

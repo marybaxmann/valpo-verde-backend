@@ -123,7 +123,7 @@ function campo(hoja: Hoja, id: string) {
     exigencia: regla?.exigencia ?? null,
     marca: regla?.marca ?? null,
     condicion_texto: regla?.condicionExcel ?? noExigido?.condicionExcel ?? null,
-    // CC-081: versión desde la que se exige (palmeras: 3.3) y si no aplica a palmeras (hoja PALMERAS, sección B).
+    // CC-082: versión desde la que se exige (palmeras: 3.3) y si no aplica a palmeras (hoja PALMERAS, sección B).
     desde_version: regla?.desdeVersion ?? null,
     no_aplica_palmera: CAMPOS_NO_APLICAN_PALMERA.includes(id),
   };

@@ -266,7 +266,7 @@ export type NucleoEntradas = EntradasConsecuencia & R01Input &
 
 export interface NucleoResultado {
   consecuencias?: ReturnType<typeof calcularConsecuencias>;
-  /** CC-081: true si se aplicaron las reglas de palmeras (tipo_hoja = palmera y versión 3.3 o posterior). */
+  /** CC-082: true si se aplicaron las reglas de palmeras (tipo_hoja = palmera y versión 3.3 o posterior). */
   palmera: boolean;
   r01: R01Resultado | ComponentePalmeraResultado<IndicadoresR01P>;
   r02: R02Resultado | ComponentePalmeraResultado<IndicadoresR02P>;
@@ -299,7 +299,7 @@ function calcularNucleo(
   }
   const escalaNueva = usaEscala32(version);
   const consecuencias = escalaNueva ? calcularConsecuencias(entradas, ajustes, inspeccionAnuladaId) : undefined;
-  // CC-081 (superposición): solo una palmera con la versión 3.3 usa R01-P a R03-P.
+  // CC-082 (superposición): solo una palmera con la versión 3.3 usa R01-P a R03-P.
   // Cualquier otro tipo_hoja, o nulo, sigue exactamente por R01–R03 de árboles.
   const palmera = incluyePalmeras(version) && entradas.tipo_hoja === "palmera";
   const r01 = palmera ? evaluarR01Palmera(entradas) : evaluarR01(entradas, escalaNueva);
@@ -383,7 +383,7 @@ function calcularAlertasInfraestructura(entradas: NucleoEntradas, version: Versi
 }
 
 function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
-  // Variables de SL y t/R: las palmeras no las tienen (CC-081).
+  // Variables de SL y t/R: las palmeras no las tienen (CC-082).
   const vc01: Partial<R01Resultado["variablesCalculo"]> = "variablesCalculo" in nucleo.r01 ? nucleo.r01.variablesCalculo : {};
   const vc02: Partial<R02Resultado["variablesCalculo"]> = "variablesCalculo" in nucleo.r02 ? nucleo.r02.variablesCalculo : {};
   const lcr = calcularLcr({
@@ -411,7 +411,7 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
     alerta_lcr: lcr.alerta,
     clasificacion_condicion_sitio: nucleo.m04.condicionSitio,
     componentes_no_determinados_infraestructura: nucleo.m04.componentesNoDeterminados,
-    // CC-081, D-310: condición fisiológica de la palmera (Salida A); no entra en el riesgo.
+    // CC-082, D-311: condición fisiológica de la palmera (Salida A); no entra en el riesgo.
     ...(nucleo.palmera && { vitalidad_palmera: calcularVitalidadPalmera(entradas) }),
   };
 }
@@ -421,7 +421,7 @@ function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas):
   return calcularIndicadoresArbol(nucleo as unknown as NucleoArbol, entradas);
 }
 
-/** CC-081: los indicadores son de árbol salvo que el resultado sea de una palmera (`tipo: "palmera"`). */
+/** CC-082: los indicadores son de árbol salvo que el resultado sea de una palmera (`tipo: "palmera"`). */
 export function sonIndicadoresArbol(i: Indicadores): i is IndicadoresArbol {
   return !("tipo" in i);
 }
@@ -433,7 +433,7 @@ type NucleoPalmera = Omit<NucleoResultado, "r01" | "r02" | "r03"> & {
   r03: ComponentePalmeraResultado<IndicadoresR03P>;
 };
 
-/** CC-081: indicadores PB-, PE- y PC-, con la infraestructura común. */
+/** CC-082: indicadores PB-, PE- y PC-, con la infraestructura común. */
 function calcularIndicadoresPalmera(nucleo: NucleoResultado, entradas: NucleoEntradas) {
   const n = nucleo as unknown as NucleoPalmera;
   return {

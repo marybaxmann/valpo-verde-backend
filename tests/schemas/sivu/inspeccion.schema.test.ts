@@ -306,7 +306,7 @@ describe("variables — Sí / No como booleano (PR-021; B16)", () => {
     crearBorradorInspeccionSchema.safeParse({ tipo_inspeccion_realizada: "evaluacion_inicial", variables });
   const campos = [...CAMPOS_SI_NO];
 
-  it("sale de la columna H del Excel: 59 campos de REGISTRO_EVALUACION (CC-081: angulacion_grave_estipite), todos en el alcance de la evaluación completa", () => {
+  it("sale de la columna H del Excel: 59 campos de REGISTRO_EVALUACION (CC-082: angulacion_grave_estipite), todos en el alcance de la evaluación completa", () => {
     const alcance = new Set<string>(camposPermitidosPorTipo("evaluacion_inicial", null)!);
     expect(campos.filter((c) => alcance.has(c))).toHaveLength(campos.length);
     expect(campos).toHaveLength(59);

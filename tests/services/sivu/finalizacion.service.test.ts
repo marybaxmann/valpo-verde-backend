@@ -236,6 +236,30 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
     expect(mockFinalizarRpc).not.toHaveBeenCalled();
   });
 
+  it("dos fotos de vista detalle no suman al minimo de una inspeccion visual", async () => {
+    preparar({ vistas: ["detalle", null, "detalle"] });
+    const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(calculo).toMatchObject({ puede_finalizar: false, fotos_validas_d27: 1 });
+    expect(calculo.campos_faltantes).toContainEqual(expect.objectContaining({ campo: "fotografias_arbol" }));
+  });
+
+  it("finaliza la instrumental sin fotos y sus fotos opcionales no cambian el calculo", async () => {
+    const escenario = {
+      tipo: "evaluacion_instrumental", subtipo: "resistografia",
+      variables: { cavidad_pudricion_basal: false, presenta_cavidad_pudricion_tronco: false },
+    };
+    preparar({ ...escenario, vistas: [] });
+    const sinFotos = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(sinFotos).toMatchObject({ puede_finalizar: true, fotos_validas_d27: null });
+    preparar({ ...escenario, vistas: ["base", "detalle"] });
+    const conFotos = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(conFotos.resultado).toEqual(sinFotos.resultado);
+    expect(conFotos.huella).toBe(sinFotos.huella);
+    preparar({ ...escenario, vistas: [] });
+    await expect(finalizarInspeccion(usuario(), INSPECTION_ID, { huella: sinFotos.huella }, TOKEN))
+      .resolves.toMatchObject({ finalizada: true });
+  });
+
   it("calcula sin escribir nada y permite finalizar una evaluación completa", async () => {
     preparar();
     const r = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
