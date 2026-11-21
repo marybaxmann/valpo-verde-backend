@@ -30,7 +30,8 @@ import {
 } from "../rules/engine/ensamblaje";
 import { SubtipoInspeccionCodigo, TipoInspeccionRealizadaCodigo } from "../rules/engine/catalogs";
 import { FechaSugeridaResultado } from "../rules/engine/fechas-sugeridas";
-import { RULE_VERSION as RULE_VERSION_CANDIDATA, RULE_VERSION_OPERATIVA as RULE_VERSION, VersionMotor } from "../rules/engine/version";
+import { EntradasPalmera } from "../rules/engine/palmeras";
+import { incluyePalmeras, RULE_VERSION_OPERATIVA as RULE_VERSION, usaEscala32, VersionMotor } from "../rules/engine/version";
 import { CampoFaltante, evaluarCompletitud } from "./completitud";
 import { validarFisiologiaCopa } from "./fisiologiaCopa";
 import { mensajeCheck } from "../../utils/mensajesBase";
@@ -88,7 +89,22 @@ const CLAVES_NUCLEO = [
 // Los datos para lcr_pct salen del árbol, no del borrador (ver resolverDatosLcr).
 // Las entradas dendrom?tricas vienen de ARBOLES, no de la composici?n de
 // REGISTRO_EVALUACION. resolverDatosConsecuencia exige resolver sus tres claves.
-type ClaveNucleoSinListar = Exclude<keyof NucleoEntradas, (typeof CLAVES_NUCLEO)[number] | keyof EntradasLcr | keyof EntradasConsecuencia>;
+/**
+ * CC-082: entradas de palmeras (EntradasPalmera). Solo se componen para una palmera y cuando la
+ * versión operativa las calcula (3.3): los árboles no reciben claves nuevas en variables_calculo.
+ */
+const CLAVES_PALMERA = [
+  "calidad_copa_palmera", "proporcion_frondas_vivas", "anomalia_cogollo", "indicios_plaga_palmera",
+  "estrechamiento_estipite", "angulacion_grave_estipite", "raices_adventicias_altura", "inclinacion_corregida",
+] as const satisfies readonly (keyof EntradasPalmera)[];
+type ClavePalmeraSinListar = Exclude<keyof EntradasPalmera, (typeof CLAVES_PALMERA)[number]>;
+const palmeraCompleta: [ClavePalmeraSinListar] extends [never] ? true : ClavePalmeraSinListar = true;
+void palmeraCompleta;
+
+type ClaveNucleoSinListar = Exclude<
+  keyof NucleoEntradas,
+  (typeof CLAVES_NUCLEO)[number] | keyof EntradasLcr | keyof EntradasConsecuencia | keyof EntradasPalmera
+>;
 const nucleoCompleto: [ClaveNucleoSinListar] extends [never] ? true : ClaveNucleoSinListar = true;
 void nucleoCompleto;
 
@@ -385,6 +401,13 @@ export function componerVariablesCalculo(
     else if (Object.prototype.hasOwnProperty.call(vigentes, clave)) entradas[clave] = vigentes[clave] ?? null;
     else entradas[clave] = null;
   }
+  if (incluyePalmeras(RULE_VERSION) && datosLcr?.tipo_hoja === "palmera") {
+    for (const clave of CLAVES_PALMERA) {
+      if (Object.prototype.hasOwnProperty.call(registradas, clave)) entradas[clave] = registradas[clave] ?? null;
+      else if (Object.prototype.hasOwnProperty.call(vigentes, clave)) entradas[clave] = vigentes[clave] ?? null;
+      else entradas[clave] = null;
+    }
+  }
   entradas.dap_cm = dapCm; // dato del árbol (ARBOLES), no de la evaluación
   Object.assign(entradas, datosLcr, datosConsecuencia);
   return entradas as unknown as NucleoEntradas;
@@ -456,7 +479,8 @@ export function huellaCalculo(args: {
   const { multifustal, numero_fustes, dap_fustes_cm, ...variablesHistoricas } = args.variablesCalculo;
   const version = RULE_VERSION as VersionMotor;
   const contenido = {
-    variables_calculo: version === RULE_VERSION_CANDIDATA
+    // Desde la 3.2 la huella incluye las entradas de consecuencia (CC-080). No depende de la versión candidata.
+    variables_calculo: usaEscala32(version)
       ? args.variablesCalculo
       : variablesHistoricas,
     tipo_inspeccion_realizada: args.tipo,

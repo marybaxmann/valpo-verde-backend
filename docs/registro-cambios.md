@@ -3353,3 +3353,78 @@ motivo)
 - Evaluación instrumental admite evidencia opcional con vistas Base, Tronco o Detalle. No interviene en finalización, mínimos ni cálculo. El protocolo recomienda una fotografía del equipo en posición y otra del resultado.
 - Backend local: carga directa y firmada para instrumentales, con las validaciones de estado y responsabilidad existentes; la descripción opcional se conserva en la columna de fotos existente. Migración 043 reversible para el conteo transaccional, sin modificar 040 ni 041.
 - Las cuatro instrumentales de regularización se cargan después de desplegar este CC. Publicación autorizada por la autora el 2026-11-21. La regularización queda sujeta a su autorización independiente.
+
+### CC-082 — PALM-01: evaluación de palmeras (SIVU 3.3.0, en preparación)
+
+- Aprobación del criterio: autora, 2026-11-21. Paquete MINOR 3.3.0 en preparación, `rule_version` 3.3 al publicar, sobre la 3.2.1 (CC-081). **Renumerado:** se registró primero como CC-081, pero ese número lo tomó la 3.2.1 (fotografías D-27, migración 043), publicada el mismo día. Al integrar `feature/fase6-backend-api` (2026-11-21) pasó a CC-082 y sus filas se corrieron una posición por la D-308 nueva de la 3.2.1. CC-082 no necesita migración: los campos de palmeras viven en `evaluations.variables` (jsonb). Fundamento: matriz E2e, protocolo E4e, diagrama v5 y propuesta E7 de PALM-01, en la carpeta de auditoría metodológica de la tesis.
+- **Superposición: no se modifica ninguna fila, celda o estilo existente del Excel.** Se agregan:
+  - D-309 a D-317, 9 campos de palmeras, Condicionales con `tipo_hoja = Palmera`;
+  - REGLAS_GENERALES, filas 30 a 33;
+  - REGLAS_INDICADORES PB-, PE- y PC-, 57 reglas;
+  - el bloque R01-P a R03-P de MATRICES_CALCULO, filas 20 a 33, con máximos 10, 12 y 5 y las bandas de los árboles;
+  - la hoja PALMERAS: definiciones adaptadas (A), campos que no aplican (B) y nota (C);
+  - VERSION, fila 11.
+- **Árboles sin cambios.** Sus reglas, campos y resultados son los de la 3.2. Las inspecciones finalizadas conservan su versión. `tipo_hoja` nulo u otro valor usa las reglas de árboles. La plaga «No determinado» deja No determinado el componente, como en los árboles.
+- **Sincronización en este cambio:**
+  - exportaciones, con PALMERAS agregada a `exportar_excel.py`;
+  - los 9 campos en `CAMPOS_NO_EXIGIDOS` y en las exclusiones manuales de `campos_evaluacion_completa.py` y de su prueba, porque no se exigen ni se admiten en el borrador hasta implementar el motor;
+  - máximos de palmeras en `verificar_14_9.py`.
+  - Pruebas: 1852 de 1852. §14.9: sin hallazgos.
+- **Pendiente para publicar la 3.3.0:**
+  - motor R01-P a R03-P con la rama `tipo_hoja === "palmera"`;
+  - completitud y borrador de los 9 campos, y desactivación de la hoja PALMERAS, sección B;
+  - formulario del frontend;
+  - prueba de regresión: árboles idénticos a la 3.2;
+  - revisar `tipo_hoja` de las palmeras en CATALOGO_ESPECIES;
+  - completar AV_000087.
+
+- [x] Verificación §14.9 (fuente): sin hallazgos en los puntos automatizables.
+- [ ] Verificación §14.9 (implementación): motor hecho; faltan la composición, la completitud y el frontend.
+
+**Motor de palmeras (2026-11-21, misma rama)**
+- `src/services/rules/engine/palmeras.ts` implementa:
+  - R01-P, R02-P y R03-P, con las reglas PB-, PE- y PC-;
+  - pisos antes de propagar No determinado;
+  - bandas 0 / 1–3 / ≥ 4 en base y estípite, y 0 / 1–2 / ≥ 3 en la corona;
+  - la vitalidad de palmera (D-311), solo en `calculados`.
+- `version.ts`: la 3.3 es la versión **candidata** (`RULE_VERSION`) y la 3.2 sigue **operativa** (`RULE_VERSION_OPERATIVA`). Los servicios calculan con la operativa, así que la plataforma no cambia hasta publicar. Las comparaciones de versión pasan a `usaEscala32` e `incluyePalmeras`. El ensamblaje sin versión explícita usa la operativa.
+- `ensamblaje.ts`: la rama de palmeras solo se activa con `incluyePalmeras(version)` y `tipo_hoja = "palmera"`. Los indicadores pasan a ser `IndicadoresArbol | IndicadoresPalmera`, con el guardián de tipo `sonIndicadoresArbol`. La consecuencia, M01 a M03, R04 y M04 son comunes.
+- Pruebas: `tests/services/rules/engine/palmeras.test.ts`, con 34 casos.
+  - Regresión con 600 árboles aleatorios (semilla fija) que cubren todos los niveles de riesgo: idénticos con la 3.3 y con la 3.2, salvo `rule_version`.
+  - Dos pruebas existentes solo se ajustaron en el tipo (`IndicadoresArbol`).
+  - Total: 1886 de 1886.
+- Pendiente para publicar:
+  - componer los 9 campos en la finalización (`CLAVES_NUCLEO`);
+  - admitirlos en el borrador y en la completitud, con catálogos y etiquetas;
+  - desactivar los de la hoja PALMERAS, sección B;
+  - formulario del frontend;
+  - pasar `RULE_VERSION_OPERATIVA` a "3.3".
+
+**Borrador, completitud y formulario (2026-11-21, misma rama)**
+- **Excel, solo en filas y columnas nuevas:**
+  - REGISTRO_EVALUACION tiene 9 columnas nuevas (EV a FD), una por campo de palmeras, como hizo CC-071;
+  - D-310 lleva el dominio literal de las clases;
+  - D-313 cambia el tipo a «Categoría» y deja la selección múltiple en la columna L.
+  - Verificado: ninguna celda existente con valor cambió.
+- **Generador `obligatoriedad_campos.py`.** Con el Excel anterior fallaba («tipo_hoja» no está en el diccionario). Ahora tiene:
+  - traducciones de los 8 campos que ingresa el Inspector: activación `tipo_hoja = palmera` y `desdeVersion: "3.3"`;
+  - la colocación de las columnas nuevas en su sección del formulario;
+  - `CAMPOS_NO_APLICAN_PALMERA`, leído de la hoja PALMERAS, sección B.
+  - La tabla de completitud vuelve a ser la salida exacta del generador. Se corrige la edición manual del primer commit de este CC.
+  - Las entradas de árboles son idénticas: reglas, no exigidos, metadatos, y sección y orden relativo.
+- **`completitud.ts`:**
+  - una regla con `desdeVersion` solo se exige desde esa versión (por omisión, la operativa);
+  - desde la 3.3, una palmera no responde los campos de la sección B (REGLAS_GENERALES fila 31).
+- **Borrador:**
+  - los 8 campos entran en `CAMPOS_EVALUACION_COMPLETA` y en los monitoreos de REGLAS_GENERALES fila 33;
+  - se quitaron las exclusiones temporales;
+  - hay catálogos nuevos (`clase_copa_palmera`, `anomalia_cogollo`, `plaga_palmera` de selección múltiple y `raices_adventicias`);
+  - las etiquetas siguen el criterio de las aprobadas el 2026-10-28; la responsable las aprobó el 2026-11-21.
+- **Formulario:** cada campo informa `desde_version` y `no_aplica_palmera`.
+- **Finalización:** las entradas de palmeras solo se componen para una palmera cuando la versión operativa incluye palmeras. Con la 3.2, ni árboles ni palmeras reciben claves nuevas.
+- **Pruebas:** `tests/services/sivu/palmerasBorrador.test.ts`, con 14 casos. Se actualizó el recuento de campos Sí / No (59). Total: 1913 de 1913. §14.9: sin hallazgos.
+- **Pendiente para publicar:**
+  - formulario del frontend;
+  - `tipo_hoja` de las palmeras en el catálogo;
+  - AV_000087;
+  - pasar `RULE_VERSION_OPERATIVA` a "3.3".

@@ -130,3 +130,60 @@ IN-SIT-03,Condición del sitio,Condición del sitio,indicios_compactacion_superf
 IN-SIT-04,Condición del sitio,Condición del sitio,suelo_sellado_impermeabilizado,suelo_sellado_impermeabilizado = Sí,Severa,Sin puntaje
 IN-SIT-05,Condición del sitio,Condición del sitio,suelo_sellado_impermeabilizado; indicios_compactacion_superficial; obstaculos_crecimiento_radicular,Se cumplen dos o más de IN-SIT-02 a 04,La categoría más severa,Sin puntaje
 IN-RAE-08,M04 Infraestructura,Red aérea,tipo_red_aerea,tipo_red_aerea incluye Función no determinada y no incluye Eléctrica. Marcar clasificación parcial con aviso si quedan componentes evaluados.,No determinado,Se excluye
+PB-INC-01,R01 Raíces y cuello (palmera),Inclinación,angulo_inclinacion,angulo_inclinacion = 0°,Despreciable,0
+PB-INC-02,R01 Raíces y cuello (palmera),Inclinación,angulo_inclinacion; inclinacion_corregida,angulo_inclinacion > 0° e inclinacion_corregida = Sí,Despreciable,0
+PB-INC-03,R01 Raíces y cuello (palmera),Inclinación,angulo_inclinacion; inclinacion_corregida,angulo_inclinacion > 0° e inclinacion_corregida = No,Moderada,2
+PB-INC-04,R01 Raíces y cuello (palmera),Inclinación,angulo_inclinacion; inclinacion_corregida,angulo_inclinacion > 0° e inclinacion_corregida = No determinado,No determinado,Sin puntaje
+PB-REX-01,R01 Raíces y cuello (palmera),Raíces (necrosis y cortes),raices_expuestas; necrosis_radicular; raices_cortadas,raices_expuestas = No y raices_cortadas = No,Despreciable,0
+PB-REX-02,R01 Raíces y cuello (palmera),Raíces (necrosis y cortes),raices_expuestas; necrosis_radicular; raices_cortadas,"raices_expuestas = Sí, necrosis_radicular = No y raices_cortadas = No",Despreciable,0
+PB-REX-03,R01 Raíces y cuello (palmera),Raíces (necrosis y cortes),raices_expuestas; necrosis_radicular; raices_cortadas,necrosis_radicular = Sí y raices_cortadas = No,Moderada,2
+PB-REX-04,R01 Raíces y cuello (palmera),Raíces (necrosis y cortes),raices_expuestas; necrosis_radicular; raices_cortadas,(necrosis_radicular = No o raices_expuestas = No) y raices_cortadas = Sí,Moderada,2
+PB-REX-05,R01 Raíces y cuello (palmera),Raíces (necrosis y cortes),raices_expuestas; necrosis_radicular; raices_cortadas,necrosis_radicular = Sí y raices_cortadas = Sí,Severa,3
+PB-CAV-01,R01 Raíces y cuello (palmera),Cavidad basal,cavidad_pudricion_basal,cavidad_pudricion_basal = No,Despreciable,0
+PB-CAV-02,R01 Raíces y cuello (palmera),Cavidad basal,cavidad_basal_externa; cavidad_basal_interna,cavidad_basal_externa = Sí o cavidad_basal_interna = Sí (se cuenta una vez; sin SL ni t/R),Moderada,2
+PB-CAV-03,R01 Raíces y cuello (palmera),Cavidad basal,cavidad_basal_externa; cavidad_basal_interna,cavidad_basal_interna = Requiere evaluación instrumental y cavidad_basal_externa ≠ Sí,No determinado,Sin puntaje
+PB-ANI-01,R01 Raíces y cuello (palmera),Anillamiento,anillamiento,anillamiento = No,Despreciable,0
+PB-ANI-02,R01 Raíces y cuello (palmera),Anillamiento,anillamiento,anillamiento = Sí,Leve,1
+PB-HON-01,R01 Raíces y cuello (palmera),Hongos,cuerpos_fructiferos_base,cuerpos_fructiferos_base = No,Despreciable,0
+PB-HON-02,R01 Raíces y cuello (palmera),Hongos,cuerpos_fructiferos_base; cavidad_pudricion_basal,cuerpos_fructiferos_base = Sí y cavidad_pudricion_basal = No,Leve,1
+PB-HON-03,R01 Raíces y cuello (palmera),Hongos,cuerpos_fructiferos_base; cavidad_pudricion_basal,cuerpos_fructiferos_base = Sí y cavidad_pudricion_basal = Sí (la pudrición ya está valorada en la cavidad),Despreciable,0
+PB-PLA-01,R01 Raíces y cuello (palmera),Plaga,indicios_plaga_palmera,indicios_plaga_palmera no incluye Base,Despreciable,0
+PB-PLA-02,R01 Raíces y cuello (palmera),Plaga,indicios_plaga_palmera; cavidad_pudricion_basal,indicios_plaga_palmera incluye Base y cavidad_pudricion_basal = No,Leve,1
+PB-PLA-03,R01 Raíces y cuello (palmera),Plaga,indicios_plaga_palmera; cavidad_pudricion_basal,indicios_plaga_palmera incluye Base y cavidad_pudricion_basal = Sí (ya valorada en la cavidad),Despreciable,0
+PB-PLA-04,R01 Raíces y cuello (palmera),Plaga,indicios_plaga_palmera,indicios_plaga_palmera = No determinado,No determinado,Sin puntaje
+PE-CAV-01,R02 Tronco (palmera),Cavidad,presenta_cavidad_pudricion_tronco,presenta_cavidad_pudricion_tronco = No,Despreciable,0
+PE-CAV-02,R02 Tronco (palmera),Cavidad,cavidad_externa_tronco; cavidad_interna_tronco,cavidad_externa_tronco = Sí o cavidad_interna_tronco = Sí (se cuenta una vez; sin SL ni t/R),Moderada,2
+PE-CAV-03,R02 Tronco (palmera),Cavidad,cavidad_externa_tronco; cavidad_interna_tronco,cavidad_interna_tronco = Requiere evaluación instrumental y cavidad_externa_tronco ≠ Sí,No determinado,Sin puntaje
+PE-GRI-01,R02 Tronco (palmera),Fisuras y grietas,presenta_fisura_grieta_tronco; afectacion_fisura_grieta,presenta_fisura_grieta_tronco = No o afectacion_fisura_grieta = Solo corteza,Despreciable,0
+PE-GRI-02,R02 Tronco (palmera),Fisuras y grietas,afectacion_fisura_grieta; direccion_grieta,afectacion_fisura_grieta = Penetra en madera y direccion_grieta = Longitudinal (sin la regla de 1/3 del DAP),Moderada,2
+PE-GRI-03,R02 Tronco (palmera),Fisuras y grietas,afectacion_fisura_grieta; direccion_grieta,afectacion_fisura_grieta = Penetra en madera y direccion_grieta = Transversal (regla de prioridad: el resultado de R02-P es Inminente),Inminente,Sin puntaje
+PE-HER-01,R02 Tronco (palmera),Heridas,presenta_heridas_tronco,presenta_heridas_tronco = No,Despreciable,0
+PE-HER-02,R02 Tronco (palmera),Heridas,presenta_heridas_tronco,presenta_heridas_tronco = Sí (en palmeras la herida no cicatriza: equivale a Abierta),Moderada,2
+PE-EST-01,R02 Tronco (palmera),Estrechamiento,estrechamiento_estipite,estrechamiento_estipite = No,Despreciable,0
+PE-EST-02,R02 Tronco (palmera),Estrechamiento,estrechamiento_estipite,estrechamiento_estipite = Sí,Moderada,2
+PE-EST-03,R02 Tronco (palmera),Estrechamiento,estrechamiento_estipite,estrechamiento_estipite = No determinado,No determinado,Sin puntaje
+PE-ANG-01,R02 Tronco (palmera),Angulación,angulacion_grave_estipite,angulacion_grave_estipite = No,Despreciable,0
+PE-ANG-02,R02 Tronco (palmera),Angulación,angulacion_grave_estipite,angulacion_grave_estipite = Sí,Moderada,2
+PE-HON-01,R02 Tronco (palmera),Hongos,cuerpos_fructiferos_tronco,cuerpos_fructiferos_tronco = No,Despreciable,0
+PE-HON-02,R02 Tronco (palmera),Hongos,cuerpos_fructiferos_tronco; presenta_cavidad_pudricion_tronco,cuerpos_fructiferos_tronco = Sí y presenta_cavidad_pudricion_tronco = No,Leve,1
+PE-HON-03,R02 Tronco (palmera),Hongos,cuerpos_fructiferos_tronco; presenta_cavidad_pudricion_tronco,cuerpos_fructiferos_tronco = Sí y presenta_cavidad_pudricion_tronco = Sí (la pudrición ya está valorada en la cavidad),Despreciable,0
+PE-PLA-01,R02 Tronco (palmera),Plaga,indicios_plaga_palmera,indicios_plaga_palmera no incluye Estípite,Despreciable,0
+PE-PLA-02,R02 Tronco (palmera),Plaga,indicios_plaga_palmera; presenta_cavidad_pudricion_tronco,indicios_plaga_palmera incluye Estípite y presenta_cavidad_pudricion_tronco = No,Leve,1
+PE-PLA-03,R02 Tronco (palmera),Plaga,indicios_plaga_palmera; presenta_cavidad_pudricion_tronco,indicios_plaga_palmera incluye Estípite y presenta_cavidad_pudricion_tronco = Sí (ya valorada en la cavidad),Despreciable,0
+PE-PLA-04,R02 Tronco (palmera),Plaga,indicios_plaga_palmera,indicios_plaga_palmera = No determinado,No determinado,Sin puntaje
+PE-RAD-01,R02 Tronco (palmera),Raíces adventicias en altura,raices_adventicias_altura,raices_adventicias_altura = Sí,Alerta: revisar Base y raíces,Sin puntaje
+PC-FSE-01,R03 Copa y ramas (palmera),Frondas secas,ramas_secas,ramas_secas = No,Despreciable,0
+PC-FSE-02,R03 Copa y ramas (palmera),Frondas secas,ramas_secas_pct_copa,"ramas_secas_pct_copa < 10 % (frondas secas, incluida la falda)",Leve,1
+PC-FSE-03,R03 Copa y ramas (palmera),Frondas secas,ramas_secas_pct_copa,10 % ≤ ramas_secas_pct_copa ≤ 50 %,Moderada,2
+PC-FSE-04,R03 Copa y ramas (palmera),Frondas secas,ramas_secas_pct_copa,ramas_secas_pct_copa > 50 %,Severa,3
+PC-FSE-05,R03 Copa y ramas (palmera),Frondas secas,ramas_secas_pct_copa,ramas_secas = Sí y ramas_secas_pct_copa no registrado,No determinado,Sin puntaje
+PC-FQU-01,R03 Copa y ramas (palmera),Frondas o racimos quebrados,ramas_quebradas,ramas_quebradas = No,Despreciable,0
+PC-FQU-02,R03 Copa y ramas (palmera),Frondas o racimos quebrados,"ramas_quebradas, permanece_suspendida",ramas_quebradas = Sí y permanece_suspendida = No,Leve,1
+PC-FQU-03,R03 Copa y ramas (palmera),Frondas o racimos quebrados,"ramas_quebradas, permanece_suspendida",ramas_quebradas = Sí y permanece_suspendida = Sí (regla de prioridad: el resultado de R03-P es Inminente),Inminente,Sin puntaje
+PC-FQU-04,R03 Copa y ramas (palmera),Frondas o racimos quebrados,"ramas_quebradas, permanece_suspendida",ramas_quebradas = Sí y permanece_suspendida no registrado,No determinado,Sin puntaje
+PC-COG-01,R03 Copa y ramas (palmera),Cogollo,anomalia_cogollo,anomalia_cogollo = Ninguna o Desviación (la desviación es solo observación),Despreciable,0
+PC-COG-02,R03 Copa y ramas (palmera),Cogollo,anomalia_cogollo,"anomalia_cogollo = Pudrición, Colapso o Ausencia (regla de prioridad: el resultado de R03-P es como mínimo Probable)",Probable,Sin puntaje
+PC-COG-03,R03 Copa y ramas (palmera),Cogollo,anomalia_cogollo,anomalia_cogollo = No determinado,No determinado,Sin puntaje
+PC-PLA-01,R03 Copa y ramas (palmera),Plaga,indicios_plaga_palmera,indicios_plaga_palmera no incluye Corona,Despreciable,0
+PC-PLA-02,R03 Copa y ramas (palmera),Plaga,indicios_plaga_palmera,indicios_plaga_palmera incluye Corona,Leve,1
+PC-PLA-03,R03 Copa y ramas (palmera),Plaga,indicios_plaga_palmera,indicios_plaga_palmera = No determinado,No determinado,Sin puntaje

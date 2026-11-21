@@ -1,9 +1,11 @@
 import { camposPermitidosPorTipo } from "../../schemas/sivu/alcanceInspeccion";
 import {
+  CAMPOS_NO_APLICAN_PALMERA,
   CondicionActivacion,
   REGLAS_COMPLETITUD,
   ReglaCompletitud,
 } from "../../schemas/sivu/completitudInspeccion";
+import { incluyePalmeras, RULE_VERSION_OPERATIVA, VersionMotor } from "../rules/engine/version";
 
 /**
  * Completitud para finalizar una inspección (CC-056; REGLAS_GENERALES
@@ -39,6 +41,8 @@ export interface EntradaCompletitud {
   arbolVigente: Readonly<Record<string, unknown>>;
   inspeccionId: string;
   fotos: readonly FotoD27[];
+  /** Versión con que se calcula (por omisión, la operativa). CC-082: las palmeras dependen de ella. */
+  ruleVersion?: VersionMotor;
 }
 
 interface FotoD27 {
@@ -63,6 +67,16 @@ export interface ResultadoCompletitud {
   vistas_recomendadas_faltantes: string[];
 }
 
+const NO_APLICAN_PALMERA: ReadonlySet<string> = new Set(CAMPOS_NO_APLICAN_PALMERA);
+
+/** CC-082: una regla con `desdeVersion` solo se exige desde esa versión (comparación MAJOR.MINOR). */
+export function vigenteEnVersion(regla: Pick<ReglaCompletitud, "desdeVersion">, version: VersionMotor): boolean {
+  if (!regla.desdeVersion) return true;
+  const [a, b] = version.split(".").map(Number);
+  const [c, d] = regla.desdeVersion.split(".").map(Number);
+  return a > c || (a === c && b >= d);
+}
+
 /** Tipos con evaluación completa (CC-056). También habilitan los indicadores biométricos de B19. */
 export const TIPOS_EVALUACION_COMPLETA: ReadonlySet<string> = new Set(["evaluacion_inicial", "reevaluacion", "levantamiento"]);
 
@@ -85,8 +99,14 @@ export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud 
   const estaRegistrado = (campo: string) => Object.prototype.hasOwnProperty.call(registrado, campo);
   const efectivo = (campo: string) => (estaRegistrado(campo) ? registrado[campo] : vigente[campo]);
 
+  // CC-082 (superposición): los campos de palmeras se exigen desde su versión, y con ella una
+  // palmera no responde los campos de la hoja PALMERAS, sección B (REGLAS_GENERALES fila 31).
+  const version = e.ruleVersion ?? RULE_VERSION_OPERATIVA;
+  const noAplicanPalmera = incluyePalmeras(version) && efectivo("tipo_hoja") === "palmera" ? NO_APLICAN_PALMERA : null;
   const reglas = REGLAS_COMPLETITUD.filter((r) =>
-    completa ? true : r.hoja === "REGISTRO_EVALUACION" && enAlcance.has(r.campo)
+    (completa ? true : r.hoja === "REGISTRO_EVALUACION" && enAlcance.has(r.campo)) &&
+    vigenteEnVersion(r, version) &&
+    !noAplicanPalmera?.has(r.campo)
   );
 
   const evidencia = completa ? evaluarFotosD27(e.inspeccionId, e.fotos) : null;

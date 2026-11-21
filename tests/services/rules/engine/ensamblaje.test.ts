@@ -4,6 +4,7 @@ import {
 } from "../../../../src/services/rules/engine/alcance";
 import {
   AjusteVigente,
+  IndicadoresArbol,
   ArgsResultadoEvaluacion,
   ensamblarResultadoEvaluacion as ensamblarEvaluacionVersionada,
   ensamblarResultadoVigente as ensamblarVigenteVersionado,
@@ -672,8 +673,8 @@ describe("metodología 3.2", () => {
   ] as const)("clasifica SL con abertura %s, t=%s e interna=%s", (abertura, t, interna, severidad, puntaje, pf) => {
     const r = cavidadAbierta(abertura, t, interna);
     expect(r.rule_version).toBe("3.2");
-    expect(r.indicadores.cavidadBasal).toMatchObject({ severidad, puntaje });
-    expect(r.indicadores.cavidadTronco).toMatchObject({ severidad, puntaje });
+    expect((r.indicadores as IndicadoresArbol).cavidadBasal).toMatchObject({ severidad, puntaje });
+    expect((r.indicadores as IndicadoresArbol).cavidadTronco).toMatchObject({ severidad, puntaje });
     expect(r.probabilidad_falla_raices_cuello).toBe(pf);
     expect(r.probabilidad_falla_tronco).toBe(pf);
   });
