@@ -22,6 +22,7 @@ import { AjustesBody, CalcularInspeccionBody, FinalizarInspeccionBody } from "..
 import { tipoSubtipoValido } from "../../schemas/sivu/alcanceInspeccion";
 import {
   AjustesEntrada,
+  EntradasConsecuencia,
   EntradasLcr,
   NucleoEntradas,
   ResultadoEvaluacion,
@@ -29,7 +30,7 @@ import {
 } from "../rules/engine/ensamblaje";
 import { SubtipoInspeccionCodigo, TipoInspeccionRealizadaCodigo } from "../rules/engine/catalogs";
 import { FechaSugeridaResultado } from "../rules/engine/fechas-sugeridas";
-import { RULE_VERSION } from "../rules/engine/version";
+import { RULE_VERSION as RULE_VERSION_CANDIDATA, RULE_VERSION_OPERATIVA as RULE_VERSION, VersionMotor } from "../rules/engine/version";
 import { CampoFaltante, evaluarCompletitud } from "./completitud";
 import { validarFisiologiaCopa } from "./fisiologiaCopa";
 import { mensajeCheck } from "../../utils/mensajesBase";
@@ -85,7 +86,9 @@ const CLAVES_NUCLEO = [
 ] as const satisfies readonly (keyof NucleoEntradas)[];
 
 // Los datos para lcr_pct salen del árbol, no del borrador (ver resolverDatosLcr).
-type ClaveNucleoSinListar = Exclude<keyof NucleoEntradas, (typeof CLAVES_NUCLEO)[number] | keyof EntradasLcr>;
+// Las entradas dendrom?tricas vienen de ARBOLES, no de la composici?n de
+// REGISTRO_EVALUACION. resolverDatosConsecuencia exige resolver sus tres claves.
+type ClaveNucleoSinListar = Exclude<keyof NucleoEntradas, (typeof CLAVES_NUCLEO)[number] | keyof EntradasLcr | keyof EntradasConsecuencia>;
 const nucleoCompleto: [ClaveNucleoSinListar] extends [never] ? true : ClaveNucleoSinListar = true;
 void nucleoCompleto;
 
@@ -292,7 +295,8 @@ async function calcular(
     variablesVigentes,
     variablesRegistradas,
     resolverDapCm(versionArbol, arbolVigente),
-    resolverDatosLcr(versionArbol, arbolVigente)
+    resolverDatosLcr(versionArbol, arbolVigente),
+    resolverDatosConsecuencia(versionArbol, arbolVigente)
   );
   if (copaAusente) variablesCalculo.sin_follaje_estacional = null;
   if (copaAusente || incidenciasFisiologia.some(({ campo }) => campo === "defoliacion_estimada_pct")) {
@@ -372,7 +376,8 @@ export function componerVariablesCalculo(
   vigentes: Readonly<Record<string, unknown>>,
   registradas: Readonly<Record<string, unknown>>,
   dapCm: number | null,
-  datosLcr?: EntradasLcr
+  datosLcr?: EntradasLcr,
+  datosConsecuencia?: Required<EntradasConsecuencia>
 ): NucleoEntradas {
   const entradas: Record<string, unknown> = {};
   for (const clave of CLAVES_NUCLEO) {
@@ -381,7 +386,7 @@ export function componerVariablesCalculo(
     else entradas[clave] = null;
   }
   entradas.dap_cm = dapCm; // dato del árbol (ARBOLES), no de la evaluación
-  if (datosLcr) Object.assign(entradas, datosLcr);
+  Object.assign(entradas, datosLcr, datosConsecuencia);
   return entradas as unknown as NucleoEntradas;
 }
 
@@ -395,8 +400,27 @@ export function resolverDapCm(versionArbol: VersionArbol | null, arbolVigente: R
 
 type VersionArbol = { campos: Record<string, unknown>; camposRegistrados: string[] };
 
+function datoDelArbol(campo: string, versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): unknown {
+  return versionArbol?.camposRegistrados.includes(campo) ? versionArbol.campos[campo] : arbolVigente?.[campo];
+}
+
+export function resolverDatosConsecuencia(
+  versionArbol: VersionArbol | null,
+  arbolVigente: Record<string, unknown> | null,
+): Required<EntradasConsecuencia> {
+  const multifustal = datoDelArbol("multifustal", versionArbol, arbolVigente);
+  const fustes = datoDelArbol("dap_fustes_cm", versionArbol, arbolVigente);
+  return {
+    multifustal: typeof multifustal === "boolean" ? multifustal : null,
+    numero_fustes: numeroDelArbol("numero_fustes", versionArbol, arbolVigente),
+    dap_fustes_cm: Array.isArray(fustes) && fustes.every(d => typeof d === "number" && Number.isFinite(d) && d > 0)
+      ? fustes
+      : null,
+  };
+}
+
 function numeroDelArbol(campo: string, versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): number | null {
-  const crudo = versionArbol?.camposRegistrados.includes(campo) ? versionArbol.campos[campo] : arbolVigente?.[campo];
+  const crudo = datoDelArbol(campo, versionArbol, arbolVigente);
   if (crudo === null || crudo === undefined || crudo === "") return null;
   const valor = Number(crudo);
   return Number.isFinite(valor) ? valor : null;
@@ -429,13 +453,17 @@ export function huellaCalculo(args: {
   fechaInspeccion: string;
   fechaVigente: string | null;
 }): string {
+  const { multifustal, numero_fustes, dap_fustes_cm, ...variablesHistoricas } = args.variablesCalculo;
+  const version = RULE_VERSION as VersionMotor;
   const contenido = {
-    variables_calculo: args.variablesCalculo,
+    variables_calculo: version === RULE_VERSION_CANDIDATA
+      ? args.variablesCalculo
+      : variablesHistoricas,
     tipo_inspeccion_realizada: args.tipo,
     subtipo_inspeccion: args.subtipo,
     fecha_inspeccion: args.fechaInspeccion,
     fecha_proxima_inspeccion_vigente: args.fechaVigente,
-    rule_version: RULE_VERSION,
+    rule_version: version,
   };
   return createHash("sha256").update(jsonCanonico(contenido)).digest("hex");
 }
@@ -461,6 +489,7 @@ function ensamblarConAjustes(
   args: Omit<Parameters<typeof ensamblarResultadoEvaluacion>[0], "ajustes">,
   ajustesBody: AjustesBody | undefined
 ): ResultadoEvaluacion {
+  args = { ...args, ruleVersion: RULE_VERSION };
   const sinAjustes = ensamblarResultadoEvaluacion(args);
   if (!ajustesBody || Object.keys(ajustesBody).length === 0) {
     return verificarFechas(sinAjustes);

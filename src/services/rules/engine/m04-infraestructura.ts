@@ -492,8 +492,8 @@ export function calcularCumplimientoDistanciaSeguridad(distancia: number | null)
   return distancia >= 2.0 ? "cumple" : "no_cumple";
 }
 
-/** IN-RAE-01 a 06. */
-function evaluarRedAerea(input: M04Input): ResultadoComponenteInfraestructura {
+/** IN-RAE-01 a 07. */
+function evaluarRedAerea(input: M04Input, aplicarIf22If23: boolean): ResultadoComponenteInfraestructura {
   const gate = gateRedesServicios(input);
   if (gate !== null) return gate;
 
@@ -548,13 +548,16 @@ function evaluarRedAerea(input: M04Input): ResultadoComponenteInfraestructura {
   if (cumplimiento === null) {
     return noDeterminadoInfra("distancia_copa_red_aerea_m no calculable (D-140/D-142): sin valor, no finita o negativa");
   }
-  if (cumplimiento === "no_cumple") return indicadorInfra("severa", "IN-RAE-02");
+  if (cumplimiento === "no_cumple") {
+    if (!aplicarIf22If23) return indicadorInfra("severa", "IN-RAE-02");
+    return input.dano_interferencia_red_aerea ? indicadorInfra("severa", "IN-RAE-07") : indicadorInfra("moderada", "IN-RAE-02");
+  }
   // cumplimiento === "cumple"
   return input.dano_interferencia_red_aerea ? indicadorInfra("moderada", "IN-RAE-04") : indicadorInfra("leve", "IN-RAE-03");
 }
 
-/** IN-RSU-01 a 07. */
-function evaluarRedSubterranea(input: M04Input): ResultadoComponenteInfraestructura {
+/** IN-RSU-01 a 08. */
+function evaluarRedSubterranea(input: M04Input, aplicarIf22If23: boolean): ResultadoComponenteInfraestructura {
   const gate = gateRedesServicios(input);
   if (gate !== null) return gate;
 
@@ -591,7 +594,9 @@ function evaluarRedSubterranea(input: M04Input): ResultadoComponenteInfraestruct
 
   const afectacion = input.afectacion_fisica_red_subterranea;
   const compromete = input.compromete_funcionalidad_red_subterranea;
-  if (compromete === "si") return indicadorInfra("severa", "IN-RSU-03"); // con o sin afectación física
+  if (compromete === "si") {
+    return aplicarIf22If23 && !afectacion ? indicadorInfra("moderada", "IN-RSU-08") : indicadorInfra("severa", "IN-RSU-03");
+  }
   if (afectacion && compromete === "no") return indicadorInfra("moderada", "IN-RSU-04");
   if (afectacion && compromete === "no_determinado") return indicadorInfra("moderada", "IN-RSU-05");
   if (!afectacion && compromete === "no") return indicadorInfra("sin_afectacion", "IN-RSU-06");
@@ -622,14 +627,14 @@ function clasificarPeorComponente(categorias: CategoriaDeterminada[]): "bajo" | 
   return categorias.includes("moderada") ? "moderado" : "bajo";
 }
 
-export function evaluarM04(input: M04Input): M04Resultado {
+export function evaluarM04(input: M04Input, aplicarIf22If23 = false): M04Resultado {
   const componentes: M04Resultado["componentes"] = {
     vereda: evaluarVereda(input),
     calzada: evaluarCalzada(input),
     alcorque: evaluarAlcorque(input),
     infraestructuraVertical: evaluarInfraestructuraVertical(input),
-    redAerea: evaluarRedAerea(input),
-    redSubterranea: evaluarRedSubterranea(input),
+    redAerea: evaluarRedAerea(input, aplicarIf22If23),
+    redSubterranea: evaluarRedSubterranea(input, aplicarIf22If23),
   };
   const comunes = {
     componentes,
