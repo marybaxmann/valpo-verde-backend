@@ -213,6 +213,7 @@ describe("GET /api/sivu/projects/:id/indicadores: secuestro anual (decisiones A 
       simulacion_exploratoria: 2,
       no_estimable: 3,
       simulacion_medicion_en_revision: 0,
+      simulacion_con_categoria_itree: 2,
       motivos: { multifustal_no_admitido: 1, sin_modelo: 1, falta_cle: 1 },
     });
     expect(s.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });

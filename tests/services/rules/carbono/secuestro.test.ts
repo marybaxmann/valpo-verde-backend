@@ -144,6 +144,7 @@ describe("agregarSecuestro", () => {
       simulacion_exploratoria: 2,
       no_estimable: 2,
       simulacion_medicion_en_revision: 0,
+      simulacion_con_categoria_itree: 2,
       motivos: { sin_modelo: 1, multifustal_no_admitido: 1, sin_evaluacion_valida: 1 },
     });
     expect(g.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });

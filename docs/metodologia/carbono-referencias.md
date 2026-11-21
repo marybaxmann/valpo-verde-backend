@@ -137,7 +137,13 @@ Para las especies con carbono directo (sección 4): ΔDAP con el crecimiento de 
 
 Solo para las ecuaciones de volumen urbano (secciones 3 y 5), nunca para el carbono directo. Un multifustal con los diámetros de al menos dos fustes usa el DAP único de i-Tree Eco: DAP = (AB / 0,00007854)^0,5 = √Σdᵢ² (Nowak, D. J. 2024, *Understanding i-Tree: 2023 Summary of Programs and Methods*, GTR NRS-200-2023, p. 22), que debe coincidir con el DAP equivalente registrado (D-18) con una tolerancia de 0,05 cm. El resultado es siempre exploratorio (`estado_resultado`), aunque el modelo esté aprobado: no suma al total ni puede ser estimación fundamentada. Limitación: el protocolo de la UTD mide los multifustales bajo la bifurcación cuando es posible (PSW-GTR-253, p. 49), así que la compatibilidad con cada ecuación no está demostrada. Sin diámetros de fustes, o con un DAP que no coincide, no se estima.
 
-## 8. Lo que queda pendiente
+## 8. PROPUESTA EXPERIMENTAL · Categoría de crecimiento de i-Tree como referencia (2026-11-21)
+
+La base de especies de i-Tree (https://database.itreetools.org/#/species, campo GrowthRate, consultada el 2026-11-21) asigna categoría a 16 de las 18 especies del Piloto: lento (*Quillaja saponaria*, *Olea europaea*, *Ginkgo biloba*, *Pittosporum tobira*, *Phoenix canariensis*), moderado (*Ulmus minor*, *Acer pseudoplatanus*, *Pittosporum undulatum*, *Araucaria angustifolia*, *Lagerstroemia indica*) y rápido (*Acer negundo*, *Acer platanoides*, *Jacaranda mimosifolia*, *Ficus elastica*, *Araucaria heterophylla*, *Schinus molle*). Sin categoría: *Cryptocarya alba* y *Beilschmiedia miersii*. Copia de la consulta: `BITACORAS_SIVU/secuestro-carbono/verificaciones/indicadores-experimental/itree_categorias_crecimiento_2026-11-21.md`.
+
+Uso: cada simulación lleva `categoria_itree`, que marca el escenario de la especie dentro del rango. **No es una categoría aprobada**: la simulación sigue siendo simulación y nada suma a los totales. i-Tree advierte que hay pocos datos medidos de crecimiento urbano por especie. Para que una especie pase a estimación fundamentada, el equipo debe aprobar su categoría (CATEGORIA_APROBADA_POR_ESPECIE).
+
+## 9. Lo que queda pendiente
 
 - Leer el apéndice 11 de Nowak 2020 y la tabla B.1 de CARB 2010 cuando se puedan descargar, y anotar su verificación aquí.
 - Confirmar en el original la tabla 4.3 del IPCC 2006 (fracción 0,47), como pide CC-069.

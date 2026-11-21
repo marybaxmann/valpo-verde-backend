@@ -53,6 +53,47 @@ export type CodigoCategoria = (typeof CRECIMIENTO_ITREE.categorias)[number]["cod
  */
 export const CATEGORIA_APROBADA_POR_ESPECIE: Readonly<Record<string, { categoria: CodigoCategoria; fuente: string }>> = {};
 
+/**
+ * PROPUESTA EXPERIMENTAL (2026-11-21): categoría de crecimiento que publica la
+ * base de especies de i-Tree (campo GrowthRate: Slow / Moderate / Fast) para
+ * las especies del Piloto. Es una REFERENCIA: marca cuál de los tres
+ * escenarios de la simulación corresponde a la especie según i-Tree, pero NO
+ * convierte la simulación en estimación fundamentada ni suma a ningún total
+ * (eso exige la aprobación del equipo y pasar la especie a
+ * CATEGORIA_APROBADA_POR_ESPECIE). i-Tree advierte que hay pocos datos medidos
+ * de crecimiento urbano por especie. Sin categoría publicada: Cryptocarya
+ * alba y Beilschmiedia miersii.
+ */
+export const FUENTE_CATEGORIA_ITREE =
+  "i-Tree Database, base de especies (https://database.itreetools.org/#/species), campo GrowthRate, consultada el 2026-11-21";
+export const CATEGORIA_ITREE_REFERENCIA: Readonly<Record<string, CodigoCategoria>> = {
+  "quillaja saponaria": "lento",
+  "olea europaea": "lento",
+  "ginkgo biloba": "lento",
+  "pittosporum tobira": "lento",
+  "phoenix canariensis": "lento",
+  "ulmus minor": "moderado",
+  "acer pseudoplatanus": "moderado",
+  "pittosporum undulatum": "moderado",
+  "araucaria angustifolia": "moderado",
+  "lagerstroemia indica": "moderado",
+  "acer negundo": "rapido",
+  "acer platanoides": "rapido",
+  "jacaranda mimosifolia": "rapido",
+  "ficus elastica": "rapido",
+  "araucaria heterophylla": "rapido",
+  "schinus molle": "rapido",
+};
+
+/** Referencia i-Tree de una especie, o null si i-Tree no publica categoría. */
+export function categoriaItreeReferencia(especie: string | null): { categoria: CodigoCategoria; fuente: string; estado: string } | null {
+  const clave = claveEspecie(especie);
+  const categoria = clave === null ? undefined : CATEGORIA_ITREE_REFERENCIA[clave];
+  return categoria
+    ? { categoria, fuente: FUENTE_CATEGORIA_ITREE, estado: "referencia experimental: no aprobada; no cambia la clasificación ni suma a totales" }
+    : null;
+}
+
 export const SUPUESTOS_SECUESTRO = [
   "Simulación basada en supuestos: no es una medición ni una estimación validada.",
   "Crecimiento diamétrico con las categorías publicadas por i-Tree Eco (lento, moderado y rápido), sin asignar ninguna a la especie.",
@@ -130,6 +171,8 @@ interface Comun {
   supuestos: string[];
   /** Advertencias del árbol: modelo exploratorio, altura sin rango publicado, poda intensa o desmoche. */
   advertencias: string[];
+  /** Propuesta experimental: categoría de crecimiento de la especie según i-Tree (solo referencia). */
+  categoria_itree: ReturnType<typeof categoriaItreeReferencia>;
 }
 
 export type ResultadoSecuestro =
@@ -249,6 +292,7 @@ export function calcularSecuestroArbol(
     factores: { factor_cle: fCle, factor_condicion: fCond },
     supuestos: [...SUPUESTOS_SECUESTRO],
     advertencias,
+    categoria_itree: categoriaItreeReferencia(a.especie_cientifica),
   };
 
   const clave = claveEspecie(a.especie_cientifica);
@@ -295,6 +339,7 @@ export function agregarSecuestro(
   let noEstimables = 0;
   let fueraUniverso = 0;
   let enRevision = 0;
+  let conCategoriaItree = 0;
   let totalCo2 = 0;
   for (const a of presentes) {
     const r = calcularSecuestroArbol(a, aprobadas);
@@ -304,6 +349,7 @@ export function agregarSecuestro(
     } else if (r.tipo === "simulacion_exploratoria") {
       simulaciones++;
       if (a.tree_code && MEDICIONES_EN_REVISION[a.tree_code]) enRevision++;
+      if (r.categoria_itree) conCategoriaItree++;
     } else {
       if (r.tipo === "fuera_del_universo") fueraUniverso++;
       else noEstimables++;
@@ -322,6 +368,8 @@ export function agregarSecuestro(
       no_estimable: noEstimables,
       /** Propuesta experimental: simulaciones con la medición en revisión (no validadas). */
       simulacion_medicion_en_revision: enRevision,
+      /** Propuesta experimental: simulaciones con categoría i-Tree de referencia (no suman ni cambian su clase). */
+      simulacion_con_categoria_itree: conCategoriaItree,
       motivos,
     },
     /** Solo estimaciones fundamentadas. Las simulaciones no se suman. */

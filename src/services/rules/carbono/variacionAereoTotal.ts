@@ -19,7 +19,7 @@
 import { CategoriaSinCarbono } from "./calculo";
 import { calcularCarbonoAereoTotalArbol } from "./carbonoAereoTotal";
 import { FACTOR_CO2_POR_C } from "./modelos";
-import { ArbolSecuestro, calcularSecuestroArbol, CodigoCategoria, CRECIMIENTO_ITREE, factorCle, MotivoSinSecuestro } from "./secuestro";
+import { ArbolSecuestro, calcularSecuestroArbol, categoriaItreeReferencia, CodigoCategoria, CRECIMIENTO_ITREE, factorCle, MotivoSinSecuestro } from "./secuestro";
 
 export const SUPUESTOS_VARIACION_AEREO_TOTAL = [
   "Propuesta experimental, no vigente: simulación basada en supuestos, no es una medición ni una estimación validada.",
@@ -64,6 +64,7 @@ export type ResultadoVariacionAereoTotal =
       por_categoria: CategoriaVariacion[];
       supuestos: string[];
       advertencias: string[];
+      categoria_itree: ReturnType<typeof categoriaItreeReferencia>;
       motivo: null;
       categoria_motivo: null;
       detalle: null;
@@ -129,6 +130,7 @@ export function calcularVariacionAereoTotalArbol(a: ArbolSecuestro): ResultadoVa
     por_categoria: porCategoria,
     supuestos: [...SUPUESTOS_VARIACION_AEREO_TOTAL],
     advertencias,
+    categoria_itree: categoriaItreeReferencia(a.especie_cientifica),
     motivo: null,
     categoria_motivo: null,
     detalle: null,

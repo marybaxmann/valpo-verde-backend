@@ -287,3 +287,25 @@ describe("motivo explícito para especies sin densidad", () => {
     expect(calcularCarbonoArbol(arbol("x", "Persea americana", 40, 15)).detalle).toBe("No hay un modelo aprobado para esta especie.");
   });
 });
+
+describe("categoría de crecimiento i-Tree como referencia (propuesta experimental)", () => {
+  it("marca la categoría de la especie sin convertir la simulación en estimación fundamentada", async () => {
+    const { CATEGORIA_ITREE_REFERENCIA, categoriaItreeReferencia } = await import("../../../../src/services/rules/carbono/secuestro");
+    expect(Object.keys(CATEGORIA_ITREE_REFERENCIA)).toHaveLength(16);
+    expect(categoriaItreeReferencia("Quillaja saponaria")?.categoria).toBe("lento");
+    expect(categoriaItreeReferencia("Acer negundo")?.categoria).toBe("rapido");
+    expect(categoriaItreeReferencia("Cryptocarya alba")).toBeNull();
+    expect(categoriaItreeReferencia("Beilschmiedia miersii")).toBeNull();
+    const r = calcularSecuestroArbol(arbol("o", "Olea europaea", 17, 5.8));
+    expect(r.tipo).toBe("simulacion_exploratoria");
+    if (r.tipo !== "simulacion_exploratoria") return;
+    expect(r.categoria_itree).toEqual(expect.objectContaining({ categoria: "lento" }));
+    expect(r.categoria_itree?.fuente).toMatch(/database\.itreetools\.org/);
+    const v = calcularVariacionAereoTotalArbol(arbol("q", "Quillaja saponaria", 18.4, 8.3));
+    if (v.tipo !== "simulacion_exploratoria") throw new Error(v.tipo);
+    expect(v.categoria_itree?.categoria).toBe("lento");
+    const g = agregarSecuestro([arbol("o", "Olea europaea", 17, 5.8), arbol("j", "Jacaranda mimosifolia", 30, 10)]);
+    expect(g.cobertura).toEqual(expect.objectContaining({ estimacion_fundamentada: 0, simulacion_con_categoria_itree: 2 }));
+    expect(g.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });
+  });
+});
