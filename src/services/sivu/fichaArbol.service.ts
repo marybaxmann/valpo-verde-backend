@@ -19,6 +19,7 @@ import { areaCopaArbol } from "../rules/indicadores/inventario";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { calcularCarbonoArbol, METODO_CARBONO } from "../rules/carbono/calculo";
 import { calcularCarbonoAereoTotalArbol, METODO_CARBONO_AEREO_TOTAL } from "../rules/carbono/carbonoAereoTotal";
+import { descriptivosArbol } from "../rules/indicadores/descriptivos";
 import { calcularVariacionAereoTotalArbol, METODO_VARIACION_AEREO_TOTAL } from "../rules/carbono/variacionAereoTotal";
 import { LIMITACIONES, LIMITACIONES_AEREO_TOTAL } from "../rules/carbono/modelos";
 import { calcularSecuestroArbol, METODO_SECUESTRO } from "../rules/carbono/secuestro";
@@ -170,6 +171,34 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     // Propuesta experimental (2026-11-21): variación anual proyectada del carbono aéreo total (con hojas), solo
     // para especies con carbono directo. Siempre simulación; no es secuestro leñoso ni captura fotosintética.
     variacion_anual_carbono_aereo_total: { ...calcularVariacionAereoTotalArbol(entradaSecuestro), metodo: METODO_VARIACION_AEREO_TOTAL },
+    // Propuesta experimental: valores descriptivos del árbol (diferencias y cocientes de medidas registradas) y condición de copa registrada.
+    descriptivos: descriptivosArbol({
+      id: treeId,
+      tree_code: (fila.tree_code as string | null | undefined) ?? null,
+      sector: (fila.sector as string | null | undefined) ?? null,
+      presente: entradaCarbono.presente,
+      evaluacion_completa_vigente: evaluacionCompletaVigente,
+      especie_cientifica: entradaCarbono.especie_cientifica,
+      especie_en_catalogo: !sinEspecie,
+      genero: rasgos?.genero ?? null,
+      familia: rasgos?.familia ?? null,
+      origen_biogeografico: rasgos?.origen_biogeografico ?? null,
+      multifustal: entradaCarbono.multifustal,
+      dap_fustes_cm: entradaCarbono.dap_fustes_cm,
+      dap_cm: entradaCarbono.dap_cm,
+      altura_total_m: entradaCarbono.altura_total_m,
+      diametro_copa_m: numero(fila.diametro_copa_m),
+      altura_primera_rama_m: numero(fila.altura_primera_rama_m),
+      altura_base_copa_viva_m: numero(fila.altura_base_copa_viva_m),
+      clase_edad: null,
+      cle: crecimiento[0]?.cle ?? null,
+      muerte_regresiva_pct: crecimiento[0]?.muerte_regresiva_pct ?? null,
+      defoliacion_pct: crecimiento[0]?.defoliacion_pct ?? null,
+      clorosis_pct: crecimiento[0]?.clorosis_pct ?? null,
+      necrosis_pct: crecimiento[0]?.necrosis_pct ?? null,
+      copa_faltante_pct: crecimiento[0]?.copa_faltante_pct ?? null,
+      vitalidad: conEtiqueta("clasificacion_vitalidad", crecimiento[0]?.vitalidad ?? null),
+    }),
     // D-28/D-29 (AM-22): Presente, Talado o Retirado, y desde cuándo.
     presencia: presencia
       ? { ...conEtiqueta("estado_presencia", presencia.estado_presencia)!, desde: presencia.fecha_cambio_estado_presencia }

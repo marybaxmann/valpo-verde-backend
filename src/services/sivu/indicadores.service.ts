@@ -1,7 +1,9 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
 import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, listarVariablesCrecimiento, obtenerSuperficieProyecto } from "../../repositories/sivu/indicadores.repository";
-import { agregarSecuestro } from "../rules/carbono/secuestro";
+import { agregarSecuestro, MEDICIONES_EN_REVISION } from "../rules/carbono/secuestro";
+import { ArbolDescriptivo, diagnosticoDescriptivo } from "../rules/indicadores/descriptivos";
+import { CATALOGO } from "../rules/engine/catalogs";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
 import { agregarCarbonoAereoTotal } from "../rules/carbono/carbonoAereoTotal";
@@ -92,6 +94,43 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
       altura_total_m: f.altura_total_m,
     }));
 
+  // Propuesta experimental: diagnóstico descriptivo con datos medidos y vigentes (sin ecuaciones).
+  const etiqueta = (catalogo: string, codigo: string | null | undefined) =>
+    codigo ? { codigo, etiqueta: CATALOGO.find((c) => c.catalogo === catalogo && c.codigo === codigo)?.etiqueta ?? null } : null;
+  const arbolesDescriptivos: ArbolDescriptivo[] = delAmbito
+    .filter((f) => presentesIds.has(f.id))
+    .map((f) => {
+      const r = rasgoPorArbol.get(f.id);
+      const c = crecimientoPorArbol.get(f.id);
+      return {
+        id: f.id,
+        tree_code: f.tree_code ?? null,
+        sector: f.sector,
+        presente: true,
+        evaluacion_completa_vigente: evaluadosIds.has(f.id),
+        especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
+        especie_en_catalogo: f.species_id !== null,
+        genero: r?.genero ?? null,
+        familia: r?.familia ?? null,
+        origen_biogeografico: r?.origen_biogeografico ?? null,
+        multifustal: f.multifustal,
+        dap_fustes_cm: f.dap_fustes_cm ?? null,
+        dap_cm: f.dap_cm,
+        altura_total_m: f.altura_total_m,
+        diametro_copa_m: f.diametro_copa_m,
+        altura_primera_rama_m: f.altura_primera_rama_m ?? null,
+        altura_base_copa_viva_m: f.altura_base_copa_viva_m ?? null,
+        clase_edad: etiqueta("clase_edad", f.clase_edad),
+        cle: c?.cle ?? null,
+        muerte_regresiva_pct: c?.muerte_regresiva_pct ?? null,
+        defoliacion_pct: c?.defoliacion_pct ?? null,
+        clorosis_pct: c?.clorosis_pct ?? null,
+        necrosis_pct: c?.necrosis_pct ?? null,
+        copa_faltante_pct: c?.copa_faltante_pct ?? null,
+        vitalidad: etiqueta("clasificacion_vitalidad", c?.vitalidad),
+      };
+    });
+
   const arbolesSecuestro = arbolesCarbono.map((a) => ({
     ...a,
     cle: crecimientoPorArbol.get(a.id)?.cle ?? null,
@@ -135,5 +174,7 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     estimacion_variacion_anual_carbono_aereo_total: agregarVariacionAereoTotal(arbolesSecuestro),
     // Propuesta experimental: una sola clase por árbol (secuestro leñoso, variación aérea total o no estimable).
     resumen_proyeccion_anual: resumirProyeccionAnual(arbolesSecuestro),
+    // Propuesta experimental: indicadores descriptivos (no registrados en INDICES).
+    diagnostico_descriptivo: diagnosticoDescriptivo(arbolesDescriptivos, MEDICIONES_EN_REVISION),
   };
 }

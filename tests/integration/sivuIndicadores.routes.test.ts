@@ -152,7 +152,7 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
         "fecha_consulta", "ambito", "barrios", "cobertura", "numero_total_arboles", "densidad_arborea", "clases_diametricas",
         "diametro_medio_copa", "area_proyectada_copa", "cobertura_taxonomica", "riqueza_especies", "abundancia_relativa",
         "diversidad_shannon", "diversidad_taxonomica_10_20_30", "proporcion_origen", "estimacion_carbono_aereo_lenoso",
-        "estimacion_carbono_aereo_total", "estimacion_secuestro_anual", "estimacion_variacion_anual_carbono_aereo_total", "resumen_proyeccion_anual",
+        "estimacion_carbono_aereo_total", "estimacion_secuestro_anual", "estimacion_variacion_anual_carbono_aereo_total", "resumen_proyeccion_anual", "diagnostico_descriptivo",
       ].sort()
     );
     expect(d.estimacion_carbono_aereo_lenoso.cobertura.presentes).toBe(d.cobertura.arboles_presentes);

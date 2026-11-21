@@ -151,7 +151,7 @@ describe("obtenerFichaArbol (B2)", () => {
     it("compatibilidad: la ficha solo agrega estimacion_carbono_aereo_lenoso, estimacion_carbono_aereo_total y secuestro_anual; arbol no cambia", async () => {
       const f = await obtenerFichaArbol(user, P, T, "token");
       expect(Object.keys(f).sort()).toEqual(
-        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso", "estimacion_carbono_aereo_total", "secuestro_anual", "variacion_anual_carbono_aereo_total"].sort()
+        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso", "estimacion_carbono_aereo_total", "secuestro_anual", "variacion_anual_carbono_aereo_total", "descriptivos"].sort()
       );
       expect(Object.keys(f.arbol)).not.toContain("estimacion_carbono_aereo_lenoso");
     });
