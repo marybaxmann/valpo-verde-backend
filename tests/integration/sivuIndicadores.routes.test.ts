@@ -136,9 +136,11 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
       expect(d[k]).toEqual(sinCarbono[k]);
     }
     const c = d.estimacion_carbono_aereo_lenoso;
-    // a4 está talado; a1-a3 son Acer negundo, sin modelo aprobado.
-    expect(c.cobertura).toEqual(expect.objectContaining({ presentes: 3, universo_calculo: 3, con_resultado: 0 }));
-    expect(c.cobertura.motivos.sin_modelo).toBe(3);
+    // a4 está talado; a1-a3 son Acer negundo, con modelo exploratorio (2026-11-20): a1 (25 cm) tiene resultado
+    // exploratorio, que no suma; a2 no tiene DAP y a3 (120 cm) queda fuera del rango (9,7-102,1 cm).
+    expect(c.cobertura).toEqual(expect.objectContaining({ presentes: 3, universo_calculo: 3, con_resultado: 0, con_resultado_exploratorio: 1 }));
+    expect(c.cobertura.motivos.falta_dap).toBe(1);
+    expect(c.cobertura.motivos.fuera_de_rango).toBe(1);
     expect(c.total).toEqual({ biomasa_aerea_lenosa_t: null, carbono_t: null, co2e_t: null });
     expect(c.metodo.estado_cc).toMatch(/pendiente de sincronización con el Excel/);
   });

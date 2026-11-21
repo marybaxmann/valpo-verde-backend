@@ -144,6 +144,7 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     ...entradaCarbono,
     cle: crecimiento[0]?.cle ?? null,
     muerte_regresiva_pct: crecimiento[0]?.muerte_regresiva_pct ?? null,
+    poda_intensa: crecimiento[0]?.poda_intensa ?? null,
   });
   const sinEspecie = fila.especie_cientifica === null;
 

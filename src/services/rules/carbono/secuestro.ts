@@ -77,6 +77,11 @@ export interface ArbolSecuestro extends ArbolCarbono {
   cle: number | null;
   /** D-89, muerte regresiva de copa (%) de la evaluación vigente. */
   muerte_regresiva_pct: number | null;
+  /**
+   * Vitalidad «no evaluable por poda» en la evaluación vigente (copa con poda
+   * intensa o desmoche). Solo genera una advertencia; no cambia el cálculo.
+   */
+  poda_intensa?: boolean | null;
 }
 
 export const MOTIVOS_SECUESTRO_PROPIOS = {
@@ -99,10 +104,19 @@ export interface ResultadoCategoria {
 
 interface Comun {
   unidad: "kg CO₂/árbol/año";
-  modelo: { id: string; fuente: string; confianza: CarbonoArbol["modelo"]["confianza"]; especie_ecuacion: string; rango: CarbonoArbol["modelo"]["rango"] };
+  modelo: {
+    id: string;
+    fuente: string;
+    confianza: CarbonoArbol["modelo"]["confianza"];
+    estado: CarbonoArbol["modelo"]["estado"];
+    especie_ecuacion: string;
+    rango: CarbonoArbol["modelo"]["rango"];
+  };
   entradas: { dap_cm: number; altura_total_m: number | null; cle: number; muerte_regresiva_pct: number };
   factores: { factor_cle: number; factor_condicion: number };
   supuestos: string[];
+  /** Advertencias del árbol: modelo exploratorio, altura sin rango publicado, poda intensa o desmoche. */
+  advertencias: string[];
 }
 
 export type ResultadoSecuestro =
@@ -182,16 +196,37 @@ export function calcularSecuestroArbol(
     porCategoria.push({ categoria: cat.codigo, tasa_base_cm_anio: cat.tasa_cm_anio, delta_dap_cm: delta, dap_proyectado_cm: dap1, carbono_kg_anio: carbono, co2_kg_anio: co2 });
   }
 
+  const advertencias: string[] = [];
+  if (c0.modelo.estado === "exploratorio") {
+    const especieEcuacion = c0.modelo.especie_ecuacion.charAt(0).toUpperCase() + c0.modelo.especie_ecuacion.slice(1);
+    advertencias.push(`Modelo de biomasa exploratorio: ecuación de ${especieEcuacion}, otra especie del mismo género, no calibrada para Valparaíso.`);
+  }
+  if (c0.modelo.variante === "dap_altura" && c0.modelo.rango.altura_min_m === null) {
+    advertencias.push("La fuente no publica el rango de altura del modelo: la altura del árbol no se pudo comprobar.");
+  }
+  if (a.poda_intensa === true) {
+    advertencias.push("Copa con poda intensa o desmoche (vitalidad no evaluable por poda): el modelo puede no representar su arquitectura.");
+  }
+
   const comun: Comun = {
     unidad: "kg CO₂/árbol/año",
-    modelo: { id: c0.modelo.id, fuente: c0.modelo.fuente, confianza: c0.modelo.confianza, especie_ecuacion: c0.modelo.especie_ecuacion, rango: { ...c0.modelo.rango } },
+    modelo: {
+      id: c0.modelo.id,
+      fuente: c0.modelo.fuente,
+      confianza: c0.modelo.confianza,
+      estado: c0.modelo.estado,
+      especie_ecuacion: c0.modelo.especie_ecuacion,
+      rango: { ...c0.modelo.rango },
+    },
     entradas: { dap_cm: c0.entradas.dap_cm, altura_total_m: c0.entradas.altura_total_m, cle: a.cle, muerte_regresiva_pct: mr },
     factores: { factor_cle: fCle, factor_condicion: fCond },
     supuestos: [...SUPUESTOS_SECUESTRO],
+    advertencias,
   };
 
   const clave = claveEspecie(a.especie_cientifica);
-  const aprobada = clave === null ? undefined : aprobadas[clave];
+  // Con un modelo de biomasa exploratorio el resultado nunca es fundamentado.
+  const aprobada = clave === null || c0.modelo.estado === "exploratorio" ? undefined : aprobadas[clave];
   if (aprobada) {
     const valor = porCategoria.find((p) => p.categoria === aprobada.categoria)!;
     return {

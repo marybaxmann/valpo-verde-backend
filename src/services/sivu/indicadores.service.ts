@@ -120,6 +120,7 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
         ...a,
         cle: crecimientoPorArbol.get(a.id)?.cle ?? null,
         muerte_regresiva_pct: crecimientoPorArbol.get(a.id)?.muerte_regresiva_pct ?? null,
+        poda_intensa: crecimientoPorArbol.get(a.id)?.poda_intensa ?? null,
       }))
     ),
   };

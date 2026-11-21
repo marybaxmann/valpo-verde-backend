@@ -98,6 +98,8 @@ export interface VariablesCrecimientoRow {
   cle: number | null;
   /** D-89 (%), de la evaluación vigente. */
   muerte_regresiva_pct: number | null;
+  /** clasificacion_vitalidad = «no_evaluable_poda» en la evaluación vigente. */
+  poda_intensa: boolean | null;
 }
 
 const numeroDeTexto = (v: unknown): number | null => {
@@ -126,21 +128,26 @@ export async function listarVariablesCrecimiento(accessToken: string, treeIds: s
     }
   }
   const inspecciones = [...new Set(inspeccionPorArbol.values())];
-  const porInspeccion = new Map<string, { cle: number | null; muerte_regresiva_pct: number | null }>();
+  const porInspeccion = new Map<string, { cle: number | null; muerte_regresiva_pct: number | null; poda_intensa: boolean | null }>();
   for (let i = 0; i < inspecciones.length; i += 100) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("evaluations")
-      .select("inspection_id, cle:variables->>exposicion_luminica_copa_cle, mr:variables->>muerte_regresiva_copa_pct")
+      .select("inspection_id, cle:variables->>exposicion_luminica_copa_cle, mr:variables->>muerte_regresiva_copa_pct, vit:variables->>clasificacion_vitalidad")
       .in("inspection_id", inspecciones.slice(i, i + 100));
     if (error) lanzar(error);
-    for (const f of (data ?? []) as Array<{ inspection_id: string; cle: unknown; mr: unknown }>) {
-      porInspeccion.set(f.inspection_id, { cle: numeroDeTexto(f.cle), muerte_regresiva_pct: numeroDeTexto(f.mr) });
+    for (const f of (data ?? []) as Array<{ inspection_id: string; cle: unknown; mr: unknown; vit: unknown }>) {
+      porInspeccion.set(f.inspection_id, {
+        cle: numeroDeTexto(f.cle),
+        muerte_regresiva_pct: numeroDeTexto(f.mr),
+        poda_intensa: f.vit === null || f.vit === undefined || f.vit === "" ? null : f.vit === "no_evaluable_poda",
+      });
     }
   }
   return [...inspeccionPorArbol.entries()].map(([tree_id, inspection_id]) => ({
     tree_id,
     cle: porInspeccion.get(inspection_id)?.cle ?? null,
     muerte_regresiva_pct: porInspeccion.get(inspection_id)?.muerte_regresiva_pct ?? null,
+    poda_intensa: porInspeccion.get(inspection_id)?.poda_intensa ?? null,
   }));
 }
 
