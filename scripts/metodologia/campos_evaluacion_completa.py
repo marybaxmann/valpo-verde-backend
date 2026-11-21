@@ -25,6 +25,9 @@ igual no son datos crudos del borrador:
     clasificacion_riesgo/infraestructura/prioridad difiere del valor
     calculado" (D-173) — es parte del AJUSTE posterior al cálculo, no del
     guardado Preguardado antes de que exista ningún valor calculado.
+  - los 8 campos de palmeras que ingresa el Inspector (PALM-01, CC-081, D-308
+    a D-316): la 3.3.0 está en preparación y el borrador aún no los admite.
+    Se quitan de esta lista al implementar el CC-081.
 
 Agrega, a mano (ADICIONES_MANUALES abajo), los campos que la metodología
 exige ingresar pero que no tienen fila propia con quien_ingresa = Inspector:
@@ -46,6 +49,14 @@ EXCLUSIONES_MANUALES = {
         "calculado (D-173) -- es parte del ajuste posterior al cálculo "
         "(#59/#72), no del guardado Preguardado."
     ),
+    "calidad_copa_palmera": "PALM-01 (CC-081, 3.3.0 en preparación): campo de palmeras aún no implementado en el borrador.",
+    "proporcion_frondas_vivas": "PALM-01 (CC-081, 3.3.0 en preparación): campo de palmeras aún no implementado en el borrador.",
+    "anomalia_cogollo": "PALM-01 (CC-081, 3.3.0 en preparación): campo de palmeras aún no implementado en el borrador.",
+    "indicios_plaga_palmera": "PALM-01 (CC-081, 3.3.0 en preparación): campo de palmeras aún no implementado en el borrador.",
+    "estrechamiento_estipite": "PALM-01 (CC-081, 3.3.0 en preparación): campo de palmeras aún no implementado en el borrador.",
+    "angulacion_grave_estipite": "PALM-01 (CC-081, 3.3.0 en preparación): campo de palmeras aún no implementado en el borrador.",
+    "raices_adventicias_altura": "PALM-01 (CC-081, 3.3.0 en preparación): campo de palmeras aún no implementado en el borrador.",
+    "inclinacion_corregida": "PALM-01 (CC-081, 3.3.0 en preparación): campo de palmeras aún no implementado en el borrador.",
 }
 
 ADICIONES_MANUALES = {

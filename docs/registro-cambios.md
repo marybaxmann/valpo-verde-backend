@@ -3325,3 +3325,49 @@ motivo)
 - Consecuencias calculadas por el diámetro de la parte (Ellison, 2005). En multifustales se entrega el DAP equivalente para raíces y cuello y el fuste mayor para tronco. La copa baja un nivel respecto del tronco. El motor conserva los ajustes justificados.
 - IF-22: red aérea eléctrica bajo la referencia, Moderada sin daño y Severa con daño, con alerta visible en el resultado. IF-23: red subterránea comprometida sin afectación física, Moderada. Se conserva CC-043, la agregación de M04 y M05.
 - Excel, exportaciones, índice y motor se sincronizan en el mismo cambio. Las evaluaciones anteriores conservan su versión y no se recalculan automáticamente. PALM-01 queda para 3.3.0. Producción requiere confirmación independiente de la autora.
+
+### CC-081 — PALM-01: evaluación de palmeras (SIVU 3.3.0, en preparación)
+
+- Aprobación del criterio: autora, 2026-11-21. Paquete MINOR 3.3.0 en preparación, `rule_version` 3.3 al publicar, sobre la 3.2.0 (CC-080). Fundamento: matriz E2e, protocolo E4e, diagrama v5 y propuesta E7 de PALM-01, en la carpeta de auditoría metodológica de la tesis.
+- **Superposición: no se modifica ninguna fila, celda o estilo existente del Excel.** Se agregan:
+  - D-308 a D-316, 9 campos de palmeras, Condicionales con `tipo_hoja = Palmera`;
+  - REGLAS_GENERALES, filas 29 a 32;
+  - REGLAS_INDICADORES PB-, PE- y PC-, 57 reglas;
+  - el bloque R01-P a R03-P de MATRICES_CALCULO, filas 20 a 33, con máximos 10, 12 y 5 y las bandas de los árboles;
+  - la hoja PALMERAS: definiciones adaptadas (A), campos que no aplican (B) y nota (C);
+  - VERSION, fila 10.
+- **Árboles sin cambios.** Sus reglas, campos y resultados son los de la 3.2. Las inspecciones finalizadas conservan su versión. `tipo_hoja` nulo u otro valor usa las reglas de árboles. La plaga «No determinado» deja No determinado el componente, como en los árboles.
+- **Sincronización en este cambio:**
+  - exportaciones, con PALMERAS agregada a `exportar_excel.py`;
+  - los 9 campos en `CAMPOS_NO_EXIGIDOS` y en las exclusiones manuales de `campos_evaluacion_completa.py` y de su prueba, porque no se exigen ni se admiten en el borrador hasta implementar el motor;
+  - máximos de palmeras en `verificar_14_9.py`.
+  - Pruebas: 1852 de 1852. §14.9: sin hallazgos.
+- **Pendiente para publicar la 3.3.0:**
+  - motor R01-P a R03-P con la rama `tipo_hoja === "palmera"`;
+  - completitud y borrador de los 9 campos, y desactivación de la hoja PALMERAS, sección B;
+  - formulario del frontend;
+  - prueba de regresión: árboles idénticos a la 3.2;
+  - revisar `tipo_hoja` de las palmeras en CATALOGO_ESPECIES;
+  - completar AV_000087.
+
+- [x] Verificación §14.9 (fuente): sin hallazgos en los puntos automatizables.
+- [ ] Verificación §14.9 (implementación): motor hecho; faltan la composición, la completitud y el frontend.
+
+**Motor de palmeras (2026-11-21, misma rama)**
+- `src/services/rules/engine/palmeras.ts` implementa:
+  - R01-P, R02-P y R03-P, con las reglas PB-, PE- y PC-;
+  - pisos antes de propagar No determinado;
+  - bandas 0 / 1–3 / ≥ 4 en base y estípite, y 0 / 1–2 / ≥ 3 en la corona;
+  - la vitalidad de palmera (D-310), solo en `calculados`.
+- `version.ts`: la 3.3 es la versión **candidata** (`RULE_VERSION`) y la 3.2 sigue **operativa** (`RULE_VERSION_OPERATIVA`). Los servicios calculan con la operativa, así que la plataforma no cambia hasta publicar. Las comparaciones de versión pasan a `usaEscala32` e `incluyePalmeras`. El ensamblaje sin versión explícita usa la operativa.
+- `ensamblaje.ts`: la rama de palmeras solo se activa con `incluyePalmeras(version)` y `tipo_hoja = "palmera"`. Los indicadores pasan a ser `IndicadoresArbol | IndicadoresPalmera`, con el guardián de tipo `sonIndicadoresArbol`. La consecuencia, M01 a M03, R04 y M04 son comunes.
+- Pruebas: `tests/services/rules/engine/palmeras.test.ts`, con 34 casos.
+  - Regresión con 600 árboles aleatorios (semilla fija) que cubren todos los niveles de riesgo: idénticos con la 3.3 y con la 3.2, salvo `rule_version`.
+  - Dos pruebas existentes solo se ajustaron en el tipo (`IndicadoresArbol`).
+  - Total: 1886 de 1886.
+- Pendiente para publicar:
+  - componer los 9 campos en la finalización (`CLAVES_NUCLEO`);
+  - admitirlos en el borrador y en la completitud, con catálogos y etiquetas;
+  - desactivar los de la hoja PALMERAS, sección B;
+  - formulario del frontend;
+  - pasar `RULE_VERSION_OPERATIVA` a "3.3".
