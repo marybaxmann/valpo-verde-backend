@@ -165,3 +165,75 @@ describe("variación anual proyectada del carbono aéreo total (carbono directo;
     expect(agregarSecuestro(CANDIDATOS.map((c) => c.a) as ArbolCarbono[] as ArbolSecuestro[]).cobertura.simulacion_exploratoria).toBe(0);
   });
 });
+
+describe("multifustales: DAP equivalente por área basal de i-Tree Eco (propuesta experimental)", () => {
+  // Medidas vigentes del Piloto.
+  const SCMO = arbol("A-000527", "Schinus molle", 23.41, 5.4, { multifustal: true, dap_fustes_cm: [14.6, 18.3] });
+  const ACPS = arbol("A-000423", "Acer pseudoplatanus", 13.52, 7.5, { multifustal: true, dap_fustes_cm: [8.1, 7.8, 7.5] });
+  const ACPS_MONO = arbol("A-000419", "Acer pseudoplatanus", 13.4, 7.1);
+
+  it("Schinus molle: usa el DAP equivalente (√Σd² = 23,41 cm) con UGEB y queda exploratorio", () => {
+    const r = calcularCarbonoArbol(SCMO);
+    expect(r.valor!.estado_resultado).toBe("exploratorio");
+    expect(r.valor!.tratamiento_multifustal).toEqual(expect.objectContaining({ metodo: "dap_equivalente_area_basal", dap_fustes_cm: [14.6, 18.3], dap_equivalente_cm: 23.41 }));
+    expect(r.valor!.tratamiento_multifustal!.fuente).toMatch(/Nowak.*p\. 22/);
+    expect(r.valor!.carbono_kg).toBeCloseTo(0.0001967 * 23.41 ** 1.951853 * 5.4 ** 0.664255 * 650 * 0.47, 8);
+  });
+
+  it("un modelo aprobado aplicado a un multifustal da un resultado exploratorio que no suma; el monofustal sigue aprobado", () => {
+    expect(calcularCarbonoArbol(ACPS).valor!).toEqual(expect.objectContaining({ estado_resultado: "exploratorio" }));
+    expect(calcularCarbonoArbol(ACPS).valor!.modelo.estado).toBe("aprobado");
+    expect(calcularCarbonoArbol(ACPS_MONO).valor!.estado_resultado).toBe("aprobado");
+    const g = agregarCarbono([ACPS_MONO, ACPS]);
+    expect(g.cobertura).toEqual(expect.objectContaining({ con_resultado: 1, con_resultado_exploratorio: 1 }));
+    expect(g.total).toEqual(agregarCarbono([ACPS_MONO]).total);
+  });
+
+  it("secuestro: el multifustal es simulación con aviso y nunca fundamentada, aunque la especie tenga categoría aprobada", () => {
+    const aprobadas = { "acer pseudoplatanus": { categoria: "moderado" as const, fuente: "prueba" } };
+    expect(calcularSecuestroArbol(ACPS_MONO, aprobadas).tipo).toBe("estimacion_fundamentada");
+    const r = calcularSecuestroArbol(ACPS, aprobadas);
+    expect(r.tipo).toBe("simulacion_exploratoria");
+    if (r.tipo !== "simulacion_exploratoria") return;
+    expect(r.advertencias.join(" ")).toMatch(/Multifustal .*área basal/);
+    expect(r.por_categoria[1].dap_proyectado_cm).toBeCloseTo(13.52 + 0.84, 10);
+  });
+
+  it("sin diámetros de fustes, o con un DAP que no coincide con ellos, no se estima", () => {
+    expect(calcularCarbonoArbol({ ...SCMO, dap_fustes_cm: null }).motivo).toBe("multifustal_no_admitido");
+    expect(calcularCarbonoArbol({ ...SCMO, dap_fustes_cm: [18.3] }).motivo).toBe("multifustal_no_admitido");
+    expect(calcularCarbonoArbol({ ...SCMO, dap_cm: 18.3 }).motivo).toBe("configuracion_fuste_no_determinada");
+  });
+
+  it("el carbono directo de Cruz et al. 2015 no admite multifustales: quillay y peumo siguen excluidos", () => {
+    const q = arbol("A-000540", "Quillaja saponaria", 25.59, 7.6, { multifustal: true, dap_fustes_cm: [21, 11.6, 8.9] });
+    expect(calcularVariacionAereoTotalArbol(q).motivo).toBe("multifustal_no_admitido");
+  });
+
+  it("Lagerstroemia indica multifustal (DAP equivalente 3,19 cm) sigue fuera del rango de UGEB", () => {
+    expect(calcularCarbonoArbol(arbol("A-000561", "Lagerstroemia indica", 3.19, 2.8, { multifustal: true, dap_fustes_cm: [1.6, 1.9, 2] })).motivo).toBe("fuera_de_rango");
+  });
+});
+
+describe("comprobaciones científicas del catálogo completo", () => {
+  it("densidades: masa seca / volumen verde (densidad básica), en kg/m³ y en un rango físico plausible", () => {
+    for (const m of MODELOS_VOLUMEN) {
+      expect(m.densidad.tipo).toBe("masa seca / volumen verde");
+      expect(m.densidad.unidad).toBe("kg/m3");
+      expect(m.densidad.valor).toBeGreaterThanOrEqual(300);
+      expect(m.densidad.valor).toBeLessThanOrEqual(1000);
+    }
+  });
+
+  it("dominios: rango de DAP válido y ecuaciones crecientes en DAP (la diferencia de existencias nunca es negativa)", () => {
+    for (const m of MODELOS_VOLUMEN) {
+      expect(m.dap_min_cm).toBeLessThan(m.dap_max_cm);
+      expect(m.b).toBeGreaterThan(0);
+      expect(m.c).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("todo modelo del catálogo de volumen pertenece al componente leñoso; ninguno lleva follaje", () => {
+    expect(MODELOS_VOLUMEN.every((m) => m.componente === "aerea_lenosa")).toBe(true);
+  });
+});

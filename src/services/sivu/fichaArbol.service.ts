@@ -138,6 +138,7 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     especie_cientifica: fila.especie_cientifica,
     tipo_hoja: rasgos?.tipo_hoja ?? null,
     multifustal: fila.multifustal ?? null,
+    dap_fustes_cm: Array.isArray(fila.dap_fustes_cm) ? (fila.dap_fustes_cm as unknown[]).map(Number).filter((x) => Number.isFinite(x)) : null,
     dap_cm: numero(fila.dap_cm),
     altura_total_m: numero(fila.altura_total_m),
   };

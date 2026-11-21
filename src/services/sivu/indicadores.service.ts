@@ -87,6 +87,7 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
       especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
       tipo_hoja: rasgoPorArbol.get(f.id)?.tipo_hoja ?? null,
       multifustal: f.multifustal,
+      dap_fustes_cm: f.dap_fustes_cm ?? null,
       dap_cm: f.dap_cm,
       altura_total_m: f.altura_total_m,
     }));

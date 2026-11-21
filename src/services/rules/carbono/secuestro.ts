@@ -180,7 +180,7 @@ export function calcularSecuestroArbol(
   for (const cat of CRECIMIENTO_ITREE.categorias) {
     const delta = cat.tasa_cm_anio * fCle * fCond;
     const dap1 = c0.entradas.dap_cm + delta;
-    const r1 = calcularCarbonoArbol({ ...a, dap_cm: dap1 });
+    const r1 = calcularCarbonoArbol({ ...a, dap_cm: dap1, proyeccion_dap: true });
     if (r1.valor === null || r1.valor.modelo.id !== c0.modelo.id) {
       return sinSecuestro(
         "dap_proyectado_fuera_de_rango",
@@ -208,6 +208,11 @@ export function calcularSecuestroArbol(
       advertencias.push(`Modelo de biomasa exploratorio: ecuación de ${especieEcuacion}, otra especie del mismo género, no calibrada para Valparaíso.`);
     }
   }
+  if (c0.tratamiento_multifustal) {
+    advertencias.push(
+      "Multifustal (propuesta experimental): DAP equivalente por área basal, como en i-Tree Eco (Nowak 2024, p. 22); su compatibilidad con la ecuación no está demostrada."
+    );
+  }
   if (c0.modelo.variante === "dap_altura" && c0.modelo.rango.altura_min_m === null) {
     advertencias.push("La fuente no publica el rango de altura del modelo: la altura del árbol no se pudo comprobar.");
   }
@@ -233,7 +238,7 @@ export function calcularSecuestroArbol(
 
   const clave = claveEspecie(a.especie_cientifica);
   // Con un modelo de biomasa exploratorio el resultado nunca es fundamentado.
-  const aprobada = clave === null || c0.modelo.estado === "exploratorio" ? undefined : aprobadas[clave];
+  const aprobada = clave === null || c0.estado_resultado === "exploratorio" ? undefined : aprobadas[clave];
   if (aprobada) {
     const valor = porCategoria.find((p) => p.categoria === aprobada.categoria)!;
     return {

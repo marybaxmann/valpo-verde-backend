@@ -102,9 +102,29 @@ export interface ModeloVolumen {
   /** Limitaciones propias de este modelo, además de las generales (LIMITACIONES). */
   limitaciones_modelo: readonly string[];
   admite_multifustal: false;
+  /**
+   * Propuesta experimental (2026-11-21): admite multifustales como resultado
+   * EXPLORATORIO con el DAP equivalente por área basal de i-Tree Eco
+   * (TRATAMIENTO_MULTIFUSTAL_ITREE). Nunca suma a un total oficial.
+   */
+  multifustal_experimental: boolean;
   apto_palmeras: false;
   fuente: string;
 }
+
+/**
+ * Propuesta experimental (2026-11-21): DAP único de un multifustal según i-Tree
+ * Eco: DAP = (AB / 0,00007854)^0,5, con AB = área basal total de los fustes
+ * (m²) y DAP en cm; equivale a √(Σ dᵢ²). Es el DAP equivalente que SIVU ya
+ * registra (D-18). Se aplica solo a las ecuaciones de volumen urbano, del tipo
+ * que usa i-Tree; su compatibilidad con cada ecuación no está demostrada.
+ */
+export const TRATAMIENTO_MULTIFUSTAL_ITREE = {
+  metodo: "dap_equivalente_area_basal",
+  formula: "DAP = √(Σ dᵢ²) = (AB / 0,00007854)^0,5",
+  fuente: "Nowak, D. J. (2024). Understanding i-Tree: 2023 Summary of Programs and Methods. USDA Forest Service, GTR NRS-200-2023, p. 22",
+  tolerancia_cm: 0.05,
+} as const;
 
 const UTD_TS9 = "USDA Urban Tree Database, TS9 (McPherson, van Doorn y Peper 2016, RDS-2016-0005)";
 const UTD_VERSION = "2020-01-21";
@@ -142,7 +162,7 @@ const LIQUIDAMBAR = {
   n_muestra: 50,
 } as const;
 
-const comun = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, apto_palmeras: false, estado: "aprobado" } as const;
+const comun = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, multifustal_experimental: true, apto_palmeras: false, estado: "aprobado" } as const;
 const PILLSBURY = { confianza: "propia_urbana", fuente_rango: RANGO_PILLSBURY, limitaciones_modelo: LIMITACIONES_PILLSBURY } as const;
 
 /**
@@ -188,7 +208,7 @@ const FUENTE_ACPL_D =
  * ecuaciones calibradas para los árboles de Valparaíso y sus resultados no
  * suman a los totales (estado «exploratorio»).
  */
-const exploratorio = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, apto_palmeras: false, estado: "exploratorio", confianza: "sustituta_mismo_genero" } as const;
+const exploratorio = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, multifustal_experimental: true, apto_palmeras: false, estado: "exploratorio", confianza: "sustituta_mismo_genero" } as const;
 
 /**
  * Acer negundo: la misma ecuación de Acer platanoides (McHale et al. 2009)
@@ -297,6 +317,7 @@ const generica = {
   version: 1,
   componente: "aerea_lenosa",
   admite_multifustal: false,
+  multifustal_experimental: true,
   apto_palmeras: false,
   estado: "exploratorio",
   confianza: "generica_urbana",
