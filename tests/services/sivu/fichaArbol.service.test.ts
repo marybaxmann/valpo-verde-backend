@@ -11,6 +11,7 @@ jest.mock("../../../src/repositories/sivu/mantenimiento.repository", () => ({ ob
 jest.mock("../../../src/services/sivu/incidencia.service", () => ({ listarIncidenciasDeArbol: jest.fn() }));
 jest.mock("../../../src/services/sivu/listadoOt.service", () => ({ listarOtsDeArbol: jest.fn() }));
 jest.mock("../../../src/services/sivu/habilitacionBiometrica", () => ({ arbolesConEvaluacionCompletaVigente: jest.fn() }));
+jest.mock("../../../src/repositories/sivu/indicadores.repository", () => ({ listarVariablesCrecimiento: jest.fn() }));
 
 import { obtenerFichaArbol } from "../../../src/services/sivu/fichaArbol.service";
 import { assertProjectAccess } from "../../../src/services/authorization.service";
@@ -20,6 +21,7 @@ import { listarIncidenciasDeArbol } from "../../../src/services/sivu/incidencia.
 import { listarOtsDeArbol } from "../../../src/services/sivu/listadoOt.service";
 import { obtenerPresencia } from "../../../src/repositories/sivu/mantenimiento.repository";
 import { arbolesConEvaluacionCompletaVigente } from "../../../src/services/sivu/habilitacionBiometrica";
+import { listarVariablesCrecimiento } from "../../../src/repositories/sivu/indicadores.repository";
 
 const user = { id: "u1", email: undefined, nombre: null, role: "inspector", activo: true };
 const P = "p1";
@@ -57,6 +59,7 @@ beforeEach(() => {
   (listarIncidenciasDeArbol as jest.Mock).mockResolvedValue([{ id: "inc1" }]);
   (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "talado", fecha_cambio_estado_presencia: "2026-11-01" });
   (arbolesConEvaluacionCompletaVigente as jest.Mock).mockImplementation(async (_t: string, _p: string, ids: string[]) => new Set(ids));
+  (listarVariablesCrecimiento as jest.Mock).mockResolvedValue([{ tree_id: T, cle: 3, muerte_regresiva_pct: 0 }]);
 });
 
 describe("obtenerFichaArbol (B2)", () => {
@@ -145,10 +148,10 @@ describe("obtenerFichaArbol (B2)", () => {
       expect(c.limitaciones.length).toBeGreaterThan(0);
     });
 
-    it("compatibilidad: la ficha solo agrega estimacion_carbono_aereo_lenoso; arbol no cambia", async () => {
+    it("compatibilidad: la ficha solo agrega estimacion_carbono_aereo_lenoso y secuestro_anual; arbol no cambia", async () => {
       const f = await obtenerFichaArbol(user, P, T, "token");
       expect(Object.keys(f).sort()).toEqual(
-        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso"].sort()
+        ["arbol", "evaluacion_completa_vigente", "presencia", "sobre_la_especie", "evaluacion_vigente", "ultima_inspeccion_finalizada", "historial", "ordenes_trabajo", "incidencias", "estimacion_carbono_aereo_lenoso", "secuestro_anual"].sort()
       );
       expect(Object.keys(f.arbol)).not.toContain("estimacion_carbono_aereo_lenoso");
     });
@@ -168,11 +171,42 @@ describe("obtenerFichaArbol (B2)", () => {
     });
 
     it("especie sin modelo aprobado: no estimable (restriccion_modelo, sin_modelo)", async () => {
-      // Acer pseudoplatanus tiene modelo desde CC-070; Acer negundo no.
-      (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, especie_cientifica: "Acer negundo" });
+      // Quillaja saponaria no tiene modelo (ni aprobado ni exploratorio).
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, especie_cientifica: "Quillaja saponaria" });
       (obtenerPresencia as jest.Mock).mockResolvedValue({ estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" });
       const c = (await obtenerFichaArbol(user, P, T, "token")).estimacion_carbono_aereo_lenoso;
       expect(c).toEqual(expect.objectContaining({ valor: null, categoria: "restriccion_modelo", motivo: "sin_modelo" }));
+    });
+  });
+
+  describe("secuestro_anual (decisiones A a C, 2026-11-20; árboles ficticios)", () => {
+    const JAC = { ...fila, especie_cientifica: "Jacaranda mimosifolia", multifustal: false, dap_cm: "30.00", altura_total_m: "10.00" };
+    const presente = { estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" };
+
+    it("con modelo y sin categoría aprobada: simulación con rango, unidad, supuestos y método", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue(JAC);
+      (obtenerPresencia as jest.Mock).mockResolvedValue(presente);
+      const s = (await obtenerFichaArbol(user, P, T, "token")).secuestro_anual;
+      expect(s.tipo).toBe("simulacion_exploratoria");
+      if (s.tipo !== "simulacion_exploratoria") return;
+      expect(s.rango.co2_kg_anio_min).toBeGreaterThan(0);
+      expect(s.rango.co2_kg_anio_max).toBeGreaterThan(s.rango.co2_kg_anio_min);
+      expect(s.entradas).toEqual({ dap_cm: 30, altura_total_m: 10, cle: 3, muerte_regresiva_pct: 0 });
+      expect(s.metodo.estado).toMatch(/decisión D pendiente/);
+      expect(listarVariablesCrecimiento).toHaveBeenCalledWith("token", [T]);
+    });
+
+    it("sin CLE en la evaluación vigente: no estimable (falta_cle)", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue(JAC);
+      (obtenerPresencia as jest.Mock).mockResolvedValue(presente);
+      (listarVariablesCrecimiento as jest.Mock).mockResolvedValue([]);
+      expect((await obtenerFichaArbol(user, P, T, "token")).secuestro_anual).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_cle" }));
+    });
+
+    it("especie sin modelo: no estimable con el mismo motivo del carbono almacenado", async () => {
+      (obtenerArbolFicha as jest.Mock).mockResolvedValue({ ...fila, especie_cientifica: "Quillaja saponaria" });
+      (obtenerPresencia as jest.Mock).mockResolvedValue(presente);
+      expect((await obtenerFichaArbol(user, P, T, "token")).secuestro_anual).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
     });
   });
 

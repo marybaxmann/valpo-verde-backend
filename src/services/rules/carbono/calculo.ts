@@ -74,6 +74,8 @@ export interface CarbonoArbol {
     n_muestra: number | null;
     /** CC-070: «propia_urbana» o «sustituta_mismo_genero» (estimación indirecta). */
     confianza: ModeloVolumen["confianza"];
+    /** «aprobado» suma al total; «exploratorio» se muestra rotulado y no suma. */
+    estado: ModeloVolumen["estado"];
     /** Especie con la que se ajustó la ecuación. */
     especie_ecuacion: string;
     fuente_rango: string;
@@ -128,7 +130,12 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
   if (!dentro(a.dap_cm, modelo.dap_min_cm, modelo.dap_max_cm)) {
     return sinResultado("fuera_de_rango", `DAP ${fmt(a.dap_cm)} cm fuera del rango del modelo (${fmt(modelo.dap_min_cm)}-${fmt(modelo.dap_max_cm)} cm).`);
   }
-  if (modelo.variante === "dap_altura" && !dentro(a.altura_total_m!, modelo.altura_min_m!, modelo.altura_max_m!)) {
+  if (
+    modelo.variante === "dap_altura" &&
+    modelo.altura_min_m !== null &&
+    modelo.altura_max_m !== null &&
+    !dentro(a.altura_total_m!, modelo.altura_min_m, modelo.altura_max_m)
+  ) {
     return sinResultado(
       "fuera_de_rango_altura",
       `Altura ${fmt(a.altura_total_m!)} m fuera del rango del modelo (${fmt(modelo.altura_min_m!)}-${fmt(modelo.altura_max_m!)} m).`
@@ -172,6 +179,7 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
         densidad: { ...modelo.densidad },
         n_muestra: modelo.n_muestra,
         confianza: modelo.confianza,
+        estado: modelo.estado,
         especie_ecuacion: modelo.especie_ecuacion,
         fuente_rango: modelo.fuente_rango,
         limitaciones_modelo: [...modelo.limitaciones_modelo],
@@ -218,11 +226,17 @@ export function agregarCarbono(arboles: ArbolCarbono[]) {
   let carbono = 0;
   let co2e = 0;
   let conResultado = 0;
+  let conResultadoExploratorio = 0;
   for (const a of presentes) {
     const r = calcularCarbonoArbol(a);
     if (r.valor === null) {
       motivos[r.motivo]++;
       porCategoria[r.categoria]++;
+      continue;
+    }
+    // Modelos exploratorios (2026-11-20): se cuentan aparte y nunca suman al total.
+    if (r.valor.modelo.estado === "exploratorio") {
+      conResultadoExploratorio++;
       continue;
     }
     conResultado++;
@@ -238,7 +252,10 @@ export function agregarCarbono(arboles: ArbolCarbono[]) {
     cobertura: {
       presentes: presentes.length,
       universo_calculo: universo.length,
+      /** Resultados con modelo aprobado: los únicos que suman al total. */
       con_resultado: conResultado,
+      /** Resultados con modelo exploratorio: se muestran rotulados en la ficha y no suman. */
+      con_resultado_exploratorio: conResultadoExploratorio,
       por_categoria: porCategoria,
       motivos,
     },
