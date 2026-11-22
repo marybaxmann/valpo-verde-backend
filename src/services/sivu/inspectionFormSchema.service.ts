@@ -122,6 +122,8 @@ function campo(hoja: Hoja, id: string) {
     exigencia: regla?.exigencia ?? null,
     marca: regla?.marca ?? null,
     condicion_texto: regla?.condicionExcel ?? noExigido?.condicionExcel ?? null,
+    // Ayuda del campo en el formulario: qué significa (columna F).
+    definicion: meta?.definicion || null,
   };
 }
 
