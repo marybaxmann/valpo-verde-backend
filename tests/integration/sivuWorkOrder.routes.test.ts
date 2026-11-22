@@ -213,7 +213,13 @@ describe("PATCH /api/sivu/inspections/:inspectionId — guardados siguientes (#5
       fecha_inspeccion: "2026-10-25",
       fecha_registro: "2026-10-25",
     });
-    mockObtenerOt.mockResolvedValueOnce({ id: WORK_ORDER_ID, project_id: PROJECT_ID, tipo_ot: "inspeccion" });
+    mockObtenerOt.mockResolvedValueOnce({
+      id: WORK_ORDER_ID,
+      project_id: PROJECT_ID,
+      tipo_ot: "inspeccion",
+      estado_ot: "en_ejecucion",
+      responsable_accion_id: INSPECTOR_ID,
+    });
     mockGuardarBorrador.mockResolvedValueOnce({
       inspection_id: INSPECTION_ID,
       evaluation_id: "ev-1",
