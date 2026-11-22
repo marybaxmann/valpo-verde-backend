@@ -6,7 +6,9 @@ jest.mock("../../../src/services/authorization.service", () => ({
 
 import {
   guardarBorradorInspeccion as guardarBorradorInspeccionRepo,
+  conservarVariablesRetiradas,
   obtenerInspeccionPorId,
+  obtenerVariablesBorrador,
   SQLSTATE_BORRADOR_INSPECCION,
 } from "../../../src/repositories/sivu/inspection.repository";
 import { obtenerOrdenTrabajoPorId } from "../../../src/repositories/sivu/workOrder.repository";
@@ -221,6 +223,29 @@ describe("guardarBorradorInspeccion (#58; guardados siguientes)", () => {
     ).rejects.toMatchObject({ statusCode: 404 });
   });
 
+  it("rechaza una preguardada con OT cancelada antes de escribir en cualquier tabla", async () => {
+    mockObtenerInspeccion.mockResolvedValueOnce({
+      id: INSPECTION_ID,
+      work_order_id: WORK_ORDER_ID,
+      estado_registro: "preguardado",
+    });
+    mockObtenerOt.mockResolvedValueOnce({
+      id: WORK_ORDER_ID,
+      project_id: PROJECT_ID,
+      tipo_ot: "inspeccion",
+      estado_ot: "cancelada",
+      responsable_accion_id: "inspector-1",
+    });
+
+    await expect(
+      guardarBorradorInspeccion(usuario("inspector"), INSPECTION_ID, bodyValido(), TOKEN)
+    ).rejects.toMatchObject({ statusCode: 422, message: expect.stringContaining("en ejecución") });
+
+    expect(obtenerVariablesBorrador).not.toHaveBeenCalled();
+    expect(conservarVariablesRetiradas).not.toHaveBeenCalled();
+    expect(mockGuardarBorrador).not.toHaveBeenCalled();
+  });
+
   it("lee work_order_id/tree_id/inspector de la fila existente, no del body", async () => {
     mockObtenerInspeccion.mockResolvedValueOnce({
       id: INSPECTION_ID,
@@ -231,7 +256,13 @@ describe("guardarBorradorInspeccion (#58; guardados siguientes)", () => {
       fecha_inspeccion: "2026-10-25",
       fecha_registro: "2026-10-25",
     });
-    mockObtenerOt.mockResolvedValueOnce({ id: WORK_ORDER_ID, project_id: PROJECT_ID, tipo_ot: "inspeccion" });
+    mockObtenerOt.mockResolvedValueOnce({
+      id: WORK_ORDER_ID,
+      project_id: PROJECT_ID,
+      tipo_ot: "inspeccion",
+      estado_ot: "en_ejecucion",
+      responsable_accion_id: "inspector-1",
+    });
     mockGuardarBorrador.mockResolvedValueOnce({ inspection_id: INSPECTION_ID, evaluation_id: "ev-1", tree_data_version_id: null, estado_registro: "preguardado" });
 
     await guardarBorradorInspeccion(usuario("inspector"), INSPECTION_ID, bodyValido({ resultado_general: "Preliminar" }), TOKEN);

@@ -102,14 +102,19 @@ export async function guardarBorradorInspeccion(
 
   await assertProjectRole(user, ot.project_id, ["inspector"], accessToken);
 
+  if (ot.tipo_ot !== "inspeccion" || ot.estado_ot !== "en_ejecucion") {
+    throw new AppError("Solo se puede guardar una inspección en una OT de inspección en ejecución", 422);
+  }
+  if (inspeccion.estado_registro !== "preguardado" || ot.responsable_accion_id !== user.id) {
+    throw new AppError("Solo el Inspector asignado puede guardar una inspección preguardada", 422);
+  }
+
   // 039 (decisión 5): un borrador guardado con una metodología anterior puede
   // tener variables que la vigente ya no usa; el guardado completo las
   // reemplazaría. Se conservan antes, sin alterar las reglas del borrador.
   // Solo quien puede guardar (Inspector responsable, borrador en Preguardado; la
   // función de la base lo vuelve a exigir al guardar).
-  if (ot.responsable_accion_id === user.id && inspeccion.estado_registro === "preguardado") {
-    await conservarRetiradasAntesDeGuardar(inspectionId, body, accessToken);
-  }
+  await conservarRetiradasAntesDeGuardar(inspectionId, body, accessToken);
 
   try {
     return await guardarBorradorInspeccionRepo({
