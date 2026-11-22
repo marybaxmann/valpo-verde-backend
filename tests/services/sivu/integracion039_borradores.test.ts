@@ -42,7 +42,7 @@ const body = (variables: Record<string, string | number | boolean | null> = {}) 
 beforeEach(() => {
   jest.clearAllMocks();
   m.insp.mockResolvedValue({ id: INSPECTION_ID, work_order_id: "w1", tree_id: "t1", inspector: INSPECTOR, estado_registro: "preguardado", fecha_inspeccion: "2026-11-03", fecha_registro: "2026-11-03" });
-  m.ot.mockResolvedValue({ id: "w1", project_id: "p1", estado_ot: "en_ejecucion", responsable_accion_id: INSPECTOR });
+  m.ot.mockResolvedValue({ id: "w1", project_id: "p1", tipo_ot: "inspeccion", estado_ot: "en_ejecucion", responsable_accion_id: INSPECTOR });
   m.rule.mockResolvedValue("2.1");
   m.guardar.mockResolvedValue({ inspection_id: INSPECTION_ID });
 });
@@ -79,16 +79,20 @@ describe("guardarBorradorInspeccion conserva antes de guardar", () => {
     expect(m.conservar).not.toHaveBeenCalled();
   });
 
-  it("un Inspector que no es el responsable no escribe (la base rechazará el guardado)", async () => {
+  it("un Inspector que no es el responsable recibe 422 sin escrituras", async () => {
     m.vars.mockResolvedValue({ condicion_radicular_entorno: "x" });
-    await guardarBorradorInspeccion(usuario("otro"), INSPECTION_ID, body({}) as never, "t");
+    await expect(guardarBorradorInspeccion(usuario("otro"), INSPECTION_ID, body({}) as never, "t"))
+      .rejects.toMatchObject({ statusCode: 422 });
     expect(m.conservar).not.toHaveBeenCalled();
+    expect(m.guardar).not.toHaveBeenCalled();
   });
 
   it("una inspección finalizada no se toca", async () => {
     m.insp.mockResolvedValue({ id: INSPECTION_ID, work_order_id: "w1", tree_id: "t1", inspector: INSPECTOR, estado_registro: "finalizado" });
     m.vars.mockResolvedValue({ condicion_radicular_entorno: "x" });
-    await guardarBorradorInspeccion(usuario(INSPECTOR), INSPECTION_ID, body({}) as never, "t");
+    await expect(guardarBorradorInspeccion(usuario(INSPECTOR), INSPECTION_ID, body({}) as never, "t"))
+      .rejects.toMatchObject({ statusCode: 422 });
     expect(m.conservar).not.toHaveBeenCalled();
+    expect(m.guardar).not.toHaveBeenCalled();
   });
 });

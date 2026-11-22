@@ -52,6 +52,7 @@ export async function crearBorradorInspeccion(
 
   const treeId = resolverTreeId(ot.tree_id, ot.accion_solicitada, body.tree_id, body.nuevo_arbol !== undefined);
   const fecha = hoyEnChile();
+  const fechaInspeccion = resolverFechaInspeccion(body.fecha_inspeccion ?? fecha, fecha);
 
   try {
     return await guardarBorradorInspeccionRepo({
@@ -60,7 +61,7 @@ export async function crearBorradorInspeccion(
       treeId,
       ...(treeId === null ? { nuevoArbol: body.nuevo_arbol! } : {}),
       inspector: user.id,
-      fechaInspeccion: fecha,
+      fechaInspeccion,
       fechaRegistro: fecha,
       ruleVersion: RULE_VERSION,
       tipoInspeccionRealizada: body.tipo_inspeccion_realizada,
@@ -102,14 +103,25 @@ export async function guardarBorradorInspeccion(
 
   await assertProjectRole(user, ot.project_id, ["inspector"], accessToken);
 
+  if (ot.tipo_ot !== "inspeccion" || ot.estado_ot !== "en_ejecucion") {
+    throw new AppError("Solo se puede guardar una inspección en una OT de inspección en ejecución", 422);
+  }
+  if (inspeccion.estado_registro !== "preguardado" || ot.responsable_accion_id !== user.id) {
+    throw new AppError("Solo el Inspector asignado puede guardar una inspección preguardada", 422);
+  }
+  const hoy = hoyEnChile();
+  const fechaRegistro = inspeccion.fecha_registro ?? hoy;
+  const fechaInspeccion = resolverFechaInspeccion(
+    body.fecha_inspeccion ?? inspeccion.fecha_inspeccion,
+    fechaRegistro < hoy ? fechaRegistro : hoy,
+  );
+
   // 039 (decisión 5): un borrador guardado con una metodología anterior puede
   // tener variables que la vigente ya no usa; el guardado completo las
   // reemplazaría. Se conservan antes, sin alterar las reglas del borrador.
   // Solo quien puede guardar (Inspector responsable, borrador en Preguardado; la
   // función de la base lo vuelve a exigir al guardar).
-  if (ot.responsable_accion_id === user.id && inspeccion.estado_registro === "preguardado") {
-    await conservarRetiradasAntesDeGuardar(inspectionId, body, accessToken);
-  }
+  await conservarRetiradasAntesDeGuardar(inspectionId, body, accessToken);
 
   try {
     return await guardarBorradorInspeccionRepo({
@@ -117,8 +129,8 @@ export async function guardarBorradorInspeccion(
       workOrderId: inspeccion.work_order_id,
       treeId: inspeccion.tree_id,
       inspector: inspeccion.inspector ?? user.id,
-      fechaInspeccion: inspeccion.fecha_inspeccion,
-      fechaRegistro: inspeccion.fecha_registro ?? hoyEnChile(),
+      fechaInspeccion,
+      fechaRegistro,
       ruleVersion: RULE_VERSION,
       tipoInspeccionRealizada: body.tipo_inspeccion_realizada,
       subtipoInspeccion: body.subtipo_inspeccion ?? null,
@@ -133,6 +145,13 @@ export async function guardarBorradorInspeccion(
   } catch (err: unknown) {
     throw traducirErrorBorrador(err);
   }
+}
+
+function resolverFechaInspeccion(fecha: string, limite: string): string {
+  if (fecha > limite) {
+    throw new AppError("La fecha de inspección no puede ser posterior al día de hoy ni a la fecha de registro", 422);
+  }
+  return fecha;
 }
 
 /**

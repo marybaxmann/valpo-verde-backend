@@ -6,14 +6,17 @@ jest.mock("../../../src/services/authorization.service", () => ({
 
 import {
   guardarBorradorInspeccion as guardarBorradorInspeccionRepo,
+  conservarVariablesRetiradas,
   obtenerInspeccionPorId,
+  obtenerVariablesBorrador,
   SQLSTATE_BORRADOR_INSPECCION,
 } from "../../../src/repositories/sivu/inspection.repository";
 import { obtenerOrdenTrabajoPorId } from "../../../src/repositories/sivu/workOrder.repository";
 import { assertProjectRole } from "../../../src/services/authorization.service";
 import { crearBorradorInspeccion, guardarBorradorInspeccion } from "../../../src/services/sivu/inspection.service";
 import { AuthenticatedUser } from "../../../src/types/auth";
-import { CrearBorradorInspeccionBody, GuardarBorradorInspeccionBody } from "../../../src/schemas/sivu/inspeccion.schema";
+import { CrearBorradorInspeccionBody, GuardarBorradorInspeccionBody, crearBorradorInspeccionSchema } from "../../../src/schemas/sivu/inspeccion.schema";
+import { hoyEnChile } from "../../../src/utils/fechaChile";
 
 const mockGuardarBorrador = guardarBorradorInspeccionRepo as jest.Mock;
 const mockObtenerInspeccion = obtenerInspeccionPorId as jest.Mock;
@@ -36,6 +39,26 @@ describe("crearBorradorInspeccion (#58; primer guardado)", () => {
   function bodyValido(overrides: Partial<CrearBorradorInspeccionBody> = {}): CrearBorradorInspeccionBody {
     return { tipo_inspeccion_realizada: "evaluacion_inicial", variables: {}, ...overrides };
   }
+
+  it.each([["2000-10-25", "2000-10-25"], [undefined, hoyEnChile()]])(
+    "registra fecha de terreno %s y conserva la fecha de registro del sistema",
+    async (fecha, esperada) => {
+      mockObtenerOt.mockResolvedValueOnce({ id: WORK_ORDER_ID, project_id: PROJECT_ID, tipo_ot: "inspeccion", tree_id: TREE_ID });
+      mockGuardarBorrador.mockResolvedValueOnce({ inspection_id: INSPECTION_ID });
+      await crearBorradorInspeccion(usuario("inspector"), WORK_ORDER_ID, bodyValido({ fecha_inspeccion: fecha }), TOKEN);
+      expect(mockGuardarBorrador).toHaveBeenCalledWith(expect.objectContaining({
+        fechaInspeccion: esperada, fechaRegistro: hoyEnChile(),
+      }));
+    },
+  );
+
+  it("rechaza fechas inexistentes y futuras", async () => {
+    expect(crearBorradorInspeccionSchema.safeParse(bodyValido({ fecha_inspeccion: "2026-02-29" })).success).toBe(false);
+    mockObtenerOt.mockResolvedValueOnce({ id: WORK_ORDER_ID, project_id: PROJECT_ID, tipo_ot: "inspeccion", tree_id: TREE_ID });
+    await expect(crearBorradorInspeccion(usuario("inspector"), WORK_ORDER_ID,
+      bodyValido({ fecha_inspeccion: "9999-12-31" }), TOKEN)).rejects.toMatchObject({ statusCode: 422 });
+    expect(mockGuardarBorrador).not.toHaveBeenCalled();
+  });
 
   it("404 si la OT no existe", async () => {
     mockObtenerOt.mockResolvedValueOnce(null);
@@ -221,6 +244,29 @@ describe("guardarBorradorInspeccion (#58; guardados siguientes)", () => {
     ).rejects.toMatchObject({ statusCode: 404 });
   });
 
+  it("rechaza una preguardada con OT cancelada antes de escribir en cualquier tabla", async () => {
+    mockObtenerInspeccion.mockResolvedValueOnce({
+      id: INSPECTION_ID,
+      work_order_id: WORK_ORDER_ID,
+      estado_registro: "preguardado",
+    });
+    mockObtenerOt.mockResolvedValueOnce({
+      id: WORK_ORDER_ID,
+      project_id: PROJECT_ID,
+      tipo_ot: "inspeccion",
+      estado_ot: "cancelada",
+      responsable_accion_id: "inspector-1",
+    });
+
+    await expect(
+      guardarBorradorInspeccion(usuario("inspector"), INSPECTION_ID, bodyValido(), TOKEN)
+    ).rejects.toMatchObject({ statusCode: 422, message: expect.stringContaining("en ejecución") });
+
+    expect(obtenerVariablesBorrador).not.toHaveBeenCalled();
+    expect(conservarVariablesRetiradas).not.toHaveBeenCalled();
+    expect(mockGuardarBorrador).not.toHaveBeenCalled();
+  });
+
   it("lee work_order_id/tree_id/inspector de la fila existente, no del body", async () => {
     mockObtenerInspeccion.mockResolvedValueOnce({
       id: INSPECTION_ID,
@@ -231,7 +277,13 @@ describe("guardarBorradorInspeccion (#58; guardados siguientes)", () => {
       fecha_inspeccion: "2026-10-25",
       fecha_registro: "2026-10-25",
     });
-    mockObtenerOt.mockResolvedValueOnce({ id: WORK_ORDER_ID, project_id: PROJECT_ID, tipo_ot: "inspeccion" });
+    mockObtenerOt.mockResolvedValueOnce({
+      id: WORK_ORDER_ID,
+      project_id: PROJECT_ID,
+      tipo_ot: "inspeccion",
+      estado_ot: "en_ejecucion",
+      responsable_accion_id: "inspector-1",
+    });
     mockGuardarBorrador.mockResolvedValueOnce({ inspection_id: INSPECTION_ID, evaluation_id: "ev-1", tree_data_version_id: null, estado_registro: "preguardado" });
 
     await guardarBorradorInspeccion(usuario("inspector"), INSPECTION_ID, bodyValido({ resultado_general: "Preliminar" }), TOKEN);
@@ -239,6 +291,29 @@ describe("guardarBorradorInspeccion (#58; guardados siguientes)", () => {
     expect(mockGuardarBorrador).toHaveBeenCalledWith(
       expect.objectContaining({ inspectionId: INSPECTION_ID, workOrderId: WORK_ORDER_ID, treeId: TREE_ID })
     );
+  });
+
+  it.each([
+    ["2000-10-25", "preguardado", true],
+    ["2000-10-27", "preguardado", false],
+    ["2000-10-25", "finalizado", false],
+  ])("guarda fecha %s en estado %s solo si es admisible", async (fecha, estado, seGuarda) => {
+    mockObtenerInspeccion.mockResolvedValueOnce({
+      id: INSPECTION_ID, work_order_id: WORK_ORDER_ID, tree_id: TREE_ID,
+      estado_registro: estado, fecha_inspeccion: "2000-10-24", fecha_registro: "2000-10-26",
+    });
+    mockObtenerOt.mockResolvedValueOnce({
+      tipo_ot: "inspeccion", estado_ot: "en_ejecucion", responsable_accion_id: "inspector-1", project_id: PROJECT_ID,
+    });
+    if (seGuarda) mockGuardarBorrador.mockResolvedValueOnce({ inspection_id: INSPECTION_ID });
+    const guardado = guardarBorradorInspeccion(usuario("inspector"), INSPECTION_ID, bodyValido({ fecha_inspeccion: fecha }), TOKEN);
+    if (seGuarda) {
+      await guardado;
+      expect(mockGuardarBorrador).toHaveBeenCalledWith(expect.objectContaining({ fechaInspeccion: fecha, fechaRegistro: "2000-10-26" }));
+    } else {
+      await expect(guardado).rejects.toMatchObject({ statusCode: 422 });
+      expect(mockGuardarBorrador).not.toHaveBeenCalled();
+    }
   });
 });
 

@@ -274,6 +274,13 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
     expect(mockGuardarBorrador).not.toHaveBeenCalled();
   });
 
+  it("calcula las fechas sugeridas desde la fecha de terreno persistida", async () => {
+    preparar({ fechaInspeccion: "2000-10-25" });
+    const resultado = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(resultado.fechas_sugeridas.fecha_proxima_inspeccion.fecha).toBe("2002-10-25");
+    expect(resultado.fechas_sugeridas.fecha_proximo_monitoreo.fecha).toBe("2001-10-25");
+  });
+
   it("lee con el JWT del usuario todo lo que entra en la respuesta y en la huella (PR-018 v5.0, CC-064 decisión h)", async () => {
     preparar();
     await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
