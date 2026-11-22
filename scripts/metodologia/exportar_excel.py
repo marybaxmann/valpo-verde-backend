@@ -13,7 +13,7 @@ src, out = sys.argv[1], sys.argv[2]
 os.makedirs(out, exist_ok=True)
 wb = openpyxl.load_workbook(src, data_only=True, read_only=True)
 HOJAS = ["DICCIONARIO_CAMPOS", "REGLAS_GENERALES", "REGLAS_INDICADORES", "MATRICES_CALCULO",
-         "VERSION", "LISTAS", "INDICES"]
+         "VERSION", "LISTAS", "INDICES", "PALMERAS"]
 faltan = [h for h in HOJAS if h not in wb.sheetnames]
 if faltan:
     sys.exit(f"Faltan hojas del paquete: {faltan}")

@@ -1,9 +1,12 @@
 import { camposPermitidosPorTipo } from "../../schemas/sivu/alcanceInspeccion";
+import { aplicaAlcanceInspeccion, type AlcanceInspeccion } from "../rules/engine/alcance";
 import {
+  CAMPOS_NO_APLICAN_PALMERA,
   CondicionActivacion,
   REGLAS_COMPLETITUD,
   ReglaCompletitud,
 } from "../../schemas/sivu/completitudInspeccion";
+import { incluyePalmeras, RULE_VERSION_OPERATIVA, VersionMotor } from "../rules/engine/version";
 
 /**
  * Completitud para finalizar una inspección (CC-056; REGLAS_GENERALES
@@ -27,6 +30,7 @@ import {
 export interface EntradaCompletitud {
   tipo: string;
   subtipo: string | null;
+  alcance?: AlcanceInspeccion | null;
   /** `evaluations.variables` de esta inspección. */
   variablesRegistradas: Readonly<Record<string, unknown>>;
   /** `v_tree_current_inputs.entradas_vigentes` del árbol. */
@@ -39,6 +43,8 @@ export interface EntradaCompletitud {
   arbolVigente: Readonly<Record<string, unknown>>;
   inspeccionId: string;
   fotos: readonly FotoD27[];
+  /** Versión con que se calcula (por omisión, la operativa). CC-082: las palmeras dependen de ella. */
+  ruleVersion?: VersionMotor;
 }
 
 interface FotoD27 {
@@ -63,6 +69,16 @@ export interface ResultadoCompletitud {
   vistas_recomendadas_faltantes: string[];
 }
 
+const NO_APLICAN_PALMERA: ReadonlySet<string> = new Set(CAMPOS_NO_APLICAN_PALMERA);
+
+/** CC-082: una regla con `desdeVersion` solo se exige desde esa versión (comparación MAJOR.MINOR). */
+export function vigenteEnVersion(regla: Pick<ReglaCompletitud, "desdeVersion">, version: VersionMotor): boolean {
+  if (!regla.desdeVersion) return true;
+  const [a, b] = version.split(".").map(Number);
+  const [c, d] = regla.desdeVersion.split(".").map(Number);
+  return a > c || (a === c && b >= d);
+}
+
 /** Tipos con evaluación completa (CC-056). También habilitan los indicadores biométricos de B19. */
 export const TIPOS_EVALUACION_COMPLETA: ReadonlySet<string> = new Set(["evaluacion_inicial", "reevaluacion", "levantamiento"]);
 
@@ -70,8 +86,10 @@ export const TIPOS_EVALUACION_COMPLETA: ReadonlySet<string> = new Set(["evaluaci
 export const VISTAS_D27 = ["arbol_completo", "base", "tronco", "copa"] as const;
 
 export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud {
+  if (e.tipo === "evaluacion_instrumental") return evaluarCompletitudInstrumental(e);
   const completa = TIPOS_EVALUACION_COMPLETA.has(e.tipo);
-  const alcance = camposPermitidosPorTipo(e.tipo, e.subtipo);
+  const parcial = aplicaAlcanceInspeccion(e.tipo) && (e.alcance === "arbol" || e.alcance === "infraestructura");
+  const alcance = camposPermitidosPorTipo(e.tipo, e.subtipo, false, e.alcance);
   if (alcance === null) {
     throw new Error(`Tipo/subtipo de inspección sin alcance definido: ${e.tipo}/${e.subtipo ?? "—"}`);
   }
@@ -83,11 +101,24 @@ export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud 
   }
   const vigente: Record<string, unknown> = { ...e.arbolVigente, ...e.variablesVigentes };
   const estaRegistrado = (campo: string) => Object.prototype.hasOwnProperty.call(registrado, campo);
-  const efectivo = (campo: string) => (estaRegistrado(campo) ? registrado[campo] : vigente[campo]);
+  const valorCompuesto = (campo: string) => (estaRegistrado(campo) ? registrado[campo] : vigente[campo]);
+  const efectivo = (campo: string) => {
+    // Un «No» vigente en la pregunta principal desactiva la cavidad externa
+    // aunque una inspección anterior haya registrado un «Sí» en el detalle.
+    if (campo === "cavidad_externa_tronco" && valorCompuesto("presenta_cavidad_pudricion_tronco") === false) return false;
+    return valorCompuesto(campo);
+  };
 
-  const reglas = REGLAS_COMPLETITUD.filter((r) =>
-    completa ? true : r.hoja === "REGISTRO_EVALUACION" && enAlcance.has(r.campo)
-  );
+  // CC-082 (superposición): los campos de palmeras se exigen desde su versión, y con ella una
+  // palmera no responde los campos de la hoja PALMERAS, sección B (REGLAS_GENERALES fila 31).
+  const version = e.ruleVersion ?? RULE_VERSION_OPERATIVA;
+  const noAplicanPalmera = incluyePalmeras(version) && efectivo("tipo_hoja") === "palmera" ? NO_APLICAN_PALMERA : null;
+  const reglas = REGLAS_COMPLETITUD.filter((r) => {
+    if (!vigenteEnVersion(r, version) || noAplicanPalmera?.has(r.campo)) return false;
+    if (!parcial && completa) return true;
+    if (r.hoja === "REGISTRO_EVALUACION") return enAlcance.has(r.campo);
+    return parcial && (e.alcance === "arbol" || r.campo === "fotografias_arbol");
+  });
 
   const evidencia = completa ? evaluarFotosD27(e.inspeccionId, e.fotos) : null;
   const faltantes: CampoFaltante[] = [];
@@ -99,7 +130,7 @@ export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud 
     }
   }
 
-  if (completa) {
+  if (completa && (!parcial || e.alcance === "arbol")) {
     const especie = efectivo("especie_cientifica");
     if (tieneValor(especie) && !especieValidaD13(String(especie))) {
       faltantes.push({
@@ -117,6 +148,49 @@ export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud 
     fotos_validas_d27: evidencia?.cantidad ?? null,
     vistas_recomendadas_faltantes: evidencia?.vistasFaltantes ?? [],
   };
+}
+
+function evaluarCompletitudInstrumental(e: EntradaCompletitud): ResultadoCompletitud {
+  const componentes = [
+    {
+      principal: "cavidad_pudricion_basal", externa: "cavidad_basal_externa", interna: "cavidad_basal_interna",
+      espesor: "t_pared_residual_basal_cm",
+      dimensiones: ["D_diametro_basal_tronco_cm", "d_diametro_cavidad_basal_cm",
+        "Cc_longitud_abertura_cavidad_cm", "C_circunferencia_basal_cm"],
+    },
+    {
+      principal: "presenta_cavidad_pudricion_tronco", externa: "cavidad_externa_tronco", interna: "cavidad_interna_tronco",
+      espesor: "t_pared_residual_tronco_cm",
+      dimensiones: ["D_diametro_tronco_cm", "d_diametro_cavidad_tronco_cm",
+        "Cc_longitud_abertura_tronco_cm", "C_circunferencia_tronco_cm"],
+    },
+  ];
+  const registrados = e.variablesRegistradas;
+  const vigente = { ...e.variablesVigentes, ...registrados };
+  const faltantes: CampoFaltante[] = [];
+  function falta(campo: string, motivo: string) {
+    const regla = REGLAS_COMPLETITUD.find(r => r.hoja === "REGISTRO_EVALUACION" && r.campo === campo)!;
+    faltantes.push({ campo, hoja: regla.hoja, fila: regla.fila, motivo });
+  }
+  const ensayados = componentes.filter(c => typeof registrados[c.principal] === "boolean");
+  if (!ensayados.length) {
+    falta(componentes[0].principal, "CC-084: registre al menos un componente ensayado (D-39 o D-51).");
+  }
+  for (const c of ensayados) {
+    if (registrados[c.principal] !== true) continue;
+    if (registrados[c.interna] !== "si" && registrados[c.interna] !== "no") {
+      falta(c.interna, "CC-084: registre Sí o No para la cavidad interna del componente ensayado.");
+    }
+    if (!tieneValor(registrados[c.espesor])) {
+      falta(c.espesor, "CC-084: registre el espesor residual medido en el componente ensayado.");
+    }
+    if (vigente[c.externa] === true) {
+      for (const campo of c.dimensiones) {
+        if (!tieneValor(vigente[campo])) falta(campo, "CC-084: falta la dimensión externa registrada o vigente.");
+      }
+    }
+  }
+  return { completa: faltantes.length === 0, campos_faltantes: faltantes, fotos_validas_d27: null, vistas_recomendadas_faltantes: [] };
 }
 
 function evaluarFotosD27(inspeccionId: string, fotos: readonly FotoD27[]) {

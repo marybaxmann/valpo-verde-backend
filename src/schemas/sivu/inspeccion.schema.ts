@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ALCANCES_INSPECCION, aplicaAlcanceInspeccion, type AlcanceInspeccion } from "../../services/rules/engine/alcance";
 import {
   CATALOGO_SELECCION_MULTIPLE,
   CATALOGO_SELECCION_UNICA,
@@ -109,6 +110,7 @@ const valorVariable = z.union([z.string(), z.number(), z.boolean(), z.null(), z.
 const variablesSchema = z.record(z.string(), valorVariable);
 
 const camposComunesInspeccion = {
+  alcance_inspeccion: z.enum(ALCANCES_INSPECCION).nullable().optional(),
   fecha_inspeccion: z.string().date("fecha_inspeccion debe ser una fecha válida en formato AAAA-MM-DD").optional(),
   tipo_inspeccion_realizada: z.enum([
     "evaluacion_inicial",
@@ -150,6 +152,7 @@ function validarAlcanceVariables(
   data: {
     tipo_inspeccion_realizada: string;
     subtipo_inspeccion?: string | null;
+    alcance_inspeccion?: AlcanceInspeccion | null;
     variables: Record<string, unknown>;
     campos_arbol?: { copa_no_presenta?: boolean | null };
   },
@@ -164,7 +167,15 @@ function validarAlcanceVariables(
     return;
   }
 
-  const permitidos = camposPermitidosPorTipo(data.tipo_inspeccion_realizada, data.subtipo_inspeccion ?? null, true);
+  if (data.alcance_inspeccion && !aplicaAlcanceInspeccion(data.tipo_inspeccion_realizada)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["alcance_inspeccion"],
+      message: "El alcance solo aplica a Evaluación inicial y Reevaluación (CC-083)" });
+  }
+  if (data.alcance_inspeccion === "infraestructura" && Object.keys(data.campos_arbol ?? {}).length) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["campos_arbol"],
+      message: "El alcance Infraestructura no registra cambios en ARBOLES (CC-083)" });
+  }
+  const permitidos = camposPermitidosPorTipo(data.tipo_inspeccion_realizada, data.subtipo_inspeccion ?? null, true, data.alcance_inspeccion);
   if (permitidos === null) return;
 
   const permitidosSet = new Set<string>(permitidos);

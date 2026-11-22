@@ -47,6 +47,10 @@ export const CAMPOS_MONITOREO_FITOSANITARIO = [
   "necrosis_pct",
   "muerte_regresiva_copa_pct",
   "presenta_exudaciones",
+  // CC-082 (REGLAS_GENERALES fila 33): monitoreo fitosanitario de palmeras.
+  "calidad_copa_palmera",
+  "proporcion_frondas_vivas",
+  "indicios_plaga_palmera",
 ] as const;
 
 /**
@@ -93,6 +97,13 @@ export const CAMPOS_MONITOREO_ESTRUCTURAL = [
   "diametro_max_ramas_quebradas_cm",
   "permanece_suspendida",
   "desequilibrio_copa",
+  // CC-082 (REGLAS_GENERALES fila 33): entradas de R01-P a R03-P propias de palmeras.
+  "inclinacion_corregida",
+  "estrechamiento_estipite",
+  "angulacion_grave_estipite",
+  "raices_adventicias_altura",
+  "indicios_plaga_palmera",
+  "anomalia_cogollo",
 ] as const;
 
 /**
@@ -105,7 +116,12 @@ export const CAMPOS_MONITOREO_ESTRUCTURAL = [
  * entrada del Inspector. El valor se valida en `inspeccion.schema.ts`
  * (`validarAlcanceVariables`) contra `esCodigoVigente("clasificacion_vitalidad", ...)`.
  */
-export const CAMPOS_MONITOREO_VITALIDAD = ["clasificacion_vitalidad"] as const;
+export const CAMPOS_MONITOREO_VITALIDAD = [
+  "clasificacion_vitalidad",
+  // CC-082 (REGLAS_GENERALES fila 33): vitalidad de palmeras (Blair et al., 2019).
+  "calidad_copa_palmera",
+  "proporcion_frondas_vivas",
+] as const;
 
 /**
  * CC-040 punto 1: Evaluación inicial, Reevaluación y Levantamiento
@@ -128,7 +144,7 @@ export const CAMPOS_MONITOREO_VITALIDAD = ["clasificacion_vitalidad"] as const;
  */
 export const CAMPOS_EVALUACION_COMPLETA = [
   "raices_expuestas", "necrosis_radicular", "raices_cortadas", "levantamiento_del_plato_radicular",
-  "angulo_inclinacion", "direccion_inclinacion",
+  "angulo_inclinacion", "inclinacion_corregida", "direccion_inclinacion",
   "cavidad_pudricion_basal", "cavidad_basal_externa", "cavidad_basal_interna",
   "D_diametro_basal_tronco_cm", "d_diametro_cavidad_basal_cm", "Cc_longitud_abertura_cavidad_cm",
   "C_circunferencia_basal_cm", "t_pared_residual_basal_cm", "anillamiento", "cuerpos_fructiferos_base", "observaciones_radicular",
@@ -139,11 +155,16 @@ export const CAMPOS_EVALUACION_COMPLETA = [
   "presenta_exudaciones", "crecimiento_de_respuesta", "presenta_fisura_grieta_tronco",
   "afectacion_fisura_grieta", "direccion_grieta", "longitud_max_grieta_cm", "ancho_apertura_cm",
   "troncos_codominantes", "corteza_incluida", "grieta_union_codominante",
-  "adelgazamiento_insuficiente_tronco", "cuerpos_fructiferos_tronco", "observaciones_tronco",
+  "adelgazamiento_insuficiente_tronco", "cuerpos_fructiferos_tronco",
+  // CC-082 (PALM-01): campos de palmeras, en el orden del formulario (D-309 a D-317).
+  "estrechamiento_estipite", "angulacion_grave_estipite", "raices_adventicias_altura", "indicios_plaga_palmera",
+  "observaciones_tronco",
   "ramas_secas", "ramas_secas_pct_copa", "diametro_max_ramas_secas_cm",
   "ramas_quebradas", "numero_ramas_quebradas", "diametro_max_ramas_quebradas_cm", "permanece_suspendida",
   "sin_follaje_estacional", "defoliacion_estimada_pct", "clorosis_pct", "necrosis_pct", "desequilibrio_copa",
-  "copa_faltante_pct", "exposicion_luminica_copa_cle", "muerte_regresiva_copa_pct", "observaciones_copa",
+  "copa_faltante_pct", "exposicion_luminica_copa_cle", "muerte_regresiva_copa_pct",
+  "anomalia_cogollo", "calidad_copa_palmera", "proporcion_frondas_vivas", // CC-082 (PALM-01)
+  "observaciones_copa",
   "infraestructura_inmediata",
   "existe_vereda", "materialidad_vereda", "dano_interferencia_vereda",
   "presenta_levantamiento_vereda", "presenta_desplazamiento_horizontal_vereda", "presenta_grieta_vereda",
@@ -181,7 +202,24 @@ export const CAMPOS_EVALUACION_COMPLETA = [
 // no alimentan M03 y el formulario ofrece las consecuencias calculadas.
 const CONSECUENCIAS_MANUALES_HISTORICAS = ["consecuencia_raices_cuello", "consecuencia_tronco", "consecuencia_copa_ramas"] as const;
 
-export function camposPermitidosPorTipo(tipo: string, subtipo: string | null, admitirConsecuenciasHistoricas = false): readonly string[] | null {
+export const ALCANCES_INSPECCION = ["arbol", "infraestructura", "ambos"] as const;
+export type AlcanceInspeccion = typeof ALCANCES_INSPECCION[number];
+
+export function aplicaAlcanceInspeccion(tipo: string): boolean {
+  return tipo === "evaluacion_inicial" || tipo === "reevaluacion";
+}
+
+const camposInfraestructura = new Set<string>(CAMPOS_EVALUACION_COMPLETA.slice(
+  CAMPOS_EVALUACION_COMPLETA.indexOf("infraestructura_inmediata"),
+  CAMPOS_EVALUACION_COMPLETA.indexOf("observaciones_infraestructura") + 1
+));
+
+export function camposPermitidosPorTipo(
+  tipo: string,
+  subtipo: string | null,
+  admitirConsecuenciasHistoricas = false,
+  alcance: AlcanceInspeccion | null = null
+): readonly string[] | null {
   if (tipo === "evaluacion_instrumental") return CAMPOS_EVALUACION_INSTRUMENTAL;
   if (tipo === "monitoreo") {
     if (subtipo === "fitosanitario") return CAMPOS_MONITOREO_FITOSANITARIO;
@@ -189,7 +227,11 @@ export function camposPermitidosPorTipo(tipo: string, subtipo: string | null, ad
     if (subtipo === "vitalidad") return CAMPOS_MONITOREO_VITALIDAD;
   }
   if (tipo === "evaluacion_inicial" || tipo === "reevaluacion" || tipo === "levantamiento") {
-    return admitirConsecuenciasHistoricas ? [...CAMPOS_EVALUACION_COMPLETA, ...CONSECUENCIAS_MANUALES_HISTORICAS] : CAMPOS_EVALUACION_COMPLETA;
+    if (aplicaAlcanceInspeccion(tipo) && alcance === "infraestructura") return [...camposInfraestructura];
+    const campos = aplicaAlcanceInspeccion(tipo) && alcance === "arbol"
+      ? CAMPOS_EVALUACION_COMPLETA.filter(campo => !camposInfraestructura.has(campo))
+      : CAMPOS_EVALUACION_COMPLETA;
+    return admitirConsecuenciasHistoricas ? [...campos, ...CONSECUENCIAS_MANUALES_HISTORICAS] : campos;
   }
   return null;
 }

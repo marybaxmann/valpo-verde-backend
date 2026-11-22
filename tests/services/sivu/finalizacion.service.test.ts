@@ -11,10 +11,12 @@ jest.mock("../../../src/repositories/sivu/inspection.repository", () => ({
 }));
 jest.mock("../../../src/repositories/sivu/workOrder.repository");
 jest.mock("../../../src/repositories/sivu/photo.repository");
+jest.mock("../../../src/repositories/sivu/species.repository");
 jest.mock("../../../src/services/authorization.service", () => ({
   assertProjectRole: jest.fn(),
 }));
 
+import { IndicadoresArbol } from "../../../src/services/rules/engine/ensamblaje";
 import {
   finalizarInspeccion as finalizarInspeccionRepo,
   guardarBorradorInspeccion,
@@ -26,6 +28,8 @@ import {
   obtenerVersionArbolDeInspeccion,
 } from "../../../src/repositories/sivu/inspection.repository";
 import { obtenerOrdenTrabajoPorId } from "../../../src/repositories/sivu/workOrder.repository";
+import { buscarEspeciesPorNombre } from "../../../src/repositories/sivu/species.repository";
+import * as versionMotor from "../../../src/services/rules/engine/version";
 import { listarFotosPorInspeccion } from "../../../src/repositories/sivu/photo.repository";
 import { assertProjectRole } from "../../../src/services/authorization.service";
 import {
@@ -177,7 +181,7 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
     mockVersionArbol.mockResolvedValue({ campos: arbol, camposRegistrados: Object.keys(arbol) });
 
     const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
-    expect(calculo.resultado.indicadores.defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
+    expect((calculo.resultado.indicadores as IndicadoresArbol).defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
     expect(calculo.valores_no_permitidos).toContainEqual(expect.stringContaining("defoliacion_estimada_pct"));
     expect(calculo.puede_finalizar).toBe(false);
     await expect(finalizarInspeccion(usuario(), INSPECTION_ID, { huella: calculo.huella }, TOKEN))
@@ -193,7 +197,7 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
       vigentes: { sin_follaje_estacional: false },
     });
     const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
-    expect(calculo.resultado.indicadores.defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
+    expect((calculo.resultado.indicadores as IndicadoresArbol).defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
     expect(calculo.puede_finalizar).toBe(false);
   });
 
@@ -208,12 +212,12 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
       },
     });
     const receso = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
-    expect(receso.resultado.indicadores.defoliacion).toMatchObject({ categoria: "no_aplica", reglaId: "CR-DEF-06" });
+    expect((receso.resultado.indicadores as IndicadoresArbol).defoliacion).toMatchObject({ categoria: "no_aplica", reglaId: "CR-DEF-06" });
     expect(receso.puede_finalizar).toBe(true);
 
     preparar({ variables: { ...variablesCompletas(), defoliacion_estimada_pct: 20 } });
     const sinReceso = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
-    expect(sinReceso.resultado.indicadores.defoliacion).toMatchObject({ categoria: "leve", reglaId: "CR-DEF-02" });
+    expect((sinReceso.resultado.indicadores as IndicadoresArbol).defoliacion).toMatchObject({ categoria: "leve", reglaId: "CR-DEF-02" });
     expect(sinReceso.puede_finalizar).toBe(true);
   });
 
@@ -735,5 +739,56 @@ describe("insumos dendrom?tricos de consecuencia en 3.2", () => {
       expect(resultado.clasificacion_tronco).toBe("no_determinado");
       expect(resultado.clasificacion_copa_ramas).toBe("no_determinado");
     }
+  });
+});
+
+
+describe("candidato SIVU 3.4 con órdenes de inspección", () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it("usa la especie del borrador y calcula vitalidad PALM-01 sin finalizar la OT", async () => {
+    jest.replaceProperty(versionMotor, "RULE_VERSION_OPERATIVA", "3.4");
+    preparar({ variables: {
+      ...variablesCompletas(),
+      calidad_copa_palmera: "5",
+      proporcion_frondas_vivas: "3",
+      anomalia_cogollo: "ninguna",
+      indicios_plaga_palmera: ["no"],
+      estrechamiento_estipite: "no",
+      angulacion_grave_estipite: false,
+      raices_adventicias_altura: "no_aplica_especie",
+      inclinacion_corregida: "si",
+    } });
+    const campos = { ...ARBOL_REGISTRADO, especie_cientifica: "Phoenix canariensis" };
+    mockVersionArbol.mockResolvedValue({ campos, camposRegistrados: Object.keys(campos) });
+    (buscarEspeciesPorNombre as jest.Mock).mockResolvedValue([
+      { especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" },
+    ]);
+
+    const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+
+    expect(buscarEspeciesPorNombre).toHaveBeenCalledWith(TOKEN, "Phoenix canariensis");
+    expect(calculo.resultado.rule_version).toBe("3.4");
+    expect(calculo.resultado.indicadores).toMatchObject({ tipo: "palmera" });
+    expect(calculo.resultado.calculados).toMatchObject({ vitalidad_palmera: 3 });
+    expect(calculo.campos_faltantes).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ campo: "calidad_copa_palmera" }),
+    ]));
+    expect(mockFinalizarRpc).not.toHaveBeenCalled();
+  });
+
+  it("conserva el cálculo de una OT de árbol con borrador anterior", async () => {
+    preparar();
+    const anterior = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    jest.replaceProperty(versionMotor, "RULE_VERSION_OPERATIVA", "3.4");
+
+    const candidato = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+
+    expect(candidato.resultado.rule_version).toBe("3.4");
+    expect(candidato.resultado.indicadores).toEqual(anterior.resultado.indicadores);
+    expect(candidato.campos_faltantes).toEqual(anterior.campos_faltantes);
+    expect(candidato.puede_finalizar).toBe(anterior.puede_finalizar);
+    expect(buscarEspeciesPorNombre).not.toHaveBeenCalled();
+    expect(mockFinalizarRpc).not.toHaveBeenCalled();
   });
 });

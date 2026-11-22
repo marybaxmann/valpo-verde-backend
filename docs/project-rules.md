@@ -2170,7 +2170,7 @@ Afecta:
 Estado: reemplazada
 Versión: 7.0
 Reemplazada por: PR-016 v8.0
-Motivo del reemplazo: alto y extremo no se distinguían con la paleta anterior; se adopta la paleta de riesgo verde, amarillo, naranjo y rojo profundo (CC-082).
+Motivo del reemplazo: alto y extremo no se distinguían con la paleta anterior; se adopta la paleta de riesgo verde, amarillo, naranjo y rojo profundo (CC-085).
 Reemplaza: PR-016 v6.0
 Origen: CC-057, CC-058
 
@@ -2241,7 +2241,7 @@ Afecta:
 Estado: vigente
 Versión: 8.0
 Reemplaza: PR-016 v7.0
-Origen: CC-057, CC-058, CC-082
+Origen: CC-057, CC-058, CC-085
 
 Jerarquía de fuentes (de mayor a menor autoridad). Ante contradicción manda el nivel superior:
 
@@ -2273,7 +2273,7 @@ Referencias visuales complementarias (inspiración UX/UI, CC-023), sin cambio. S
 
 Reglas de uso de las referencias complementarias:
 - Se adaptan a la arquitectura, los módulos y los datos de SIVU; no se copian su identidad, marca, nombres ni composición literal (por ejemplo, el botón verde lima y la barra en píldora de Groundzy).
-- La paleta oficial de riesgo (CC-082) es: Bajo verde `#4FA35B`, Moderado amarillo `#F6D03F`, Alto naranjo `#F59A23` y Extremo rojo profundo `#B3121F`; en modo oscuro, `#5DB869`, `#F6D03F`, `#F7A43A` y `#D9243A`. Extremo se refuerza sin depender solo del color: insignia sólida con texto blanco y, en el mapa, anillo sólido. Se usa solo para el riesgo y no se modifica sin un CC. Los colores de módulo evitan esos tonos.
+- La paleta oficial de riesgo (CC-085) es: Bajo verde `#4FA35B`, Moderado amarillo `#F6D03F`, Alto naranjo `#F59A23` y Extremo rojo profundo `#B3121F`; en modo oscuro, `#5DB869`, `#F6D03F`, `#F7A43A` y `#D9243A`. Extremo se refuerza sin depender solo del color: insignia sólida con texto blanco y, en el mapa, anillo sólido. Se usa solo para el riesgo y no se modifica sin un CC. Los colores de módulo evitan esos tonos.
 - No se incorporan elementos que impliquen funciones o resultados que SIVU no calcula (por ejemplo, recomendaciones automáticas tipo "AI insight").
 - Los gráficos se usan solo cuando aportan a la lectura del módulo y siempre con datos reales.
 - Antes de rediseñar la interfaz se valida una maqueta visual con la autora.

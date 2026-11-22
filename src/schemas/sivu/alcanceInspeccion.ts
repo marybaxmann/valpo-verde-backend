@@ -55,6 +55,8 @@ export const CATALOGO_SELECCION_MULTIPLE: Readonly<Record<string, string>> = {
   tipo_infraestructura_vertical: "tipo_infraestructura_vertical",
   tipo_red_aerea: "tipo_red_aerea",
   tipo_red_subterranea: "tipo_red_subterranea",
+  // CC-082: D-313, «Permitir selección múltiple» (No y No determinado no se combinan: lo valida el motor).
+  indicios_plaga_palmera: "plaga_palmera",
 };
 
 /**
@@ -93,5 +95,12 @@ export const CATALOGO_SELECCION_UNICA: Readonly<Record<string, string>> = {
   consecuencia_tronco: "consecuencia",
   consecuencia_copa_ramas: "consecuencia",
   clasificacion_vitalidad: "clasificacion_vitalidad",
+  // CC-082 (PALM-01): D-309, D-310, D-312, D-314, D-316 y D-317.
+  calidad_copa_palmera: "clase_copa_palmera",
+  proporcion_frondas_vivas: "clase_copa_palmera",
+  anomalia_cogollo: "anomalia_cogollo",
+  estrechamiento_estipite: "si_no_no_determinado",
+  raices_adventicias_altura: "raices_adventicias",
+  inclinacion_corregida: "si_no_no_determinado",
 };
 

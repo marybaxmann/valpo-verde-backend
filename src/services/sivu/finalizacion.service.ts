@@ -16,6 +16,7 @@ import {
   obtenerVariablesBorrador,
   obtenerVersionArbolDeInspeccion,
 } from "../../repositories/sivu/inspection.repository";
+import { buscarEspeciesPorNombre } from "../../repositories/sivu/species.repository";
 import { listarFotosPorInspeccion } from "../../repositories/sivu/photo.repository";
 import { OrdenTrabajoRow, obtenerOrdenTrabajoPorId } from "../../repositories/sivu/workOrder.repository";
 import { AjustesBody, CalcularInspeccionBody, FinalizarInspeccionBody } from "../../schemas/sivu/finalizacion.schema";
@@ -30,7 +31,8 @@ import {
 } from "../rules/engine/ensamblaje";
 import { SubtipoInspeccionCodigo, TipoInspeccionRealizadaCodigo } from "../rules/engine/catalogs";
 import { FechaSugeridaResultado } from "../rules/engine/fechas-sugeridas";
-import { RULE_VERSION as RULE_VERSION_CANDIDATA, RULE_VERSION_OPERATIVA as RULE_VERSION, VersionMotor } from "../rules/engine/version";
+import { EntradasPalmera } from "../rules/engine/palmeras";
+import { incluyePalmeras, RULE_VERSION_OPERATIVA as RULE_VERSION, usaEscala32, VersionMotor } from "../rules/engine/version";
 import { CampoFaltante, evaluarCompletitud } from "./completitud";
 import { validarFisiologiaCopa } from "./fisiologiaCopa";
 import { mensajeCheck } from "../../utils/mensajesBase";
@@ -88,7 +90,22 @@ const CLAVES_NUCLEO = [
 // Los datos para lcr_pct salen del árbol, no del borrador (ver resolverDatosLcr).
 // Las entradas dendrom?tricas vienen de ARBOLES, no de la composici?n de
 // REGISTRO_EVALUACION. resolverDatosConsecuencia exige resolver sus tres claves.
-type ClaveNucleoSinListar = Exclude<keyof NucleoEntradas, (typeof CLAVES_NUCLEO)[number] | keyof EntradasLcr | keyof EntradasConsecuencia>;
+/**
+ * CC-082: entradas de palmeras (EntradasPalmera). Solo se componen para una palmera y cuando la
+ * versión operativa las calcula (3.3): los árboles no reciben claves nuevas en variables_calculo.
+ */
+const CLAVES_PALMERA = [
+  "calidad_copa_palmera", "proporcion_frondas_vivas", "anomalia_cogollo", "indicios_plaga_palmera",
+  "estrechamiento_estipite", "angulacion_grave_estipite", "raices_adventicias_altura", "inclinacion_corregida",
+] as const satisfies readonly (keyof EntradasPalmera)[];
+type ClavePalmeraSinListar = Exclude<keyof EntradasPalmera, (typeof CLAVES_PALMERA)[number]>;
+const palmeraCompleta: [ClavePalmeraSinListar] extends [never] ? true : ClavePalmeraSinListar = true;
+void palmeraCompleta;
+
+type ClaveNucleoSinListar = Exclude<
+  keyof NucleoEntradas,
+  (typeof CLAVES_NUCLEO)[number] | keyof EntradasLcr | keyof EntradasConsecuencia | keyof EntradasPalmera
+>;
 const nucleoCompleto: [ClaveNucleoSinListar] extends [never] ? true : ClaveNucleoSinListar = true;
 void nucleoCompleto;
 
@@ -175,6 +192,10 @@ export async function finalizarInspeccion(
 
   const sugeridaInspeccion = respuesta.fechas_sugeridas.fecha_proxima_inspeccion.fecha;
   const sugeridaMonitoreo = respuesta.fechas_sugeridas.fecha_proximo_monitoreo.fecha;
+  if (inspeccion.alcance_inspeccion === "infraestructura" &&
+      (body.fecha_proxima_inspeccion != null || body.fecha_proximo_monitoreo != null || body.justificacion_ajuste_fecha != null)) {
+    throw new AppError("Una inspección de Infraestructura conserva las fechas vigentes (CC-083)", 422);
+  }
   const fechaInspeccion = body.fecha_proxima_inspeccion ?? sugeridaInspeccion;
   const fechaMonitoreo = body.fecha_proximo_monitoreo ?? sugeridaMonitoreo;
   const justificacion = body.justificacion_ajuste_fecha ?? null;
@@ -287,6 +308,8 @@ async function calcular(
     throw new AppError("El árbol de la inspección no existe", 404);
   }
 
+  const tipoHoja = await resolverTipoHoja(accessToken, versionArbol, arbolVigente);
+  const arbolParaCalculo = { ...arbolVigente, tipo_hoja: tipoHoja };
   const copaAusente = (versionArbol?.camposRegistrados.includes("copa_no_presenta")
     ? versionArbol.campos.copa_no_presenta
     : arbolVigente.copa_no_presenta) === true;
@@ -295,7 +318,7 @@ async function calcular(
     variablesVigentes,
     variablesRegistradas,
     resolverDapCm(versionArbol, arbolVigente),
-    resolverDatosLcr(versionArbol, arbolVigente),
+    resolverDatosLcr(versionArbol, arbolParaCalculo),
     resolverDatosConsecuencia(versionArbol, arbolVigente)
   );
   if (copaAusente) variablesCalculo.sin_follaje_estacional = null;
@@ -306,6 +329,7 @@ async function calcular(
     variablesCalculo,
     tipo,
     subtipo,
+    alcance: inspeccion.alcance_inspeccion,
     fechaInspeccion: inspeccion.fecha_inspeccion,
     fechaVigente,
   });
@@ -326,11 +350,12 @@ async function calcular(
   const completitud = evaluarCompletitud({
     tipo,
     subtipo,
+    alcance: inspeccion.alcance_inspeccion,
     variablesRegistradas,
     variablesVigentes,
     arbolRegistrado: versionArbol?.campos ?? {},
     camposRegistradosArbol: versionArbol?.camposRegistrados ?? [],
-    arbolVigente,
+    arbolVigente: arbolParaCalculo,
     inspeccionId: inspeccion.id,
     fotos,
   });
@@ -385,6 +410,13 @@ export function componerVariablesCalculo(
     else if (Object.prototype.hasOwnProperty.call(vigentes, clave)) entradas[clave] = vigentes[clave] ?? null;
     else entradas[clave] = null;
   }
+  if (incluyePalmeras(RULE_VERSION) && datosLcr?.tipo_hoja === "palmera") {
+    for (const clave of CLAVES_PALMERA) {
+      if (Object.prototype.hasOwnProperty.call(registradas, clave)) entradas[clave] = registradas[clave] ?? null;
+      else if (Object.prototype.hasOwnProperty.call(vigentes, clave)) entradas[clave] = vigentes[clave] ?? null;
+      else entradas[clave] = null;
+    }
+  }
   entradas.dap_cm = dapCm; // dato del árbol (ARBOLES), no de la evaluación
   Object.assign(entradas, datosLcr, datosConsecuencia);
   return entradas as unknown as NucleoEntradas;
@@ -394,6 +426,25 @@ export function componerVariablesCalculo(
  * dap_cm para el cálculo: el que registró la inspección, si lo registró;
  * si no, el vigente del árbol. null si no hay un número válido.
  */
+async function resolverTipoHoja(
+  token: string,
+  versionArbol: VersionArbol | null,
+  arbolVigente: Record<string, unknown>,
+): Promise<unknown> {
+  if (!incluyePalmeras(RULE_VERSION) || !versionArbol?.camposRegistrados.includes("especie_cientifica")) {
+    return arbolVigente.tipo_hoja;
+  }
+  const nombre = versionArbol.campos.especie_cientifica;
+  if (typeof nombre !== "string" || !nombre.trim()) return null;
+  const normalizado = nombre.trim().toLowerCase();
+  if (typeof arbolVigente.especie_cientifica === "string" &&
+      arbolVigente.especie_cientifica.trim().toLowerCase() === normalizado) {
+    return arbolVigente.tipo_hoja;
+  }
+  const candidatas = await buscarEspeciesPorNombre(token, nombre.trim());
+  return candidatas.find(e => e.especie_cientifica.trim().toLowerCase() === normalizado)?.tipo_hoja ?? null;
+}
+
 export function resolverDapCm(versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): number | null {
   return numeroDelArbol("dap_cm", versionArbol, arbolVigente);
 }
@@ -452,15 +503,18 @@ export function huellaCalculo(args: {
   subtipo: string | null;
   fechaInspeccion: string;
   fechaVigente: string | null;
+  alcance?: InspeccionRow["alcance_inspeccion"];
 }): string {
   const { multifustal, numero_fustes, dap_fustes_cm, ...variablesHistoricas } = args.variablesCalculo;
   const version = RULE_VERSION as VersionMotor;
   const contenido = {
-    variables_calculo: version === RULE_VERSION_CANDIDATA
+    // Desde la 3.2 la huella incluye las entradas de consecuencia (CC-080). No depende de la versión candidata.
+    variables_calculo: usaEscala32(version)
       ? args.variablesCalculo
       : variablesHistoricas,
     tipo_inspeccion_realizada: args.tipo,
     subtipo_inspeccion: args.subtipo,
+    ...(args.alcance && args.alcance !== "ambos" ? { alcance_inspeccion: args.alcance } : {}),
     fecha_inspeccion: args.fechaInspeccion,
     fecha_proxima_inspeccion_vigente: args.fechaVigente,
     rule_version: version,

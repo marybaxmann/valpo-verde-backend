@@ -19,6 +19,7 @@ export interface ComposicionVigente {
 }
 
 export interface InspeccionFinalizadaDeOt {
+  alcance_inspeccion?: import("../../services/rules/engine/alcance").AlcanceInspeccion | null;
   id: string;
   tree_id: string;
   fecha_inspeccion: string;
@@ -48,7 +49,7 @@ function lanzar(error: { message: string; code: string }): never {
 export async function listarInspeccionesFinalizadasDeOt(workOrderId: string): Promise<InspeccionFinalizadaDeOt[]> {
   const { data, error } = await supabaseAdmin
     .from("inspections")
-    .select("id, tree_id, fecha_inspeccion, created_at")
+    .select("id, tree_id, fecha_inspeccion, created_at, alcance_inspeccion")
     .eq("work_order_id", workOrderId)
     .eq("estado_registro", "finalizado");
   if (error) lanzar(error);
