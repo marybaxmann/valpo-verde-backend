@@ -777,8 +777,25 @@ describe("candidato SIVU 3.4 con órdenes de inspección", () => {
     expect(mockFinalizarRpc).not.toHaveBeenCalled();
   });
 
+  it("reconoce la palmera registrada por nombre cuando la ficha aún no está enlazada al catálogo", async () => {
+    jest.replaceProperty(versionMotor, "RULE_VERSION_OPERATIVA", "3.4");
+    preparar();
+    mockArbolVigente.mockResolvedValue({
+      ...ARBOL_VIGENTE, especie_cientifica: "Phoenix canariensis", tipo_hoja: null,
+    });
+    (buscarEspeciesPorNombre as jest.Mock).mockResolvedValue([
+      { especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" },
+    ]);
+    const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(calculo.resultado.indicadores).toMatchObject({ tipo: "palmera" });
+    expect(calculo.campos_faltantes).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ campo: "altura_primera_rama_m" }),
+    ]));
+  });
+
   it("conserva el cálculo de una OT de árbol con borrador anterior", async () => {
     preparar();
+    mockArbolVigente.mockResolvedValue({ ...ARBOL_VIGENTE, tipo_hoja: "latifoliada" });
     const anterior = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
     jest.replaceProperty(versionMotor, "RULE_VERSION_OPERATIVA", "3.4");
 

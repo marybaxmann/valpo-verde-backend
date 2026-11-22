@@ -431,18 +431,19 @@ async function resolverTipoHoja(
   versionArbol: VersionArbol | null,
   arbolVigente: Record<string, unknown>,
 ): Promise<unknown> {
-  if (!incluyePalmeras(RULE_VERSION) || !versionArbol?.camposRegistrados.includes("especie_cientifica")) {
-    return arbolVigente.tipo_hoja;
-  }
-  const nombre = versionArbol.campos.especie_cientifica;
+  if (!incluyePalmeras(RULE_VERSION)) return arbolVigente.tipo_hoja;
+
+  const nombre = datoDelArbol("especie_cientifica", versionArbol, arbolVigente);
   if (typeof nombre !== "string" || !nombre.trim()) return null;
-  const normalizado = nombre.trim().toLowerCase();
-  if (typeof arbolVigente.especie_cientifica === "string" &&
-      arbolVigente.especie_cientifica.trim().toLowerCase() === normalizado) {
+  const normalizar = (valor: string) => valor.trim().replace(/\s+/g, " ").toLowerCase();
+  const normalizado = normalizar(nombre);
+  if (typeof arbolVigente.tipo_hoja === "string" &&
+      typeof arbolVigente.especie_cientifica === "string" &&
+      normalizar(arbolVigente.especie_cientifica) === normalizado) {
     return arbolVigente.tipo_hoja;
   }
-  const candidatas = await buscarEspeciesPorNombre(token, nombre.trim());
-  return candidatas.find(e => e.especie_cientifica.trim().toLowerCase() === normalizado)?.tipo_hoja ?? null;
+  const candidatas = await buscarEspeciesPorNombre(token, nombre.trim().replace(/\s+/g, " "));
+  return candidatas.find(e => normalizar(e.especie_cientifica) === normalizado)?.tipo_hoja ?? null;
 }
 
 export function resolverDapCm(versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): number | null {
