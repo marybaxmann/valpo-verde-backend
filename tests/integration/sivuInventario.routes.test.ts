@@ -32,6 +32,7 @@ const PROJECT_ID = "33333333-3333-3333-3333-333333333333";
 const arbolFila = {
   id: "aaaa0001-0000-0000-0000-000000000001",
   tree_code: "A-000001",
+  codigo_publico: "P-VIC-001",
   project_id: PROJECT_ID,
   sector_id: "bbbb0001-0000-0000-0000-000000000001",
   sector: "Sector Norte",
@@ -54,6 +55,7 @@ const arbolFila = {
 const arbolDto = {
   id: arbolFila.id,
   tree_code: "A-000001",
+  codigo_publico: "P-VIC-001",
   sector_id: arbolFila.sector_id,
   sector: "Sector Norte",
   ubicacion_descriptiva: "Frente al n°10",

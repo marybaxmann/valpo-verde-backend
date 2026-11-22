@@ -3353,3 +3353,36 @@ motivo)
 - Evaluación instrumental admite evidencia opcional con vistas Base, Tronco o Detalle. No interviene en finalización, mínimos ni cálculo. El protocolo recomienda una fotografía del equipo en posición y otra del resultado.
 - Backend local: carga directa y firmada para instrumentales, con las validaciones de estado y responsabilidad existentes; la descripción opcional se conserva en la columna de fotos existente. Migración 043 reversible para el conteo transaccional, sin modificar 040 ni 041.
 - Las cuatro instrumentales de regularización se cargan después de desplegar este CC. Publicación autorizada por la autora el 2026-11-21. La regularización queda sujeta a su autorización independiente.
+
+---
+
+### CC-086 — Código público del árbol por lugar (P-VIC-001, PM-001), asignado desde las coordenadas
+
+| Campo | Valor |
+|---|---|
+| Fecha | 2026-11-22 |
+| Origen | Pedido de la responsable (2026-11-14): identificadores territoriales legibles (ejemplo inicial `PLA-VIC-PM-001`) sin romper las relaciones del árbol. Propuesta `docs/plan/propuestas/codigos-publicos/` (rama local `docs/propuesta-codigos-publicos`, `24bee40`). |
+| Tipo | 3 — modelo de datos (+4, API y frontend) |
+| Estado | APROBADO (implementado en la base de pruebas); falta la fila en el Excel |
+| Regla / campo afectado | ARBOLES: campo nuevo `codigo_publico` (fila D-n por asignar al copiarla al Excel). `tree_code` (D-2) sin cambios. |
+| Versión anterior | El árbol solo tiene `tree_code` (A-000xxx), correlativo sin información del lugar. |
+| Versión nueva | **(1)** Código público `PREFIJO-NNN`: `P-NOMBRE` en plazas y parques (Plaza Victoria `P-VIC`), sigla de la calle en calles (Av. Pedro Montt `PM`). **(2)** El lugar se obtiene de las coordenadas con los polígonos de la plataforma (partes del `geometria_sector` del sector), no de OpenStreetMap; solo el eje de la calle (para la vereda) viene de OSM. **(3)** D1: la fila de la vereda perimetral es parte de la plaza. D2: A-000506 y A-000507 van a P-VIC. D3: en calles, impares en la vereda norte y pares en la sur, de poniente a oriente. D4: lista de prefijos de la propuesta aprobada. **(4)** Asignación automática al registrar o completar la coordenada del árbol: siguiente número libre del lugar (en calles, de la paridad de su vereda). Un código emitido no cambia ni se reutiliza, aunque el árbol se mueva. Sin lugar con prefijo, el árbol queda sin código público. **(5)** Solo los árboles del sector del lugar reciben su prefijo. **(6) Visibilidad (Mari, 2026-11-22):** el código se muestra **solo en la plataforma** (inventario, ficha del árbol, lista de placas QR). **No** aparece en la ficha pública ciudadana ni en la placa impresa, y la API pública no lo entrega. |
+| Motivo | Que el equipo ubique cada árbol en terreno por un código que dice dónde está, sin tocar `tree_code`, el QR ni las relaciones (registros, fotos, evaluaciones). |
+| Fundamento / fuente | Decisiones de la responsable (marybaxmann), 2026-11-22: D1 a D4, asignación automática por coordenadas con los polígonos de la plataforma, aprobación del ID lógico y visibilidad solo interna. |
+| Archivos afectados | Migración `database/migrations/049_codigo_publico.sql` (+ `.down.sql`). Backend: repositorios y servicios de inventario, ficha del árbol y placas QR (Conecta interno). Frontend: inventario, ficha lateral del árbol y lista de placas QR. |
+| Impacto en Excel metodológico | **Sí, pendiente:** una fila nueva en DICCIONARIO_CAMPOS (ARBOLES.codigo_publico, calculado por la plataforma). No se modificó el Excel: requiere autorización de la responsable. |
+| Impacto en BD | Tabla `public_code_places` (prefijo, nombre, tipo, polígono UTM 19S, eje en calles; RLS de lectura para `authenticated`), columna única `trees.codigo_publico`, funciones `fn_vereda_respecto_eje`, `fn_max_numero_codigo`, `fn_asignar_codigo_publico` (SECURITY DEFINER) y trigger `trg_trees_codigo_publico`. Carga inicial: P-VIC y PM del sector «Plazas y eje Pedro Montt», y códigos de los árboles existentes (P-VIC por filas de 10 m de norte a sur, en zigzag; PM a lo largo del eje). |
+| Impacto en API | `codigo_publico` en el inventario, la ficha del árbol y la lista de árboles de las placas (con sesión). La ficha pública (`/conecta/arboles/:qrToken`) no cambia. |
+| Pruebas necesarias | Ensayo revertido en la base de pruebas; 60 P-VIC (P-VIC-001 a 060) y 43 PM (PM-001 a PM-051); trigger: un árbol nuevo recibe P-VIC-061, PM-053 en la vereda norte y PM-036 en la sur (prueba revertida); los árboles de QA de otro sector quedan sin código; Jest 1860/1860. |
+| Dependencias | CC-046 (árbol dentro del sector), D-255 (geometría del sector). |
+| rule_version | Sin cambio: ningún campo entra en una regla. PATCH del paquete al copiar la fila. |
+| Aprobado por | marybaxmann (Mari) |
+| Fecha de aprobación | 2026-11-22 |
+| Commits / PR asociados | — |
+| Observaciones | **(a)** Los otros dos polígonos del sector (sin árboles) todavía no tienen prefijo: se cargan en `public_code_places` cuando se defina a qué plaza corresponde cada uno. **(b)** Si se corrige la geometría del sector, `public_code_places` no se actualiza solo: hay que actualizar el polígono del lugar. **(c)** 049 aplicada solo en la base de pruebas `gmlbmyreoxgoqrolhyxo` (2026-11-22). |
+
+**Historial de estados**
+
+| Fecha | Estado | Por | Nota |
+|---|---|---|---|
+| 2026-11-22 | APROBADO | marybaxmann | Aprueba D1 a D4, la asignación por coordenadas y el nuevo ID lógico, visible solo en la plataforma. 049 aplicada en la base de pruebas por Claude con su autorización. Falta la fila en el Excel. |

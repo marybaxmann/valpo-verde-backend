@@ -16,6 +16,8 @@ import { patronSinTildes } from "../../utils/busquedaSinTildes";
 export interface ArbolInventarioRow {
   id: string;
   tree_code: string;
+  /** Código público por lugar (CC-086, migración 049). */
+  codigo_publico: string | null;
   project_id: string;
   sector_id: string;
   sector: string | null;                    // D-7: valor vigente
@@ -40,7 +42,7 @@ export interface ArbolInventarioRow {
 
 /** Columnas seleccionadas del inventario — lista constante para reutilizar. */
 const INVENTARIO_COLUMNS =
-  "id, tree_code, project_id, sector_id, sector, ubicacion_descriptiva, utm_este, utm_norte, ubicacion::geometry, especie_cientifica, nombre_comun, estado_ciclo_vida, fecha_registro, multifustal, numero_fustes, dap_cm, altura_total_m, vigente_desde_inspection_id";
+  "id, tree_code, codigo_publico, project_id, sector_id, sector, ubicacion_descriptiva, utm_este, utm_norte, ubicacion::geometry, especie_cientifica, nombre_comun, estado_ciclo_vida, fecha_registro, multifustal, numero_fustes, dap_cm, altura_total_m, vigente_desde_inspection_id";
 
 export interface FiltrosInventario {
   projectId: string;

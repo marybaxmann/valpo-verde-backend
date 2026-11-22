@@ -21,6 +21,7 @@ import { InventarioQuery } from "../../schemas/sivu/inventario.schema";
 export interface ArbolInventario {
   id: string;
   tree_code: string;
+  codigo_publico: string | null;
   sector_id: string;
   sector: string | null;
   ubicacion_descriptiva: string | null;
@@ -139,6 +140,7 @@ function aArbolInventario(fila: ArbolInventarioRow, riesgo: RiesgoVigenteRow | u
   return {
     id: fila.id,
     tree_code: fila.tree_code,
+    codigo_publico: fila.codigo_publico ?? null,
     sector_id: fila.sector_id,
     sector: fila.sector,
     ubicacion_descriptiva: fila.ubicacion_descriptiva,
