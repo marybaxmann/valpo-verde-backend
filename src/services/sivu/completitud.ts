@@ -132,7 +132,9 @@ export function evaluarCompletitud(e: EntradaCompletitud): ResultadoCompletitud 
 
   if (completa && (!parcial || e.alcance === "arbol")) {
     const especie = efectivo("especie_cientifica");
-    if (tieneValor(especie) && !especieValidaD13(String(especie))) {
+    const washingtoniaDeCatalogo = noAplicanPalmera !== null
+      && String(especie).trim().toLowerCase() === "washingtonia sp.";
+    if (tieneValor(especie) && !washingtoniaDeCatalogo && !especieValidaD13(String(especie))) {
       faltantes.push({
         campo: "especie_cientifica",
         hoja: "ARBOLES",
