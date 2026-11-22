@@ -3353,3 +3353,12 @@ motivo)
 - Evaluación instrumental admite evidencia opcional con vistas Base, Tronco o Detalle. No interviene en finalización, mínimos ni cálculo. El protocolo recomienda una fotografía del equipo en posición y otra del resultado.
 - Backend local: carga directa y firmada para instrumentales, con las validaciones de estado y responsabilidad existentes; la descripción opcional se conserva en la columna de fotos existente. Migración 043 reversible para el conteo transaccional, sin modificar 040 ni 041.
 - Las cuatro instrumentales de regularización se cargan después de desplegar este CC. Publicación autorizada por la autora el 2026-11-21. La regularización queda sujeta a su autorización independiente.
+
+### CC-082 — Paleta de clasificación de riesgo: verde, amarillo, naranjo y rojo profundo
+
+- Decisión de la autora e investigadora responsable SIVU, 2026-11-22: con la paleta anterior, Alto (`#F04A32`) y Extremo (`#C7252B`) no se distinguían. Se eligió la opción C entre tres maquetas.
+- Paleta nueva: Bajo `#4FA35B`, Moderado `#F6D03F`, Alto `#F59A23`, Extremo `#B3121F`; en modo oscuro, `#5DB869`, `#F6D03F`, `#F7A43A` y `#D9243A`. Alto es más claro y Extremo más oscuro, para que se diferencien por luminosidad y no solo por tono.
+- Extremo se refuerza sin depender solo del color: insignia sólida con texto blanco y, en el mapa, anillo sólido tras el borde blanco. Las etiquetas de texto se mantienen en todas las vistas.
+- Reemplaza PR-016 v7.0 por PR-016 v8.0 (solo cambia la regla de la paleta). Sin cambios en metodología, clasificaciones, datos ni cálculos.
+- Implementación: frontend PR #42 → `feature/fase7-maqueta-lab` (`29eec8f`), publicado en sivu.cl el 2026-11-22 con autorización de la responsable.
+
