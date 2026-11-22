@@ -617,3 +617,44 @@ describe("Campos faltantes → no_determinado por componente (el motor nunca rel
     expect(r.componentes.redAerea.categoria).toBe("no_determinado");
   });
 });
+
+
+describe("M04 3.2: IF-22 e IF-23", () => {
+  const redes = { infraestructura_inmediata: true, interferencia_redes_servicios: true };
+
+  it.each([
+    [1.99, false, "moderada", "IN-RAE-02", 2],
+    [1.99, true, "severa", "IN-RAE-07", 3],
+    [2, false, "leve", "IN-RAE-03", 1],
+    [2.01, true, "moderada", "IN-RAE-04", 2],
+  ])("red el?ctrica a %s m con da?o=%s", (distancia, dano, categoria, reglaId, puntaje) => {
+    const resultado = evaluarM04({
+      ...base(), ...redes, red_aerea_presente: true, tipo_red_aerea: ["electrica"],
+      distancia_copa_red_aerea_m: distancia, dano_interferencia_red_aerea: dano,
+    }, true);
+    expect(resultado.componentes.redAerea).toMatchObject({ categoria, reglaId, puntaje });
+  });
+
+  it("conserva CC-043 para redes de funci?n no determinada", () => {
+    const resultado = evaluarM04({
+      ...base(), ...redes, red_aerea_presente: true, tipo_red_aerea: ["funcion_no_determinada"],
+      distancia_copa_red_aerea_m: 1, dano_interferencia_red_aerea: true,
+    }, true);
+    expect(resultado.componentes.redAerea).toMatchObject({ categoria: "no_determinado", puntaje: null });
+  });
+
+  it.each([
+    [true, "si", "severa", "IN-RSU-03", 3],
+    [false, "si", "moderada", "IN-RSU-08", 2],
+    [true, "no", "moderada", "IN-RSU-04", 2],
+    [true, "no_determinado", "moderada", "IN-RSU-05", 2],
+    [false, "no", "sin_afectacion", "IN-RSU-06", 0],
+    [false, "no_determinado", "no_determinado", "IN-RSU-07", null],
+  ] as const)("red subterr?nea con afectaci?n=%s y compromiso=%s", (afectacion, compromete, categoria, reglaId, puntaje) => {
+    const resultado = evaluarM04({
+      ...base(), ...redes, red_subterranea_presente: "si", afectacion_fisica_red_subterranea: afectacion,
+      compromete_funcionalidad_red_subterranea: compromete,
+    }, true);
+    expect(resultado.componentes.redSubterranea).toMatchObject({ categoria, reglaId, puntaje });
+  });
+});

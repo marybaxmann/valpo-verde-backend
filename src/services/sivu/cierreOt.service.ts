@@ -1,3 +1,4 @@
+import { RULE_VERSION_OPERATIVA } from "../rules/engine/version";
 import { env } from "../../config/env";
 import { AuthenticatedUser } from "../../types/auth";
 import { AppError } from "../../utils/AppError";
@@ -23,7 +24,7 @@ import {
 import { OrdenTrabajoRow, obtenerOrdenTrabajoPorId } from "../../repositories/sivu/workOrder.repository";
 import { obtenerArbolVigente, obtenerInspeccionPorId, obtenerVersionArbolDeInspeccion } from "../../repositories/sivu/inspection.repository";
 import { AjusteVigente, AjustesEntrada, ensamblarResultadoVigente } from "../rules/engine/ensamblaje";
-import { componerVariablesCalculo, resolverDapCm, resolverDatosLcr } from "./finalizacion.service";
+import { componerVariablesCalculo, resolverDapCm, resolverDatosConsecuencia, resolverDatosLcr } from "./finalizacion.service";
 
 /** Intentos ante SV068: la composición cambió entre la lectura y la escritura. */
 const INTENTOS_COMPLETAR = 2;
@@ -90,11 +91,13 @@ async function prepararEvaluaciones(workOrderId: string, accessToken: string): P
         obtenerArbolVigente(accessToken, treeId),
       ]);
       const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
+        ruleVersion: RULE_VERSION_OPERATIVA,
         variablesCalculo: componerVariablesCalculo(
           composicion.entradas_vigentes,
           {},
           resolverDapCm(versionArbol, arbolVigente),
-          resolverDatosLcr(versionArbol, arbolVigente)
+          resolverDatosLcr(versionArbol, arbolVigente),
+          resolverDatosConsecuencia(versionArbol, arbolVigente)
         ),
         ajustes: ajustesDeLaInspeccion(ajustes, inspeccion.id),
         motorCommit: env.MOTOR_COMMIT,
@@ -189,11 +192,13 @@ export async function anularInspeccionFinalizada(
       ]);
       const ajustes = ultimaValida ? await listarAjustesDeInspecciones([ultimaValida]) : [];
       const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
+        ruleVersion: RULE_VERSION_OPERATIVA,
         variablesCalculo: componerVariablesCalculo(
           composicion.entradas_vigentes,
           {},
           resolverDapCm(null, arbolVigente),
-          resolverDatosLcr(null, arbolVigente)
+          resolverDatosLcr(null, arbolVigente),
+          resolverDatosConsecuencia(null, arbolVigente)
         ),
         ajustes: ultimaValida ? ajustesDeLaInspeccion(ajustes, ultimaValida) : {},
         inspeccionAnuladaId: inspectionId,

@@ -1,14 +1,6 @@
 import { z } from "zod";
 
-/**
- * Esquemas de fotografías (CC-049; D-27: las 4 vistas obligatorias;
- * 039: vista «detalle», fotos de registro del árbol y carga firmada).
- */
-
-/**
- * Dominio de `photos.vista` (039). Las cuatro primeras son las de D-27;
- * «detalle» es una foto complementaria que nunca completa D-27.
- */
+/** Vistas de photos. Detalle es complementaria y se excluye del minimo D-27. */
 export const VISTAS_FOTO = ["arbol_completo", "base", "tronco", "copa", "detalle"] as const;
 export const vistaFotoSchema = z.enum(VISTAS_FOTO);
 
@@ -28,19 +20,11 @@ export const inspectionIdParamSchema = z.object({
 
 export type InspectionIdParam = z.infer<typeof inspectionIdParamSchema>;
 
-/**
- * `vista` llega como campo de texto en el `multipart/form-data` (junto
- * al archivo) — D-27, dominio de `photos.vista`. Opcional en la forma:
- * el service exige o prohíbe según `tipo_inspeccion_realizada` de la
- * inspección (D-27: obligatoria en Evaluación inicial/Reevaluación/
- * Levantamiento, opcional en Monitoreo, ninguna foto en Evaluación
- * instrumental) — ese cruce no se puede validar aquí, no se conoce la
- * inspección en este punto. «detalle» cumple «vista obligatoria» (se
- * declara qué es la foto) pero no cuenta para las cuatro de D-27.
- */
+/** La inspeccion determina las vistas admitidas. La carga instrumental usa Base, Tronco o Detalle. */
 export const subirFotoInspeccionSchema = z
   .object({
     vista: vistaFotoSchema.optional(),
+    descripcion: z.string().trim().min(1).max(500).optional(),
   })
   .strict();
 
@@ -99,6 +83,7 @@ export const confirmarSubidaSchema = z
     upload_id: z.string().uuid("upload_id inválido"),
     sha256: z.string().regex(/^[0-9a-f]{64}$/, "sha256 debe ser hexadecimal en minúsculas (64 caracteres)"),
     vista: vistaFotoSchema.optional(),
+    descripcion: z.string().trim().min(1).max(500).optional(),
   })
   .strict();
 

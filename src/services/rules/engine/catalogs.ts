@@ -477,3 +477,6 @@ export type SubtipoInspeccionCodigo =
   | "fitosanitario"
   | "estructural"
   | "vitalidad";
+
+/** Crítica es exclusiva de cavidades y solo impone un piso. */
+export const SEVERIDAD_CRITICA_CAVIDAD = { codigo: "critica", etiqueta: "Crítica" } as const;

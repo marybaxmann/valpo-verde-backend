@@ -193,10 +193,21 @@ describe("subirFotoInspeccion (CC-049, mismas reglas de CC-048/CC-050)", () => {
     expect(mockSubirArchivo).not.toHaveBeenCalled();
   });
 
-  it("Evaluación instrumental → rechazada, no admite fotos (D-27)", async () => {
-    await expect(
-      subirConFixtures({ tipo_inspeccion_realizada: "evaluacion_instrumental" }, {}, { vista: "base" })
-    ).rejects.toMatchObject({ statusCode: 422 });
+  it.each(["base", "tronco", "detalle"] as const)("acepta fotos instrumentales con vista %s", async (vista) => {
+    const buffer = await jpegConExif();
+    mockCrearFoto.mockResolvedValueOnce({ vista });
+    const descripcion = "tira 1 / basal";
+    await expect(subirConFixtures(
+      { tipo_inspeccion_realizada: "evaluacion_instrumental" }, {}, { vista, descripcion },
+      { buffer: Buffer.from(buffer), mimetype: "image/jpeg" },
+    )).resolves.toMatchObject({ vista });
+    expect(mockCrearFoto).toHaveBeenCalledWith(expect.objectContaining({ vista, descripcion, inspectionId: INSPECTION_ID }));
+  });
+
+  it.each(["copa", "arbol_completo", undefined] as const)("rechaza vista instrumental %s", async (vista) => {
+    await expect(subirConFixtures(
+      { tipo_inspeccion_realizada: "evaluacion_instrumental" }, {}, { vista },
+    )).rejects.toMatchObject({ statusCode: 422 });
     expect(mockSubirArchivo).not.toHaveBeenCalled();
   });
 

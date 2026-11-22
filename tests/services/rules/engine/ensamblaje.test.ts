@@ -5,8 +5,8 @@ import {
 import {
   AjusteVigente,
   ArgsResultadoEvaluacion,
-  ensamblarResultadoEvaluacion,
-  ensamblarResultadoVigente,
+  ensamblarResultadoEvaluacion as ensamblarEvaluacionVersionada,
+  ensamblarResultadoVigente as ensamblarVigenteVersionado,
   NucleoEntradas,
   resolverValorEfectivo,
   validarAlcance,
@@ -633,4 +633,104 @@ describe("lcr_pct en calculados (CC-071)", () => {
     expect(conLcr({ altura_punta_viva_m: 10, altura_base_copa_viva_m: 4, altura_total_m: 10, tipo_hoja: "palmera" }).lcr_pct).toBeNull();
     expect(conLcr({}).lcr_pct).toBeNull();
   });
+});
+
+function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion) {
+  return ensamblarEvaluacionVersionada({ ruleVersion: "3.1", ...args });
+}
+
+function ensamblarResultadoVigente(args: Parameters<typeof ensamblarVigenteVersionado>[0]) {
+  return ensamblarVigenteVersionado({ ruleVersion: "3.1", ...args });
+}
+
+function calcular32(variables: Partial<NucleoEntradas>, ajustes?: Parameters<typeof ensamblarVigenteVersionado>[0]["ajustes"]) {
+  return ensamblarVigenteVersionado({ variablesCalculo: { ...arbolSano(), ...variables }, motorCommit: "local", ajustes });
+}
+
+describe("metodología 3.2", () => {
+  const cavidadAbierta = (abertura: number, t: number | null, interna: NucleoEntradas["cavidad_basal_interna"] = "no") =>
+    calcular32({
+      cavidad_pudricion_basal: true, cavidad_basal_externa: true, cavidad_basal_interna: interna,
+      D_diametro_basal_tronco_cm: 100, d_diametro_cavidad_basal_cm: 10,
+      Cc_longitud_abertura_cavidad_cm: abertura, C_circunferencia_basal_cm: 100, t_pared_residual_basal_cm: t,
+      presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: true, cavidad_interna_tronco: interna,
+      D_diametro_tronco_cm: 100, d_diametro_cavidad_tronco_cm: 10,
+      Cc_longitud_abertura_tronco_cm: abertura, C_circunferencia_tronco_cm: 100, t_pared_residual_tronco_cm: t,
+    });
+
+  it.each([
+    [10, null, "no", "moderada", 2, "posible"],
+    [21, null, "no", "severa", 3, "probable"],
+    [34, null, "no", "critica", null, "inminente"],
+    [10, 21, "no", "moderada", 2, "posible"],
+    [10, 15, "no", "severa", 3, "probable"],
+    [10, 14, "si", "critica", null, "inminente"],
+    [34, 21, "si", "critica", null, "inminente"],
+    [21, null, "requiere_evaluacion_instrumental", "severa", 3, "probable"],
+    [34, null, "requiere_evaluacion_instrumental", "critica", null, "inminente"],
+    [10, null, "requiere_evaluacion_instrumental", null, null, "no_determinado"],
+  ] as const)("clasifica SL con abertura %s, t=%s e interna=%s", (abertura, t, interna, severidad, puntaje, pf) => {
+    const r = cavidadAbierta(abertura, t, interna);
+    expect(r.rule_version).toBe("3.2");
+    expect(r.indicadores.cavidadBasal).toMatchObject({ severidad, puntaje });
+    expect(r.indicadores.cavidadTronco).toMatchObject({ severidad, puntaje });
+    expect(r.probabilidad_falla_raices_cuello).toBe(pf);
+    expect(r.probabilidad_falla_tronco).toBe(pf);
+  });
+
+  it.each([
+    [2.5, "insignificante", "insignificante"],
+    [2.5001, "menor", "insignificante"],
+    [10, "menor", "insignificante"],
+    [10.0001, "significativa", "menor"],
+    [25, "significativa", "menor"],
+    [25.0001, "severa", "significativa"],
+  ])("calcula las consecuencias para DAP %s", (dap_cm, tronco, copa) => {
+    const c = calcular32({ dap_cm }).calculados.consecuencias;
+    expect(c).toMatchObject({
+      raicesCuello: { calculada: tronco }, tronco: { calculada: tronco }, copaRamas: { calculada: copa },
+    });
+  });
+
+  it("distingue el equivalente del fuste mayor y conserva el respaldo del ajuste", () => {
+    const entradas = { multifustal: true, numero_fustes: 2, dap_fustes_cm: [18, 19] };
+    const ajuste = {
+      valorCalculadoEnElAjuste: "significativa", valorAjustado: "menor",
+      adjustmentId: "ajuste-1", justificacion: "Blanco protegido.",
+    } as const;
+    const r = calcular32(entradas, { consecuenciaTronco: ajuste });
+    expect(r.calculados.consecuencias).toMatchObject({
+      raicesCuello: { calculada: "severa" },
+      tronco: { calculada: "significativa", efectiva: "menor", ajuste },
+      copaRamas: { calculada: "menor" },
+    });
+    const sinJustificacion = calcular32(entradas, { consecuenciaTronco: { ...ajuste, justificacion: " " } });
+    expect(sinJustificacion.calculados.consecuencias?.tronco).toEqual({ calculada: "significativa", efectiva: "significativa", ajuste: null });
+  });
+});
+
+it("emite IF-22 en 3.2 sin modificar la prioridad para la misma infraestructura", () => {
+  const entrada: Partial<NucleoEntradas> = {
+    infraestructura_inmediata: true, interferencia_redes_servicios: true,
+    red_aerea_presente: true, tipo_red_aerea: ["electrica"],
+    distancia_copa_red_aerea_m: 1, dano_interferencia_red_aerea: false,
+  };
+  const bajo = calcular32(entrada);
+  const sobre = calcular32({ ...entrada, distancia_copa_red_aerea_m: 2, dano_interferencia_red_aerea: true });
+  expect(bajo.alertas).toEqual([expect.stringContaining("Circular SEC 204702")]);
+  expect(sobre.alertas).toEqual([]);
+  expect(bajo.clasificacion_infraestructura_calculada).toBe("moderado");
+  expect(sobre.clasificacion_infraestructura_calculada).toBe("moderado");
+  expect(bajo.clasificacion_prioridad_calculada).toBe(sobre.clasificacion_prioridad_calculada);
+  const extrema = calcular32({
+    ...entrada, levantamiento_del_plato_radicular: true, angulo_inclinacion: 35,
+    zona_objetivo: "bajo_la_copa", tasa_ocupacion_objetivo: "constante",
+  });
+  expect(extrema.clasificacion_riesgo_calculada).toBe("extremo");
+  expect(extrema.clasificacion_prioridad_calculada).toBe("critica");
+  for (const ruleVersion of ["3.0", "3.1"] as const) {
+    const legacy = ensamblarVigenteVersionado({ variablesCalculo: { ...arbolSano(), ...entrada }, ruleVersion, motorCommit: "local" });
+    expect(legacy.clasificacion_infraestructura_calculada).toBe("alto");
+    expect(legacy).not.toHaveProperty("alertas");
+  }
 });

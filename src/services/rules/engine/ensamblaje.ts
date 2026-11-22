@@ -109,9 +109,9 @@ import { evaluarR01, R01Input, R01Resultado } from "./r01-raices-cuello";
 import { evaluarExudaciones, evaluarR02, R02Input, R02Resultado } from "./r02-tronco";
 import { evaluarR03, R03Input, R03Resultado } from "./r03-copa-ramas";
 import { evaluarR04 } from "./r04-clasificacion-riesgo";
-import { calcularSuperficieAlcorqueM2, ResultadoCalculo } from "./variables-calculo";
+import { calcularDapEquivalenteCm, calcularSuperficieAlcorqueM2, ResultadoCalculo } from "./variables-calculo";
 import { camposPermitidosPorTipo } from "./alcance";
-import { RULE_VERSION } from "./version";
+import { RULE_VERSION, VersionMotor } from "./version";
 
 // =====================================================================
 // 1. Alcance por tipo de inspección (CC-040 a, b)
@@ -158,7 +158,7 @@ export function validarAlcance(
   // (Monitoreo sin subtipo o con uno no reconocido) no se inventa un
   // subtipo por defecto: todo lo registrado queda fuera de un alcance
   // que no se pudo confirmar.
-  const alcancePermitido = new Set<string>(camposPermitidosPorTipo(tipoInspeccionRealizada, subtipoInspeccion) ?? []);
+  const alcancePermitido = new Set<string>(camposPermitidosPorTipo(tipoInspeccionRealizada, subtipoInspeccion, true) ?? []);
   for (const campo of camposRegistrados) {
     if (!alcancePermitido.has(campo)) camposFueraDeAlcance.push(campo);
   }
@@ -197,7 +197,48 @@ export interface EntradasLcr {
   tipo_hoja?: string | null;
 }
 
-export type NucleoEntradas = R01Input &
+export interface EntradasConsecuencia {
+  multifustal?: boolean | null;
+  numero_fustes?: number | null;
+  dap_fustes_cm?: number[] | null;
+}
+
+const NIVELES_CONSECUENCIA = ["insignificante", "menor", "significativa", "severa"] as const;
+
+function consecuenciaPorDiametro(diametro: number | null): ConsecuenciaCodigo | null {
+  if (diametro === null || !Number.isFinite(diametro) || diametro <= 0) return null;
+  if (diametro <= 2.5) return "insignificante";
+  if (diametro <= 10) return "menor";
+  if (diametro <= 25) return "significativa";
+  return "severa";
+}
+
+type AjusteConsecuencia = AjusteVigente<ConsecuenciaCodigo> & { justificacion: string };
+
+function resolverConsecuencia(calculada: ConsecuenciaCodigo | null, ajuste?: AjusteConsecuencia | null) {
+  const aplicado = calculada !== null && ajuste?.valorCalculadoEnElAjuste === calculada &&
+    NIVELES_CONSECUENCIA.some(nivel => nivel === ajuste.valorAjustado) &&
+    ajuste.justificacion?.trim() ? ajuste : null;
+  return { calculada, efectiva: aplicado?.valorAjustado ?? calculada, ajuste: aplicado };
+}
+
+function calcularConsecuencias(entradas: NucleoEntradas, ajustes?: AjustesEntrada, anulada?: string | null) {
+  const fustes = entradas.dap_fustes_cm ?? null;
+  const multifustal = entradas.multifustal ?? ((fustes?.length ?? 0) >= 2);
+  const equivalente = multifustal && fustes !== null
+    ? calcularDapEquivalenteCm({ numero_fustes: entradas.numero_fustes ?? fustes.length, dap_fustes_cm: fustes }).valor
+    : entradas.dap_cm;
+  const fusteMayor = multifustal ? (fustes !== null && equivalente !== null ? Math.max(...fustes) : null) : entradas.dap_cm;
+  const tronco = consecuenciaPorDiametro(fusteMayor);
+  const copa = tronco === null ? null : NIVELES_CONSECUENCIA[Math.max(0, NIVELES_CONSECUENCIA.indexOf(tronco) - 1)];
+  return {
+    raicesCuello: resolverConsecuencia(consecuenciaPorDiametro(equivalente), filtrarPorAnulacion(ajustes?.consecuenciaRaicesCuello, anulada)),
+    tronco: resolverConsecuencia(tronco, filtrarPorAnulacion(ajustes?.consecuenciaTronco, anulada)),
+    copaRamas: resolverConsecuencia(copa, filtrarPorAnulacion(ajustes?.consecuenciaCopaRamas, anulada)),
+  };
+}
+
+export type NucleoEntradas = EntradasConsecuencia & R01Input &
   R02Input &
   R03Input &
   CondicionCopaInput &
@@ -212,6 +253,7 @@ export type NucleoEntradas = R01Input &
   };
 
 export interface NucleoResultado {
+  consecuencias?: ReturnType<typeof calcularConsecuencias>;
   r01: R01Resultado;
   r02: R02Resultado;
   r03: R03Resultado;
@@ -234,11 +276,17 @@ export interface NucleoResultado {
 
 function calcularNucleo(
   entradas: NucleoEntradas,
+  version: VersionMotor,
   ajustes?: AjustesEntrada,
   inspeccionAnuladaId?: string | null,
 ): NucleoResultado {
-  const r01 = evaluarR01(entradas);
-  const r02 = evaluarR02(entradas);
+  if (version !== "3.0" && version !== "3.1" && version !== RULE_VERSION) {
+    throw new Error(`Versi?n de motor no admitida: ${version}`);
+  }
+  const escalaNueva = version === RULE_VERSION;
+  const consecuencias = escalaNueva ? calcularConsecuencias(entradas, ajustes, inspeccionAnuladaId) : undefined;
+  const r01 = evaluarR01(entradas, escalaNueva);
+  const r02 = evaluarR02(entradas, escalaNueva);
   const r03 = evaluarR03(entradas);
   const m01 = evaluarM01(entradas.zona_objetivo, entradas.tasa_ocupacion_objetivo);
 
@@ -264,13 +312,13 @@ function calcularNucleo(
   const componenteRaicesCuello = evaluarClasificacionComponente(
     probabilidades.raicesCuello.valorEfectivo,
     m01.probabilidadImpacto,
-    entradas.consecuencia_raices_cuello,
+    consecuencias ? consecuencias.raicesCuello.efectiva : entradas.consecuencia_raices_cuello,
   );
-  const componenteTronco = evaluarClasificacionComponente(probabilidades.tronco.valorEfectivo, m01.probabilidadImpacto, entradas.consecuencia_tronco);
+  const componenteTronco = evaluarClasificacionComponente(probabilidades.tronco.valorEfectivo, m01.probabilidadImpacto, consecuencias ? consecuencias.tronco.efectiva : entradas.consecuencia_tronco);
   const componenteCopaRamas = evaluarClasificacionComponente(
     probabilidades.copaRamas.valorEfectivo,
     m01.probabilidadImpacto,
-    entradas.consecuencia_copa_ramas,
+    consecuencias ? consecuencias.copaRamas.efectiva : entradas.consecuencia_copa_ramas,
   );
 
   // CC-024: un componente no determinado se representa con el código
@@ -286,19 +334,33 @@ function calcularNucleo(
   const r04 = evaluarR04(clasificacionRaicesCuello, clasificacionTronco, clasificacionCopaRamas);
   const clasificacionRiesgoCalculada: ClasificacionRiesgoCodigo = r04.noDeterminado ? "no_determinado" : r04.clasificacionRiesgo!;
 
-  const m04 = evaluarM04(entradas);
+  const m04 = evaluarM04(entradas, escalaNueva);
 
   return {
     r01,
     r02,
     r03,
     m04,
+    consecuencias,
     probabilidades,
     clasificacionRaicesCuello,
     clasificacionTronco,
     clasificacionCopaRamas,
     clasificacionRiesgoCalculada,
     clasificacionInfraestructuraCalculada: m04.clasificacionInfraestructura,
+  };
+}
+
+function calcularAlertasInfraestructura(entradas: NucleoEntradas, version: VersionMotor): { alertas?: string[] } {
+  if (version !== RULE_VERSION) return {};
+  const bajoReferencia = entradas.infraestructura_inmediata === true && entradas.interferencia_redes_servicios === true &&
+    entradas.red_aerea_presente === true &&
+    Array.isArray(entradas.tipo_red_aerea) && entradas.tipo_red_aerea.includes("electrica") &&
+    calcularCumplimientoDistanciaSeguridad(entradas.distancia_copa_red_aerea_m) === "no_cumple";
+  return {
+    alertas: bajoReferencia
+      ? ["Red el?ctrica bajo la distancia de referencia (2,00 m, Circular SEC 204702). Informar a la distribuidora."]
+      : [],
   };
 }
 
@@ -310,6 +372,7 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
     tipo_hoja: entradas.tipo_hoja ?? null,
   });
   return {
+    ...(nucleo.consecuencias && { consecuencias: nucleo.consecuencias }),
     SL_basal_pct: nucleo.r01.variablesCalculo.SL_basal_pct,
     R_radio_basal_cm: nucleo.r01.variablesCalculo.R_radio_basal_cm,
     t_R_basal: nucleo.r01.variablesCalculo.t_R_basal,
@@ -418,6 +481,9 @@ const CODIGOS_AJUSTE_VALIDOS: Record<AjusteDescartado["campo"], readonly string[
 };
 
 export interface AjustesEntrada {
+  consecuenciaRaicesCuello?: AjusteConsecuencia | null;
+  consecuenciaTronco?: AjusteConsecuencia | null;
+  consecuenciaCopaRamas?: AjusteConsecuencia | null;
   riesgo?: AjusteVigente<ClasificacionRiesgoCodigo> | null;
   infraestructura?: AjusteVigente<ClasificacionInfraestructuraCodigo> | null;
   prioridad?: AjusteVigente<ClasificacionPrioridadCodigo> | null;
@@ -514,10 +580,10 @@ export { resolverValorEfectivo };
  * hay información suficiente para decidir) — quien llama debe
  * informarlo siempre que pase `inspeccionAnuladaId`.
  */
-function filtrarPorAnulacion<T extends string>(
-  ajuste: AjusteVigente<T> | null | undefined,
+function filtrarPorAnulacion<T extends { inspectionId?: string }>(
+  ajuste: T | null | undefined,
   inspeccionAnuladaId: string | null | undefined,
-): AjusteVigente<T> | null | undefined {
+): T | null | undefined {
   if (!ajuste || !inspeccionAnuladaId) return ajuste;
   if (ajuste.inspectionId === inspeccionAnuladaId) return null;
   return ajuste;
@@ -620,6 +686,7 @@ function resolverAjustesYPrioridad(
 // =====================================================================
 
 export interface ArgsResultadoEvaluacion {
+  ruleVersion?: VersionMotor;
   /** Solo lo registrado en esta inspección (diseño Fase 3, §3.10 bis; REGLAS_GENERALES "Preguardado y finalización"; CC-040). Se usa para el alcance y se devuelve tal cual — nunca para calcular. */
   variables: Record<string, unknown>;
   /** Registrado + vigente en ese momento, ya compuesto por la Fase 6 (§3.9). Esto es lo que se calcula. */
@@ -642,6 +709,7 @@ export interface ResultadoEvaluacion {
   variables: Record<string, unknown>;
   variables_calculo: NucleoEntradas;
   calculados: Calculados;
+  alertas?: string[];
   indicadores: Indicadores;
   puntaje_raices_cuello: number | null;
   probabilidad_falla_raices_cuello: R01Resultado["probabilidadFalla"];
@@ -665,7 +733,7 @@ export interface ResultadoEvaluacion {
   clasificacion_riesgo_ajustada: ClasificacionRiesgoCodigo | null;
   clasificacion_infraestructura_ajustada: ClasificacionInfraestructuraCodigo | null;
   clasificacion_prioridad_ajustada: ClasificacionPrioridadCodigo | null;
-  rule_version: typeof RULE_VERSION;
+  rule_version: VersionMotor;
   motor_commit: string;
 
   /**
@@ -697,7 +765,8 @@ export interface ResultadoEvaluacion {
 
 export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): ResultadoEvaluacion {
   const alcance = validarAlcance(args.tipoInspeccionRealizada, args.subtipoInspeccion ?? null, args.variables);
-  const nucleo = calcularNucleo(args.variablesCalculo, args.ajustes);
+  const version = args.ruleVersion ?? RULE_VERSION;
+  const nucleo = calcularNucleo(args.variablesCalculo, version, args.ajustes);
   const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes);
   const ajustadaOnull = (r: ResolucionValorEfectivo<ProbabilidadFallaCodigo>) => (r.ajusteMantenidoId ? r.valorEfectivo : null);
 
@@ -716,6 +785,7 @@ export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): Res
   return {
     variables: args.variables,
     variables_calculo: args.variablesCalculo,
+    ...calcularAlertasInfraestructura(args.variablesCalculo, version),
     calculados: calcularCalculados(args.variablesCalculo, nucleo),
     indicadores: calcularIndicadores(nucleo, args.variablesCalculo),
     puntaje_raices_cuello: nucleo.r01.puntaje,
@@ -739,7 +809,7 @@ export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): Res
     clasificacion_riesgo_ajustada: resolucion.clasificacionRiesgoAjustada,
     clasificacion_infraestructura_ajustada: resolucion.clasificacionInfraestructuraAjustada,
     clasificacion_prioridad_ajustada: resolucion.clasificacionPrioridadAjustada,
-    rule_version: RULE_VERSION,
+    rule_version: version,
     motor_commit: args.motorCommit,
     inspeccion: {
       nivelRiesgo: resolucion.riesgoEfectivo,
@@ -756,6 +826,7 @@ export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): Res
 // =====================================================================
 
 export interface ArgsResultadoVigente {
+  ruleVersion?: VersionMotor;
   /** Composición campo por campo de v_tree_current_inputs (§3.10 bis), ya armada por la Fase 6. */
   variablesCalculo: NucleoEntradas;
   /**
@@ -783,6 +854,7 @@ export interface ResultadoVigente {
   // --- tree_assessments ---
   entradas_vigentes: NucleoEntradas;
   calculados: Calculados;
+  alertas?: string[];
   indicadores: Indicadores;
   puntaje_raices_cuello: number | null;
   probabilidad_falla_raices_cuello: R01Resultado["probabilidadFalla"];
@@ -805,7 +877,7 @@ export interface ResultadoVigente {
   adjustment_ids: string[];
   ajustes_descartados: AjusteDescartado[];
   requiere_revision_ajuste: boolean;
-  rule_version: typeof RULE_VERSION;
+  rule_version: VersionMotor;
   motor_commit: string;
 }
 
@@ -817,11 +889,13 @@ export interface ResultadoVigente {
  * `v_tree_current_inputs` antes de llegar aquí (§3.10 bis).
  */
 export function ensamblarResultadoVigente(args: ArgsResultadoVigente): ResultadoVigente {
-  const nucleo = calcularNucleo(args.variablesCalculo, args.ajustes, args.inspeccionAnuladaId);
+  const version = args.ruleVersion ?? RULE_VERSION;
+  const nucleo = calcularNucleo(args.variablesCalculo, version, args.ajustes, args.inspeccionAnuladaId);
   const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes, args.inspeccionAnuladaId);
 
   return {
     entradas_vigentes: args.variablesCalculo,
+    ...calcularAlertasInfraestructura(args.variablesCalculo, version),
     calculados: calcularCalculados(args.variablesCalculo, nucleo),
     indicadores: calcularIndicadores(nucleo, args.variablesCalculo),
     puntaje_raices_cuello: nucleo.r01.puntaje,
@@ -845,7 +919,7 @@ export function ensamblarResultadoVigente(args: ArgsResultadoVigente): Resultado
     adjustment_ids: resolucion.adjustmentIdsVigentes,
     ajustes_descartados: resolucion.ajustesDescartados,
     requiere_revision_ajuste: resolucion.ajustesDescartados.length > 0,
-    rule_version: RULE_VERSION,
+    rule_version: version,
     motor_commit: args.motorCommit,
   };
 }

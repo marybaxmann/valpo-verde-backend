@@ -125,7 +125,7 @@ function evaluarFotosD27(inspeccionId: string, fotos: readonly FotoD27[]) {
   const huellasPorRuta = new Map<string, string | null>();
   const vistas = new Set<string | null>();
   for (const foto of fotos) {
-    if (foto.inspection_id !== inspeccionId || !/[^ \t\n\r\f\v]/.test(foto.storage_path)) continue;
+    if (foto.vista === "detalle" || foto.inspection_id !== inspeccionId || !/[^ \t\n\r\f\v]/.test(foto.storage_path)) continue;
     const anterior = huellasPorRuta.get(foto.storage_path);
     const huella = foto.sha256;
     if (anterior === undefined || (huella !== null && (anterior === null || huella < anterior))) {

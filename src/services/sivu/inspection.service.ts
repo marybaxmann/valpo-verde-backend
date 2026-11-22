@@ -4,7 +4,7 @@ import { hoyEnChile } from "../../utils/fechaChile";
 import { mensajeAltaFueraDeSector, mensajeCheck } from "../../utils/mensajesBase";
 import { SQLSTATE_ARBOL_FUERA_SECTOR } from "../../repositories/sivu/project.repository";
 import { assertProjectRole } from "../authorization.service";
-import { RULE_VERSION } from "../rules/engine/version";
+import { RULE_VERSION_OPERATIVA as RULE_VERSION } from "../rules/engine/version";
 import { calcularDapEquivalenteCm } from "../rules/engine/variables-calculo";
 import {
   BorradorInspeccionResultado,
@@ -235,7 +235,7 @@ export function variablesRetiradas(
   guardadas: Record<string, unknown>,
   body: Pick<GuardarBorradorInspeccionBody, "tipo_inspeccion_realizada" | "subtipo_inspeccion" | "variables">
 ): string[] {
-  const alcance = new Set<string>(camposPermitidosPorTipo(body.tipo_inspeccion_realizada, body.subtipo_inspeccion ?? null) ?? []);
+  const alcance = new Set<string>(camposPermitidosPorTipo(body.tipo_inspeccion_realizada, body.subtipo_inspeccion ?? null, true) ?? []);
   return Object.keys(guardadas).filter((k) => !alcance.has(k) && !(k in body.variables) && guardadas[k] !== null && guardadas[k] !== undefined);
 }
 

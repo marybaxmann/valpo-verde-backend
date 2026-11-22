@@ -163,7 +163,7 @@ function validarAlcanceVariables(
     return;
   }
 
-  const permitidos = camposPermitidosPorTipo(data.tipo_inspeccion_realizada, data.subtipo_inspeccion ?? null);
+  const permitidos = camposPermitidosPorTipo(data.tipo_inspeccion_realizada, data.subtipo_inspeccion ?? null, true);
   if (permitidos === null) return;
 
   const permitidosSet = new Set<string>(permitidos);

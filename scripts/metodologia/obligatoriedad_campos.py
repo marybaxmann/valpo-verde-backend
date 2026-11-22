@@ -104,7 +104,7 @@ COLOCACION_CC070 = [
     ("sin_follaje_estacional", "defoliacion_estimada_pct"),
 ]
 
-D_SOLO_SISTEMA = {"Sistema", "Sistema / Administrador Plataforma", "Sistema / usuario autorizado"}
+D_SOLO_SISTEMA = {"Sistema", "Sistema / Administrador Plataforma", "Sistema / usuario autorizado", "Sistema. Ajuste por Inspector."}
 
 # Campo que activa una condición -> catálogo de catalogs.ts cuando su
 # dominio no es "Sí / No".
@@ -149,6 +149,14 @@ EXISTE_COPA = no_verdadero("copa_no_presenta")
 # para el que se aprobó; "i", el de la columna I. Si "exigido" es False,
 # "motivo" explica por qué no se exige.
 TRADUCCIONES_CC056 = {
+    ("REGISTRO_EVALUACION", "t_pared_residual_basal_cm"): {
+        "i": "Condicional", "k": "cavidad_basal_interna = Sí, o cavidad_basal_externa = Sí cuando la pared residual se midió con instrumento (resistógrafo o tomógrafo).", "exigido": True,
+        "activacion": igual("cavidad_basal_interna", "si"),
+        "nota": "CC-080: si la cavidad es abierta, registrar el espesor cuando exista una medición instrumental."},
+    ("REGISTRO_EVALUACION", "t_pared_residual_tronco_cm"): {
+        "i": "Condicional", "k": "cavidad_interna_tronco = Sí, o cavidad_externa_tronco = Sí cuando la pared residual se midió con instrumento (resistógrafo o tomógrafo).", "exigido": True,
+        "activacion": igual("cavidad_interna_tronco", "si"),
+        "nota": "CC-080: si la cavidad es abierta, registrar el espesor cuando exista una medición instrumental."},
     # --- ARBOLES ---
     ("ARBOLES", "fecha_registro"): {
         "i": "Obligatorio", "k": "", "exigido": False,
@@ -203,9 +211,9 @@ TRADUCCIONES_CC056 = {
     ("ARBOLES", "fotografias_arbol"): {
         "i": "Obligatorio para finalizar la Evaluación inicial, la Reevaluación y el Levantamiento",
         "k": "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. "
-             "No aplica en la Evaluación instrumental; en el Monitoreo no es obligatoria.",
+             "En la Evaluación instrumental es opcional; en el Monitoreo no es obligatoria.",
         "exigido": True, "activacion": SIEMPRE, "exigencia": "fotos_d27",
-        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección; vistas informativas."},
+        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección, excluida la vista Detalle."},
     # --- REGISTRO_EVALUACION ---
     ("REGISTRO_EVALUACION", "direccion_inclinacion"): {
         "i": "Condicional", "k": "angulo_inclinacion ≥ 15°", "exigido": True,

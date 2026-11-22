@@ -235,6 +235,30 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
     expect(mockFinalizarRpc).not.toHaveBeenCalled();
   });
 
+  it("dos fotos de vista detalle no suman al minimo de una inspeccion visual", async () => {
+    preparar({ vistas: ["detalle", null, "detalle"] });
+    const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(calculo).toMatchObject({ puede_finalizar: false, fotos_validas_d27: 1 });
+    expect(calculo.campos_faltantes).toContainEqual(expect.objectContaining({ campo: "fotografias_arbol" }));
+  });
+
+  it("finaliza la instrumental sin fotos y sus fotos opcionales no cambian el calculo", async () => {
+    const escenario = {
+      tipo: "evaluacion_instrumental", subtipo: "resistografia",
+      variables: { cavidad_pudricion_basal: false, presenta_cavidad_pudricion_tronco: false },
+    };
+    preparar({ ...escenario, vistas: [] });
+    const sinFotos = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(sinFotos).toMatchObject({ puede_finalizar: true, fotos_validas_d27: null });
+    preparar({ ...escenario, vistas: ["base", "detalle"] });
+    const conFotos = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(conFotos.resultado).toEqual(sinFotos.resultado);
+    expect(conFotos.huella).toBe(sinFotos.huella);
+    preparar({ ...escenario, vistas: [] });
+    await expect(finalizarInspeccion(usuario(), INSPECTION_ID, { huella: sinFotos.huella }, TOKEN))
+      .resolves.toMatchObject({ finalizada: true });
+  });
+
   it("calcula sin escribir nada y permite finalizar una evaluación completa", async () => {
     preparar();
     const r = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
@@ -670,5 +694,39 @@ describe("ajuste de probabilidad de falla y datos de LCR (CC-071)", () => {
     const a = componerVariablesCalculo({}, {}, null, { altura_punta_viva_m: 9 });
     const b = componerVariablesCalculo({}, {}, null, { altura_punta_viva_m: 8 });
     expect(huellaCalculo({ ...base, variablesCalculo: a })).not.toBe(huellaCalculo({ ...base, variablesCalculo: b }));
+  });
+});
+
+
+describe("insumos dendrom?tricos de consecuencia en 3.2", () => {
+  const version = jest.requireActual("../../../src/services/rules/engine/version");
+
+  beforeEach(() => {
+    jest.replaceProperty(version, "RULE_VERSION_OPERATIVA", "3.2");
+    preparar();
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it.each([
+    [true, [8, 9], "significativa", "menor", "insignificante"],
+    [true, null, "significativa", null, null],
+    [false, null, "significativa", "significativa", "menor"],
+  ])("resuelve los campos de la inspecci?n y del ?rbol vigente (multifustal=%s, fustes=%j)", async (
+    multifustal, fustes, raices, tronco, copa,
+  ) => {
+    mockVersionArbol.mockResolvedValue({
+      campos: { multifustal, dap_fustes_cm: fustes, dap_cm: 12 },
+      camposRegistrados: ["multifustal", "dap_fustes_cm", "dap_cm"],
+    });
+    mockArbolVigente.mockResolvedValue({ ...ARBOL_VIGENTE, multifustal: true, dap_fustes_cm: [40, 40], numero_fustes: 2, dap_cm: 56.57 });
+    const { resultado } = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
+    expect(resultado.calculados.consecuencias).toMatchObject({
+      raicesCuello: { calculada: raices }, tronco: { calculada: tronco }, copaRamas: { calculada: copa },
+    });
+    if (multifustal && fustes === null) {
+      expect(resultado.clasificacion_tronco).toBe("no_determinado");
+      expect(resultado.clasificacion_copa_ramas).toBe("no_determinado");
+    }
   });
 });

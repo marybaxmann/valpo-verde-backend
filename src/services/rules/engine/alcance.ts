@@ -167,7 +167,6 @@ export const CAMPOS_EVALUACION_COMPLETA = [
   "compromete_funcionalidad_red_subterranea", "observaciones_infraestructura",
   "presenta_tutorado", "tipo_tutorado", "condicion_tutorado", "interferencia_tutorado_arbol", "observaciones_tutorado",
   "zona_objetivo", "tasa_ocupacion_objetivo",
-  "consecuencia_raices_cuello", "consecuencia_tronco", "consecuencia_copa_ramas",
   "clasificacion_vitalidad",
 ] as const;
 
@@ -178,7 +177,11 @@ export const CAMPOS_EVALUACION_COMPLETA = [
  * 2026-10-25 — antes el Zod quedaba permisivo con esos tres mientras
  * la lista no estaba enumerada).
  */
-export function camposPermitidosPorTipo(tipo: string, subtipo: string | null): readonly string[] | null {
+// Compatibilidad para borradores y clientes anteriores. En 3.2 estas entradas
+// no alimentan M03 y el formulario ofrece las consecuencias calculadas.
+const CONSECUENCIAS_MANUALES_HISTORICAS = ["consecuencia_raices_cuello", "consecuencia_tronco", "consecuencia_copa_ramas"] as const;
+
+export function camposPermitidosPorTipo(tipo: string, subtipo: string | null, admitirConsecuenciasHistoricas = false): readonly string[] | null {
   if (tipo === "evaluacion_instrumental") return CAMPOS_EVALUACION_INSTRUMENTAL;
   if (tipo === "monitoreo") {
     if (subtipo === "fitosanitario") return CAMPOS_MONITOREO_FITOSANITARIO;
@@ -186,7 +189,7 @@ export function camposPermitidosPorTipo(tipo: string, subtipo: string | null): r
     if (subtipo === "vitalidad") return CAMPOS_MONITOREO_VITALIDAD;
   }
   if (tipo === "evaluacion_inicial" || tipo === "reevaluacion" || tipo === "levantamiento") {
-    return CAMPOS_EVALUACION_COMPLETA;
+    return admitirConsecuenciasHistoricas ? [...CAMPOS_EVALUACION_COMPLETA, ...CONSECUENCIAS_MANUALES_HISTORICAS] : CAMPOS_EVALUACION_COMPLETA;
   }
   return null;
 }
