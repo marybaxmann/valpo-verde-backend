@@ -109,6 +109,7 @@ const valorVariable = z.union([z.string(), z.number(), z.boolean(), z.null(), z.
 const variablesSchema = z.record(z.string(), valorVariable);
 
 const camposComunesInspeccion = {
+  fecha_inspeccion: z.string().date("fecha_inspeccion debe ser una fecha válida en formato AAAA-MM-DD").optional(),
   tipo_inspeccion_realizada: z.enum([
     "evaluacion_inicial",
     "reevaluacion",
