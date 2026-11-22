@@ -102,6 +102,16 @@ COLOCACION_CC070 = [
     ("adelgazamiento_insuficiente_tronco", "observaciones_tronco"),
     ("cuerpos_fructiferos_tronco", "observaciones_tronco"),
     ("sin_follaje_estacional", "defoliacion_estimada_pct"),
+    # CC-082 (PALM-01): columnas de palmeras, al final de la hoja.
+    ("inclinacion_corregida", "direccion_inclinacion"),
+    ("estrechamiento_estipite", "observaciones_tronco"),
+    ("angulacion_grave_estipite", "observaciones_tronco"),
+    ("raices_adventicias_altura", "observaciones_tronco"),
+    ("indicios_plaga_palmera", "observaciones_tronco"),
+    ("anomalia_cogollo", "observaciones_copa"),
+    ("calidad_copa_palmera", "observaciones_copa"),
+    ("proporcion_frondas_vivas", "observaciones_copa"),
+    ("vitalidad_palmera", "observaciones_copa"),
 ]
 
 D_SOLO_SISTEMA = {"Sistema", "Sistema / Administrador Plataforma", "Sistema / usuario autorizado", "Sistema. Ajuste por Inspector."}
@@ -144,6 +154,10 @@ def o(*conds):
 
 
 EXISTE_COPA = no_verdadero("copa_no_presenta")
+
+# CC-082: condición común de los campos de palmeras (texto literal de la columna K).
+PALMERA_K = "tipo_hoja = Palmera (derivado de CATALOGO_ESPECIES)"
+ES_PALMERA = igual("tipo_hoja", "palmera")
 
 # (hoja, campo) -> traducción aprobada. "k" es el texto de la columna K
 # para el que se aprobó; "i", el de la columna I. Si "exigido" es False,
@@ -270,6 +284,21 @@ TRADUCCIONES_CC056 = {
         "i": "Condicional", "k": "tipo_hoja ≠ Palmera (derivado de CATALOGO_ESPECIES), en cada evaluación de vitalidad.",
         "exigido": True, "activacion": {"op": "distinto", "campo": "tipo_hoja", "valor": "palmera"},
         "nota": "No aplica a palmeras, porque el método observa la ramificación (CC-071)."},
+    # --- CC-082 (PALM-01): solo palmeras y desde la 3.3 ("desde") ---
+    **{("REGISTRO_EVALUACION", campo): {
+        "i": "Condicional", "k": PALMERA_K + sufijo, "exigido": True, "desde": "3.4",
+        "activacion": y(ES_PALMERA, *extra) if extra else ES_PALMERA,
+        "nota": "PALM-01 (CC-082): solo palmeras; se exige desde la 3.3."}
+       for campo, sufijo, extra in [
+           ("calidad_copa_palmera", " y existe corona.", [EXISTE_COPA]),
+           ("proporcion_frondas_vivas", " y existe corona.", [EXISTE_COPA]),
+           ("anomalia_cogollo", " y existe corona.", [EXISTE_COPA]),
+           ("indicios_plaga_palmera", ".", []),
+           ("estrechamiento_estipite", ".", []),
+           ("angulacion_grave_estipite", ".", []),
+           ("raices_adventicias_altura", ".", []),
+           ("inclinacion_corregida", " y angulo_inclinacion > 0°.", [{"op": "mayor_que", "campo": "angulo_inclinacion", "valor": 0}]),
+       ]},
     ("REGISTRO_EVALUACION", "clasificacion_infraestructura"): {
         "i": "Obligatorio", "k": "", "exigido": False,
         "motivo": "Salida calculada; el ajuste del Inspector se valida en /finalizar (D-173)."},
@@ -297,6 +326,20 @@ ADICIONES_CC056 = [
         "nota": "D-125: con forma Irregular la superficie se ingresa a mano (CC-056; corrige el alcance del borrador, #58).",
     },
 ]
+
+
+def leer_no_aplican_palmera(wb, campos_diccionario):
+    """CC-082, REGLAS_GENERALES fila 31: campos de la hoja PALMERAS, sección B (no aplican a palmeras)."""
+    if "PALMERAS" not in wb.sheetnames:
+        return []
+    campos = []
+    for row in wb["PALMERAS"].iter_rows(min_row=2, values_only=True):
+        if texto(row[0]).startswith("B."):
+            campos += [c.strip() for c in texto(row[1]).split(";") if c.strip()]
+    faltan = [c for c in campos if c not in campos_diccionario]
+    if faltan:
+        sys.exit(f"PALMERAS, sección B: campos que no están en el diccionario: {faltan}")
+    return campos
 
 
 def texto(v):
@@ -416,6 +459,8 @@ def main():
                 regla = {**base, "exigencia": t.get("exigencia", "valor"), "origen": origen,
                          "activacion": resolver(t["activacion"], contexto), "traduccion": "cc056",
                          "nota": t["nota"]}
+                if "desde" in t:
+                    regla["desdeVersion"] = t["desde"]
                 if "marca" in t:
                     regla["marca"] = t["marca"]
                 exigidos.append(regla)
@@ -462,7 +507,8 @@ def main():
         sys.exit(1)
 
     secciones, campos_seccion = leer_secciones(wb)
-    ts = generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion)
+    no_aplican_palmera = leer_no_aplican_palmera(wb, {f["campo"] for f in filas})
+    ts = generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion, no_aplican_palmera)
     if salida:
         with open(salida, "w", encoding="utf-8", newline="\n") as f:
             f.write(ts)
@@ -481,7 +527,7 @@ def entrada(r):
     return "  {\n" + cuerpo + ",\n  },"
 
 
-def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion):
+def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion, no_aplican_palmera=()):
     lineas = [
         "// GENERADO por scripts/metodologia/obligatoriedad_campos.py desde DICCIONARIO_CAMPOS",
         "// (columnas D, G, H, I y K de ARBOLES y REGISTRO_EVALUACION) y las traducciones aprobadas",
@@ -522,6 +568,8 @@ def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion):
         "  activacion: CondicionActivacion;",
         '  traduccion: "automatica" | "cc056";',
         "  nota?: string;",
+        "  /** CC-082: versión de rule_version desde la que se exige (palmeras: 3.4); sin ella, en todas. */",
+        "  desdeVersion?: string;",
         "}",
         "",
         "export interface CampoNoExigido {",
@@ -554,6 +602,8 @@ def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion):
     for f in filas:
         lineas.append(entrada({k: f[k] for k in ("hoja", "campo", "tipoDato", "unidadValores", "definicion")}))
     lineas += ["] as const;", ""]
+    lineas += ["/** CC-082 (REGLAS_GENERALES fila 31; hoja PALMERAS, sección B): campos que no se exigen en una palmera desde la 3.4. */",
+               f"export const CAMPOS_NO_APLICAN_PALMERA: readonly string[] = {js(list(no_aplican_palmera))};", ""]
     lineas += ["/** Secciones del formulario (B16): orden de columnas de las hojas; propuesta = nombre por aprobar. */", "export const SECCIONES_FORMULARIO: readonly { codigo: string; etiqueta: string; orden: number; propuesta: boolean }[] = ["]
     for s in secciones:
         lineas.append(entrada(s))

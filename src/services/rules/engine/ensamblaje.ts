@@ -111,7 +111,18 @@ import { evaluarR03, R03Input, R03Resultado } from "./r03-copa-ramas";
 import { evaluarR04 } from "./r04-clasificacion-riesgo";
 import { calcularDapEquivalenteCm, calcularSuperficieAlcorqueM2, ResultadoCalculo } from "./variables-calculo";
 import { camposPermitidosPorTipo } from "./alcance";
-import { RULE_VERSION, VersionMotor } from "./version";
+import { incluyePalmeras, RULE_VERSION, RULE_VERSION_OPERATIVA, usaEscala32, VersionMotor } from "./version";
+import {
+  calcularVitalidadPalmera,
+  ComponentePalmeraResultado,
+  EntradasPalmera,
+  evaluarR01Palmera,
+  evaluarR02Palmera,
+  evaluarR03Palmera,
+  IndicadoresR01P,
+  IndicadoresR02P,
+  IndicadoresR03P,
+} from "./palmeras";
 
 // =====================================================================
 // 1. Alcance por tipo de inspección (CC-040 a, b)
@@ -244,7 +255,8 @@ export type NucleoEntradas = EntradasConsecuencia & R01Input &
   CondicionCopaInput &
   M04Input &
   EntradasAlcorque &
-  EntradasLcr & {
+  EntradasLcr &
+  EntradasPalmera & {
     zona_objetivo: ZonaObjetivoCodigo | null;
     tasa_ocupacion_objetivo: TasaOcupacionCodigo | null;
     consecuencia_raices_cuello: ConsecuenciaCodigo | null;
@@ -254,9 +266,11 @@ export type NucleoEntradas = EntradasConsecuencia & R01Input &
 
 export interface NucleoResultado {
   consecuencias?: ReturnType<typeof calcularConsecuencias>;
-  r01: R01Resultado;
-  r02: R02Resultado;
-  r03: R03Resultado;
+  /** CC-082: true si se aplicaron las reglas de palmeras (tipo_hoja = palmera y versión 3.4). */
+  palmera: boolean;
+  r01: R01Resultado | ComponentePalmeraResultado<IndicadoresR01P>;
+  r02: R02Resultado | ComponentePalmeraResultado<IndicadoresR02P>;
+  r03: R03Resultado | ComponentePalmeraResultado<IndicadoresR03P>;
   m04: M04Resultado;
   /** Probabilidad de falla efectiva de cada componente: alimenta M02/M03 (CC-071). */
   probabilidades: {
@@ -280,14 +294,17 @@ function calcularNucleo(
   ajustes?: AjustesEntrada,
   inspeccionAnuladaId?: string | null,
 ): NucleoResultado {
-  if (version !== "3.0" && version !== "3.1" && version !== RULE_VERSION) {
+  if (version !== "3.0" && version !== "3.1" && version !== "3.2" && version !== "3.3" && version !== RULE_VERSION) {
     throw new Error(`Versi?n de motor no admitida: ${version}`);
   }
-  const escalaNueva = version === RULE_VERSION;
+  const escalaNueva = usaEscala32(version);
   const consecuencias = escalaNueva ? calcularConsecuencias(entradas, ajustes, inspeccionAnuladaId) : undefined;
-  const r01 = evaluarR01(entradas, escalaNueva);
-  const r02 = evaluarR02(entradas, escalaNueva);
-  const r03 = evaluarR03(entradas);
+  // CC-082 (superposición): solo una palmera con la versión 3.3 usa R01-P a R03-P.
+  // Cualquier otro tipo_hoja, o nulo, sigue exactamente por R01–R03 de árboles.
+  const palmera = incluyePalmeras(version) && entradas.tipo_hoja === "palmera";
+  const r01 = palmera ? evaluarR01Palmera(entradas) : evaluarR01(entradas, escalaNueva);
+  const r02 = palmera ? evaluarR02Palmera(entradas) : evaluarR02(entradas, escalaNueva);
+  const r03 = palmera ? evaluarR03Palmera(entradas) : evaluarR03(entradas);
   const m01 = evaluarM01(entradas.zona_objetivo, entradas.tasa_ocupacion_objetivo);
 
   // CC-071: R01–R03 guardan la probabilidad calculada; a M02/M03 entra la efectiva.
@@ -337,6 +354,7 @@ function calcularNucleo(
   const m04 = evaluarM04(entradas, escalaNueva);
 
   return {
+    palmera,
     r01,
     r02,
     r03,
@@ -352,7 +370,7 @@ function calcularNucleo(
 }
 
 function calcularAlertasInfraestructura(entradas: NucleoEntradas, version: VersionMotor): { alertas?: string[] } {
-  if (version !== RULE_VERSION) return {};
+  if (!usaEscala32(version)) return {};
   const bajoReferencia = entradas.infraestructura_inmediata === true && entradas.interferencia_redes_servicios === true &&
     entradas.red_aerea_presente === true &&
     Array.isArray(entradas.tipo_red_aerea) && entradas.tipo_red_aerea.includes("electrica") &&
@@ -365,6 +383,9 @@ function calcularAlertasInfraestructura(entradas: NucleoEntradas, version: Versi
 }
 
 function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
+  // Variables de SL y t/R: las palmeras no las tienen (CC-082).
+  const vc01: Partial<R01Resultado["variablesCalculo"]> = "variablesCalculo" in nucleo.r01 ? nucleo.r01.variablesCalculo : {};
+  const vc02: Partial<R02Resultado["variablesCalculo"]> = "variablesCalculo" in nucleo.r02 ? nucleo.r02.variablesCalculo : {};
   const lcr = calcularLcr({
     altura_punta_viva_m: entradas.altura_punta_viva_m ?? null,
     altura_base_copa_viva_m: entradas.altura_base_copa_viva_m ?? null,
@@ -373,14 +394,14 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
   });
   return {
     ...(nucleo.consecuencias && { consecuencias: nucleo.consecuencias }),
-    SL_basal_pct: nucleo.r01.variablesCalculo.SL_basal_pct,
-    R_radio_basal_cm: nucleo.r01.variablesCalculo.R_radio_basal_cm,
-    t_R_basal: nucleo.r01.variablesCalculo.t_R_basal,
-    abertura_cavidad_basal_pct: nucleo.r01.variablesCalculo.abertura_cavidad_basal_pct,
-    SL_tronco_pct: nucleo.r02.variablesCalculo.SL_tronco_pct,
-    R_radio_tronco_cm: nucleo.r02.variablesCalculo.R_radio_tronco_cm,
-    t_R_tronco: nucleo.r02.variablesCalculo.t_R_tronco,
-    abertura_cavidad_tronco_pct: nucleo.r02.variablesCalculo.abertura_cavidad_tronco_pct,
+    SL_basal_pct: vc01.SL_basal_pct,
+    R_radio_basal_cm: vc01.R_radio_basal_cm,
+    t_R_basal: vc01.t_R_basal,
+    abertura_cavidad_basal_pct: vc01.abertura_cavidad_basal_pct,
+    SL_tronco_pct: vc02.SL_tronco_pct,
+    R_radio_tronco_cm: vc02.R_radio_tronco_cm,
+    t_R_tronco: vc02.t_R_tronco,
+    abertura_cavidad_tronco_pct: vc02.abertura_cavidad_tronco_pct,
     superficie_alcorque_m2: calcularSuperficieAlcorqueM2(entradas),
     // D-142, calculado desde distancia_copa_red_aerea_m (D-140) — no es
     // un ResultadoCalculo con `motivo`; es "cumple"/"no_cumple"/null.
@@ -390,10 +411,47 @@ function calcularCalculados(entradas: NucleoEntradas, nucleo: NucleoResultado) {
     alerta_lcr: lcr.alerta,
     clasificacion_condicion_sitio: nucleo.m04.condicionSitio,
     componentes_no_determinados_infraestructura: nucleo.m04.componentesNoDeterminados,
+    // CC-082, D-311: condición fisiológica de la palmera (Salida A); no entra en el riesgo.
+    ...(nucleo.palmera && { vitalidad_palmera: calcularVitalidadPalmera(entradas) }),
   };
 }
 
-function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas) {
+function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas): Indicadores {
+  if (nucleo.palmera) return calcularIndicadoresPalmera(nucleo, entradas);
+  return calcularIndicadoresArbol(nucleo as unknown as NucleoArbol, entradas);
+}
+
+/** CC-082: los indicadores son de árbol salvo que el resultado sea de una palmera (`tipo: "palmera"`). */
+export function sonIndicadoresArbol(i: Indicadores): i is IndicadoresArbol {
+  return !("tipo" in i);
+}
+
+type NucleoArbol = Omit<NucleoResultado, "r01" | "r02" | "r03"> & { r01: R01Resultado; r02: R02Resultado; r03: R03Resultado };
+type NucleoPalmera = Omit<NucleoResultado, "r01" | "r02" | "r03"> & {
+  r01: ComponentePalmeraResultado<IndicadoresR01P>;
+  r02: ComponentePalmeraResultado<IndicadoresR02P>;
+  r03: ComponentePalmeraResultado<IndicadoresR03P>;
+};
+
+/** CC-082: indicadores PB-, PE- y PC-, con la infraestructura común. */
+function calcularIndicadoresPalmera(nucleo: NucleoResultado, entradas: NucleoEntradas) {
+  const n = nucleo as unknown as NucleoPalmera;
+  return {
+    tipo: "palmera" as const,
+    baseRaices: n.r01.indicadores,
+    estipite: n.r02.indicadores,
+    corona: n.r03.indicadores,
+    desequilibrioCopa: evaluarDesequilibrio(entradas),
+    vereda: nucleo.m04.componentes.vereda,
+    calzada: nucleo.m04.componentes.calzada,
+    alcorque: nucleo.m04.componentes.alcorque,
+    infraestructuraVertical: nucleo.m04.componentes.infraestructuraVertical,
+    redAerea: nucleo.m04.componentes.redAerea,
+    redSubterranea: nucleo.m04.componentes.redSubterranea,
+  };
+}
+
+function calcularIndicadoresArbol(nucleo: NucleoArbol, entradas: NucleoEntradas) {
   return {
     estabilidad: nucleo.r01.indicadores.estabilidad,
     raices: nucleo.r01.indicadores.raices,
@@ -423,7 +481,9 @@ function calcularIndicadores(nucleo: NucleoResultado, entradas: NucleoEntradas) 
 }
 
 type Calculados = ReturnType<typeof calcularCalculados>;
-type Indicadores = ReturnType<typeof calcularIndicadores>;
+export type IndicadoresArbol = ReturnType<typeof calcularIndicadoresArbol>;
+export type IndicadoresPalmera = ReturnType<typeof calcularIndicadoresPalmera>;
+type Indicadores = IndicadoresArbol | IndicadoresPalmera;
 
 // =====================================================================
 // 3. Ajuste → valor efectivo → descarte (CC-040 d, PR-008 v2.0)
@@ -765,7 +825,7 @@ export interface ResultadoEvaluacion {
 
 export function ensamblarResultadoEvaluacion(args: ArgsResultadoEvaluacion): ResultadoEvaluacion {
   const alcance = validarAlcance(args.tipoInspeccionRealizada, args.subtipoInspeccion ?? null, args.variables);
-  const version = args.ruleVersion ?? RULE_VERSION;
+  const version = args.ruleVersion ?? RULE_VERSION_OPERATIVA;
   const nucleo = calcularNucleo(args.variablesCalculo, version, args.ajustes);
   const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes);
   const ajustadaOnull = (r: ResolucionValorEfectivo<ProbabilidadFallaCodigo>) => (r.ajusteMantenidoId ? r.valorEfectivo : null);
@@ -889,7 +949,7 @@ export interface ResultadoVigente {
  * `v_tree_current_inputs` antes de llegar aquí (§3.10 bis).
  */
 export function ensamblarResultadoVigente(args: ArgsResultadoVigente): ResultadoVigente {
-  const version = args.ruleVersion ?? RULE_VERSION;
+  const version = args.ruleVersion ?? RULE_VERSION_OPERATIVA;
   const nucleo = calcularNucleo(args.variablesCalculo, version, args.ajustes, args.inspeccionAnuladaId);
   const resolucion = resolverAjustesYPrioridad(nucleo, args.ajustes, args.inspeccionAnuladaId);
 

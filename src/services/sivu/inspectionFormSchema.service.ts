@@ -2,6 +2,7 @@ import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
 import { camposPermitidosPorTipo, CATALOGO_SELECCION_MULTIPLE, CATALOGO_SELECCION_UNICA } from "../../schemas/sivu/alcanceInspeccion";
 import {
+  CAMPOS_NO_APLICAN_PALMERA,
   CAMPOS_NO_EXIGIDOS,
   REGLAS_COMPLETITUD,
   METADATOS_DICCIONARIO,
@@ -9,6 +10,7 @@ import {
   SECCION_DE_CAMPO,
 } from "../../schemas/sivu/completitudInspeccion";
 import { camposArbolBaseSchema } from "../../schemas/sivu/inspeccion.schema";
+import { RULE_VERSION_OPERATIVA } from "../rules/engine/version";
 import { entradasVigentesDe } from "../rules/engine/catalogs";
 import { ETIQUETAS_FORMULARIO } from "../../schemas/sivu/etiquetasFormulario";
 
@@ -124,6 +126,9 @@ function campo(hoja: Hoja, id: string) {
     condicion_texto: regla?.condicionExcel ?? noExigido?.condicionExcel ?? null,
     // Ayuda del campo en el formulario: qué significa (columna F).
     definicion: meta?.definicion || null,
+    // CC-082: versión desde la que se exige (palmeras: 3.4) y si no aplica a palmeras (hoja PALMERAS, sección B).
+    desde_version: regla?.desdeVersion ?? null,
+    no_aplica_palmera: CAMPOS_NO_APLICAN_PALMERA.includes(id),
   };
 }
 
@@ -134,6 +139,7 @@ function ordenar<T extends { orden: number | null }>(campos: T[]): T[] {
 export function construirInspectionFormSchema() {
   return {
     tipo: "evaluacion_inicial",
+    rule_version: RULE_VERSION_OPERATIVA,
     secciones: SECCIONES_FORMULARIO.map(s => ({ codigo: s.codigo, etiqueta: s.etiqueta, orden: s.orden, propuesta: s.propuesta })),
     variables: ordenar(camposPermitidosPorTipo("evaluacion_inicial", null)!.map(id => campo("REGISTRO_EVALUACION", id))),
     campos_arbol: ordenar(Object.keys(camposArbolBaseSchema.shape).map(id => campo("ARBOLES", id))),

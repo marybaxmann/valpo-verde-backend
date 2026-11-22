@@ -103,6 +103,35 @@ export const CATALOGO: readonly CatalogEntry[] = [
   { catalogo: "si_no_no_determinado", codigo: "no", etiqueta: "No", orden: 1, estado: "vigente", cc: "PR-021" },
   { catalogo: "si_no_no_determinado", codigo: "no_determinado", etiqueta: "No determinado", orden: 2, estado: "vigente", cc: "PR-021" },
 
+  // --- clase_copa_palmera: D-309 y D-310 (calidad_copa_palmera, proporcion_frondas_vivas; Blair et al., 2019) ---
+  { catalogo: "clase_copa_palmera", codigo: "0", etiqueta: "0 sin copa viva", orden: 0, estado: "vigente", cc: "CC-082" },
+  { catalogo: "clase_copa_palmera", codigo: "1", etiqueta: "1 hasta 20 %", orden: 1, estado: "vigente", cc: "CC-082" },
+  { catalogo: "clase_copa_palmera", codigo: "2", etiqueta: "2 21–40 %", orden: 2, estado: "vigente", cc: "CC-082" },
+  { catalogo: "clase_copa_palmera", codigo: "3", etiqueta: "3 41–60 %", orden: 3, estado: "vigente", cc: "CC-082" },
+  { catalogo: "clase_copa_palmera", codigo: "4", etiqueta: "4 61–80 %", orden: 4, estado: "vigente", cc: "CC-082" },
+  { catalogo: "clase_copa_palmera", codigo: "5", etiqueta: "5 81–100 %", orden: 5, estado: "vigente", cc: "CC-082" },
+  { catalogo: "clase_copa_palmera", codigo: "6", etiqueta: "6 no determinable", orden: 6, estado: "vigente", cc: "CC-082" },
+
+  // --- anomalia_cogollo: D-312 ---
+  { catalogo: "anomalia_cogollo", codigo: "ninguna", etiqueta: "Ninguna", orden: 0, estado: "vigente", cc: "CC-082" },
+  { catalogo: "anomalia_cogollo", codigo: "desviacion", etiqueta: "Desviación", orden: 1, estado: "vigente", cc: "CC-082" },
+  { catalogo: "anomalia_cogollo", codigo: "pudricion", etiqueta: "Pudrición", orden: 2, estado: "vigente", cc: "CC-082" },
+  { catalogo: "anomalia_cogollo", codigo: "colapso", etiqueta: "Colapso", orden: 3, estado: "vigente", cc: "CC-082" },
+  { catalogo: "anomalia_cogollo", codigo: "ausencia", etiqueta: "Ausencia", orden: 4, estado: "vigente", cc: "CC-082" },
+  { catalogo: "anomalia_cogollo", codigo: "no_determinado", etiqueta: "No determinado", orden: 5, estado: "vigente", cc: "CC-082" },
+
+  // --- plaga_palmera: D-313, selección múltiple ---
+  { catalogo: "plaga_palmera", codigo: "no", etiqueta: "No", orden: 0, estado: "vigente", cc: "CC-082" },
+  { catalogo: "plaga_palmera", codigo: "corona", etiqueta: "Corona", orden: 1, estado: "vigente", cc: "CC-082" },
+  { catalogo: "plaga_palmera", codigo: "estipite", etiqueta: "Estípite", orden: 2, estado: "vigente", cc: "CC-082" },
+  { catalogo: "plaga_palmera", codigo: "base", etiqueta: "Base", orden: 3, estado: "vigente", cc: "CC-082" },
+  { catalogo: "plaga_palmera", codigo: "no_determinado", etiqueta: "No determinado", orden: 4, estado: "vigente", cc: "CC-082" },
+
+  // --- raices_adventicias: D-316 ---
+  { catalogo: "raices_adventicias", codigo: "si", etiqueta: "Sí", orden: 0, estado: "vigente", cc: "CC-082" },
+  { catalogo: "raices_adventicias", codigo: "no", etiqueta: "No", orden: 1, estado: "vigente", cc: "CC-082" },
+  { catalogo: "raices_adventicias", codigo: "no_aplica_especie", etiqueta: "No aplica por especie", orden: 2, estado: "vigente", cc: "CC-082" },
+
   // --- categoria_infraestructura: categoría parcial de REGLAS_INDICADORES (IN-*) ---
   { catalogo: "categoria_infraestructura", codigo: "no_aplica", etiqueta: "No aplica", orden: 0, estado: "vigente", cc: "PR-021" },
   { catalogo: "categoria_infraestructura", codigo: "sin_afectacion", etiqueta: "Sin afectación", orden: 1, estado: "vigente", cc: "PR-021" },

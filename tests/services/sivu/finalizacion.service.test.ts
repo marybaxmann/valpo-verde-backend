@@ -15,6 +15,7 @@ jest.mock("../../../src/services/authorization.service", () => ({
   assertProjectRole: jest.fn(),
 }));
 
+import { IndicadoresArbol } from "../../../src/services/rules/engine/ensamblaje";
 import {
   finalizarInspeccion as finalizarInspeccionRepo,
   guardarBorradorInspeccion,
@@ -177,7 +178,7 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
     mockVersionArbol.mockResolvedValue({ campos: arbol, camposRegistrados: Object.keys(arbol) });
 
     const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
-    expect(calculo.resultado.indicadores.defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
+    expect((calculo.resultado.indicadores as IndicadoresArbol).defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
     expect(calculo.valores_no_permitidos).toContainEqual(expect.stringContaining("defoliacion_estimada_pct"));
     expect(calculo.puede_finalizar).toBe(false);
     await expect(finalizarInspeccion(usuario(), INSPECTION_ID, { huella: calculo.huella }, TOKEN))
@@ -193,7 +194,7 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
       vigentes: { sin_follaje_estacional: false },
     });
     const calculo = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
-    expect(calculo.resultado.indicadores.defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
+    expect((calculo.resultado.indicadores as IndicadoresArbol).defoliacion).toMatchObject({ categoria: null, noDeterminado: true });
     expect(calculo.puede_finalizar).toBe(false);
   });
 
@@ -208,12 +209,12 @@ describe("POST /calcular (#59/#72; CC-054)", () => {
       },
     });
     const receso = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
-    expect(receso.resultado.indicadores.defoliacion).toMatchObject({ categoria: "no_aplica", reglaId: "CR-DEF-06" });
+    expect((receso.resultado.indicadores as IndicadoresArbol).defoliacion).toMatchObject({ categoria: "no_aplica", reglaId: "CR-DEF-06" });
     expect(receso.puede_finalizar).toBe(true);
 
     preparar({ variables: { ...variablesCompletas(), defoliacion_estimada_pct: 20 } });
     const sinReceso = await calcularInspeccion(usuario(), INSPECTION_ID, {}, TOKEN);
-    expect(sinReceso.resultado.indicadores.defoliacion).toMatchObject({ categoria: "leve", reglaId: "CR-DEF-02" });
+    expect((sinReceso.resultado.indicadores as IndicadoresArbol).defoliacion).toMatchObject({ categoria: "leve", reglaId: "CR-DEF-02" });
     expect(sinReceso.puede_finalizar).toBe(true);
   });
 
