@@ -395,6 +395,7 @@ export interface InspeccionDeOtRow {
   subtipo_inspeccion: string | null;
   metodo_instrumental: string | null;
   fecha_inspeccion: string;
+  fecha_registro: string | null;
   observaciones: string | null;
   inspector: string | null;
   finalizada_at: string | null;
@@ -407,7 +408,7 @@ export async function listarInspeccionesDeOt(accessToken: string, workOrderId: s
   const { data, error } = await createUserScopedClient(accessToken)
     .from("inspections")
     .select(
-      "id, tree_id, codigo_inspeccion, estado_registro, tipo_inspeccion_realizada, subtipo_inspeccion, metodo_instrumental, fecha_inspeccion, observaciones, inspector, finalizada_at, motivo_anulacion, fecha_anulacion, created_at"
+      "id, tree_id, codigo_inspeccion, estado_registro, tipo_inspeccion_realizada, subtipo_inspeccion, metodo_instrumental, fecha_inspeccion, fecha_registro, observaciones, inspector, finalizada_at, motivo_anulacion, fecha_anulacion, created_at"
     )
     .eq("work_order_id", workOrderId)
     .order("created_at", { ascending: true });
