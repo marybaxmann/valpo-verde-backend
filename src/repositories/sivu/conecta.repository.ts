@@ -232,27 +232,27 @@ export async function obtenerArbolParaQr(
   accessToken: string,
   projectId: string,
   treeId: string
-): Promise<{ tree_code: string; qr_token: string; estado_ciclo_vida: string } | null> {
+): Promise<{ tree_code: string; codigo_publico: string | null; qr_token: string; estado_ciclo_vida: string } | null> {
   const { data, error } = await createUserScopedClient(accessToken)
     .from("trees")
-    .select("tree_code, qr_token, estado_ciclo_vida")
+    .select("tree_code, codigo_publico, qr_token, estado_ciclo_vida")
     .eq("project_id", projectId)
     .eq("id", treeId)
     .maybeSingle();
   if (error) lanzar(error);
-  return (data as { tree_code: string; qr_token: string; estado_ciclo_vida: string } | null) ?? null;
+  return (data as { tree_code: string; codigo_publico: string | null; qr_token: string; estado_ciclo_vida: string } | null) ?? null;
 }
 
 /** Árboles del proyecto para las placas QR (CC-062 punto 2), con el JWT del usuario. */
 export async function listarArbolesParaPlacas(
   accessToken: string,
   projectId: string
-): Promise<Array<{ tree_code: string; qr_token: string; especie_cientifica: string | null; nombre_comun: string | null }>> {
-  const filas: Array<{ tree_code: string; qr_token: string; especie_cientifica: string | null; nombre_comun: string | null }> = [];
+): Promise<Array<{ tree_code: string; codigo_publico: string | null; qr_token: string; especie_cientifica: string | null; nombre_comun: string | null }>> {
+  const filas: Array<{ tree_code: string; codigo_publico: string | null; qr_token: string; especie_cientifica: string | null; nombre_comun: string | null }> = [];
   for (let desde = 0; ; desde += 1000) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("trees")
-      .select("tree_code, qr_token, especie_cientifica, nombre_comun")
+      .select("tree_code, codigo_publico, qr_token, especie_cientifica, nombre_comun")
       .eq("project_id", projectId)
       .eq("estado_ciclo_vida", "activo")
       .order("tree_code", { ascending: true })

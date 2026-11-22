@@ -67,6 +67,7 @@ function arbol(f: ArbolFichaRow, evaluacionCompletaVigente: boolean) {
   return {
     id: f.id,
     tree_code: f.tree_code,
+    codigo_publico: f.codigo_publico ?? null,
     sector_id: f.sector_id,
     ubicacion: coordenadas ? { lng: coordenadas[0], lat: coordenadas[1] } : null,
     estado_ciclo_vida: conEtiqueta("estado_ciclo_vida", f.estado_ciclo_vida),
