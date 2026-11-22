@@ -40,15 +40,14 @@ it("metadatos del diccionario conservan tipo y unidad literales", async () => {
   expect(red).toMatchObject({tipo: "Categoría", tipo_entrada: "seleccion_multiple", unidad: null});
 });
 
-it("entrega el significado y la forma de obtener cada campo (columnas F y E del diccionario)", async () => {
+it("entrega el significado de cada campo (columna F del diccionario)", async () => {
   auth.mockResolvedValue(fakeAuthUser({ id: MUNICIPAL_ID })); profile.mockResolvedValue(municipalProfileRow()); membership.mockResolvedValue({});
   const res = await request(app).get(url).set("Authorization", `Bearer ${FAKE_TOKEN}`);
   const cle = res.body.data.variables.find((x: any) => x.identificador === "exposicion_luminica_copa_cle");
   expect(cle.definicion).toBe("Número de caras de la copa expuestas a luz directa según los criterios del protocolo.");
-  expect(cle.como_se_obtiene).toBe("Observación de las cuatro caras laterales de la copa y de su cara superior conforme al protocolo CLE de i-Tree Eco.");
   // Un campo sin fila propia en el diccionario no inventa ayuda.
   const sinCopa = res.body.data.campos_arbol.find((x: any) => x.identificador === "copa_no_presenta");
-  expect(sinCopa).toMatchObject({ definicion: null, como_se_obtiene: null });
+  expect(sinCopa).toMatchObject({ definicion: null });
 });
 
 describe("tipo de entrada y opciones (columnas G y H)", () => {

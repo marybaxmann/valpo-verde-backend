@@ -337,8 +337,8 @@ def main():
             "d": texto(row[3]), "h": texto(row[7]), "i": texto(row[8]),
             "j": texto(row[9]), "k": texto(row[10]),
             "tipoDato": texto(row[6]), "unidadValores": texto(row[7]),
-            # Columnas E y F: se muestran como ayuda del campo en el formulario.
-            "comoSeObtiene": texto(row[4]), "definicion": texto(row[5]),
+            # Columna F: se muestra como ayuda del campo en el formulario.
+            "definicion": texto(row[5]),
         })
     por_campo = {}
     for f in filas:
@@ -546,13 +546,13 @@ def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion):
     lineas += ["];", ""]
     lineas += [
         "/**",
-        " * Metadatos literales de DICCIONARIO_CAMPOS: columnas G y H (tipo y unidad),",
-        " * F («Definiciones o criterios aplicables») y E («¿Cómo se obtiene?»).",
+        " * Metadatos literales de DICCIONARIO_CAMPOS: columnas G y H (tipo y unidad)",
+        " * y F («Definiciones o criterios aplicables»).",
         " */",
-        "export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipoDato: string; unidadValores: string; definicion: string; comoSeObtiene: string }[] = [",
+        "export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipoDato: string; unidadValores: string; definicion: string }[] = [",
     ]
     for f in filas:
-        lineas.append(entrada({k: f[k] for k in ("hoja", "campo", "tipoDato", "unidadValores", "definicion", "comoSeObtiene")}))
+        lineas.append(entrada({k: f[k] for k in ("hoja", "campo", "tipoDato", "unidadValores", "definicion")}))
     lineas += ["] as const;", ""]
     lineas += ["/** Secciones del formulario (B16): orden de columnas de las hojas; propuesta = nombre por aprobar. */", "export const SECCIONES_FORMULARIO: readonly { codigo: string; etiqueta: string; orden: number; propuesta: boolean }[] = ["]
     for s in secciones:

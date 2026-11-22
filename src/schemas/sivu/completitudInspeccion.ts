@@ -2113,17 +2113,16 @@ export const CAMPOS_NO_EXIGIDOS: readonly CampoNoExigido[] = [
 ];
 
 /**
- * Metadatos literales de DICCIONARIO_CAMPOS: columnas G y H (tipo y unidad),
- * F («Definiciones o criterios aplicables») y E («¿Cómo se obtiene?»).
+ * Metadatos literales de DICCIONARIO_CAMPOS: columnas G y H (tipo y unidad)
+ * y F («Definiciones o criterios aplicables»).
  */
-export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipoDato: string; unidadValores: string; definicion: string; comoSeObtiene: string }[] = [
+export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipoDato: string; unidadValores: string; definicion: string }[] = [
   {
     hoja: "ARBOLES",
     campo: "id_arbol",
     tipoDato: "Identificador (texto)",
     unidadValores: "No aplica",
     definicion: "Identificador único y estable del árbol, que vincula inventario, evaluaciones y gestión posterior.",
-    comoSeObtiene: "Asignación automática al crear el registro.",
   },
   {
     hoja: "ARBOLES",
@@ -2131,7 +2130,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Identificador (texto)",
     unidadValores: "No aplica",
     definicion: "Identificador del proyecto al que pertenece el árbol. Permite separar inventarios y acceso por proyecto. El proyecto solamente lo puede crear el \"Administrador\".",
-    comoSeObtiene: "Vinculación a registro existente dentro del proyecto.",
   },
   {
     hoja: "ARBOLES",
@@ -2139,7 +2137,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Fecha",
     unidadValores: "dd/mm/aaaa",
     definicion: "Fecha de incorporación del árbol al inventario.",
-    comoSeObtiene: "Fecha del alta registrada por el sistema o importada de un registro validado.",
   },
   {
     hoja: "ARBOLES",
@@ -2147,7 +2144,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Identificador (texto)",
     unidadValores: "No aplica",
     definicion: "Identificador del usuario con rol de \"Inspector\" o \"Usuario Municipal\".",
-    comoSeObtiene: "Usuario autenticado que realiza el alta.",
   },
   {
     hoja: "ARBOLES",
@@ -2155,7 +2151,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Identificador (texto)",
     unidadValores: "No aplica",
     definicion: "Identificador del polígono territorial del proyecto utilizado para el cálculo de índices.",
-    comoSeObtiene: "Vinculación automática al polígono del proyecto al que pertenece el árbol.",
   },
   {
     hoja: "ARBOLES",
@@ -2163,7 +2158,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Nombre del barrio o sector donde se encuentra el árbol dentro del proyecto.",
-    comoSeObtiene: "Registro en Inventario mediante referencias territoriales del lugar.",
   },
   {
     hoja: "ARBOLES",
@@ -2171,7 +2165,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Descripción de la ubicación mediante dirección, plaza u otras referencias de terreno.",
-    comoSeObtiene: "Registro en Inventario mediante referencias de terreno.",
   },
   {
     hoja: "ARBOLES",
@@ -2179,7 +2172,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Coordenada Este del árbol en el sistema UTM, expresada en metros.",
-    comoSeObtiene: "Ingreso manual de la coordenada del árbol obtenida en terreno. Como ayuda, al marcar el punto en el mapa del formulario la plataforma rellena utm_este y utm_norte, que siguen siendo editables.",
   },
   {
     hoja: "ARBOLES",
@@ -2187,7 +2179,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Coordenada Norte del árbol en el sistema UTM, expresada en metros.",
-    comoSeObtiene: "Ingreso manual de la coordenada del árbol obtenida en terreno. Como ayuda, al marcar el punto en el mapa del formulario la plataforma rellena utm_este y utm_norte, que siguen siendo editables.",
   },
   {
     hoja: "ARBOLES",
@@ -2195,7 +2186,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "19S",
     definicion: "Zona UTM y hemisferio 19S.",
-    comoSeObtiene: "19S",
   },
   {
     hoja: "ARBOLES",
@@ -2203,7 +2193,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "WGS84",
     definicion: "Sistema de referencia geodésico que define el marco utilizado para representar las coordenadas de ubicación del árbol. Para SIVU se propone WGS84, compatible con coordenadas UTM. Debe distinguirse del huso UTM, que identifica la zona de proyección.",
-    comoSeObtiene: "WGS84",
   },
   {
     hoja: "ARBOLES",
@@ -2211,7 +2200,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Nombre científico de la especie identificada.",
-    comoSeObtiene: "Selección desde CATALOGO_ESPECIES o registro de una especie identificada en terreno.",
   },
   {
     hoja: "ARBOLES",
@@ -2219,7 +2207,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Nombre común asociado a la especie identificada; puede variar según la localidad.",
-    comoSeObtiene: "Registro del nombre común utilizado para identificar el árbol.",
   },
   {
     hoja: "ARBOLES",
@@ -2227,7 +2214,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de más de un fuste a la altura de 1,30 metros sobre terreno, considerado para la determinación del DAP.",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "ARBOLES",
@@ -2235,7 +2221,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Número entero",
     unidadValores: "Sin unidad",
     definicion: "Número de fustes a la altura de 1,30 metros sobre el terreno",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "ARBOLES",
@@ -2243,7 +2228,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Lista de valores numéricos",
     unidadValores: "cm",
     definicion: "Diámetros individuales de los fustes considerados para determinar el diámetro equivalente de un árbol multifustal.",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "ARBOLES",
@@ -2251,7 +2235,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Diámetro del tronco a 1,30 m sobre el terreno, en centímetros. Para árboles multifustales, corresponde al diámetro equivalente calculado a partir de los diámetros individuales de los fustes.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "ARBOLES",
@@ -2259,7 +2242,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Distancia vertical desde el nivel de terreno en la base hasta el punto más alto del árbol, en metros.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "ARBOLES",
@@ -2267,7 +2249,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Extensión horizontal de la copa en dirección norte–sur.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "ARBOLES",
@@ -2275,7 +2256,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Extensión horizontal de la copa en dirección este–oeste, perpendicular a la medición norte–sur.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "ARBOLES",
@@ -2283,7 +2263,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Diámetro medio de copa del árbol.",
-    comoSeObtiene: "Promedio de las mediciones norte–sur y este–oeste de la copa.",
   },
   {
     hoja: "ARBOLES",
@@ -2291,7 +2270,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Altura desde el terreno hasta la inserción de la primera rama principal viva. Se mantiene como variable independiente de la base de copa viva.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "ARBOLES",
@@ -2299,7 +2277,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Altura desde el terreno hasta la base del conjunto de ramas y follaje que constituye la copa viva. No corresponde necesariamente a la primera rama viva aislada.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "ARBOLES",
@@ -2307,7 +2284,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Joven / Semimaduro / Tempranamente maduro / Maduro / Sobremaduro",
     definicion: "Joven: en establecimiento o desarrollo inicial, lejos de sus dimensiones adultas. Semimaduro: establecido, con crecimiento activo en altura y copa. Tempranamente maduro: próximo a sus dimensiones adultas, pero aún con crecimiento significativo. Maduro: dimensiones adultas aproximadamente alcanzadas y crecimiento en altura reducido. Sobremaduro: etapa posterior a la madurez, con retracción o declinación asociada al envejecimiento.",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "ARBOLES",
@@ -2315,7 +2291,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "0–5 / 6–10 / 11–15 / 16–20 / 21–25 / 26–30 / 31–35 / 36–40 / 41–45 / 46–50 / 51–55 / 56–60 / 61–65 / 66–70 / 71–75 / 76–80 / 81–85 / 86–90 / 91–95 / 96–100 / Más de 100 años",
     definicion: "Intervalo de edad cronológica estimada del ejemplar, en años, independiente de su etapa de desarrollo.",
-    comoSeObtiene: "Estimación a partir de especie_cientifica, dap_cm, altura_total_m, características de crecimiento de la especie, fotografías con regla topográfica y antecedentes disponibles.",
   },
   {
     hoja: "ARBOLES",
@@ -2323,7 +2298,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Archivo de imagen",
     unidadValores: "Varias fotografías por inspección Dominio informativo de vista_foto: Árbol completo / Base / Tronco / Copa / Detalle.",
     definicion: "Registro fotográfico del árbol que respalda la evaluación realizada. En la Evaluación instrumental se admiten fotografías opcionales asociadas a la inspección, con vista Base, Tronco o Detalle. No se exigen para finalizar, no cuentan para ningún mínimo y no intervienen en el cálculo.",
-    comoSeObtiene: "Carga de fotografías obtenidas durante la inspección.",
   },
   {
     hoja: "ARBOLES",
@@ -2331,7 +2305,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Presente / Talado / Retirado",
     definicion: "Presencia del árbol en terreno. Todo árbol registrado comienza como Presente. Cambia a Talado o Retirado únicamente mediante una intervención ejecutada y aprobada.",
-    comoSeObtiene: "Consulta de las órdenes de trabajo y ejecuciones de mantenimiento vinculadas al árbol, con revisión aprobada por el Inspector.",
   },
   {
     hoja: "ARBOLES",
@@ -2339,7 +2312,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Fecha",
     unidadValores: "dd/mm/aaaa",
     definicion: "Fecha de inicio del estado de presencia vigente.",
-    comoSeObtiene: "Fecha de registro inicial o fecha de aprobación de la intervención que produjo el cambio de estado.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2347,7 +2319,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Identificador (texto)",
     unidadValores: "No aplica",
     definicion: "Identificador único de cada evaluación. Un árbol puede tener múltiples evaluaciones históricas.",
-    comoSeObtiene: "Asignación automática al crear el registro.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2355,7 +2326,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Identificador (texto)",
     unidadValores: "No aplica",
     definicion: "Identificador de la inspección que origina esta evaluación, relacionado con INSPECCION.",
-    comoSeObtiene: "Vinculación a registro existente dentro del proyecto.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2363,7 +2333,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Identificador (texto)",
     unidadValores: "No aplica",
     definicion: "Identificador único y estable del árbol, que vincula inventario, evaluaciones y gestión posterior.",
-    comoSeObtiene: "Vinculación a registro existente dentro del proyecto.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2371,7 +2340,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de raíces visibles sobre el terreno o descubiertas por pérdida de suelo.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2379,7 +2347,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia visible de tejido necrótico en raíces expuestas o visibles.",
-    comoSeObtiene: "Inspección visual y registro en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2387,7 +2354,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia visible de raíces seccionadas o cortadas, o evidencia de zanja o corte de suelo que las haya afectado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2395,7 +2361,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Levantamiento o desplazamiento visible del plato radicular y del terreno asociado respecto de su posición circundante.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2403,7 +2368,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "grados",
     definicion: "Ángulo del eje del tronco respecto de la vertical, en grados; 0° corresponde a vertical.",
-    comoSeObtiene: "Medición en terreno o estimación con escala y método documentados.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2411,7 +2375,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "Calzada / Vía peatonal / Área verde / Edificación",
     definicion: "Elemento o espacio del entorno hacia el cual se orienta la inclinación principal del fuste.",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2419,7 +2382,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de cavidad o pérdida interna o externa de tejido leñoso asociada a pudrición en la base del tronco o cuello del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2427,7 +2389,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Cavidad basal con abertura o pérdida de tejido leñoso visible desde el exterior.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2435,7 +2396,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No / Requiere evaluación instrumental",
     definicion: "Cavidad o pérdida de tejido leñoso localizada internamente, sin requerir una abertura exterior visible.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2443,7 +2403,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Diámetro exterior del tronco medido en la sección basal donde se evalúa la cavidad.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2451,7 +2410,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Diámetro de la zona hueca o madera sin capacidad estructural en la sección basal evaluada, expresado en centímetros. No corresponde al ancho de la abertura de la cavidad.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2459,7 +2417,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Longitud de la abertura exterior de la cavidad medida sobre el contorno del tronco en la sección basal evaluada, expresada en centímetros.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2467,7 +2424,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Circunferencia exterior total del tronco medida en la misma sección basal donde se evalúa la cavidad, expresada en centímetros.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2475,7 +2431,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100, porcentaje)",
     definicion: "Porcentaje estimado de pérdida de resistencia estructural de la sección basal asociado a la cavidad o madera sin capacidad estructural.",
-    comoSeObtiene: "Calculado automáticamente por la plataforma",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2483,7 +2438,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Espesor mínimo de pared residual de madera estructuralmente sana entre la cavidad interna y la superficie exterior del tronco, en la sección basal evaluada.",
-    comoSeObtiene: "Medición en terreno o estimación con escala. Para cavidades abiertas se exige medición instrumental.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2491,7 +2445,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Radio del tronco en la sección basal evaluada, utilizado como referencia para determinar la relación entre el espesor de pared residual (t) y el radio del tronco (R).",
-    comoSeObtiene: "Calculado automáticamente por la plataforma",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2499,7 +2452,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "Sin unidad",
     definicion: "Relación entre el espesor mínimo de pared residual de madera estructuralmente sana (t) y el radio del tronco (R) en la sección basal evaluada.",
-    comoSeObtiene: "Espesor t / radio R de referencia del mismo componente.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2507,7 +2459,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Descripción de hallazgos en raíces y cuello, ubicación, limitaciones, método, fotos y mediciones estimadas o instrumentales.",
-    comoSeObtiene: "Descripción libre del Inspector en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2515,7 +2466,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de cavidad o pérdida de tejido leñoso asociada a pudrición en el tronco.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2523,7 +2473,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de cavidad en el tronco con abertura o pérdida de tejido hacia el exterior.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2531,7 +2480,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No / Requiere evaluación instrumental",
     definicion: "Presencia de cavidad o pérdida interna de tejido leñoso en el tronco.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2539,7 +2487,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Diámetro exterior del tronco en la sección donde se evalúa la cavidad o pudrición.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2547,7 +2494,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Diámetro de la zona hueca o madera sin capacidad estructural en la sección del tronco evaluada. No corresponde al ancho de la abertura.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2555,7 +2501,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Longitud de abertura sobre el perímetro de la sección evaluada, en centímetros; medir en la misma sección que C. No corresponde a su altura.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2563,7 +2508,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Perímetro exterior de referencia de la sección evaluada, en centímetros. Medir a la misma altura que D, d y Cc.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2571,7 +2515,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100, porcentaje)",
     definicion: "Porcentaje estimado de pérdida de resistencia estructural de la sección del tronco asociado a la cavidad o madera sin capacidad estructural.",
-    comoSeObtiene: "SL (%) = 100 × [d³ + (Cc/C) × (D³ − d³)] / D³. D, d, Cc y C corresponden al mismo componente.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2579,7 +2522,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Menor espesor comprobado de madera sana remanente entre cavidad y exterior, en centímetros, excluyendo corteza.",
-    comoSeObtiene: "Medición en terreno o estimación con escala. Para cavidades abiertas se exige medición instrumental.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2587,7 +2529,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Radio de referencia de la sección evaluada, en centímetros. D/2 es una aproximación para sección circular.",
-    comoSeObtiene: "R=D/2 bajo aproximación circular",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2595,7 +2536,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "Sin unidad",
     definicion: "Relación entre el espesor mínimo de pared residual (t) y el radio del tronco (R) en la sección evaluada.",
-    comoSeObtiene: "Espesor t / radio R de referencia del mismo componente.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2603,7 +2543,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Lesión visible en el tronco con ruptura o pérdida de corteza y/o tejido leñoso expuesto, de origen identificable (golpe, poda o rotura). Una misma lesión no se registra además en corteza_muerta_ausente.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2611,7 +2550,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Abierta / En proceso de cierre / Cerrada",
     definicion: "Estado de cierre de la herida del tronco según el grado de recubrimiento de la zona lesionada.",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2619,7 +2557,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia visible de sectores del tronco con corteza muerta, adherida o desprendida, sin una herida registrada en el mismo sector.",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2627,7 +2564,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia visible de salida o acumulación de líquidos, savia, resina u otras secreciones provenientes del tronco.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2635,7 +2571,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia visible de madera de reacción o crecimiento adicional desarrollado en respuesta a un defecto o condición estructural del tronco.",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2643,7 +2578,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia visible de una separación en la madera del tronco o de una separación anómala limitada a la corteza. Una grieta en la unión de fustes codominantes se registra solo en grieta_union_codominante.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2651,7 +2585,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Solo corteza / Penetra en madera",
     definicion: "Tejido alcanzado por la fisura o grieta observada.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2659,7 +2592,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Longitudinal / Transversal",
     definicion: "Dirección predominante de la grieta que alcanza la madera respecto de su eje.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2667,7 +2599,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Largo visible de la grieta longitudinal en la madera, medido sobre el tronco.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2675,7 +2606,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Ancho máximo medido de la abertura visible entre los bordes de la grieta.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2683,7 +2613,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de dos o más fustes de diámetro aproximadamente similar que se originan desde una unión común y carecen de una unión normal rama–tronco.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2691,7 +2620,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Corteza atrapada entre ejes o ramas en su unión, que interfiere con una conexión continua de madera.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2699,7 +2627,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de una separación o grieta visible en la madera asociada a la unión entre fustes codominantes.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2707,7 +2634,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Descripción de defectos, ubicación y altura, evidencia fotográfica, métodos y limitaciones de evaluación del tronco.",
-    comoSeObtiene: "Descripción libre del Inspector en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2715,7 +2641,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de una o más ramas muertas o secas en la copa del árbol. La ausencia estacional de hojas no basta para identificar una rama como seca.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2723,7 +2648,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Porcentaje estimado de ramas y ramillas muertas respecto del total de ramas y ramillas de la copa.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2731,7 +2655,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Diámetro basal estimado de la rama seca de mayor diámetro identificada en la copa.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2739,7 +2662,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de una o más ramas que presentan una fractura o rotura, completa o parcial, incluidas las ramas cortadas que permanecen en la copa.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2747,7 +2669,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Entero",
     unidadValores: "Número entero adimensional",
     definicion: "Número total estimado de ramas quebradas identificadas en la copa durante la evaluación.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2755,7 +2676,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Diámetro basal estimado de la rama quebrada de mayor diámetro identificada en la copa.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2763,7 +2683,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Indica la presencia de al menos una rama quebrada o cortada que permanece en el árbol, sostenida por otras ramas o estructuras de la copa, pendiente de caer.",
-    comoSeObtiene: "Registro en Inventario mediante observación o medición de terreno.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2771,7 +2690,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Porcentaje estimado de follaje ausente respecto de una copa de referencia de la misma especie y condición estacional.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2779,7 +2697,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Porcentaje estimado del follaje de la copa que presenta coloración verde amarillenta a amarilla, respecto del follaje total evaluable.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2787,7 +2704,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Porcentaje estimado de follaje muerto o necrótico presente en la copa, respecto del follaje total evaluable.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2795,7 +2711,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de una distribución marcadamente no uniforme de ramas y follaje en la copa, concentrada principalmente hacia un lado del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2803,7 +2718,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Porcentaje del volumen de referencia de la copa que no está ocupado por ramas y follaje.",
-    comoSeObtiene: "Estimación visual en terreno conforme al protocolo de i-Tree Eco.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2811,7 +2725,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Entero",
     unidadValores: "0 / 1 / 2 / 3 / 4 / 5",
     definicion: "Número de caras de la copa expuestas a luz directa según los criterios del protocolo.",
-    comoSeObtiene: "Observación de las cuatro caras laterales de la copa y de su cara superior conforme al protocolo CLE de i-Tree Eco.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2819,7 +2732,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Porcentaje de copa afectada por muerte regresiva de ramas y ramillas conforme al protocolo. Excluye la muerte natural de ramas inferiores por autopoda.",
-    comoSeObtiene: "Estimación visual en terreno conforme al protocolo de muerte regresiva de copa de i-Tree Eco.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2827,7 +2739,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Descripción de defectos, ubicación y altura, evidencia fotográfica, métodos y limitaciones de evaluación de la copa y ramas.",
-    comoSeObtiene: "Descripción libre del Inspector en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2835,7 +2746,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de elementos de infraestructura gris en el entorno inmediato del árbol, incluido el alcorque, asociados al espacio ocupado por sus raíces, tronco y/o copa.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2843,7 +2753,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de vereda, acera o sendero pavimentado en el área evaluada junto al árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2851,7 +2760,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Baldosa / Adoquín / Hormigón / Asfalto / Otro / No determinado",
     definicion: "Material predominante que constituye la superficie pavimentada de la vereda en el sector inmediato al árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2859,7 +2767,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de alteraciones físicas observables en la vereda asociadas a la interacción con el árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2867,7 +2774,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de desplazamiento vertical ascendente del pavimento de la vereda respecto de su nivel o superficie adyacente, compatible con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2875,7 +2781,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de desplazamiento lateral de uno o más elementos del pavimento de la vereda respecto de su posición o alineación adyacente, compatible con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2883,7 +2788,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de una o más discontinuidades lineales visibles en el pavimento de la vereda, compatibles con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2891,7 +2795,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de fractura, quiebre o pérdida de integridad de uno o más elementos del pavimento de la vereda, compatible con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2899,7 +2802,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de descenso localizado del pavimento de la vereda respecto de la superficie adyacente, compatible con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2907,7 +2809,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Máxima diferencia vertical de nivel entre el sector afectado del pavimento y la superficie adyacente de referencia.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2915,7 +2816,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Entero",
     unidadValores: "cantidad",
     definicion: "Cantidad total de grietas visibles identificadas en el sector de vereda afectado asociado al árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2923,7 +2823,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Mayor ancho de abertura de las grietas observadas en la vereda, en centímetros.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2931,7 +2830,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Longitud de la grieta más extensa observada en la vereda, en centímetros.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2939,7 +2837,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m²",
     definicion: "Área estimada de vereda que presenta los daños registrados, en metros cuadrados.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2947,7 +2844,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Indica si el daño o interferencia reduce el espacio disponible para circulación peatonal.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2955,7 +2851,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Ancho libre mínimo disponible para la circulación peatonal en el sector de vereda afectado.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2963,7 +2858,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Indica si la afectación de la vereda impide mantener una trayectoria peatonal continua y transitable a través del sector evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2971,7 +2865,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de calzada destinada a circulación vehicular en el entorno inmediato del árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2979,7 +2872,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Asfalto / Hormigón / Adoquín / Otro / No determinado",
     definicion: "Material predominante que constituye la superficie pavimentada de la calzada en el sector inmediato al árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2987,7 +2879,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de daño o interferencia en la calzada. Registrar por separado la evidencia que permita vincularlo con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -2995,7 +2886,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de desplazamiento vertical ascendente del pavimento de la calzada respecto de su nivel o superficie adyacente, compatible con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3003,7 +2893,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de una o más grietas o fisuras visibles en el pavimento de la calzada, compatibles con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3011,7 +2900,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de descenso localizado del pavimento de la calzada respecto de su nivel o superficie adyacente, compatible con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3019,7 +2907,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de fractura, quiebre o pérdida de integridad del pavimento de la calzada, compatible con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3027,7 +2914,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "cm",
     definicion: "Máxima diferencia vertical de nivel entre el sector afectado del pavimento de la calzada y la superficie adyacente de referencia.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3035,7 +2921,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m²",
     definicion: "Área de calzada afectada por los daños registrados, en metros cuadrados.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3043,7 +2928,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Indica si la condición observada interfiere con la circulación de vehículos.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3051,7 +2935,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Distancia estimada horizontal mínima entre la base del tronco del árbol y el borde más próximo de la calzada.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3059,7 +2942,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de superficie permeable alrededor de la base del árbol, ya sea como área verde continua o como espacio permeable delimitado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3067,7 +2949,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de un espacio delimitado destinado a la implantación del árbol dentro de una superficie circundante pavimentada o acondicionada.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3075,7 +2956,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Rectangular / Circular / Irregular",
     definicion: "Forma geométrica predominante del alcorque que delimita el espacio disponible alrededor del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3083,7 +2963,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Dimensión longitudinal interior del alcorque disponible para el árbol.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3091,7 +2970,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Dimensión transversal interior del alcorque disponible para el árbol.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3099,7 +2977,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Diámetro interior del alcorque de forma circular.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3107,7 +2984,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m²",
     definicion: "Superficie interior delimitada por el alcorque disponible alrededor del árbol.",
-    comoSeObtiene: "Área superficie alcorque",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3115,7 +2991,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de alteraciones físicas observables en el alcorque asociadas a la interacción con el árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3123,7 +2998,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de indicios visuales de compactación superficial del suelo alrededor del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3131,7 +3005,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de material impermeable que sella la superficie del suelo alrededor de la base del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3139,7 +3012,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de elementos físicos observables que limitan el espacio disponible para el crecimiento y expansión de las raíces.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3147,7 +3019,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de elementos verticales (edificaciones, muros, señalética, semáforos u otros) en el entorno inmediato del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3155,7 +3026,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de contacto físico o interferencia observable entre alguna parte del árbol y un elemento de infraestructura vertical.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3163,7 +3033,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Poste / Luminaria / Señalética / Semáforo / Muro o cierre / Edificación / Otro",
     definicion: "Tipo de elemento de infraestructura vertical con el que el árbol presenta contacto o interferencia.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3171,7 +3040,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto libre",
     unidadValores: "No aplica",
     definicion: "Especificación del tipo de infraestructura vertical cuando no corresponde a las categorías predefinidas.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3179,7 +3047,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de daño físico visible en el elemento de infraestructura vertical asociado o compatible con la interacción con el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3187,7 +3054,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Indica si la interacción del árbol compromete la estabilidad o funcionalidad de la infraestructura vertical evaluada.",
-    comoSeObtiene: "Inspección visual y registro en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3195,7 +3061,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de interacción o interferencia entre el árbol y una red de servicio aérea o subterránea.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3203,7 +3068,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia observable de una red de servicio aérea en el entorno inmediato del árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3211,7 +3075,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No / No determinado",
     definicion: "Presencia conocida de una red de servicio subterránea en el entorno inmediato del árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3219,7 +3082,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Eléctrica / Telecomunicaciones / Alumbrado público / Otra / Función no determinada",
     definicion: "Función de la red aérea que presenta interacción con el árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3227,7 +3089,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Distancia estimada mínima observada o medida entre la copa o ramas del árbol y el conductor de la red aérea evaluada.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3235,7 +3096,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de alteraciones físicas observables en la red aérea o en sus elementos asociadas a la interacción con el árbol evaluado. Si la red es eléctrica y está bajo la distancia de referencia, Sí determina la categoría Severa y No determina Moderada.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3243,7 +3103,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sobre la referencia / Bajo la referencia",
     definicion: "Comparación de la distancia entre la copa o ramas del árbol y una red eléctrica aérea de baja o media tensión (BT/MT) con la distancia de referencia. No afirma cumplimiento legal. Bajo la referencia genera una alerta visible.",
-    comoSeObtiene: "Calculado automáticamente por la plataforma",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3251,7 +3110,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Eléctrica / Telecomunicaciones / Agua potable / Alcantarillado / Aguas lluvias / Gas / Otra / Función no determinada",
     definicion: "Función de la red subterránea que presenta interacción con el árbol evaluado.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3259,7 +3117,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Distancia horizontal mínima entre la base del tronco y el trazado conocido de la red subterránea más próxima.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3267,7 +3124,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Daño, obstrucción o desplazamiento de una red subterránea asociado o compatible con la interacción radicular del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3275,7 +3131,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No / No determinado",
     definicion: "Indica si existe interrupción o reducción del servicio asociada a la interacción del árbol con la red subterránea.",
-    comoSeObtiene: "Revisión de antecedentes verificables sobre el funcionamiento del tipo de red subterránea evaluado.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3283,7 +3138,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Registro de antecedentes, condiciones particulares o detalles relevantes de la interacción árbol–infraestructura que no queden adecuadamente representados en los campos estructurados de la evaluación.",
-    comoSeObtiene: "Descripción libre del Inspector en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3291,7 +3145,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de uno o más tutores o sistemas de sujeción destinados a sostener el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3299,7 +3152,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Simple / Doble / Múltiple / Otro",
     definicion: "Tipo de tutorado instalado para sostener el árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3307,7 +3159,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Adecuado / Deteriorado",
     definicion: "Condición observable de los tutores y elementos de sujeción instalados.",
-    comoSeObtiene: "Inspección visual y registro en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3315,7 +3166,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de contacto, presión o restricción del tutorado que afecta al árbol o limita su desarrollo.",
-    comoSeObtiene: "Inspección visual y registro en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3323,7 +3173,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Descripción del sistema de tutorado cuando no corresponde a las categorías definidas y de la interferencia observada entre el tutorado y el árbol.",
-    comoSeObtiene: "Descripción libre del Inspector en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3331,7 +3180,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Bajo la copa / Entre el límite de la copa y 1× la altura del árbol / Entre 1× y 1,5× la altura del árbol / Más allá de 1,5× la altura del árbol",
     definicion: "Ubicación del objetivo evaluado respecto de la proyección de la copa y la altura total del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3339,7 +3187,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Rara / Ocasional / Frecuente / Constante",
     definicion: "Frecuencia con que el objetivo evaluado se encuentra presente dentro de la zona objetivo.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3347,7 +3194,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Muy baja / Baja / Media / Alta",
     definicion: "Probabilidad de que el objetivo evaluado sea impactado en caso de ocurrir la falla del árbol o de la parte evaluada.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3355,7 +3201,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Insignificante / Menor / Significativa / Severa",
     definicion: "Magnitud de las consecuencias esperadas sobre el objetivo en caso de que ocurra la falla y este sea impactado.",
-    comoSeObtiene: "Cálculo por diámetro de la parte (Ellison, 2005).",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3363,7 +3208,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Insignificante / Menor / Significativa / Severa",
     definicion: "Magnitud de las consecuencias esperadas sobre el objetivo en caso de que ocurra la falla y este sea impactado.",
-    comoSeObtiene: "Cálculo por diámetro de la parte (Ellison, 2005).",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3371,7 +3215,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Insignificante / Menor / Significativa / Severa",
     definicion: "Magnitud de las consecuencias esperadas sobre el objetivo en caso de que ocurra la falla y este sea impactado.",
-    comoSeObtiene: "Cálculo por diámetro de la parte (Ellison, 2005).",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3379,7 +3222,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Improbable / Posible / Probable / Inminente",
     definicion: "Probabilidad de ocurrencia de una falla asociada al sistema radicular o cuello del árbol durante el período de evaluación.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3387,7 +3229,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Improbable / Posible / Probable / Inminente",
     definicion: "Probabilidad de ocurrencia de una falla asociada al tronco durante el período de evaluación.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3395,7 +3236,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Improbable / Posible / Probable / Inminente",
     definicion: "Probabilidad de ocurrencia de una falla asociada a copa o ramas durante el período de evaluación.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3403,7 +3243,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Bajo / Moderado / Alto / Extremo",
     definicion: "Clasificación del nivel de riesgo asociado a la falla del componente raíces y cuello.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3411,7 +3250,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Bajo / Moderado / Alto / Extremo",
     definicion: "Clasificación del nivel de riesgo asociado a la falla del componente tronco.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3419,7 +3257,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Bajo / Moderado / Alto / Extremo",
     definicion: "Clasificación del nivel de riesgo asociado a la falla del componente copa y ramas.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3427,7 +3264,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "0 Exploración / 1 Degeneración / 2 Estancamiento / 3 Resignación / Muerto / No evaluable (poda importante) / No evaluable (descabezado)",
     definicion: "Clase de vitalidad según Roloff: 0 Exploración; 1 Degeneración; 2 Estancamiento; 3 Resignación. Muerto corresponde al árbol sin vida.",
-    comoSeObtiene: "Observación de la arquitectura de ramificación y del desarrollo de brotes largos y cortos, considerando especie, etapa de desarrollo y antecedentes de poda.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3435,7 +3271,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Bajo / Moderado / Alto / Crítico / No aplica",
     definicion: "Nivel global de afectación o conflicto físico y funcional que se produce entre el individuo arbóreo y cada componente de infraestructura gris evaluado. No mide el riesgo de falla del árbol ni su salud.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3443,7 +3278,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Bajo / Moderado / Alto / Extremo / No determinado",
     definicion: "Clasificación global del riesgo del árbol, correspondiente al nivel de riesgo más alto obtenido entre los componentes raíces/cuello, tronco y copa/ramas.",
-    comoSeObtiene: "Matriz 1: falla + impacto. Matriz 2: resultado combinado + consecuencia. No multiplicar códigos ordinales.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3451,7 +3285,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Baja / Media / Alta / Crítica / No determinado",
     definicion: "Nivel de prioridad de intervención obtenido mediante el cruce entre la clasificación global de riesgo del árbol y la clasificación global del conflicto con infraestructura.",
-    comoSeObtiene: "Aplicación de matriz metodológica versionada a los datos registrados en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3459,7 +3292,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Texto",
     unidadValores: "No aplica",
     definicion: "Fundamento técnico del ajuste de probabilidad_falla_raices_cuello, probabilidad_falla_tronco, probabilidad_falla_copa_ramas, clasificacion_riesgo, clasificacion_infraestructura o clasificacion_prioridad respecto del valor calculado por la plataforma.",
-    comoSeObtiene: "Descripción libre del Inspector en Inventario.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3467,7 +3299,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Indica que el árbol no tiene hojas porque se encuentra en su receso estacional. Equivale a None (seasonal) de ISA.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "ARBOLES",
@@ -3475,7 +3306,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "m",
     definicion: "Altura desde el terreno hasta la punta viva de la copa.",
-    comoSeObtiene: "Medición en terreno o estimación con escala.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3483,7 +3313,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Proporción de copa viva: parte de la altura del árbol ocupada por copa viva.",
-    comoSeObtiene: "Cálculo desde las alturas registradas.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3491,7 +3320,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Excelente / Buena / Regular / Mala / Crítica / Moribunda / Muerto",
     definicion: "Clase de condición de copa según i-Tree. Describe la salud de la copa y no entra en R03.",
-    comoSeObtiene: "Cálculo desde muerte_regresiva_copa_pct.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3499,7 +3327,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de cuerpos fructíferos de hongos en el tronco.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3507,7 +3334,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "El diámetro del tronco cambia poco a lo largo de su longitud.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3515,7 +3341,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Abertura de la cavidad como porcentaje de la circunferencia de la sección evaluada.",
-    comoSeObtiene: "Cálculo desde las mediciones de la cavidad.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3523,7 +3348,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Presencia de cuerpos fructíferos de hongos en la base del tronco o en el cuello del árbol.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3531,7 +3355,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sí / No",
     definicion: "Restricción del crecimiento del tronco o de las raíces principales por raíces, amarras, correas o daño mecánico.",
-    comoSeObtiene: "Inspección visual y registro en Inventario",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3539,7 +3362,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Decimal",
     unidadValores: "% (0 a 100)",
     definicion: "Abertura de la cavidad basal como porcentaje de la circunferencia de la sección evaluada.",
-    comoSeObtiene: "Cálculo desde las mediciones de la cavidad.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3547,7 +3369,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Categoría",
     unidadValores: "Sin restricción / Leve / Moderada / Severa",
     definicion: "Restricciones que el entorno impone al árbol. Con alcorque, se considera en su clasificación; sin alcorque, es informativa.",
-    comoSeObtiene: "Cálculo desde las condiciones del sitio registradas.",
   },
   {
     hoja: "REGISTRO_EVALUACION",
@@ -3555,7 +3376,6 @@ export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipo
     tipoDato: "Lista",
     unidadValores: "Vereda / Calzada / Alcorque / Infraestructura vertical / Red aérea / Red subterránea",
     definicion: "Componentes de infraestructura excluidos del cálculo por quedar No determinados.",
-    comoSeObtiene: "Derivado de la clasificación de cada componente.",
   },
 ] as const;
 
