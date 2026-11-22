@@ -3428,3 +3428,29 @@ motivo)
   - `tipo_hoja` de las palmeras en el catálogo;
   - AV_000087;
   - pasar `RULE_VERSION_OPERATIVA` a "3.3".
+
+### CC-083 — IF-25: alcance de Evaluación inicial y Reevaluación
+
+- Aprobación de la autora: 2026-11-22. Paquete 3.3.0 en preparación, sobre 3.2.1.
+- Alcance de la inspección: Árbol, Infraestructura o Ambos. Ambos es el valor por defecto e interpreta la ausencia en inspecciones anteriores de los tipos aplicables.
+- Infraestructura exige M04, condición del sitio y D-27. Conserva las fechas sugeridas. Árbol exige los datos del árbol y R01–R04, conserva la clasificación de infraestructura vigente y recalcula con ella la prioridad.
+- La OT completada incorpora los campos registrados a la evaluación vigente. M05 usa el riesgo y la infraestructura vigentes. Sin riesgo vigente, prioridad No determinado.
+- Excel: REGLAS_GENERALES B28/C28, INSPECCION W1, DICCIONARIO_CAMPOS J209 y fila 318 (se conservan los números D-309 a D-317 de PALM-01), MATRICES_CALCULO AW5 y VERSION fila 11.
+- PALM-01 conserva CC-082 y pasa a 3.4.0.
+- Pendiente: implementación, regresión y publicación.
+
+### CC-084 — Completitud por componente ensayado en Evaluación instrumental
+
+- Aprobación de la autora: 2026-11-22. Incluido con CC-083 en 3.3.0, en preparación.
+- Se registra al menos uno de los componentes D-39 y D-51. Un No explícito acredita que ese componente se ensayó. Cuando la respuesta es Sí, se exige el resultado interno Sí/No y el espesor residual medido en esta inspección.
+- Las dimensiones externas D, d, Cc y C pueden provenir de los valores vigentes, y los datos registrados en la inspección tienen precedencia. El componente no ensayado conserva su composición vigente conforme a CC-040. Las fotos siguen siendo opcionales conforme a CC-081.
+- Excel sincronizado: REGLAS_GENERALES B28, DICCIONARIO_CAMPOS J209 y VERSION E11/J11.
+- Verificación local: 793 pruebas de completitud y motor pasaron. Pendiente despliegue coordinado de 3.3.0 y comprobación de los tres borradores instrumentales.
+
+### Candidato SIVU 3.4.0 — PALM-01 después de IF-25
+
+- SIVU 3.3.0 conserva IF-25 (CC-083) y la completitud instrumental (CC-084). PALM-01 (CC-082) empieza en 3.4.0. El Excel conserva ambos registros como versiones en preparación.
+- El frontend recibe la versión operativa y las reglas de visibilidad desde el esquema de inspección. Solo muestra los campos PALM-01 si la especie del catálogo tiene tipo de hoja palmera.
+- Verificar en pruebas la migración 046 antes de activar 3.3, y la 047 antes de activar 3.4. La 047 clasifica registros existentes de Arecaceae y de Phoenix canariensis. Las especies que falten se deben incorporar por el flujo del catálogo.
+- Mantener sin configurar `SIVU_RULE_VERSION_OPERATIVA` conserva 3.2. En pruebas, 3.3 activa IF-25 y 3.4 activa además PALM-01. El cambio de versión, la base y los dos despliegues deben coordinarse.
+- Antes de promover, guardar y calcular un borrador de palmera y otro de árbol en una OT de prueba, y verificar la compatibilidad de un borrador previo. La preparación del candidato no registra ni finaliza evaluaciones del piloto.

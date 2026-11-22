@@ -5,6 +5,8 @@ jest.mock("../../src/repositories/userProfile.repository");
 jest.mock("../../src/repositories/projectMember.repository");
 jest.mock("../../src/repositories/sivu/workOrder.repository");
 jest.mock("../../src/repositories/sivu/inspection.repository");
+jest.mock("../../src/repositories/sivu/diagnostico.repository");
+import { listarEvaluacionesVigentes } from "../../src/repositories/sivu/diagnostico.repository";
 jest.mock("../../src/repositories/sivu/cierreOt.repository", () => ({
   ...jest.requireActual("../../src/repositories/sivu/cierreOt.repository"),
   listarInspeccionesFinalizadasDeOt: jest.fn(),
@@ -89,6 +91,19 @@ beforeEach(() => {
 const completar = () => request(app).post(`/api/sivu/work-orders/${OT_ID}/completar`).set(auth);
 
 describe("POST /api/sivu/work-orders/:id/completar (#60; ADR-017 v1.2)", () => {
+  it.each([
+    [[], "no_determinado", "no_determinado"],
+    [[{ clasificacion_riesgo_calculada: "extremo" }], "extremo", "critica"],
+  ])("recalcula M05 con el riesgo vigente al completar Infraestructura", async (vigentes, riesgo, prioridad) => {
+    mInspecciones.mockResolvedValue([{ id: INS_NUEVA, tree_id: TREE_ID, fecha_inspeccion: "2026-10-28",
+      created_at: "2026-10-28T12:00:00Z", alcance_inspeccion: "infraestructura" }]);
+    (listarEvaluacionesVigentes as jest.Mock).mockResolvedValue(vigentes);
+    expect((await completar()).status).toBe(200);
+    expect(mCompletar.mock.calls[0][2][0].resultado).toMatchObject({
+      clasificacion_riesgo_calculada: riesgo,
+      clasificacion_prioridad_calculada: prioridad,
+    });
+  });
   it("env?a al motor 3.2 el di?metro del fuste mayor al cerrar la OT", async () => {
     const version = jest.requireActual("../../src/services/rules/engine/version");
     const operativa = jest.replaceProperty(version, "RULE_VERSION_OPERATIVA", "3.2");

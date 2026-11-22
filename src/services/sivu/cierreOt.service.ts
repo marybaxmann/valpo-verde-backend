@@ -24,6 +24,9 @@ import {
 import { OrdenTrabajoRow, obtenerOrdenTrabajoPorId } from "../../repositories/sivu/workOrder.repository";
 import { obtenerArbolVigente, obtenerInspeccionPorId, obtenerVersionArbolDeInspeccion } from "../../repositories/sivu/inspection.repository";
 import { AjusteVigente, AjustesEntrada, ensamblarResultadoVigente } from "../rules/engine/ensamblaje";
+import { evaluarM05 } from "../rules/engine/m05-prioridad";
+import type { ClasificacionRiesgoCodigo, ClasificacionInfraestructuraCodigo } from "../rules/engine/catalogs";
+import { listarEvaluacionesVigentes } from "../../repositories/sivu/diagnostico.repository";
 import { componerVariablesCalculo, resolverDapCm, resolverDatosConsecuencia, resolverDatosLcr } from "./finalizacion.service";
 
 /** Intentos ante SV068: la composición cambió entre la lectura y la escritura. */
@@ -70,7 +73,7 @@ function ajustesDeLaInspeccion(ajustes: readonly AjusteRegistradoRow[], inspecti
   return entrada;
 }
 
-async function prepararEvaluaciones(workOrderId: string, accessToken: string): Promise<EvaluacionVigentePayload[]> {
+async function prepararEvaluaciones(workOrderId: string, projectId: string, accessToken: string): Promise<EvaluacionVigentePayload[]> {
   const inspecciones = await listarInspeccionesFinalizadasDeOt(workOrderId);
   if (inspecciones.length === 0) {
     throw new AppError("No se puede completar la orden de trabajo: debe tener al menos una inspección Finalizada (CC-050)", 422);
@@ -102,6 +105,21 @@ async function prepararEvaluaciones(workOrderId: string, accessToken: string): P
         ajustes: ajustesDeLaInspeccion(ajustes, inspeccion.id),
         motorCommit: env.MOTOR_COMMIT,
       });
+      if (inspeccion.alcance_inspeccion === "arbol" || inspeccion.alcance_inspeccion === "infraestructura") {
+        const [vigente] = await listarEvaluacionesVigentes(accessToken, projectId, treeId);
+        if (inspeccion.alcance_inspeccion === "infraestructura") {
+          resultado.clasificacion_riesgo_calculada = (vigente?.clasificacion_riesgo_calculada ?? "no_determinado") as ClasificacionRiesgoCodigo;
+          resultado.clasificacion_riesgo_ajustada = (vigente?.clasificacion_riesgo_ajustada ?? null) as ClasificacionRiesgoCodigo | null;
+        } else {
+          resultado.clasificacion_infraestructura_calculada = (vigente?.clasificacion_infraestructura_calculada ?? "no_aplica") as ClasificacionInfraestructuraCodigo;
+          resultado.clasificacion_infraestructura_ajustada = (vigente?.clasificacion_infraestructura_ajustada ?? null) as ClasificacionInfraestructuraCodigo | null;
+        }
+        resultado.clasificacion_prioridad_calculada = evaluarM05(
+          resultado.clasificacion_riesgo_ajustada ?? resultado.clasificacion_riesgo_calculada,
+          resultado.clasificacion_infraestructura_ajustada ?? resultado.clasificacion_infraestructura_calculada
+        ).clasificacionPrioridad ?? "no_determinado";
+        resultado.clasificacion_prioridad_ajustada = null;
+      }
       return { tree_id: treeId, composicion, resultado };
     })
   );
@@ -121,7 +139,7 @@ export async function completarOrdenTrabajo(user: AuthenticatedUser, workOrderId
   }
 
   for (let intento = 1; ; intento++) {
-    const evaluaciones = await prepararEvaluaciones(workOrderId, accessToken);
+    const evaluaciones = await prepararEvaluaciones(workOrderId, ot.project_id, accessToken);
     try {
       return await completarOt(workOrderId, user.id, evaluaciones);
     } catch (err: unknown) {

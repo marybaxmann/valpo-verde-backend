@@ -140,6 +140,9 @@ export function construirInspectionFormSchema() {
   return {
     tipo: "evaluacion_inicial",
     rule_version: RULE_VERSION_OPERATIVA,
+    ...(RULE_VERSION_OPERATIVA === "3.2" ? {} : {
+      campos_infraestructura: camposPermitidosPorTipo("evaluacion_inicial", null, false, "infraestructura"),
+    }),
     secciones: SECCIONES_FORMULARIO.map(s => ({ codigo: s.codigo, etiqueta: s.etiqueta, orden: s.orden, propuesta: s.propuesta })),
     variables: ordenar(camposPermitidosPorTipo("evaluacion_inicial", null)!.map(id => campo("REGISTRO_EVALUACION", id))),
     campos_arbol: ordenar(Object.keys(camposArbolBaseSchema.shape).map(id => campo("ARBOLES", id))),

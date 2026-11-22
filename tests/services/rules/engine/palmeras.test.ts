@@ -50,7 +50,7 @@ function palmeraSana(): PalmeraInput {
 }
 
 describe("versiones (CC-082)", () => {
-  it("la 3.3 es candidata y la plataforma sigue en la 3.2", () => {
+  it("la 3.4 es candidata y la plataforma sigue en la 3.2", () => {
     expect(RULE_VERSION).toBe("3.4");
     expect(RULE_VERSION_OPERATIVA).toBe("3.2");
     expect(incluyePalmeras("3.3")).toBe(false);
@@ -252,7 +252,7 @@ function args(variablesCalculo: NucleoEntradas, ruleVersion: "3.2" | "3.4"): Arg
 }
 
 describe("ensamblaje con palmeras (CC-082)", () => {
-  it("una palmera con la 3.3 usa R01-P a R03-P, consecuencia por DAP y vitalidad de palmera", () => {
+  it("una palmera con la 3.4 usa R01-P a R03-P, consecuencia por DAP y vitalidad de palmera", () => {
     const r = ensamblarResultadoEvaluacion(args({
       ...nucleoBase(), tipo_hoja: "palmera", presenta_heridas_tronco: true, estrechamiento_estipite: "si",
     }, "3.4"));
@@ -283,7 +283,7 @@ function aleatorio(semilla: number) {
   };
 }
 
-describe("regresión: los árboles dan lo mismo con la 3.3 que con la 3.2 (CC-082, superposición)", () => {
+describe("regresión: los árboles dan lo mismo con la 3.4 que con la 3.2 (CC-082, superposición)", () => {
   it("600 árboles aleatorios: resultado idéntico salvo rule_version", () => {
     const r = aleatorio(81);
     const elegir = <T,>(xs: readonly T[]): T => xs[Math.floor(r() * xs.length)];

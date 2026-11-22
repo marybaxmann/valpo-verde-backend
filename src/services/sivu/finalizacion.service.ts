@@ -192,6 +192,10 @@ export async function finalizarInspeccion(
 
   const sugeridaInspeccion = respuesta.fechas_sugeridas.fecha_proxima_inspeccion.fecha;
   const sugeridaMonitoreo = respuesta.fechas_sugeridas.fecha_proximo_monitoreo.fecha;
+  if (inspeccion.alcance_inspeccion === "infraestructura" &&
+      (body.fecha_proxima_inspeccion != null || body.fecha_proximo_monitoreo != null || body.justificacion_ajuste_fecha != null)) {
+    throw new AppError("Una inspección de Infraestructura conserva las fechas vigentes (CC-083)", 422);
+  }
   const fechaInspeccion = body.fecha_proxima_inspeccion ?? sugeridaInspeccion;
   const fechaMonitoreo = body.fecha_proximo_monitoreo ?? sugeridaMonitoreo;
   const justificacion = body.justificacion_ajuste_fecha ?? null;
@@ -325,6 +329,7 @@ async function calcular(
     variablesCalculo,
     tipo,
     subtipo,
+    alcance: inspeccion.alcance_inspeccion,
     fechaInspeccion: inspeccion.fecha_inspeccion,
     fechaVigente,
   });
@@ -345,6 +350,7 @@ async function calcular(
   const completitud = evaluarCompletitud({
     tipo,
     subtipo,
+    alcance: inspeccion.alcance_inspeccion,
     variablesRegistradas,
     variablesVigentes,
     arbolRegistrado: versionArbol?.campos ?? {},
@@ -497,6 +503,7 @@ export function huellaCalculo(args: {
   subtipo: string | null;
   fechaInspeccion: string;
   fechaVigente: string | null;
+  alcance?: InspeccionRow["alcance_inspeccion"];
 }): string {
   const { multifustal, numero_fustes, dap_fustes_cm, ...variablesHistoricas } = args.variablesCalculo;
   const version = RULE_VERSION as VersionMotor;
@@ -507,6 +514,7 @@ export function huellaCalculo(args: {
       : variablesHistoricas,
     tipo_inspeccion_realizada: args.tipo,
     subtipo_inspeccion: args.subtipo,
+    ...(args.alcance && args.alcance !== "ambos" ? { alcance_inspeccion: args.alcance } : {}),
     fecha_inspeccion: args.fechaInspeccion,
     fecha_proxima_inspeccion_vigente: args.fechaVigente,
     rule_version: version,

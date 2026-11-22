@@ -41,7 +41,10 @@ export interface NuevoArbolLevantamiento {
   nombre_comun?: string;
 }
 
+import type { AlcanceInspeccion } from "../../services/rules/engine/alcance";
+
 export interface GuardarBorradorInspeccionInput {
+  alcanceInspeccion?: AlcanceInspeccion | null;
   inspectionId: string | null;
   workOrderId: string;
   /** null solo en el primer guardado de un Levantamiento con árbol nuevo (CC-052). */
@@ -85,7 +88,8 @@ export interface BorradorInspeccionResultado {
 export async function guardarBorradorInspeccion(
   input: GuardarBorradorInspeccionInput
 ): Promise<BorradorInspeccionResultado> {
-  const { data, error } = await supabaseAdmin.rpc("fn_save_inspection_draft", {
+  const { data, error } = await supabaseAdmin.rpc("fn_save_inspection_draft_if25", {
+    p_alcance_inspeccion: input.alcanceInspeccion ?? null,
     p_inspection_id: input.inspectionId,
     p_work_order_id: input.workOrderId,
     p_tree_id: input.treeId,
@@ -119,6 +123,7 @@ export async function guardarBorradorInspeccion(
 }
 
 export interface InspeccionRow {
+  alcance_inspeccion?: AlcanceInspeccion | null;
   id: string;
   work_order_id: string;
   tree_id: string;
@@ -147,7 +152,7 @@ export async function obtenerInspeccionPorId(inspectionId: string): Promise<Insp
   const { data, error } = await supabaseAdmin
     .from("inspections")
     .select(
-      "id, work_order_id, tree_id, inspector, estado_registro, tipo_inspeccion_realizada, subtipo_inspeccion, metodo_instrumental, resultado_general, requiere_mantenimiento, observaciones, fecha_inspeccion, fecha_registro, registrado_por"
+      "id, work_order_id, tree_id, inspector, estado_registro, tipo_inspeccion_realizada, alcance_inspeccion, subtipo_inspeccion, metodo_instrumental, resultado_general, requiere_mantenimiento, observaciones, fecha_inspeccion, fecha_registro, registrado_por"
     )
     .eq("id", inspectionId)
     .maybeSingle();
@@ -387,6 +392,7 @@ export async function finalizarInspeccion(input: FinalizarInspeccionInput): Prom
 // ---------------------------------------------------------------------
 
 export interface InspeccionDeOtRow {
+  alcance_inspeccion?: AlcanceInspeccion | null;
   id: string;
   tree_id: string;
   codigo_inspeccion: string | null;
@@ -408,7 +414,7 @@ export async function listarInspeccionesDeOt(accessToken: string, workOrderId: s
   const { data, error } = await createUserScopedClient(accessToken)
     .from("inspections")
     .select(
-      "id, tree_id, codigo_inspeccion, estado_registro, tipo_inspeccion_realizada, subtipo_inspeccion, metodo_instrumental, fecha_inspeccion, fecha_registro, observaciones, inspector, finalizada_at, motivo_anulacion, fecha_anulacion, created_at"
+      "id, tree_id, codigo_inspeccion, estado_registro, tipo_inspeccion_realizada, alcance_inspeccion, subtipo_inspeccion, metodo_instrumental, fecha_inspeccion, fecha_registro, observaciones, inspector, finalizada_at, motivo_anulacion, fecha_anulacion, created_at"
     )
     .eq("work_order_id", workOrderId)
     .order("created_at", { ascending: true });

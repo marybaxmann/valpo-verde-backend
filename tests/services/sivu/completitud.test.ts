@@ -1,6 +1,33 @@
 import { EntradaCompletitud, especieValidaD13, evaluarCompletitud } from "../../../src/services/sivu/completitud";
 import { calcularDapEquivalenteCm } from "../../../src/services/rules/engine/variables-calculo";
 import { REGLAS_COMPLETITUD } from "../../../src/schemas/sivu/completitudInspeccion";
+import { camposPermitidosPorTipo } from "../../../src/services/rules/engine/alcance";
+
+describe("alcance IF-25", () => {
+  it("infraestructura no exige dendrometría y mantiene D-27", () => {
+    const base = evaluacionCompleta({
+      alcance: "infraestructura",
+      arbolRegistrado: {},
+      camposRegistradosArbol: [],
+      arbolVigente: {},
+    });
+    expect(evaluarCompletitud(base).campos_faltantes).toEqual([]);
+    expect(evaluarCompletitud({ ...base, fotos: [] }).campos_faltantes.map(f => f.campo))
+      .toEqual(["fotografias_arbol"]);
+  });
+
+  it("árbol no exige los campos de M04", () => {
+    const permitidos = new Set(camposPermitidosPorTipo("reevaluacion", null, false, "arbol"));
+    const variables = Object.fromEntries(Object.entries(variablesCompletas()).filter(([campo]) => permitidos.has(campo)));
+    expect(evaluarCompletitud(evaluacionCompleta({ tipo: "reevaluacion", alcance: "arbol", variablesRegistradas: variables }))
+      .campos_faltantes).toEqual([]);
+  });
+
+  it("el alcance omitido se comporta como Ambos", () => {
+    const base = evaluacionCompleta({ variablesRegistradas: {} });
+    expect(evaluarCompletitud(base)).toEqual(evaluarCompletitud({ ...base, alcance: "ambos" }));
+  });
+});
 
 /**
  * Completitud para finalizar (CC-056). La evaluación completa de base
@@ -34,6 +61,19 @@ function variablesCompletas(): Record<string, unknown> {
     exposicion_luminica_copa_cle: 3,
   };
 }
+
+it("el No registrado para cavidad de tronco desactiva las medidas de una cavidad externa anterior", () => {
+  const variables = { ...variablesCompletas(), presenta_cavidad_pudricion_tronco: false };
+  const entrada = evaluacionCompleta({
+    variablesRegistradas: variables,
+    variablesVigentes: { presenta_cavidad_pudricion_tronco: true, cavidad_externa_tronco: true },
+  });
+  expect(evaluarCompletitud(entrada).campos_faltantes.filter(f => [55, 56, 57].includes(f.fila))).toEqual([]);
+  expect(evaluarCompletitud({
+    ...entrada,
+    variablesRegistradas: { ...variables, presenta_cavidad_pudricion_tronco: true },
+  }).campos_faltantes.filter(f => [55, 56, 57].includes(f.fila)).map(f => f.fila)).toEqual([55, 56, 57]);
+});
 
 function arbolRegistradoCompleto(): Record<string, unknown> {
   return {
@@ -266,13 +306,40 @@ describe("inspecciones parciales (CC-040; CC-056 punto 2)", () => {
     ).toEqual({ completa: true, campos_faltantes: [], fotos_validas_d27: null, vistas_recomendadas_faltantes: [] });
   });
 
-  it("Instrumental con cavidad basal = Sí: exige su cadena de condicionales", () => {
+  it("Instrumental con cavidad basal = Sí: exige cavidad interna y espesor medidos", () => {
     const r = parcial("evaluacion_instrumental", null, { cavidad_pudricion_basal: true, presenta_cavidad_pudricion_tronco: false });
     expect(r.campos_faltantes.map((f) => f.campo)).toEqual([
-      "cavidad_basal_externa",
       "cavidad_basal_interna",
-      "D_diametro_basal_tronco_cm",
+      "t_pared_residual_basal_cm",
     ]);
+  });
+
+  it.each(["cavidad_pudricion_basal", "presenta_cavidad_pudricion_tronco"])(
+    "permite ensayar solo %s y conserva el otro componente fuera de la completitud", campo => {
+      expect(parcial("evaluacion_instrumental", "resistografia", { [campo]: false }, {
+        variablesVigentes: { cavidad_pudricion_basal: true, presenta_cavidad_pudricion_tronco: true },
+      }).completa).toBe(true);
+    }
+  );
+
+  it("rechaza ausencia de componentes incluso si hay componentes vigentes", () => {
+    const resultado = parcial("evaluacion_instrumental", "resistografia", {}, {
+      variablesVigentes: { cavidad_pudricion_basal: false },
+    });
+    expect(resultado.completa).toBe(false);
+    expect(resultado.campos_faltantes[0].motivo).toMatch(/D-39 o D-51/);
+  });
+
+  it("acepta las dimensiones externas vigentes y exige el espesor de esta inspección", () => {
+    const vigentes = {
+      cavidad_basal_externa: true, D_diametro_basal_tronco_cm: 32, d_diametro_cavidad_basal_cm: 15,
+      Cc_longitud_abertura_cavidad_cm: 12, C_circunferencia_basal_cm: 100, t_pared_residual_basal_cm: 7,
+    };
+    const variables = { cavidad_pudricion_basal: true, cavidad_basal_interna: "no" };
+    expect(parcial("evaluacion_instrumental", "resistografia", variables, { variablesVigentes: vigentes })
+      .campos_faltantes.map(f => f.campo)).toEqual(["t_pared_residual_basal_cm"]);
+    expect(parcial("evaluacion_instrumental", "resistografia", { ...variables, t_pared_residual_basal_cm: 5 },
+      { variablesVigentes: vigentes }).completa).toBe(true);
   });
 
   it("no exige ARBOLES, fotos ni D-13 (especie vigente «sp.»)", () => {

@@ -1,8 +1,10 @@
 /** Versión candidata del motor. La operativa se mantiene en 3.2 salvo activación explícita. */
 export const RULE_VERSION = "3.4" as const;
 
-export const RULE_VERSION_OPERATIVA: "3.2" | typeof RULE_VERSION =
-  process.env.SIVU_RULE_VERSION_OPERATIVA === RULE_VERSION ? RULE_VERSION : "3.2";
+const versionConfigurada = process.env.SIVU_RULE_VERSION_OPERATIVA;
+export const RULE_VERSION_OPERATIVA = versionConfigurada === RULE_VERSION || versionConfigurada === "3.3"
+  ? versionConfigurada
+  : "3.2";
 
 export type VersionMotor = "3.0" | "3.1" | "3.2" | "3.3" | typeof RULE_VERSION;
 

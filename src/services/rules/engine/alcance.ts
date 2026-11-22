@@ -202,7 +202,24 @@ export const CAMPOS_EVALUACION_COMPLETA = [
 // no alimentan M03 y el formulario ofrece las consecuencias calculadas.
 const CONSECUENCIAS_MANUALES_HISTORICAS = ["consecuencia_raices_cuello", "consecuencia_tronco", "consecuencia_copa_ramas"] as const;
 
-export function camposPermitidosPorTipo(tipo: string, subtipo: string | null, admitirConsecuenciasHistoricas = false): readonly string[] | null {
+export const ALCANCES_INSPECCION = ["arbol", "infraestructura", "ambos"] as const;
+export type AlcanceInspeccion = typeof ALCANCES_INSPECCION[number];
+
+export function aplicaAlcanceInspeccion(tipo: string): boolean {
+  return tipo === "evaluacion_inicial" || tipo === "reevaluacion";
+}
+
+const camposInfraestructura = new Set<string>(CAMPOS_EVALUACION_COMPLETA.slice(
+  CAMPOS_EVALUACION_COMPLETA.indexOf("infraestructura_inmediata"),
+  CAMPOS_EVALUACION_COMPLETA.indexOf("observaciones_infraestructura") + 1
+));
+
+export function camposPermitidosPorTipo(
+  tipo: string,
+  subtipo: string | null,
+  admitirConsecuenciasHistoricas = false,
+  alcance: AlcanceInspeccion | null = null
+): readonly string[] | null {
   if (tipo === "evaluacion_instrumental") return CAMPOS_EVALUACION_INSTRUMENTAL;
   if (tipo === "monitoreo") {
     if (subtipo === "fitosanitario") return CAMPOS_MONITOREO_FITOSANITARIO;
@@ -210,7 +227,11 @@ export function camposPermitidosPorTipo(tipo: string, subtipo: string | null, ad
     if (subtipo === "vitalidad") return CAMPOS_MONITOREO_VITALIDAD;
   }
   if (tipo === "evaluacion_inicial" || tipo === "reevaluacion" || tipo === "levantamiento") {
-    return admitirConsecuenciasHistoricas ? [...CAMPOS_EVALUACION_COMPLETA, ...CONSECUENCIAS_MANUALES_HISTORICAS] : CAMPOS_EVALUACION_COMPLETA;
+    if (aplicaAlcanceInspeccion(tipo) && alcance === "infraestructura") return [...camposInfraestructura];
+    const campos = aplicaAlcanceInspeccion(tipo) && alcance === "arbol"
+      ? CAMPOS_EVALUACION_COMPLETA.filter(campo => !camposInfraestructura.has(campo))
+      : CAMPOS_EVALUACION_COMPLETA;
+    return admitirConsecuenciasHistoricas ? [...campos, ...CONSECUENCIAS_MANUALES_HISTORICAS] : campos;
   }
   return null;
 }

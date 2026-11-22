@@ -7,7 +7,7 @@ import { construirInspectionFormSchema } from "../../../src/services/sivu/inspec
 /**
  * CC-082 (PALM-01): borrador, completitud y composición de los campos de
  * palmeras. Superposición: con la versión operativa (3.2) nada cambia ni para
- * árboles ni para palmeras; con la 3.3 se exigen los campos de palmeras y una
+ * árboles ni para palmeras; con la 3.4 se exigen los campos de palmeras y una
  * palmera no responde los de la hoja PALMERAS, sección B.
  */
 
@@ -28,7 +28,7 @@ function variablesArbol(): Record<string, unknown> {
   };
 }
 
-function entrada(tipo_hoja: string | null, variablesRegistradas: Record<string, unknown>, ruleVersion?: "3.2" | "3.4"): EntradaCompletitud {
+function entrada(tipo_hoja: string | null, variablesRegistradas: Record<string, unknown>, ruleVersion?: "3.2" | "3.3" | "3.4"): EntradaCompletitud {
   const arbolRegistrado = {
     multifustal: false, dap_cm: 40, altura_total_m: 10, diametro_copa_ns_m: 5, diametro_copa_eo_m: 5, copa_no_presenta: false,
     altura_primera_rama_m: 6, altura_base_copa_viva_m: 7, clase_edad: "maduro",
@@ -56,7 +56,7 @@ describe("completitud de palmeras por versión (CC-082)", () => {
     expect(vigenteEnVersion({ desdeVersion: "3.4" }, "3.4")).toBe(true);
   });
 
-  it("los campos de palmeras se generan con desdeVersion 3.3 y activación tipo_hoja = palmera", () => {
+  it("los campos de palmeras se generan con desdeVersion 3.4 y activación tipo_hoja = palmera", () => {
     for (const campo of CAMPOS_PALMERA) {
       const r = REGLAS_COMPLETITUD.find((x) => x.campo === campo)!;
       expect({ campo, desde: r.desdeVersion }).toEqual({ campo, desde: "3.4" });
@@ -69,13 +69,13 @@ describe("completitud de palmeras por versión (CC-082)", () => {
     expect(faltantes(entrada("palmera", { ...variablesArbol(), clasificacion_vitalidad: undefined }))).toEqual([]);
   });
 
-  it("con la 3.3, un árbol se exige igual que con la 3.2", () => {
+  it("con la 3.4, un árbol se exige igual que con la 3.2", () => {
     const incompleto = { ...variablesArbol() };
     delete incompleto.ramas_secas;
     expect(faltantes(entrada("latifoliada", incompleto, "3.4"))).toEqual(faltantes(entrada("latifoliada", incompleto, "3.2")));
   });
 
-  it("con la 3.3, una palmera debe responder sus campos y no los de la sección B", () => {
+  it("con la 3.4, una palmera debe responder sus campos y no los de la sección B", () => {
     // angulo_inclinacion = 5 activa inclinacion_corregida; las demás se activan por ser palmera.
     const f = faltantes(entrada("palmera", variablesArbol(), "3.4"));
     expect([...f].sort()).toEqual([...CAMPOS_PALMERA].sort());
@@ -88,7 +88,18 @@ describe("completitud de palmeras por versión (CC-082)", () => {
     for (const c of fh) expect(CAMPOS_NO_APLICAN_PALMERA).not.toContain(c);
   });
 
-  it("con la 3.3, una palmera completa finaliza", () => {
+  it("3.3 conserva IF-25 sin pedir campos PALM-01", () => {
+    expect(faltantes({ ...entrada("palmera", variablesArbol(), "3.3"), alcance: "arbol" }))
+      .not.toContain("calidad_copa_palmera");
+  });
+
+  it("3.4 aplica PALM-01 en alcance árbol, pero no en infraestructura", () => {
+    const palmera = entrada("palmera", variablesArbol(), "3.4");
+    expect(faltantes({ ...palmera, alcance: "arbol" })).toContain("calidad_copa_palmera");
+    expect(faltantes({ ...palmera, alcance: "infraestructura" })).not.toContain("calidad_copa_palmera");
+  });
+
+  it("con la 3.4, una palmera completa finaliza", () => {
     const v = {
       ...variablesArbol(), calidad_copa_palmera: "5", proporcion_frondas_vivas: "4", anomalia_cogollo: "ninguna",
       indicios_plaga_palmera: ["no"], estrechamiento_estipite: "no", angulacion_grave_estipite: false,

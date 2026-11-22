@@ -299,7 +299,7 @@ function calcularNucleo(
   }
   const escalaNueva = usaEscala32(version);
   const consecuencias = escalaNueva ? calcularConsecuencias(entradas, ajustes, inspeccionAnuladaId) : undefined;
-  // CC-082 (superposición): solo una palmera con la versión 3.3 usa R01-P a R03-P.
+  // CC-082 (superposición): solo una palmera con la versión 3.4 usa R01-P a R03-P.
   // Cualquier otro tipo_hoja, o nulo, sigue exactamente por R01–R03 de árboles.
   const palmera = incluyePalmeras(version) && entradas.tipo_hoja === "palmera";
   const r01 = palmera ? evaluarR01Palmera(entradas) : evaluarR01(entradas, escalaNueva);
