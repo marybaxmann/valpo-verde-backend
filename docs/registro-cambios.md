@@ -3454,3 +3454,12 @@ motivo)
 - Verificar en pruebas la migración 046 antes de activar 3.3, y la 047 antes de activar 3.4. La 047 clasifica registros existentes de Arecaceae y de Phoenix canariensis. Las especies que falten se deben incorporar por el flujo del catálogo.
 - Mantener sin configurar `SIVU_RULE_VERSION_OPERATIVA` conserva 3.2. En pruebas, 3.3 activa IF-25 y 3.4 activa además PALM-01. El cambio de versión, la base y los dos despliegues deben coordinarse.
 - Antes de promover, guardar y calcular un borrador de palmera y otro de árbol en una OT de prueba, y verificar la compatibilidad de un borrador previo. La preparación del candidato no registra ni finaliza evaluaciones del piloto.
+
+### CC-085 — Paleta de clasificación de riesgo: verde, amarillo, naranjo y rojo profundo
+
+- Decisión de la autora e investigadora responsable SIVU, 2026-11-22: con la paleta anterior, Alto (`#F04A32`) y Extremo (`#C7252B`) no se distinguían. Se eligió la opción C entre tres maquetas.
+- Paleta nueva: Bajo `#4FA35B`, Moderado `#F6D03F`, Alto `#F59A23`, Extremo `#B3121F`; en modo oscuro, `#5DB869`, `#F6D03F`, `#F7A43A` y `#D9243A`. Alto es más claro y Extremo más oscuro, para que se diferencien por luminosidad y no solo por tono.
+- Extremo se refuerza sin depender solo del color: insignia sólida con texto blanco y, en el mapa, anillo sólido tras el borde blanco. Las etiquetas de texto se mantienen en todas las vistas.
+- Reemplaza PR-016 v7.0 por PR-016 v8.0 (solo cambia la regla de la paleta). Sin cambios en metodología, clasificaciones, datos ni cálculos.
+- Implementación: frontend PR #42 → `feature/fase7-maqueta-lab` (`29eec8f`), publicado en sivu.cl el 2026-11-22 con autorización de la responsable.
+
