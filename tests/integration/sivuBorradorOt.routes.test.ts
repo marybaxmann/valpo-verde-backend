@@ -42,7 +42,7 @@ beforeEach(() => {
     {
       id: INS_ID, tree_id: "t", codigo_inspeccion: "INS-000001", estado_registro: "preguardado",
       tipo_inspeccion_realizada: "evaluacion_inicial", subtipo_inspeccion: null, metodo_instrumental: null,
-      fecha_inspeccion: "2026-10-29", observaciones: "parcial", inspector: INSPECTOR_ID, finalizada_at: null,
+      fecha_inspeccion: "2026-10-25", fecha_registro: "2026-10-29", observaciones: "parcial", inspector: INSPECTOR_ID, finalizada_at: null,
       motivo_anulacion: null, fecha_anulacion: null, created_at: "2026-10-29T10:00:00Z",
     },
   ]);
@@ -73,6 +73,8 @@ describe("GET /api/sivu/work-orders/:id/inspections (B17)", () => {
         inspection_id: INS_ID,
         estado_registro: "preguardado",
         tipo_inspeccion_realizada: "evaluacion_inicial",
+        fecha_inspeccion: "2026-10-25",
+        fecha_registro: "2026-10-29",
         observaciones: "parcial",
         variables: { raices_expuestas: true },
         campos_arbol: { dap_cm: 31.5 },
