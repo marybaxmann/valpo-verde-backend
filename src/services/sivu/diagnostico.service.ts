@@ -121,14 +121,15 @@ export async function diagnosticoDeArbol(token: string, projectId: string, treeI
  */
 export async function listarDiagnosticos(user: AuthenticatedUser, projectId: string, token: string, treeId?: string) {
   await assertProjectAccess(user, projectId, token);
-  const inspecciones = await listarInspeccionesFinalizadas(token, projectId, treeId);
+  // Las evaluaciones vigentes no dependen de las inspecciones: se piden en paralelo (2026-11-23).
+  const [inspecciones, vigentes] = await Promise.all([
+    listarInspeccionesFinalizadas(token, projectId, treeId),
+    listarEvaluacionesVigentes(token, projectId, treeId),
+  ]);
   const ultimaPorArbol = new Map<string, InspeccionFinalizadaRow>();
   for (const ins of inspecciones) if (!ultimaPorArbol.has(ins.tree_id)) ultimaPorArbol.set(ins.tree_id, ins);
   const ultimas = [...ultimaPorArbol.values()];
-  const [evaluaciones, vigentes] = await Promise.all([
-    listarEvaluacionesDeInspecciones(token, ultimas.map(i => i.id)),
-    listarEvaluacionesVigentes(token, projectId, treeId),
-  ]);
+  const evaluaciones = await listarEvaluacionesDeInspecciones(token, ultimas.map(i => i.id));
   const porInspeccion = new Map(evaluaciones.map(e => [e.inspection_id, e]));
   const vigentePorArbol = new Map<string, EvaluacionVigenteRow>();
   for (const v of vigentes) if (!vigentePorArbol.has(v.tree_id)) vigentePorArbol.set(v.tree_id, v);

@@ -1,6 +1,7 @@
 import {
   ArbolIndicador,
   areaProyectadaCopa,
+  coberturaCopa,
   densidadArborea,
   diametroMedioCopa,
   distribucionClaseDiametrica,
@@ -86,5 +87,22 @@ describe("B19 bloque 1 — indicadores del inventario (hoja INDICES, filas 3, 4,
 
   it("fila 13: sin árboles con los dos diámetros, total null", () => {
     expect(areaProyectadaCopa([arbol({ copa_no_presenta: true }), arbol()]).total_m2).toBeNull();
+  });
+});
+
+describe("Cobertura de copa del sector (2026-11-22)", () => {
+  const area = areaProyectadaCopa([arbol({ diametro_copa_ns_m: 4, diametro_copa_eo_m: 4 }), arbol({ copa_no_presenta: true })]);
+
+  it("área de copa / superficie del sector, en %", () => {
+    const c = coberturaCopa(area, 1000, false);
+    expect(c.valor).toBeCloseTo(((Math.PI * 2 * 2) / 1000) * 100, 10);
+    expect(c.n_con_area).toBe(1);
+    expect(c.motivo).toBeNull();
+  });
+
+  it("por barrio, sin superficie o sin copas medidas: valor null con motivo", () => {
+    expect(coberturaCopa(area, 1000, true).valor).toBeNull();
+    expect(coberturaCopa(area, null, false).motivo).toMatch(/superficie/);
+    expect(coberturaCopa(areaProyectadaCopa([arbol()]), 1000, false).motivo).toMatch(/diámetros/);
   });
 });

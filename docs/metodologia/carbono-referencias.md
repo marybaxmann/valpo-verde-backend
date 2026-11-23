@@ -2,6 +2,8 @@
 
 > Documento de trazabilidad de la estimación de carbono de SIVU (B19 y ficha del árbol B2). Registra **de dónde sale cada número** y **cómo se usa en el cálculo**. Decisiones: CC-069 v1 (método general) y CC-070 (modelo sustituto para *Acer pseudoplatanus*). Código: `src/services/rules/carbono/modelos.ts` y `calculo.ts`.
 >
+> **Carbono aéreo total (sección 4, propuesta experimental, no vigente):** desde el 2026-11-21, en rama experimental, *Quillaja saponaria* y *Cryptocarya alba* tienen modelos exploratorios de carbono directo (Cruz et al. 2015) en un indicador aparte, que incluye hojas y nunca se suma con el leñoso.
+>
 > **Qué estima SIVU:** **carbono aéreo leñoso almacenado** en el árbol, con la medición vigente (tronco y ramas, sin raíces ni follaje). **No estima el secuestro anual** (carbono capturado por año; INDICES fila 15, «Pendiente»), porque requiere dos mediciones del mismo árbol separadas en el tiempo.
 
 ## 1. Cadena de cálculo (igual para todos los modelos)
@@ -60,8 +62,90 @@ Es una **estimación indirecta**: la ecuación es de *Acer platanoides*, otra es
 
 **Limitaciones de este modelo** (se entregan con cada resultado, en `modelo.limitaciones_modelo`): ecuación de otra especie del mismo género; ajustada en Fort Collins (clima semiárido continental, no mediterráneo); densidad de árboles de bosque de Croacia; DAP de SIVU a 1,30 m y el de la ecuación a 4,5 ft (1,37 m), sin corrección. Además, las limitaciones generales de CC-069.
 
-## 4. Lo que queda pendiente
+## 4. PROPUESTA EXPERIMENTAL · Carbono aéreo total con modelos de carbono directo (2026-11-21)
+
+> **No es metodología vigente.** Implementación experimental en la rama `feature/carbono-directo` (PR #94, borrador), pendiente de revisión y aprobación del equipo. No se fusiona ni se despliega hasta entonces. Resumen para la revisión: `docs/plan/propuestas/carbono-directo-revision-equipo.md`.
+
+> **Otro componente, otro indicador.** Estos modelos estiman el **carbono aéreo total** (tallo, ramas, ramillas y hojas; sin raíces), no el carbono aéreo leñoso de las secciones 1 a 3. Se calculan en `rules/carbono/carbonoAereoTotal.ts` y se exponen como `estimacion_carbono_aereo_total` (ficha B2 y B19), **nunca sumados** con `estimacion_carbono_aereo_lenoso`. Son **exploratorios** para el arbolado urbano de Valparaíso: se muestran rotulados y no generan total oficial. **No alimentan el secuestro anual**, ni como simulación (decisión del 2026-11-21, temporal). Pendientes de sincronización con el Excel maestro: `docs/plan/propuestas/carbono-directo-discrepancia-excel.md`.
+
+### 4.1 Cadena de cálculo
+
+| Paso | Fórmula | Unidad |
+|---|---|---|
+| 1. Carbono aéreo total | `C = a · DAP^b` | kg de C; DAP en cm, medido a 1,30 m |
+| 2. CO₂ equivalente | `CO₂e = C × 44/12` | kg de CO₂ |
+
+La ecuación entrega el carbono **directamente**: no se aplica densidad de madera ni la fracción 0,47, ni se vuelve a aplicar la fracción de carbono de la fuente. La altura no interviene. Fuera del rango de DAP el resultado es `null` con su motivo, sin extrapolar.
+
+### 4.2 Referencias
+
+1. **Fuente principal.** Cruz, P., Bascuñan, A., Velozo, J. y Rodríguez, M. (2015). Funciones alométricas de contenido de carbono para quillay, peumo, espino y litre. *Bosque*, 36(3), 375–381. https://doi.org/10.4067/S0717-92002015000300005 (PDF: https://www.scielo.cl/pdf/bosque/v36n3/art05.pdf). — Componentes considerados: p. 376. Contenido de carbono por componente: p. 379, cuadro 5. Ecuaciones, muestras y rangos: p. 379, cuadro 6.
+2. **Fuente metodológica complementaria.** Cruz, P., Bascuñán, A. y Velozo, J. (2014). *Funciones alométricas para el bosque mediterráneo chileno: modelos de biomasa y carbono para quillay, peumo, espino y litre.* Informe final OTERRA, Universidad Mayor. (PDF: https://gefmontanacurso.mma.gob.cl/wp-content/uploads/2021/01/modulos/clase_04/FUNCIONES_ALOMETRICAS_PARA_EL_BOSQUE_MED.pdf). — Selección de individuos monopódicos y simpódicos: p. 24. DAP a 1,30 m: p. 26, cuadro 3.2. Construcción de los modelos de biomasa y carbono: capítulos 7 y 8.
+
+Parámetros entregados y verificados por la responsable (2026-11-21); SIVU no los redefine.
+
+| Modelo | Especie | a | b | DAP (cm) | n | R² | Carbono de la biomasa aérea seca (solo informativo) |
+|---|---|---|---|---|---|---|---|
+| `CRUZ15-C6-QUSA-D` | *Quillaja saponaria* | 0,0736 | 2,251 | 5–41 | 80 | 0,95 | 49,3 % |
+| `CRUZ15-C6-CRAL-D` | *Cryptocarya alba* | 0,0675 | 2,352 | 5–37 | 82 | 0,95 | 49,5 % |
+
+Nivel de confianza: **`propia_no_urbana`** (ecuación de la misma especie ajustada fuera de la ciudad). Estado metodológico en SIVU: **exploratorio**. Son dos atributos distintos: el primero describe el origen de la ecuación; el segundo, su aplicación en SIVU.
+
+### 4.3 Limitaciones (se entregan con cada resultado)
+
+- **Transferencia a árboles urbanos no validada:** las ecuaciones se ajustaron en el bosque mediterráneo chileno; la arquitectura de copa de un árbol urbano (podas, competencia, espacio) puede diferir.
+- **Componente no comparable con el leñoso:** incluye hojas. Por eso va en un indicador aparte y nunca se suma con el carbono aéreo leñoso.
+- **Multifustales excluidos:** la fuente no demuestra que el DAP equivalente de un multifustal pueda sustituir el DAP con que se ajustó la ecuación. No se suma por fuste ni se usa el DAP equivalente hasta que se apruebe un tratamiento.
+- **Sin secuestro anual:** las tasas de crecimiento y su transferibilidad al entorno urbano requieren validación.
+
+### 4.4 Selección de modelos
+
+Cada cálculo selecciona sus modelos por **componente**, **especie** y **estado** (`seleccionarModelos` en `modelos.ts`): dentro de un componente, si hay un modelo aprobado se descartan los exploratorios. Una especie puede tener modelos en ambos componentes; cada indicador agrega un solo componente, por lo que un árbol nunca se cuenta dos veces en un mismo total. Una prueba exige que, dentro de un componente, no haya dos modelos con la misma especie, estado y variante.
+
+### 4.5 Ejemplares del Piloto (2026-11-21)
+
+Con resultado (monofustales con evaluación completa vigente): A-000543 (quillay, DAP 6,9 cm: 5,69 kg C), A-000554 (quillay, 8,9 cm: 10,09 kg C), A-000568 (quillay, 18,4 cm: 51,76 kg C) y A-000537 (peumo, 7,8 cm: 8,46 kg C).
+Excluidos: multifustales A-000538, A-000540 y A-000558; sin medidas vigentes (OT de inspección en ejecución) A-000562 a A-000565.
+
+## 5. PROPUESTA EXPERIMENTAL · Modelos de volumen de la Urban Tree Database por especie (2026-11-21)
+
+> **No es metodología vigente.** Rama `feature/indicadores-experimental`, pendiente de revisión del equipo. Propuesta consolidada: `docs/plan/propuestas/indicadores-biometricos-propuesta-experimental.md`. Componente: **carbono aéreo leñoso** (misma cadena de la sección 1); por eso el secuestro anual vigente se aplica sin cambios y sus resultados son simulaciones exploratorias que no suman.
+
+**Fuente.** McPherson, E. G., van Doorn, N. S. y Peper, P. J. (2016). *Urban Tree Database and Allometric Equations*. USDA Forest Service, PSW-GTR-253. https://doi.org/10.2737/PSW-GTR-253 — tabla 9 (p. 70), ecuaciones; tabla 11 (pp. 73-82), ecuación asignada y densidad por especie; p. 73, uso de las ecuaciones generales con la densidad de la Global Wood Density Database cuando la especie no está listada. Densidades complementarias: Global Wood Density Database v2.2 (https://zenodo.org/records/18262736, `gwddagg_v2.2_binomial.csv`, `wsg_est` en g/cm³ × 1000).
+
+| Modelo | Especie | Ecuación (V en m³; D en cm; H en m) | DAP (cm) | Densidad (kg/m³) y fuente | Confianza |
+|---|---|---|---|---|---|
+| `UTD-T9-UGEB-DH-GIBI` | *Ginkgo biloba* | UGEB: 0,0001967 · D^1,951853 · H^0,664255 | 6–135 | 520, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-LAIN` | *Lagerstroemia indica* | UGEB | 6–135 | 571, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-OLEU` | *Olea europaea* | UGEB | 6–135 | 700, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-PIUN` | *Pittosporum undulatum* | UGEB | 6–135 | 745, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-SCMO` | *Schinus molle* | UGEB | 6–135 | 650, tabla 11 | `generica_urbana` |
+| `UTD-T9-UGEB-DH-FIEL` | *Ficus elastica* | UGEB | 6–135 | 500, GWDD v2.2 (no está en la tabla 11) | `generica_urbana` |
+| `UTD-T9-UGEB-DH-PITO` | *Pittosporum tobira* | UGEB | 6–135 | 650, GWDD v2.2 (no está en la tabla 11) | `generica_urbana` |
+| `UTD-T9-UGEC-DH-ARAN` | *Araucaria angustifolia* | UGEC: 0,0000426 · D^2,24358 · H^0,64956 | 16–147 | 450, GWDD v2.2 (no está en la tabla 11) | `generica_urbana` |
+| `MCH09-T1-ACPL-D-ACPL` | *Acer platanoides* | 0,0019 · D^1,785 (McHale et al. 2009, igual que CC-070) | 9,7–102,1 | 520, tablas 9 y 11 | `propia_urbana` |
+
+**Componentes:** volumen exterior a la corteza de tronco y ramas (madera verde) × densidad básica = biomasa aérea leñosa; sin hojas ni raíces. **No se usan** los factores de la UTD para raíces (1,28) ni su fracción 0,5: se mantiene la cadena de SIVU (× 0,47).
+
+**Limitaciones:** las ecuaciones generales no son de la especie ni del género (árboles urbanos de EE. UU.); sin rango de altura publicado (la altura no se controla); densidad de madera aplicada al volumen con corteza; DAP a 1,30 m frente a 4,5 ft. Sin densidad de la especie no hay modelo (*Beilschmiedia miersii*, *Araucaria heterophylla*): no se usan promedios de género.
+
+## 6. PROPUESTA EXPERIMENTAL · Variación anual del carbono aéreo total (2026-11-21)
+
+Para las especies con carbono directo (sección 4): ΔDAP con el crecimiento de i-Tree Eco del secuestro anual (sin cambios) y variación = (C(DAP + ΔDAP) − C(DAP)) × 44/12 con la ecuación de Cruz et al. 2015. Incluye hojas: **no** es el secuestro leñoso de SIVU ni la captura fotosintética. Siempre simulación, sin total. Código: `rules/carbono/variacionAereoTotal.ts`.
+
+## 7. PROPUESTA EXPERIMENTAL · Multifustales con el DAP equivalente de i-Tree Eco (2026-11-21)
+
+Solo para las ecuaciones de volumen urbano (secciones 3 y 5), nunca para el carbono directo. Un multifustal con los diámetros de al menos dos fustes usa el DAP único de i-Tree Eco: DAP = (AB / 0,00007854)^0,5 = √Σdᵢ² (Nowak, D. J. 2024, *Understanding i-Tree: 2023 Summary of Programs and Methods*, GTR NRS-200-2023, p. 22), que debe coincidir con el DAP equivalente registrado (D-18) con una tolerancia de 0,05 cm. El resultado es siempre exploratorio (`estado_resultado`), aunque el modelo esté aprobado: no suma al total ni puede ser estimación fundamentada. Limitación: el protocolo de la UTD mide los multifustales bajo la bifurcación cuando es posible (PSW-GTR-253, p. 49), así que la compatibilidad con cada ecuación no está demostrada. Sin diámetros de fustes, o con un DAP que no coincide, no se estima.
+
+## 8. PROPUESTA EXPERIMENTAL · Categoría de crecimiento de i-Tree como referencia (2026-11-21)
+
+La base de especies de i-Tree (https://database.itreetools.org/#/species, campo GrowthRate, consultada el 2026-11-21) asigna categoría a 16 de las 18 especies del Piloto: lento (*Quillaja saponaria*, *Olea europaea*, *Ginkgo biloba*, *Pittosporum tobira*, *Phoenix canariensis*), moderado (*Ulmus minor*, *Acer pseudoplatanus*, *Pittosporum undulatum*, *Araucaria angustifolia*, *Lagerstroemia indica*) y rápido (*Acer negundo*, *Acer platanoides*, *Jacaranda mimosifolia*, *Ficus elastica*, *Araucaria heterophylla*, *Schinus molle*). Sin categoría: *Cryptocarya alba* y *Beilschmiedia miersii*. Copia de la consulta: `BITACORAS_SIVU/secuestro-carbono/verificaciones/indicadores-experimental/itree_categorias_crecimiento_2026-11-21.md`.
+
+Uso: cada simulación lleva `categoria_itree`, que marca el escenario de la especie dentro del rango. **No es una categoría aprobada**: la simulación sigue siendo simulación y nada suma a los totales. i-Tree advierte que hay pocos datos medidos de crecimiento urbano por especie. Para que una especie pase a estimación fundamentada, el equipo debe aprobar su categoría (CATEGORIA_APROBADA_POR_ESPECIE).
+
+## 9. Lo que queda pendiente
 
 - Leer el apéndice 11 de Nowak 2020 y la tabla B.1 de CARB 2010 cuando se puedan descargar, y anotar su verificación aquí.
 - Confirmar en el original la tabla 4.3 del IPCC 2006 (fracción 0,47), como pide CC-069.
-- Llevar los modelos al Excel maestro (hoja de modelos propuesta en CC-069), con estas mismas referencias.
+- Llevar los modelos al Excel maestro (hoja de modelos propuesta en CC-069), con estas mismas referencias, incluidos los de carbono directo (sección 4).
+- Carbono aéreo total: tratamiento de multifustales, validación urbana y secuestro anual de quillay y peumo (decisiones de la responsable).

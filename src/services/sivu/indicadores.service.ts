@@ -1,9 +1,14 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
 import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, listarVariablesCrecimiento, obtenerSuperficieProyecto } from "../../repositories/sivu/indicadores.repository";
-import { agregarSecuestro } from "../rules/carbono/secuestro";
+import { agregarSecuestro, MEDICIONES_EN_REVISION } from "../rules/carbono/secuestro";
+import { ArbolDescriptivo, diagnosticoDescriptivo } from "../rules/indicadores/descriptivos";
+import { CATALOGO } from "../rules/engine/catalogs";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
+import { agregarCarbonoAereoTotal } from "../rules/carbono/carbonoAereoTotal";
+import { agregarCarbonoIntegrado } from "../rules/carbono/carbonoIntegrado";
+import { agregarVariacionAereoTotal, resumirProyeccionAnual } from "../rules/carbono/variacionAereoTotal";
 import {
   ArbolEspecie,
   abundanciaRelativa,
@@ -16,6 +21,7 @@ import {
 import {
   ArbolIndicador,
   areaProyectadaCopa,
+  coberturaCopa,
   densidadArborea,
   diametroMedioCopa,
   distribucionClaseDiametrica,
@@ -85,9 +91,55 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
       especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
       tipo_hoja: rasgoPorArbol.get(f.id)?.tipo_hoja ?? null,
       multifustal: f.multifustal,
+      dap_fustes_cm: f.dap_fustes_cm ?? null,
       dap_cm: f.dap_cm,
       altura_total_m: f.altura_total_m,
     }));
+
+  // Propuesta experimental: diagnóstico descriptivo con datos medidos y vigentes (sin ecuaciones).
+  const etiqueta = (catalogo: string, codigo: string | null | undefined) =>
+    codigo ? { codigo, etiqueta: CATALOGO.find((c) => c.catalogo === catalogo && c.codigo === codigo)?.etiqueta ?? null } : null;
+  const arbolesDescriptivos: ArbolDescriptivo[] = delAmbito
+    .filter((f) => presentesIds.has(f.id))
+    .map((f) => {
+      const r = rasgoPorArbol.get(f.id);
+      const c = crecimientoPorArbol.get(f.id);
+      return {
+        id: f.id,
+        tree_code: f.tree_code ?? null,
+        sector: f.sector,
+        presente: true,
+        evaluacion_completa_vigente: evaluadosIds.has(f.id),
+        especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
+        especie_en_catalogo: f.species_id !== null,
+        genero: r?.genero ?? null,
+        familia: r?.familia ?? null,
+        origen_biogeografico: r?.origen_biogeografico ?? null,
+        multifustal: f.multifustal,
+        dap_fustes_cm: f.dap_fustes_cm ?? null,
+        dap_cm: f.dap_cm,
+        altura_total_m: f.altura_total_m,
+        diametro_copa_m: f.diametro_copa_m,
+        altura_primera_rama_m: f.altura_primera_rama_m ?? null,
+        altura_base_copa_viva_m: f.altura_base_copa_viva_m ?? null,
+        clase_edad: etiqueta("clase_edad", f.clase_edad),
+        cle: c?.cle ?? null,
+        muerte_regresiva_pct: c?.muerte_regresiva_pct ?? null,
+        defoliacion_pct: c?.defoliacion_pct ?? null,
+        clorosis_pct: c?.clorosis_pct ?? null,
+        necrosis_pct: c?.necrosis_pct ?? null,
+        copa_faltante_pct: c?.copa_faltante_pct ?? null,
+        vitalidad: etiqueta("clasificacion_vitalidad", c?.vitalidad),
+      };
+    });
+
+  const arbolesSecuestro = arbolesCarbono.map((a) => ({
+    ...a,
+    cle: crecimientoPorArbol.get(a.id)?.cle ?? null,
+    muerte_regresiva_pct: crecimientoPorArbol.get(a.id)?.muerte_regresiva_pct ?? null,
+    poda_intensa: crecimientoPorArbol.get(a.id)?.poda_intensa ?? null,
+    tree_code: delAmbito.find((f) => f.id === a.id)?.tree_code ?? null,
+  }));
 
   return {
     fecha_consulta: fechaConsulta,
@@ -105,6 +157,8 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     clases_diametricas: distribucionClaseDiametrica(evaluados),
     diametro_medio_copa: diametroMedioCopa(evaluados),
     area_proyectada_copa: areaProyectadaCopa(evaluados),
+    // Cobertura de copa del sector: área de copa / superficie del sector (Valej, 2026-11-22).
+    cobertura_copa: coberturaCopa(areaProyectadaCopa(evaluados), superficie, barrio !== undefined),
     cobertura_taxonomica: coberturaTaxonomica(especies),
     riqueza_especies: riquezaEspecies(especies),
     abundancia_relativa: abundanciaRelativa(especies),
@@ -113,15 +167,22 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     proporcion_origen: proporcionOrigen(especies),
     // Separados: biomasa aérea leñosa, carbono aéreo leñoso y CO₂ equivalente (total en t), con cobertura y motivos.
     estimacion_carbono_aereo_lenoso: agregarCarbono(arbolesCarbono),
+    // Carbono aéreo total con follaje (carbono directo, 2026-11-21): indicador aparte, solo cobertura mientras
+    // los modelos sean exploratorios; nunca se suma con el carbono aéreo leñoso.
+    estimacion_carbono_aereo_total: agregarCarbonoAereoTotal(arbolesCarbono),
+    // Propuesta experimental (Valej, 2026-11-22): mejor modelo por árbol, aéreo y total separados, con su traza.
+    estimacion_carbono_integrada: agregarCarbonoIntegrado(
+      arbolesCarbono.map((a) => ({ ...a, tree_code: delAmbito.find((f) => f.id === a.id)?.tree_code ?? null }))
+    ),
     // Secuestro anual (decisiones A a C, 2026-11-20): cobertura por tipo de resultado; el total suma solo
     // estimaciones fundamentadas, nunca simulaciones.
-    estimacion_secuestro_anual: agregarSecuestro(
-      arbolesCarbono.map((a) => ({
-        ...a,
-        cle: crecimientoPorArbol.get(a.id)?.cle ?? null,
-        muerte_regresiva_pct: crecimientoPorArbol.get(a.id)?.muerte_regresiva_pct ?? null,
-        poda_intensa: crecimientoPorArbol.get(a.id)?.poda_intensa ?? null,
-      }))
-    ),
+    estimacion_secuestro_anual: agregarSecuestro(arbolesSecuestro),
+    // Propuesta experimental (2026-11-21): variación anual proyectada del carbono aéreo total (con hojas) de las
+    // especies con carbono directo. Solo cobertura; no es secuestro leñoso ni captura fotosintética.
+    estimacion_variacion_anual_carbono_aereo_total: agregarVariacionAereoTotal(arbolesSecuestro),
+    // Propuesta experimental: una sola clase por árbol (secuestro leñoso, variación aérea total o no estimable).
+    resumen_proyeccion_anual: resumirProyeccionAnual(arbolesSecuestro),
+    // Propuesta experimental: indicadores descriptivos (no registrados en INDICES).
+    diagnostico_descriptivo: diagnosticoDescriptivo(arbolesDescriptivos, MEDICIONES_EN_REVISION),
   };
 }
