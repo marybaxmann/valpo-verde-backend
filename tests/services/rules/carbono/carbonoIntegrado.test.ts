@@ -104,3 +104,13 @@ describe("Carbono directo por vástago (Cruz et al. 2015)", () => {
     expect(r.aereo).toBeNull();
   });
 });
+
+describe("Belloto del norte con la densidad del género (Valej, 2026-11-22)", () => {
+  it("se estima con UGEB y 570 kg/m³ del género, como exploratorio", () => {
+    const r = calcularCarbonoIntegradoArbol(arbol({ especie_cientifica: "Beilschmiedia miersii", dap_cm: 56.1, altura_total_m: 23.6 }), FECHA);
+    const v = 0.0001967 * 56.1 ** 1.951853 * 23.6 ** 0.664255;
+    expect(r.aereo!.modelo.id).toBe("UTD-T9-UGEB-DH-BEMI");
+    expect(r.aereo!.carbono_kg).toBeCloseTo(v * 570 * 0.47, 6);
+    expect(r.estado).toBe("exploratorio");
+  });
+});

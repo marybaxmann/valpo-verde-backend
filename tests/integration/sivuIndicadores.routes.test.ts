@@ -278,7 +278,7 @@ describe("GET /api/sivu/projects/:id/indicadores: propuesta experimental (2026-1
       fila("j1", { especie_cientifica: "Jacaranda mimosifolia", dap_cm: 30, altura_total_m: 10 }),
       fila("g1", { especie_cientifica: "Ginkgo biloba", dap_cm: 84, altura_total_m: 6.5 }),
       fila("o1", { especie_cientifica: "Olea europaea", dap_cm: 17, altura_total_m: 5.8 }),
-      fila("b1", { especie_cientifica: "Beilschmiedia miersii", dap_cm: 39.1, altura_total_m: 14.4 }),
+      fila("b1", { especie_cientifica: "Araucaria heterophylla", dap_cm: 39.1, altura_total_m: 14.4 }),
       fila("q1", { especie_cientifica: "Quillaja saponaria", dap_cm: 18.4, altura_total_m: 8.3 }),
     ]);
     const d = (await request(app).get(RUTA).set(auth)).body.data;

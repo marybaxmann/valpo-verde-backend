@@ -60,7 +60,7 @@ describe("catálogo experimental de la UTD (PSW-GTR-253)", () => {
 
   it("todos exploratorios, del componente leñoso, con fuente y limitaciones; los generales con confianza «generica_urbana»", () => {
     const nuevos = MODELOS_VOLUMEN.filter((m) => m.id.startsWith("UTD-T9-UGE") || m.id === "MCH09-T1-ACPL-D-ACPL");
-    expect(nuevos).toHaveLength(9);
+    expect(nuevos).toHaveLength(10);
     for (const m of nuevos) {
       expect(m.estado).toBe("exploratorio");
       expect(m.componente).toBe("aerea_lenosa");
@@ -99,7 +99,7 @@ describe("carbono almacenado y secuestro con los modelos UTD experimentales (pro
     expect(calcularCarbonoArbol(arbol("A-000552", "Lagerstroemia indica", 3.4, 2.9)).motivo).toBe("fuera_de_rango");
     expect(calcularCarbonoArbol(arbol("A-000527", "Schinus molle", 23.41, 5.4, { multifustal: true })).motivo).toBe("multifustal_no_admitido");
     // Sin densidad de la especie en la tabla 11 ni en la GWDD v2.2: no hay modelo.
-    expect(calcularCarbonoArbol(arbol("A-000532", "Beilschmiedia miersii", 39.1, 14.4)).motivo).toBe("sin_modelo");
+    expect(calcularCarbonoArbol(arbol("A-000531", "Araucaria heterophylla", 39.1, 14.4)).motivo).toBe("sin_modelo");
     expect(calcularCarbonoArbol(arbol("A-000531", "Araucaria heterophylla", 47.3, 24.5)).motivo).toBe("sin_modelo");
     // Las ecuaciones generales necesitan la altura.
     expect(calcularCarbonoArbol(arbol("x", "Ginkgo biloba", 30, null)).motivo).toBe("sin_modelo");
@@ -259,7 +259,7 @@ describe("resumen de la proyección anual (una clase por árbol)", () => {
       arbol("j", "Jacaranda mimosifolia", 30, 10),
       arbol("q", "Quillaja saponaria", 18.4, 8.3),
       arbol("qm", "Quillaja saponaria", 25.59, 7.6, { multifustal: true, dap_fustes_cm: [21, 11.6, 8.9] }),
-      arbol("b", "Beilschmiedia miersii", 39.1, 14.4),
+      arbol("b", "Araucaria heterophylla", 39.1, 14.4),
       arbol("l", "Lagerstroemia indica", 3.4, 2.9),
       arbol("x", "Ginkgo biloba", 30, 8, { evaluacion_completa_vigente: false }),
     ]);
@@ -278,8 +278,8 @@ describe("resumen de la proyección anual (una clase por árbol)", () => {
 });
 
 describe("motivo explícito para especies sin densidad", () => {
-  it("Beilschmiedia miersii y Araucaria heterophylla: sin_modelo con el motivo de la densidad", () => {
-    for (const e of ["Beilschmiedia miersii", "Araucaria heterophylla"]) {
+  it("Araucaria heterophylla: sin_modelo con el motivo de la densidad", () => {
+    for (const e of ["Araucaria heterophylla"]) {
       const r = calcularCarbonoArbol(arbol("x", e, 40, 15));
       expect(r.motivo).toBe("sin_modelo");
       expect(r.detalle).toMatch(/No hay densidad de madera de la especie/);

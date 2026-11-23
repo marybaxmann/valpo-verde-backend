@@ -388,7 +388,6 @@ const ACER_PLATANOIDES_PROPIA = {
  * género. Solo cambia el texto del motivo «sin_modelo».
  */
 export const ESPECIES_SIN_DENSIDAD: Readonly<Record<string, string>> = {
-  "beilschmiedia miersii": "No hay densidad de madera de la especie en las fuentes revisadas (UTD tabla 11; GWDD v1 y v2.2): sin ella no se puede convertir el volumen en biomasa, y no se usan promedios de género.",
   "araucaria heterophylla": "No hay densidad de madera de la especie en las fuentes revisadas (UTD tabla 11; GWDD v1 y v2.2): sin ella no se puede convertir el volumen en biomasa, y no se usan promedios de género.",
 };
 
@@ -410,6 +409,23 @@ export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
   { ...UGEB, id: "UTD-T9-UGEB-DH-SCMO", especie: "schinus molle", densidad: densidadTabla11(650, "SCMO") },
   { ...UGEB, id: "UTD-T9-UGEB-DH-FIEL", especie: "ficus elastica", densidad: densidadGwdd(500, "Ficus elastica, wsg_est 0,50 (8 registros, 8 fuentes, 5 países); no está en la tabla 11 de la UTD") },
   { ...UGEB, id: "UTD-T9-UGEB-DH-PITO", especie: "pittosporum tobira", densidad: densidadGwdd(650, "Pittosporum tobira, wsg_est 0,65 (8 registros, 3 fuentes, 2 países); no está en la tabla 11 de la UTD") },
+  // Excepción de Valej (2026-11-22): sin densidad de la especie, se usa la del GÉNERO (exploratorio).
+  {
+    ...UGEB,
+    id: "UTD-T9-UGEB-DH-BEMI",
+    especie: "beilschmiedia miersii",
+    densidad: {
+      valor: 570,
+      unidad: "kg/m3",
+      tipo: "masa seca / volumen verde",
+      fuente: `${GWDD_22.replace("gwddagg_v2.2_binomial.csv", "gwddagg_v2.2_genus.csv")}: género Beilschmiedia, wsg_est 0,57 (196 registros, 41 fuentes, 31 países); Beilschmiedia miersii no tiene densidad propia`,
+      version: "v2.2",
+    },
+    limitaciones_modelo: [
+      ...LIMITACIONES_GENERICA,
+      "Densidad del GÉNERO Beilschmiedia, no de B. miersii: excepción a la regla de no usar promedios de género, aprobada por Valej (2026-11-22).",
+    ],
+  },
   { ...UGEC, id: "UTD-T9-UGEC-DH-ARAN", especie: "araucaria angustifolia", densidad: densidadGwdd(450, "Araucaria angustifolia, wsg_est 0,45 (37 registros, 11 fuentes, 3 países); no está en la tabla 11 de la UTD") },
 ];
 

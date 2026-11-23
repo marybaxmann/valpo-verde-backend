@@ -78,7 +78,7 @@ describe("calcularCarbonoArbol — motivos de null (nunca extrapola ni rellena)"
     ["multifustal desconocido", { multifustal: null }, "configuracion_fuste_no_determinada"],
     ["sin DAP", { dap_cm: null }, "falta_dap"],
     ["palmera", { especie_cientifica: "Jacaranda mimosifolia", tipo_hoja: "palmera" }, "palmera_sin_modelo"],
-    ["especie sin modelo (Beilschmiedia miersii)", { especie_cientifica: "Beilschmiedia miersii" }, "sin_modelo"],
+    ["especie sin modelo (Araucaria heterophylla)", { especie_cientifica: "Araucaria heterophylla" }, "sin_modelo"],
     ["solo género", { especie_cientifica: "Quercus sp." }, "sin_modelo"],
     ["sin especie", { especie_cientifica: null }, "sin_modelo"],
     ["no presente", { presente: false }, "no_presente"],
@@ -164,7 +164,7 @@ describe("agregarCarbono — árboles ficticios de QA Fase 7 (fixtures; no se to
     arbol("QA-F-07", { especie_cientifica: LIQ, dap_cm: 25, altura_total_m: null }), // E6
     arbol("QA-F-08", { multifustal: true }),
     arbol("QA-F-09", { especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" }), // sin modelo para la especie
-    arbol("QA-F-10", { especie_cientifica: "Beilschmiedia miersii" }),
+    arbol("QA-F-10", { especie_cientifica: "Araucaria heterophylla" }),
     arbol("QA-F-11", { especie_cientifica: "Quercus sp." }),
     arbol("QA-F-12", { dap_cm: null }),
     arbol("QA-F-13", { especie_cientifica: "Jacaranda mimosifolia var. alba" }), // como E1

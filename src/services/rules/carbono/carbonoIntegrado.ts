@@ -137,8 +137,6 @@ export const MODELOS_BIOMASA: readonly ModeloBiomasa[] = [
 export const PENDIENTES_POR_ESPECIE: Readonly<Record<string, string>> = {
   "phoenix canariensis":
     "Palmera: no hay una ecuación de Phoenix canariensis verificada. La única revisada (Frangi y Lugo 1985, en Brown 1997) se ajustó con Prestoea montana, una palmera de tronco delgado; transferirla a una palmera canaria subestimaría su biomasa.",
-  "beilschmiedia miersii":
-    "Sin densidad de madera publicada (UTD tabla 11; GWDD v1 y v2.2) ni una ecuación de biomasa de la especie, del género o de un grupo funcional compatible verificada.",
   "araucaria heterophylla":
     "Sin densidad de madera publicada (UTD tabla 11; GWDD v1 y v2.2) ni una ecuación de biomasa de la especie o del género verificada.",
 };

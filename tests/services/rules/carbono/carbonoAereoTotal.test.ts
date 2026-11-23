@@ -73,7 +73,7 @@ describe("catálogo de carbono directo (Cruz et al. 2015)", () => {
   });
 
   it("los modelos de volumen existentes no cambian: mismo número, componente leñoso y estados", () => {
-    expect(MODELOS_VOLUMEN).toHaveLength(16);
+    expect(MODELOS_VOLUMEN).toHaveLength(17);
     expect(MODELOS_VOLUMEN.every((m) => m.componente === "aerea_lenosa")).toBe(true);
     expect(MODELOS_VOLUMEN.filter((m) => m.estado === "aprobado").map((m) => m.id)).toEqual([
       "UTD-TS7-JAME-DH",
