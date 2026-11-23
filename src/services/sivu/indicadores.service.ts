@@ -16,6 +16,7 @@ import {
 import {
   ArbolIndicador,
   areaProyectadaCopa,
+  coberturaCopa,
   densidadArborea,
   diametroMedioCopa,
   distribucionClaseDiametrica,
@@ -105,6 +106,8 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     clases_diametricas: distribucionClaseDiametrica(evaluados),
     diametro_medio_copa: diametroMedioCopa(evaluados),
     area_proyectada_copa: areaProyectadaCopa(evaluados),
+    // Cobertura de copa del sector: área de copa / superficie del sector (Valej, 2026-11-22).
+    cobertura_copa: coberturaCopa(areaProyectadaCopa(evaluados), superficie, barrio !== undefined),
     cobertura_taxonomica: coberturaTaxonomica(especies),
     riqueza_especies: riquezaEspecies(especies),
     abundancia_relativa: abundanciaRelativa(especies),
