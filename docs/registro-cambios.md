@@ -3354,7 +3354,9 @@ motivo)
 - Backend local: carga directa y firmada para instrumentales, con las validaciones de estado y responsabilidad existentes; la descripción opcional se conserva en la columna de fotos existente. Migración 043 reversible para el conteo transaccional, sin modificar 040 ni 041.
 - Las cuatro instrumentales de regularización se cargan después de desplegar este CC. Publicación autorizada por la autora el 2026-11-21. La regularización queda sujeta a su autorización independiente.
 
-### CC-082 — PALM-01: evaluación de palmeras (SIVU 3.3.0, en preparación)
+### CC-082 — PALM-01: evaluación de palmeras (SIVU 3.4.0, publicada el 2026-11-23)
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.4.0, publicada el 2026-11-23. `rule_version` 3.4. Ver «Publicación SIVU 3.3.0 y 3.4.0».
 
 - Aprobación del criterio: autora, 2026-11-21. Paquete MINOR 3.3.0 en preparación, `rule_version` 3.3 al publicar, sobre la 3.2.1 (CC-081). **Renumerado:** se registró primero como CC-081, pero ese número lo tomó la 3.2.1 (fotografías D-27, migración 043), publicada el mismo día. Al integrar `feature/fase6-backend-api` (2026-11-21) pasó a CC-082 y sus filas se corrieron una posición por la D-308 nueva de la 3.2.1. CC-082 no necesita migración: los campos de palmeras viven en `evaluations.variables` (jsonb). Fundamento: matriz E2e, protocolo E4e, diagrama v5 y propuesta E7 de PALM-01, en la carpeta de auditoría metodológica de la tesis.
 - **Superposición: no se modifica ninguna fila, celda o estilo existente del Excel.** Se agregan:
@@ -3431,6 +3433,8 @@ motivo)
 
 ### CC-083 — IF-25: alcance de Evaluación inicial y Reevaluación
 
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.3.0, publicada el 2026-11-23. `rule_version` 3.3. Ver «Publicación SIVU 3.3.0 y 3.4.0».
+
 - Aprobación de la autora: 2026-11-22. Paquete 3.3.0 en preparación, sobre 3.2.1.
 - Alcance de la inspección: Árbol, Infraestructura o Ambos. Ambos es el valor por defecto e interpreta la ausencia en inspecciones anteriores de los tipos aplicables.
 - Infraestructura exige M04, condición del sitio y D-27. Conserva las fechas sugeridas. Árbol exige los datos del árbol y R01–R04, conserva la clasificación de infraestructura vigente y recalcula con ella la prioridad.
@@ -3440,6 +3444,8 @@ motivo)
 - Pendiente: implementación, regresión y publicación.
 
 ### CC-084 — Completitud por componente ensayado en Evaluación instrumental
+
+**Sincronización con el Excel maestro:** incorporado a VERSION 3.3.0, publicada el 2026-11-23. `rule_version` 3.3. Ver «Publicación SIVU 3.3.0 y 3.4.0».
 
 - Aprobación de la autora: 2026-11-22. Incluido con CC-083 en 3.3.0, en preparación.
 - Se registra al menos uno de los componentes D-39 y D-51. Un No explícito acredita que ese componente se ensayó. Cuando la respuesta es Sí, se exige el resultado interno Sí/No y el espesor residual medido en esta inspección.
@@ -3454,6 +3460,33 @@ motivo)
 - Verificar en pruebas la migración 046 antes de activar 3.3, y la 047 antes de activar 3.4. La 047 clasifica registros existentes de Arecaceae y de Phoenix canariensis. Las especies que falten se deben incorporar por el flujo del catálogo.
 - Mantener sin configurar `SIVU_RULE_VERSION_OPERATIVA` conserva 3.2. En pruebas, 3.3 activa IF-25 y 3.4 activa además PALM-01. El cambio de versión, la base y los dos despliegues deben coordinarse.
 - Antes de promover, guardar y calcular un borrador de palmera y otro de árbol en una OT de prueba, y verificar la compatibilidad de un borrador previo. La preparación del candidato no registra ni finaliza evaluaciones del piloto.
+
+### Publicación SIVU 3.3.0 y 3.4.0
+
+- Decisión de la autora e investigadora responsable SIVU, 2026-11-23: publicar juntas la 3.3.0 (CC-083 y CC-084) y la 3.4.0 (CC-082), en ese orden. La 3.4.0 declara la 3.3.0 como versión anterior. Tags `metodologia-v3.3.0` y `metodologia-v3.4.0`, ambos sobre el commit de integración en `release/demo`.
+- **Excepción al orden de §14.7, como en la 3.0.0.** La API de pruebas ya calculaba con `SIVU_RULE_VERSION_OPERATIVA = 3.4` antes de publicar.
+  - Primera evaluación 3.4: 2026-11-22, AV_000087 (INS-000489).
+  - Al publicar, `evaluations` tiene 7 filas con `rule_version` 3.4 y `tree_assessments` tiene 6. Todas son de palmeras (`indicadores.tipo = palmera`): AV_000087 y AV_000102 a 106 (Plaza Victoria).
+  - Ninguna evaluación quedó con `rule_version` 3.3.
+- **Excel:** solo la hoja VERSION, filas 11 y 12: estado publicada, fecha de publicación, tag y nota de la excepción. En la fila 12, `aprobado_por` es la autora y `fecha_aprobacion` es el 2026-11-21, la aprobación del criterio de CC-082. Ninguna otra parte del `.xlsx` cambió (se comparó parte por parte). `VERSION.csv` se regeneró con `exportar_excel.py`. `verificar_14_9.py`: sin hallazgos en los puntos automatizables.
+- **Migraciones en la base de pruebas:** 046 (`20261122180337`), 047 (`20261122180350`) y 048 (`20261122221921`). La 050 (*Washingtonia robusta*, PR #112) está aplicada en pruebas, pero es un alta de catálogo fuera del paquete.
+- **Cierre de OT de palmeras:** PR #109 (`dfe1953`). Desde entonces, completar la OT calcula con PALM-01 aunque `trees.species_id` llegue en la misma transacción.
+- **Pendientes de CC-082 resueltos:**
+  - motor y composición;
+  - borrador y completitud;
+  - formulario del frontend;
+  - `tipo_hoja` del catálogo (047 y 048);
+  - AV_000087 completada;
+  - versión operativa 3.4.
+- **Queda abierto:**
+  - la prueba en la API publicada de un borrador **de árbol** con 3.4: guardar, calcular y comprobar la compatibilidad de un borrador previo. Ninguna evaluación de árbol se ha calculado aún con 3.3 o 3.4;
+  - la comprobación de los tres borradores instrumentales (CC-084);
+  - la regla de plaga «No determinado» en palmeras;
+  - el plazo de la probabilidad de falla;
+  - `D_diametro_basal_tronco_cm`;
+  - `MOTOR_COMMIT` del despliegue, que sigue en `f3a7356`.
+- **Pendiente de otra versión:** CC-078 (ficha pública, D-280 a D-307) sigue esperando su registro en VERSION, que no figura en `cc_incluidos`. No se incorpora aquí y queda diferido.
+- La base real (`ytcxswbulsmboucardxa`) no se toca. Su activación requiere una confirmación independiente de la autora.
 
 ### CC-085 — Paleta de clasificación de riesgo: verde, amarillo, naranjo y rojo profundo
 

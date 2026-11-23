@@ -19,15 +19,26 @@ No inferir ni completar metodología faltante.
 
 ## Versión vigente
 
-Versión vigente del paquete metodológico: **3.2.1** (`rule_version` **3.2**), publicada el 2026-11-21, tag `metodologia-v3.2.1`. Versión anterior: 3.2.0, tag `metodologia-v3.2.0` (CC-080).
+Versión vigente del paquete metodológico: **3.4.0** (`rule_version` **3.4**), publicada el 2026-11-23, tag `metodologia-v3.4.0` (CC-082). Versión anterior: 3.3.0 (`rule_version` 3.3), publicada el mismo día, tag `metodologia-v3.3.0` (CC-083 y CC-084). Antes: 3.2.1, tag `metodologia-v3.2.1`.
 
-**Activación en producción:** requiere confirmación de la autora. Este paquete no introduce migraciones. Las evaluaciones anteriores conservan su `rule_version` y no se recalculan automáticamente.
+**Activación:** la API de pruebas (`release/demo`, base `gmlbmyreoxgoqrolhyxo`) calcula con 3.4 mediante `SIVU_RULE_VERSION_OPERATIVA = 3.4`. La activación ocurrió **antes** de esta publicación: la primera evaluación 3.4 es del 2026-11-22 (AV_000087). Es una excepción al orden de §14.7, como la de 3.0.0. Al publicar, las 7 evaluaciones con `rule_version` 3.4 son de palmeras, y ninguna quedó con 3.3. Las evaluaciones anteriores conservan su `rule_version` y no se recalculan automáticamente. Migraciones requeridas: 046 (IF-25), 047 y 048 (catálogo de palmeras), ya aplicadas en la base de pruebas. La base real no se toca.
 
 - **Fuente única:** el Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (PR-002 v3.0). Su export de texto está en `docs/excel/export/`.
-- **Reglas vigentes:** todas las de REGLAS_INDICADORES (131), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0). 3.0.0 cambia la agregación de R01 a R03 (pisos y suma estructural) y de M04 (peor componente), y separa la condición fisiológica de copa y la condición del sitio (CC-071).
+- **Reglas vigentes:** todas las de REGLAS_INDICADORES (188: 131 de árboles y 57 de palmeras, PB-, PE- y PC-), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0). 3.0.0 cambia la agregación de R01 a R03 (pisos y suma estructural) y de M04 (peor componente), y separa la condición fisiológica de copa y la condición del sitio (CC-071).
 - **INDICES** sigue en propuesta y no es implementable (CC-016; DM-09). Los índices de proporción de árboles nativos e introducidos no se adoptan en 2.0.0 (CC-039).
 - **Diagramas:** no forman parte del paquete (CC-030); son ilustraciones en `docs/excel/diagramas/` (imágenes, el `.drawio` de consolidación y `docs/excel/Diagrama actualizados.json`). Si difieren del Excel, manda el Excel.
 - **Documentos `01-roots-base.md` a `05-infrastructure.md` (v1.1)** y las secciones de este índice marcadas como reemplazadas son historial de la metodología textual previa; no se usan para implementar.
+
+### Cambios de 3.4.0 (CC-082)
+
+- PALM-01: evaluación de palmeras para las especies con `tipo_hoja = Palmera` en el catálogo. Incluye 9 campos (D-309 a D-317), REGLAS_GENERALES filas 30 a 33, las 57 reglas PB-, PE- y PC- de REGLAS_INDICADORES, el bloque R01-P a R03-P de MATRICES_CALCULO (máximos 10, 12 y 5, con las bandas de los árboles) y la hoja PALMERAS.
+- Superposición: ningún campo, regla ni resultado de los árboles cambia. Un `tipo_hoja` nulo o distinto de Palmera usa las reglas de árboles. La consecuencia, M01 a M03, R04 y M04 son comunes.
+- Fundamento: matriz E2e, protocolo E4e, diagrama v5 y propuesta E7 de PALM-01, en la carpeta de auditoría metodológica de la tesis.
+
+### Cambios de 3.3.0 (CC-083 y CC-084)
+
+- IF-25: alcance de la inspección (Árbol, Infraestructura o Ambos) y vigencia de Evaluación inicial y Reevaluación. La OT completada incorpora los campos registrados a la evaluación vigente.
+- CC-084: completitud por componente ensayado en Evaluación instrumental.
 
 ### Cambios de 3.2.1
 
