@@ -6,7 +6,7 @@
  * es null con su motivo.
  */
 import { claveEspecie } from "../indicadores/especies";
-import { FACTOR_CO2_POR_C, FRACCION_CARBONO, LIMITACIONES, MODELOS_VOLUMEN, ModeloVolumen } from "./modelos";
+import { ESPECIES_SIN_DENSIDAD, FACTOR_CO2_POR_C, FRACCION_CARBONO, LIMITACIONES, ModeloVolumen, seleccionarModelos, TRATAMIENTO_MULTIFUSTAL_ITREE } from "./modelos";
 
 export interface ArbolCarbono {
   id: string;
@@ -28,6 +28,13 @@ export interface ArbolCarbono {
   dap_cm: number | null;
   /** D-19. */
   altura_total_m: number | null;
+  /** D-16: diámetros de cada fuste de un multifustal (propuesta experimental). */
+  dap_fustes_cm?: number[] | null;
+  /**
+   * Solo para la proyección del secuestro: el DAP ya es el equivalente
+   * proyectado y no se compara con los fustes medidos.
+   */
+  proyeccion_dap?: boolean;
 }
 
 /**
@@ -82,36 +89,53 @@ export interface CarbonoArbol {
     limitaciones_modelo: string[];
   };
   entradas: { dap_cm: number; altura_total_m: number | null; densidad_kg_m3: number; fraccion_carbono: number };
+  /**
+   * Estado del RESULTADO: el del modelo, salvo un multifustal, que siempre es
+   * «exploratorio» (propuesta experimental). Solo «aprobado» suma al total.
+   */
+  estado_resultado: "aprobado" | "exploratorio";
+  /** null en monofustales; en multifustales, el DAP equivalente usado y su fuente. */
+  tratamiento_multifustal: null | { metodo: string; formula: string; fuente: string; dap_fustes_cm: number[]; dap_equivalente_cm: number };
 }
 
 export type ResultadoArbol =
   | { valor: CarbonoArbol; categoria: null; motivo: null; detalle: null }
   | { valor: null; categoria: CategoriaSinCarbono; motivo: MotivoSinCarbono; detalle: string };
 
-const sinResultado = (motivo: MotivoSinCarbono, detalle: string): ResultadoArbol => ({
+export type SinResultado = Extract<ResultadoArbol, { valor: null }>;
+
+export const sinResultado = (motivo: MotivoSinCarbono, detalle: string): SinResultado => ({
   valor: null,
   categoria: CATEGORIA_DE_MOTIVO[motivo],
   motivo,
   detalle,
 });
-const dentro = (x: number, min: number, max: number) => x >= min && x <= max;
-const fmt = (x: number) => x.toFixed(4).replace(/\.?0+$/, "");
+export const dentro = (x: number, min: number, max: number) => x >= min && x <= max;
+export const fmt = (x: number) => x.toFixed(4).replace(/\.?0+$/, "");
 
-/** Calcula un árbol, empezando por su pertenencia al universo de cálculo. */
-export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
+/**
+ * Requisitos comunes a todos los modelos, en este orden: universo de
+ * cálculo, modelo para la especie, palmera, configuración de fustes y DAP.
+ * null si el árbol los cumple. Los textos de «sin modelo» y «multifustal»
+ * los pone cada cálculo, porque dependen de su catálogo y su fuente.
+ */
+export function comprobarRequisitosComunes(
+  a: ArbolCarbono,
+  clave: string | null,
+  hayModelo: boolean,
+  detalles: { sinModelo: string; multifustal: string },
+  /** Propuesta experimental: el cálculo trata él mismo los multifustales. */
+  admiteMultifustal = false
+): SinResultado | null {
   if (!a.presente) return sinResultado("no_presente", "El árbol no está presente (D-28).");
   if (!a.evaluacion_completa_vigente) {
     return sinResultado("sin_evaluacion_valida", "El árbol no tiene una evaluación completa válida y vigente: queda fuera del universo de cálculo.");
   }
-  const clave = claveEspecie(a.especie_cientifica);
-  const modelos = clave === null ? [] : MODELOS_VOLUMEN.filter((m) => m.especie === clave);
-  if (modelos.length === 0) {
-    return sinResultado("sin_modelo", clave === null ? "Especie no determinada a nivel específico." : "No hay un modelo aprobado para esta especie.");
+  if (!hayModelo) {
+    return sinResultado("sin_modelo", clave === null ? "Especie no determinada a nivel específico." : detalles.sinModelo);
   }
   if (a.tipo_hoja === "palmera") return sinResultado("palmera_sin_modelo", "Las palmeras no tienen modelo aprobado.");
-  if (a.multifustal === true) {
-    return sinResultado("multifustal_no_admitido", "El modelo se ajustó con árboles de un fuste a la altura del DAP; los multifustales no se estiman.");
-  }
+  if (a.multifustal === true && !admiteMultifustal) return sinResultado("multifustal_no_admitido", detalles.multifustal);
   if (a.multifustal === null) {
     return sinResultado(
       "configuracion_fuste_no_determinada",
@@ -119,6 +143,50 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
     );
   }
   if (a.dap_cm === null) return sinResultado("falta_dap", "Falta el DAP.");
+  return null;
+}
+
+/** Calcula un árbol, empezando por su pertenencia al universo de cálculo. */
+export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
+  const clave = claveEspecie(a.especie_cientifica);
+  // Solo modelos del componente aéreo leñoso (selección explícita por componente y estado, 2026-11-21).
+  const modelos = seleccionarModelos("aerea_lenosa", clave);
+  const admiteMultifustal = modelos.length > 0 && modelos.every((m) => m.multifustal_experimental);
+  const requisito = comprobarRequisitosComunes(
+    a,
+    clave,
+    modelos.length > 0,
+    {
+      sinModelo: (clave !== null && ESPECIES_SIN_DENSIDAD[clave]) || "No hay un modelo aprobado para esta especie.",
+      multifustal: "El modelo se ajustó con árboles de un fuste a la altura del DAP; los multifustales no se estiman.",
+    },
+    admiteMultifustal
+  );
+  if (requisito) return requisito;
+  if (a.dap_cm === null) return sinResultado("falta_dap", "Falta el DAP.");
+
+  // Propuesta experimental (2026-11-21): multifustal con el DAP equivalente de i-Tree Eco; resultado exploratorio.
+  let tratamiento: CarbonoArbol["tratamiento_multifustal"] = null;
+  if (a.multifustal === true) {
+    const fustes = (a.dap_fustes_cm ?? []).filter((d) => Number.isFinite(d) && d > 0);
+    if (fustes.length < 2) {
+      return sinResultado("multifustal_no_admitido", "Multifustal sin los diámetros de al menos dos fustes: no se puede calcular el DAP equivalente.");
+    }
+    const equivalente = Math.sqrt(fustes.reduce((s, d) => s + d * d, 0));
+    if (!a.proyeccion_dap && Math.abs(equivalente - a.dap_cm) > TRATAMIENTO_MULTIFUSTAL_ITREE.tolerancia_cm) {
+      return sinResultado(
+        "configuracion_fuste_no_determinada",
+        `El DAP registrado (${fmt(a.dap_cm)} cm) no coincide con el DAP equivalente de los fustes (${fmt(equivalente)} cm).`
+      );
+    }
+    tratamiento = {
+      metodo: TRATAMIENTO_MULTIFUSTAL_ITREE.metodo,
+      formula: TRATAMIENTO_MULTIFUSTAL_ITREE.formula,
+      fuente: TRATAMIENTO_MULTIFUSTAL_ITREE.fuente,
+      dap_fustes_cm: fustes,
+      dap_equivalente_cm: a.dap_cm,
+    };
+  }
 
   const conAltura = a.altura_total_m !== null;
   // Con altura se usa la variante con altura si la especie la tiene; un modelo
@@ -185,6 +253,8 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
         limitaciones_modelo: [...modelo.limitaciones_modelo],
       },
       entradas: { dap_cm: a.dap_cm, altura_total_m: modelo.variante === "dap_altura" ? a.altura_total_m : null, densidad_kg_m3: modelo.densidad.valor, fraccion_carbono: FRACCION_CARBONO.valor },
+      estado_resultado: tratamiento ? "exploratorio" : modelo.estado,
+      tratamiento_multifustal: tratamiento,
     },
     categoria: null,
     motivo: null,
@@ -235,7 +305,7 @@ export function agregarCarbono(arboles: ArbolCarbono[]) {
       continue;
     }
     // Modelos exploratorios (2026-11-20): se cuentan aparte y nunca suman al total.
-    if (r.valor.modelo.estado === "exploratorio") {
+    if (r.valor.estado_resultado === "exploratorio") {
       conResultadoExploratorio++;
       continue;
     }

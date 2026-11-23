@@ -32,6 +32,28 @@ export const FRACCION_CARBONO = {
 /** Razón de masas molares CO₂ / C. */
 export const FACTOR_CO2_POR_C = 44 / 12;
 
+/**
+ * Nivel de confianza por el ORIGEN de la ecuación (CC-069 decisión 1; CC-070;
+ * 2026-11-21): «propia_urbana», ecuación urbana de la misma especie;
+ * «sustituta_mismo_genero», ecuación de otra especie del mismo género;
+ * «propia_no_urbana», ecuación de la misma especie ajustada fuera de la
+ * ciudad; «generica_urbana», ecuación general urbana de latifoliadas o
+ * coníferas (UTD), sin ecuación de la especie ni del género. Es independiente
+ * del estado metodológico en SIVU (aprobado o exploratorio).
+ */
+export type NivelConfianza = "propia_urbana" | "sustituta_mismo_genero" | "propia_no_urbana" | "generica_urbana";
+
+/** Estado metodológico del modelo en SIVU: solo «aprobado» suma a los totales. */
+export type EstadoModelo = "aprobado" | "exploratorio";
+
+/**
+ * Componente de carbono que estima un modelo (2026-11-21). Cada indicador
+ * agrega un solo componente y nunca se suman entre sí:
+ * - aerea_lenosa: tronco y ramas, sin follaje ni raíces (CC-069 v1).
+ * - aerea_total: tallo, ramas, ramillas y hojas, sin raíces.
+ */
+export type ComponenteCarbono = "aerea_lenosa" | "aerea_total";
+
 export interface ModeloVolumen {
   id: string;
   version: number;
@@ -65,14 +87,14 @@ export interface ModeloVolumen {
    * urbana ajustada para la misma especie; «sustituta_mismo_genero»,
    * ecuación de otra especie del mismo género (estimación indirecta).
    */
-  confianza: "propia_urbana" | "sustituta_mismo_genero";
+  confianza: Extract<NivelConfianza, "propia_urbana" | "sustituta_mismo_genero" | "generica_urbana">;
   /**
    * «aprobado»: aprobado por la responsable de la metodología (CC-069,
    * CC-070); sus resultados suman al total. «exploratorio» (2026-11-20):
    * incorporado para ampliar la cobertura con carácter exploratorio; sus
    * resultados se muestran rotulados y NUNCA suman a los totales.
    */
-  estado: "aprobado" | "exploratorio";
+  estado: EstadoModelo;
   /** Especie con la que se ajustó la ecuación (igual a `especie` si es propia). */
   especie_ecuacion: string;
   /** Fuente del rango de DAP (y de altura) aplicado. */
@@ -80,9 +102,29 @@ export interface ModeloVolumen {
   /** Limitaciones propias de este modelo, además de las generales (LIMITACIONES). */
   limitaciones_modelo: readonly string[];
   admite_multifustal: false;
+  /**
+   * Propuesta experimental (2026-11-21): admite multifustales como resultado
+   * EXPLORATORIO con el DAP equivalente por área basal de i-Tree Eco
+   * (TRATAMIENTO_MULTIFUSTAL_ITREE). Nunca suma a un total oficial.
+   */
+  multifustal_experimental: boolean;
   apto_palmeras: false;
   fuente: string;
 }
+
+/**
+ * Propuesta experimental (2026-11-21): DAP único de un multifustal según i-Tree
+ * Eco: DAP = (AB / 0,00007854)^0,5, con AB = área basal total de los fustes
+ * (m²) y DAP en cm; equivale a √(Σ dᵢ²). Es el DAP equivalente que SIVU ya
+ * registra (D-18). Se aplica solo a las ecuaciones de volumen urbano, del tipo
+ * que usa i-Tree; su compatibilidad con cada ecuación no está demostrada.
+ */
+export const TRATAMIENTO_MULTIFUSTAL_ITREE = {
+  metodo: "dap_equivalente_area_basal",
+  formula: "DAP = √(Σ dᵢ²) = (AB / 0,00007854)^0,5",
+  fuente: "Nowak, D. J. (2024). Understanding i-Tree: 2023 Summary of Programs and Methods. USDA Forest Service, GTR NRS-200-2023, p. 22",
+  tolerancia_cm: 0.05,
+} as const;
 
 const UTD_TS9 = "USDA Urban Tree Database, TS9 (McPherson, van Doorn y Peper 2016, RDS-2016-0005)";
 const UTD_VERSION = "2020-01-21";
@@ -120,7 +162,7 @@ const LIQUIDAMBAR = {
   n_muestra: 50,
 } as const;
 
-const comun = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, apto_palmeras: false, estado: "aprobado" } as const;
+const comun = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, multifustal_experimental: true, apto_palmeras: false, estado: "aprobado" } as const;
 const PILLSBURY = { confianza: "propia_urbana", fuente_rango: RANGO_PILLSBURY, limitaciones_modelo: LIMITACIONES_PILLSBURY } as const;
 
 /**
@@ -166,7 +208,7 @@ const FUENTE_ACPL_D =
  * ecuaciones calibradas para los árboles de Valparaíso y sus resultados no
  * suman a los totales (estado «exploratorio»).
  */
-const exploratorio = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, apto_palmeras: false, estado: "exploratorio", confianza: "sustituta_mismo_genero" } as const;
+const exploratorio = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, multifustal_experimental: true, apto_palmeras: false, estado: "exploratorio", confianza: "sustituta_mismo_genero" } as const;
 
 /**
  * Acer negundo: la misma ecuación de Acer platanoides (McHale et al. 2009)
@@ -237,6 +279,118 @@ const ULMUS_MINOR_SUSTITUTA = {
 const FUENTE_ULPU_DH =
   "Lefsky y McHale 2008, según McPherson, van Doorn y Peper 2016 (PSW-GTR-253), tabla 9 (Ulmus pumila, ULPU, d.b.h. y altura). Fuente original no revisada";
 
+/**
+ * PROPUESTA EXPERIMENTAL (2026-11-21), no vigente: modelos de volumen de la
+ * Urban Tree Database para las especies del Piloto sin ecuación, según la
+ * asignación que la propia UTD publica (McPherson, van Doorn y Peper 2016,
+ * PSW-GTR-253; tabla 9: ecuaciones; tabla 11: ecuación asignada y densidad por
+ * especie). Si la especie no está en la tabla 11, se usa la ecuación general
+ * urbana con la densidad de la especie de la Global Wood Density Database
+ * v2.2, como recomienda la misma UTD (p. 73). Mismos coeficientes y rangos
+ * que publica la fuente; sin densidad de la especie, no hay modelo.
+ * Exploratorios: no suman a ningún total oficial.
+ */
+const UTD_GTR253 = "McPherson, E. G.; van Doorn, N. S.; Peper, P. J. 2016. Urban Tree Database and Allometric Equations. USDA Forest Service, PSW-GTR-253 (https://doi.org/10.2737/PSW-GTR-253)";
+const FUENTE_UGEB = `${UTD_GTR253}, tabla 9 (Urban Gen broadleaf, UGEB, d.b.h. y altura; p. 70)`;
+const FUENTE_UGEC = `${UTD_GTR253}, tabla 9 (Urban Gen conifer, UGEC, d.b.h. y altura; p. 70)`;
+const GWDD_22 = "Global Wood Density Database v2.2 (Zenodo, 2026-01-15; https://zenodo.org/records/18262736), gwddagg_v2.2_binomial.csv";
+const densidadTabla11 = (valor: number, codigo: string) => ({
+  valor,
+  unidad: "kg/m3" as const,
+  tipo: "masa seca / volumen verde" as const,
+  fuente: `${UTD_GTR253}, tabla 11 (${codigo}: ${valor} kg/m³; ecuación asignada UGEB)`,
+  version: "2016",
+});
+const densidadGwdd = (valor: number, detalle: string) => ({
+  valor,
+  unidad: "kg/m3" as const,
+  tipo: "masa seca / volumen verde" as const,
+  fuente: `${GWDD_22}: ${detalle}`,
+  version: "v2.2",
+});
+const LIMITACIONES_GENERICA = [
+  "Exploratorio: ecuación general urbana de la UTD, ajustada con las especies urbanas de EE. UU.; no es una ecuación de la especie ni de su género, ni está calibrada para Valparaíso.",
+  "La fuente no publica el rango de altura de la ecuación general: la altura no se controla.",
+  "DAP de SIVU a 1,30 m; el de la ecuación, a 4,5 ft (1,37 m). Sin corrección.",
+] as const;
+const generica = {
+  version: 1,
+  componente: "aerea_lenosa",
+  admite_multifustal: false,
+  multifustal_experimental: true,
+  apto_palmeras: false,
+  estado: "exploratorio",
+  confianza: "generica_urbana",
+  variante: "dap_altura",
+  altura_min_m: null,
+  altura_max_m: null,
+  n_muestra: null,
+  limitaciones_modelo: LIMITACIONES_GENERICA,
+} as const;
+/** UGEB: V = 0,0001967 · D^1,951853 · H^0,664255; DAP 6-135 cm (tabla 9). */
+const UGEB = {
+  ...generica,
+  especie_ecuacion: "ecuación general urbana de latifoliadas (UGEB)",
+  a: 0.0001967,
+  b: 1.951853,
+  c: 0.664255,
+  dap_min_cm: 6,
+  dap_max_cm: 135,
+  fuente_rango: `${UTD_GTR253}, tabla 9 (UGEB: d.b.h. 6 a 135 cm)`,
+  fuente: FUENTE_UGEB,
+} as const;
+/** UGEC: V = 0,0000426 · D^2,24358 · H^0,64956; DAP 16-147 cm (tabla 9). */
+const UGEC = {
+  ...generica,
+  especie_ecuacion: "ecuación general urbana de coníferas (UGEC)",
+  a: 0.0000426,
+  b: 2.24358,
+  c: 0.64956,
+  dap_min_cm: 16,
+  dap_max_cm: 147,
+  fuente_rango: `${UTD_GTR253}, tabla 9 (UGEC: d.b.h. 16 a 147 cm)`,
+  fuente: FUENTE_UGEC,
+} as const;
+
+/**
+ * Acer platanoides: su propia ecuación (McHale et al. 2009), la misma que ya
+ * usan como sustituta Acer pseudoplatanus (CC-070) y Acer negundo, con los
+ * mismos coeficientes y rango. Densidad de la especie: 520 kg/m³ (PSW-GTR-253,
+ * tablas 9 y 11). Exploratorio hasta que el equipo lo apruebe.
+ */
+const ACER_PLATANOIDES_PROPIA = {
+  especie: "acer platanoides",
+  especie_ecuacion: "acer platanoides",
+  dap_min_cm: 9.7,
+  dap_max_cm: 102.1,
+  altura_min_m: null,
+  altura_max_m: null,
+  densidad: {
+    valor: 520,
+    unidad: "kg/m3",
+    tipo: "masa seca / volumen verde",
+    fuente: "McPherson, van Doorn y Peper 2016, PSW-GTR-253, tablas 9 y 11 (Acer platanoides, ACPL: 520 kg/m³)",
+    version: "2016",
+  },
+  n_muestra: null,
+  fuente_rango: "California Air Resources Board 2010, Compliance Offset Protocol Urban Forest Projects, tabla B.1 (Acer platanoides)",
+  limitaciones_modelo: [
+    "Exploratorio: ecuación de la propia especie, aún no revisada por el equipo para SIVU.",
+    "Ecuación ajustada con árboles de calle de Fort Collins, Colorado (EE. UU.), con volumen medido por LiDAR terrestre (McHale et al. 2009).",
+    "DAP de SIVU a 1,30 m; el de la ecuación, a 4,5 ft (1,37 m). Sin corrección.",
+  ],
+} as const;
+
+/**
+ * Propuesta experimental (2026-11-21): especies del Piloto sin densidad de la
+ * especie en las fuentes revisadas (PSW-GTR-253 tabla 11; GWDD v1, Zanne et
+ * al. 2009; GWDD v2.2). Sin densidad no hay biomasa; no se usan promedios de
+ * género. Solo cambia el texto del motivo «sin_modelo».
+ */
+export const ESPECIES_SIN_DENSIDAD: Readonly<Record<string, string>> = {
+  "araucaria heterophylla": "No hay densidad de madera de la especie en las fuentes revisadas (UTD tabla 11; GWDD v1 y v2.2): sin ella no se puede convertir el volumen en biomasa, y no se usan promedios de género.",
+};
+
 export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-DH", variante: "dap_altura", a: 0.0000801, b: 2.18578, c: 0.548045, fuente: FUENTE_JAME_DH },
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-D", variante: "dap", a: 0.0001005, b: 2.486248, c: 0, fuente: FUENTE_JAME_D },
@@ -246,6 +400,33 @@ export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
   // Exploratorios (2026-11-20): no suman a los totales.
   { ...exploratorio, ...ACER_NEGUNDO_SUSTITUTA, id: "MCH09-T1-ACPL-D-ACNE", variante: "dap", a: 0.0019, b: 1.785, c: 0, fuente: FUENTE_ACPL_D },
   { ...exploratorio, ...ULMUS_MINOR_SUSTITUTA, id: "UTD-T9-ULPU-DH-ULMI", variante: "dap_altura", a: 0.000338, b: 0.855, c: 2.041, fuente: FUENTE_ULPU_DH },
+  // Propuesta experimental (2026-11-21): no suman a los totales.
+  { ...exploratorio, ...ACER_PLATANOIDES_PROPIA, confianza: "propia_urbana", id: "MCH09-T1-ACPL-D-ACPL", variante: "dap", a: 0.0019, b: 1.785, c: 0, fuente: FUENTE_ACPL_D },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-GIBI", especie: "ginkgo biloba", densidad: densidadTabla11(520, "GIBI") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-LAIN", especie: "lagerstroemia indica", densidad: densidadTabla11(571, "LAIN") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-OLEU", especie: "olea europaea", densidad: densidadTabla11(700, "OLEU") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-PIUN", especie: "pittosporum undulatum", densidad: densidadTabla11(745, "PIUN") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-SCMO", especie: "schinus molle", densidad: densidadTabla11(650, "SCMO") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-FIEL", especie: "ficus elastica", densidad: densidadGwdd(500, "Ficus elastica, wsg_est 0,50 (8 registros, 8 fuentes, 5 países); no está en la tabla 11 de la UTD") },
+  { ...UGEB, id: "UTD-T9-UGEB-DH-PITO", especie: "pittosporum tobira", densidad: densidadGwdd(650, "Pittosporum tobira, wsg_est 0,65 (8 registros, 3 fuentes, 2 países); no está en la tabla 11 de la UTD") },
+  // Excepción de Valej (2026-11-22): sin densidad de la especie, se usa la del GÉNERO (exploratorio).
+  {
+    ...UGEB,
+    id: "UTD-T9-UGEB-DH-BEMI",
+    especie: "beilschmiedia miersii",
+    densidad: {
+      valor: 570,
+      unidad: "kg/m3",
+      tipo: "masa seca / volumen verde",
+      fuente: `${GWDD_22.replace("gwddagg_v2.2_binomial.csv", "gwddagg_v2.2_genus.csv")}: género Beilschmiedia, wsg_est 0,57 (196 registros, 41 fuentes, 31 países); Beilschmiedia miersii no tiene densidad propia`,
+      version: "v2.2",
+    },
+    limitaciones_modelo: [
+      ...LIMITACIONES_GENERICA,
+      "Densidad del GÉNERO Beilschmiedia, no de B. miersii: excepción a la regla de no usar promedios de género, aprobada por Valej (2026-11-22).",
+    ],
+  },
+  { ...UGEC, id: "UTD-T9-UGEC-DH-ARAN", especie: "araucaria angustifolia", densidad: densidadGwdd(450, "Araucaria angustifolia, wsg_est 0,45 (37 registros, 11 fuentes, 3 países); no está en la tabla 11 de la UTD") },
 ];
 
 /**
@@ -261,3 +442,109 @@ export const LIMITACIONES = [
   "DAP de SIVU a 1,30 m; el de las ecuaciones, a 4,5 ft (1,37 m). Sin corrección.",
   "Fracción de carbono 0,47 por defecto (IPCC 2006), no específica de la especie.",
 ] as const;
+
+/**
+ * PROPUESTA EXPERIMENTAL, no forma parte de la metodología vigente (pendiente
+ * de revisión del equipo; docs/plan/propuestas/carbono-directo-revision-equipo.md).
+ * Modelos de CARBONO DIRECTO (implementación experimental, 2026-11-21):
+ * la ecuación entrega el carbono en kg sin pasar por volumen, densidad ni
+ * fracción de carbono. Estiman otro componente (carbono aéreo total, con
+ * hojas) y por eso se agregan en un indicador propio, nunca junto al carbono
+ * aéreo leñoso. Pendientes de sincronización con el Excel maestro
+ * (docs/plan/propuestas/carbono-directo-discrepancia-excel.md).
+ */
+export interface ModeloCarbonoDirecto {
+  id: string;
+  version: number;
+  tipo: "carbono_directo";
+  /** Clave de especie de B19 (claveEspecie). */
+  especie: string;
+  variante: "dap";
+  /** C (kg) = a · D(cm)^b. */
+  a: number;
+  b: number;
+  componente: "aerea_total";
+  /** Partes del árbol que incluye y excluye la ecuación. */
+  incluye: readonly string[];
+  excluye: readonly string[];
+  /** Rango de DAP de la muestra; límites incluidos. */
+  dap_min_cm: number;
+  dap_max_cm: number;
+  /** Altura de medición del DAP en la fuente. */
+  altura_medicion_dap_m: number;
+  n_muestra: number;
+  r2: number;
+  /**
+   * Contenido medio de carbono de la biomasa aérea seca en la fuente. SOLO
+   * informativo: la ecuación ya lo incorpora y nunca se vuelve a aplicar.
+   */
+  fraccion_carbono_fuente: number;
+  confianza: Extract<NivelConfianza, "propia_no_urbana">;
+  estado: EstadoModelo;
+  especie_ecuacion: string;
+  fuente_rango: string;
+  limitaciones_modelo: readonly string[];
+  admite_multifustal: false;
+  apto_palmeras: false;
+  fuente: string;
+  doi: string;
+}
+
+const FUENTE_CRUZ_2015 =
+  "Cruz, P., Bascuñan, A., Velozo, J. y Rodríguez, M. (2015). Funciones alométricas de contenido de carbono para quillay, peumo, espino y litre. Bosque, 36(3), 375-381 (componentes: p. 376; contenido de carbono por componente: p. 379, cuadro 5; ecuaciones, muestras y rangos: p. 379, cuadro 6)";
+const DOI_CRUZ_2015 = "https://doi.org/10.4067/S0717-92002015000300005";
+const RANGO_CRUZ_2015 = "Cruz et al. 2015, p. 379, cuadro 6";
+const LIMITACIONES_CRUZ_2015 = [
+  "Exploratorio en SIVU: ecuación de la misma especie ajustada en el bosque mediterráneo chileno, no en árboles urbanos; su transferencia a los árboles de Valparaíso no está validada.",
+  "Carbono aéreo total: incluye tallo, ramas, ramillas y hojas, y excluye raíces. No es comparable con el carbono aéreo leñoso ni se suma a él.",
+  "La ecuación entrega el carbono directamente: no se aplica densidad de madera ni la fracción de carbono 0,47.",
+  "Solo árboles de un fuste: la fuente no demuestra que el DAP equivalente de un multifustal pueda sustituir el DAP con que se ajustó la ecuación.",
+] as const;
+const carbonoDirecto = {
+  version: 1,
+  tipo: "carbono_directo",
+  variante: "dap",
+  componente: "aerea_total",
+  incluye: ["tallo", "ramas", "ramillas", "hojas"],
+  excluye: ["raíces"],
+  altura_medicion_dap_m: 1.3,
+  confianza: "propia_no_urbana",
+  estado: "exploratorio",
+  fuente_rango: RANGO_CRUZ_2015,
+  limitaciones_modelo: LIMITACIONES_CRUZ_2015,
+  admite_multifustal: false,
+  apto_palmeras: false,
+  fuente: FUENTE_CRUZ_2015,
+  doi: DOI_CRUZ_2015,
+} as const;
+
+export const MODELOS_CARBONO_DIRECTO: readonly ModeloCarbonoDirecto[] = [
+  { ...carbonoDirecto, id: "CRUZ15-C6-QUSA-D", especie: "quillaja saponaria", especie_ecuacion: "quillaja saponaria", a: 0.0736, b: 2.251, dap_min_cm: 5, dap_max_cm: 41, n_muestra: 80, r2: 0.95, fraccion_carbono_fuente: 0.493 },
+  { ...carbonoDirecto, id: "CRUZ15-C6-CRAL-D", especie: "cryptocarya alba", especie_ecuacion: "cryptocarya alba", a: 0.0675, b: 2.352, dap_min_cm: 5, dap_max_cm: 37, n_muestra: 82, r2: 0.95, fraccion_carbono_fuente: 0.495 },
+];
+
+/** Limitaciones generales del carbono aéreo total (2026-11-21). */
+export const LIMITACIONES_AEREO_TOTAL = [
+  "Estimación de carbono aéreo total almacenado (tallo, ramas, ramillas y hojas; sin raíces): no es carbono leñoso, carbono total ni secuestro anual.",
+  "Ecuaciones de carbono directo: el carbono sale de la ecuación, sin densidad de madera ni fracción de carbono adicional.",
+  "Modelos exploratorios para árboles urbanos: se muestran rotulados y no suman a ningún total oficial.",
+  "Indicador separado del carbono aéreo leñoso: sus resultados nunca se suman con él.",
+] as const;
+
+/**
+ * Selección explícita de modelos (2026-11-21): por componente, especie y
+ * estado metodológico. Una especie puede tener modelos de distintos
+ * componentes, y dentro de un componente, si hay un modelo aprobado, se
+ * descartan los exploratorios. Así cada árbol recibe a lo sumo un modelo
+ * por componente (con la variante que elige cada cálculo) y cada indicador
+ * agrega un solo componente.
+ */
+export function seleccionarModelos(componente: "aerea_lenosa", especie: string | null): ModeloVolumen[];
+export function seleccionarModelos(componente: "aerea_total", especie: string | null): ModeloCarbonoDirecto[];
+export function seleccionarModelos(componente: ComponenteCarbono, especie: string | null): (ModeloVolumen | ModeloCarbonoDirecto)[] {
+  if (especie === null) return [];
+  const catalogo: readonly (ModeloVolumen | ModeloCarbonoDirecto)[] = componente === "aerea_lenosa" ? MODELOS_VOLUMEN : MODELOS_CARBONO_DIRECTO;
+  const deEspecie = catalogo.filter((m) => m.componente === componente && m.especie === especie);
+  const aprobados = deEspecie.filter((m) => m.estado === "aprobado");
+  return aprobados.length > 0 ? aprobados : deEspecie;
+}
