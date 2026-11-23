@@ -14,6 +14,8 @@ const aNumero = (v: unknown): number | null => (v === null || v === undefined ? 
 
 export interface ArbolIndicadorRow {
   id: string;
+  /** Código del árbol: solo para el aviso de medición en revisión (propuesta experimental). */
+  tree_code?: string | null;
   sector: string | null;
   especie_cientifica: string | null;
   species_id: string | null;
@@ -22,11 +24,17 @@ export interface ArbolIndicadorRow {
   dap_cm: number | null;
   /** D-15 y D-19: solo los usa el carbono (CC-069). */
   multifustal: boolean | null;
+  /** D-16: diámetros de cada fuste (multifustales); propuesta experimental del DAP equivalente. */
+  dap_fustes_cm: number[] | null;
   altura_total_m: number | null;
   diametro_copa_ns_m: number | null;
   diametro_copa_eo_m: number | null;
   diametro_copa_m: number | null;
   copa_no_presenta: boolean | null;
+  /** Propuesta experimental (descriptivos): D-21, D-22 y clase de edad vigentes. */
+  altura_primera_rama_m?: number | null;
+  altura_base_copa_viva_m?: number | null;
+  clase_edad?: string | null;
 }
 
 /** Árboles del proyecto con los valores vigentes que usan los indicadores, de a 1000. */
@@ -35,7 +43,7 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
   for (let desde = 0; ; desde += 1000) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("trees")
-      .select("id, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, multifustal, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta")
+      .select("id, tree_code, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, multifustal, dap_fustes_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta, altura_primera_rama_m, altura_base_copa_viva_m, clase_edad")
       .eq("project_id", projectId)
       .order("id", { ascending: true })
       .range(desde, desde + 999);
@@ -44,17 +52,22 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
     for (const f of pagina) {
       filas.push({
         id: f.id as string,
+        tree_code: (f.tree_code as string | null) ?? null,
         sector: (f.sector as string | null) ?? null,
         especie_cientifica: (f.especie_cientifica as string | null) ?? null,
         species_id: (f.species_id as string | null) ?? null,
         especie_catalogo: ((f.species as { especie_cientifica?: string } | null)?.especie_cientifica as string | undefined) ?? null,
         dap_cm: aNumero(f.dap_cm),
         multifustal: (f.multifustal as boolean | null) ?? null,
+        dap_fustes_cm: Array.isArray(f.dap_fustes_cm) ? (f.dap_fustes_cm as unknown[]).map(aNumero).filter((x): x is number => x !== null) : null,
         altura_total_m: aNumero(f.altura_total_m),
         diametro_copa_ns_m: aNumero(f.diametro_copa_ns_m),
         diametro_copa_eo_m: aNumero(f.diametro_copa_eo_m),
         diametro_copa_m: aNumero(f.diametro_copa_m),
         copa_no_presenta: (f.copa_no_presenta as boolean | null) ?? null,
+        altura_primera_rama_m: aNumero(f.altura_primera_rama_m),
+        altura_base_copa_viva_m: aNumero(f.altura_base_copa_viva_m),
+        clase_edad: (f.clase_edad as string | null) ?? null,
       });
     }
     if (pagina.length < 1000) return filas;
@@ -100,6 +113,12 @@ export interface VariablesCrecimientoRow {
   muerte_regresiva_pct: number | null;
   /** clasificacion_vitalidad = «no_evaluable_poda» en la evaluación vigente. */
   poda_intensa: boolean | null;
+  /** Propuesta experimental (descriptivos): valores registrados sin transformar. */
+  vitalidad?: string | null;
+  defoliacion_pct?: number | null;
+  clorosis_pct?: number | null;
+  necrosis_pct?: number | null;
+  copa_faltante_pct?: number | null;
 }
 
 const numeroDeTexto = (v: unknown): number | null => {
@@ -128,27 +147,44 @@ export async function listarVariablesCrecimiento(accessToken: string, treeIds: s
     }
   }
   const inspecciones = [...new Set(inspeccionPorArbol.values())];
-  const porInspeccion = new Map<string, { cle: number | null; muerte_regresiva_pct: number | null; poda_intensa: boolean | null }>();
+  type Vars = Omit<VariablesCrecimientoRow, "tree_id">;
+  const porInspeccion = new Map<string, Vars>();
   for (let i = 0; i < inspecciones.length; i += 100) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("evaluations")
-      .select("inspection_id, cle:variables->>exposicion_luminica_copa_cle, mr:variables->>muerte_regresiva_copa_pct, vit:variables->>clasificacion_vitalidad")
+      .select(
+        "inspection_id, cle:variables->>exposicion_luminica_copa_cle, mr:variables->>muerte_regresiva_copa_pct, vit:variables->>clasificacion_vitalidad, def:variables->>defoliacion_estimada_pct, clo:variables->>clorosis_pct, nec:variables->>necrosis_pct, cf:variables->>copa_faltante_pct"
+      )
       .in("inspection_id", inspecciones.slice(i, i + 100));
     if (error) lanzar(error);
-    for (const f of (data ?? []) as Array<{ inspection_id: string; cle: unknown; mr: unknown; vit: unknown }>) {
+    for (const f of (data ?? []) as Array<{ inspection_id: string; cle: unknown; mr: unknown; vit: unknown; def: unknown; clo: unknown; nec: unknown; cf: unknown }>) {
+      const vit = f.vit === null || f.vit === undefined || f.vit === "" ? null : String(f.vit);
       porInspeccion.set(f.inspection_id, {
         cle: numeroDeTexto(f.cle),
         muerte_regresiva_pct: numeroDeTexto(f.mr),
-        poda_intensa: f.vit === null || f.vit === undefined || f.vit === "" ? null : f.vit === "no_evaluable_poda",
+        poda_intensa: vit === null ? null : vit === "no_evaluable_poda",
+        vitalidad: vit,
+        defoliacion_pct: numeroDeTexto(f.def),
+        clorosis_pct: numeroDeTexto(f.clo),
+        necrosis_pct: numeroDeTexto(f.nec),
+        copa_faltante_pct: numeroDeTexto(f.cf),
       });
     }
   }
-  return [...inspeccionPorArbol.entries()].map(([tree_id, inspection_id]) => ({
-    tree_id,
-    cle: porInspeccion.get(inspection_id)?.cle ?? null,
-    muerte_regresiva_pct: porInspeccion.get(inspection_id)?.muerte_regresiva_pct ?? null,
-    poda_intensa: porInspeccion.get(inspection_id)?.poda_intensa ?? null,
-  }));
+  return [...inspeccionPorArbol.entries()].map(([tree_id, inspection_id]) => {
+    const v = porInspeccion.get(inspection_id);
+    return {
+      tree_id,
+      cle: v?.cle ?? null,
+      muerte_regresiva_pct: v?.muerte_regresiva_pct ?? null,
+      poda_intensa: v?.poda_intensa ?? null,
+      vitalidad: v?.vitalidad ?? null,
+      defoliacion_pct: v?.defoliacion_pct ?? null,
+      clorosis_pct: v?.clorosis_pct ?? null,
+      necrosis_pct: v?.necrosis_pct ?? null,
+      copa_faltante_pct: v?.copa_faltante_pct ?? null,
+    };
+  });
 }
 
 /** Superficie de la delimitación del proyecto (SECTORES.superficie_sector_m2, D-256); null si no hay sector. */

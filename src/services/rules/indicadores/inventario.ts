@@ -160,3 +160,30 @@ export function areaProyectadaCopa(evaluados: ArbolIndicador[]) {
     denominador_evaluados: presentes.length,
   };
 }
+
+/**
+ * Cobertura de copa del sector (2026-11-22, a pedido de Valej): suma del área
+ * proyectada de copa (fila 13) sobre la superficie del sector, en %. Mismo
+ * universo que la fila 13 (evaluados con los dos diámetros) y misma regla
+ * que la densidad: no se calcula por barrio (sin delimitación). Falta su fila
+ * en la hoja INDICES del Excel.
+ */
+export function coberturaCopa(area: ReturnType<typeof areaProyectadaCopa>, superficieM2: number | null, porBarrio: boolean) {
+  const base = {
+    unidad: "porcentaje" as const,
+    area_copa_m2: area.total_m2,
+    superficie_m2: superficieM2,
+    n_con_area: area.n_con_area,
+    denominador_evaluados: area.denominador_evaluados,
+  };
+  if (porBarrio) {
+    return { ...base, valor: null, motivo: "No se calcula por barrio: el barrio no tiene delimitación (INDICES)." };
+  }
+  if (superficieM2 === null || !(superficieM2 > 0)) {
+    return { ...base, valor: null, motivo: "El proyecto no tiene una delimitación con superficie registrada." };
+  }
+  if (area.total_m2 === null) {
+    return { ...base, valor: null, motivo: "Ningún árbol evaluado tiene los dos diámetros de copa." };
+  }
+  return { ...base, valor: (area.total_m2 / superficieM2) * 100, motivo: null };
+}
