@@ -3452,6 +3452,7 @@ motivo)
 - Las dimensiones externas D, d, Cc y C pueden provenir de los valores vigentes, y los datos registrados en la inspección tienen precedencia. El componente no ensayado conserva su composición vigente conforme a CC-040. Las fotos siguen siendo opcionales conforme a CC-081.
 - Excel sincronizado: REGLAS_GENERALES B28, DICCIONARIO_CAMPOS J209 y VERSION E11/J11.
 - Verificación local: 793 pruebas de completitud y motor pasaron. Pendiente despliegue coordinado de 3.3.0 y comprobación de los tres borradores instrumentales.
+- **Comprobado el 2026-11-23** con la API publicada (`rule_version` 3.4): los tres borradores instrumentales quedan completos y su resultado coincide con la evaluación vigente 3.2. Detalle en «Pruebas posteriores a la publicación», en «Publicación SIVU 3.3.0 y 3.4.0».
 
 ### Candidato SIVU 3.4.0 — PALM-01 después de IF-25
 
@@ -3478,9 +3479,18 @@ motivo)
   - `tipo_hoja` del catálogo (047 y 048);
   - AV_000087 completada;
   - versión operativa 3.4.
+- **Pruebas posteriores a la publicación (2026-11-23, API publicada, sesión Inspector Fase 7, sin finalizar nada).** `/calcular` no escribe (CC-054). En la base se confirmó después que los borradores no cambiaron: igual md5 de `evaluations.variables`, `calculado_at` nulo, inspecciones en preguardado con 3.2, OT en ejecución y sin `tree_assessments` nuevas.
+  - **Borrador de árbol, compatibilidad 3.2 → 3.4:** INS-000457 (A-000515, Olmo, OT-I-000484), probado en sivu.cl.
+    - El borrador guardado con 3.2 abre con el formulario 3.4 y el alcance de IF-25.
+    - Calcular entrega riesgo Moderado (raíces y cuello Moderado, tronco Moderado, copa Bajo), infraestructura Bajo y prioridad Baja.
+    - Le faltan D-27 (fotos) y 2 respuestas.
+  - **Borradores instrumentales (CC-084):** se probaron llamando a `POST /calcular` de la API, porque el frontend aún no tiene formulario instrumental (`InspectionFormPage.tsx`, `TIPOS_CON_FORMULARIO`). Los tres calculan con `rule_version` 3.4, están completos y no tienen valores no permitidos ni alertas. Coinciden con su evaluación vigente 3.2:
+    - INS-000475, A-000479 Olmo: Bajo (Bajo, Bajo, Bajo);
+    - INS-000476, A-000488 Olmo: Extremo (raíces y cuello Extremo, por probabilidad de falla Inminente);
+    - INS-000487, A-000531 Araucaria excelsa: Alto (tronco Alto, por probabilidad de falla Probable).
+  - Respaldo y detalle: `SIVU_DIAGNOSTICOS/sivu_batch/datos/carga_palmeras/BITACORA_2026-11-22.md` y `RESPALDO_INS-000457_antes_prueba_3.4_2026-11-23.json`, en la carpeta de la tesis.
 - **Queda abierto:**
-  - la prueba en la API publicada de un borrador **de árbol** con 3.4: guardar, calcular y comprobar la compatibilidad de un borrador previo. Ninguna evaluación de árbol se ha calculado aún con 3.3 o 3.4;
-  - la comprobación de los tres borradores instrumentales (CC-084);
+  - el formulario instrumental del frontend. Hasta que exista, las OT instrumentales solo se cierran por la API;
   - la regla de plaga «No determinado» en palmeras;
   - el plazo de la probabilidad de falla;
   - `D_diametro_basal_tronco_cm`;
