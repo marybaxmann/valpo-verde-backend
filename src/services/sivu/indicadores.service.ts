@@ -7,6 +7,7 @@ import { CATALOGO } from "../rules/engine/catalogs";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
 import { agregarCarbonoAereoTotal } from "../rules/carbono/carbonoAereoTotal";
+import { agregarCarbonoIntegrado } from "../rules/carbono/carbonoIntegrado";
 import { agregarVariacionAereoTotal, resumirProyeccionAnual } from "../rules/carbono/variacionAereoTotal";
 import {
   ArbolEspecie,
@@ -166,6 +167,10 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     // Carbono aéreo total con follaje (carbono directo, 2026-11-21): indicador aparte, solo cobertura mientras
     // los modelos sean exploratorios; nunca se suma con el carbono aéreo leñoso.
     estimacion_carbono_aereo_total: agregarCarbonoAereoTotal(arbolesCarbono),
+    // Propuesta experimental (Valej, 2026-11-22): mejor modelo por árbol, aéreo y total separados, con su traza.
+    estimacion_carbono_integrada: agregarCarbonoIntegrado(
+      arbolesCarbono.map((a) => ({ ...a, tree_code: delAmbito.find((f) => f.id === a.id)?.tree_code ?? null }))
+    ),
     // Secuestro anual (decisiones A a C, 2026-11-20): cobertura por tipo de resultado; el total suma solo
     // estimaciones fundamentadas, nunca simulaciones.
     estimacion_secuestro_anual: agregarSecuestro(arbolesSecuestro),
