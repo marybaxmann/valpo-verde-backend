@@ -6,6 +6,8 @@ jest.mock("../../src/repositories/projectMember.repository");
 jest.mock("../../src/repositories/sivu/workOrder.repository");
 jest.mock("../../src/repositories/sivu/inspection.repository");
 jest.mock("../../src/repositories/sivu/diagnostico.repository");
+jest.mock("../../src/repositories/sivu/species.repository");
+import { buscarEspeciesPorNombre } from "../../src/repositories/sivu/species.repository";
 import { listarEvaluacionesVigentes } from "../../src/repositories/sivu/diagnostico.repository";
 jest.mock("../../src/repositories/sivu/cierreOt.repository", () => ({
   ...jest.requireActual("../../src/repositories/sivu/cierreOt.repository"),
@@ -124,6 +126,51 @@ describe("POST /api/sivu/work-orders/:id/completar (#60; ADR-017 v1.2)", () => {
     } finally {
       operativa.restore();
     }
+  });
+
+  describe("CC-082: tipo de hoja al cerrar la OT", () => {
+    const PHOENIX = { especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" };
+    const conVersion = (version: string) => {
+      const motor = jest.requireActual("../../src/services/rules/engine/version");
+      return jest.replaceProperty(motor, "RULE_VERSION_OPERATIVA", version);
+    };
+
+    it("palmera cuyo species_id solo lo registró la inspección: aplica PALM-01 (caso AV_000087)", async () => {
+      const operativa = conVersion("3.4");
+      try {
+        jest.mocked(obtenerVersionArbolDeInspeccion).mockResolvedValue({
+          campos: { especie_cientifica: "Phoenix canariensis", species_id: "sp-phoenix" },
+          camposRegistrados: ["especie_cientifica", "species_id"],
+        });
+        // `trees` todavía sin vínculo al catálogo: pasa a tenerlo en la misma transacción que completa la OT.
+        jest.mocked(obtenerArbolVigente).mockResolvedValue({ especie_cientifica: "Phoenix canariensis", species_id: null, tipo_hoja: null });
+        jest.mocked(buscarEspeciesPorNombre).mockResolvedValue([PHOENIX] as never);
+        expect((await completar()).status).toBe(200);
+        expect(buscarEspeciesPorNombre).toHaveBeenCalledWith(FAKE_TOKEN, "Phoenix canariensis");
+        const resultado = mCompletar.mock.calls[0][2][0].resultado;
+        expect(resultado.rule_version).toBe("3.4");
+        expect(resultado.indicadores).toMatchObject({ tipo: "palmera" });
+        expect(resultado.indicadores).toHaveProperty("estipite");
+        expect(resultado.indicadores).not.toHaveProperty("codominancia");
+      } finally {
+        operativa.restore();
+      }
+    });
+
+    it("árbol con su especie del catálogo: sigue con las reglas de árboles sin buscar por nombre", async () => {
+      const operativa = conVersion("3.4");
+      try {
+        jest.mocked(obtenerVersionArbolDeInspeccion).mockResolvedValue({ campos: {}, camposRegistrados: [] });
+        jest.mocked(obtenerArbolVigente).mockResolvedValue({ especie_cientifica: "Platanus x hispanica", tipo_hoja: "latifoliada" });
+        expect((await completar()).status).toBe(200);
+        expect(buscarEspeciesPorNombre).not.toHaveBeenCalled();
+        const { indicadores } = mCompletar.mock.calls[0][2][0].resultado;
+        expect(indicadores).not.toHaveProperty("tipo");
+        expect(indicadores).toHaveProperty("codominancia");
+      } finally {
+        operativa.restore();
+      }
+    });
   });
 
   it("exige JWT", async () => {
@@ -295,6 +342,22 @@ describe("POST /api/sivu/inspections/:id/anular (CC-067; CC-045 a)", () => {
     expect(evaluacion.composicion.origen_por_campo).toEqual({ raices_expuestas: INS_VIEJA });
     expect(evaluacion.resultado).toHaveProperty("rule_version");
     expect(evaluacion.resultado).not.toHaveProperty("entradas_vigentes");
+  });
+
+  it("OT completada de una palmera sin vínculo al catálogo: recalcula la vigente con PALM-01 (CC-082)", async () => {
+    const motor = jest.requireActual("../../src/services/rules/engine/version");
+    const operativa = jest.replaceProperty(motor, "RULE_VERSION_OPERATIVA", "3.4");
+    try {
+      otEnEjecucion({ estado_ot: "completada" });
+      mSinInspeccion.mockResolvedValue({ entradas_vigentes: {}, origen_por_campo: {} });
+      mUltimaValida.mockResolvedValue(null);
+      jest.mocked(obtenerArbolVigente).mockResolvedValue({ especie_cientifica: "Phoenix canariensis", tipo_hoja: null });
+      jest.mocked(buscarEspeciesPorNombre).mockResolvedValue([{ especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" }] as never);
+      expect((await anular({ motivo_anulacion: "x" })).status).toBe(200);
+      expect(mAnular.mock.calls[0][3].resultado.indicadores).toMatchObject({ tipo: "palmera" });
+    } finally {
+      operativa.restore();
+    }
   });
 
   it("OT completada sin otra inspección válida: no pide ajustes", async () => {

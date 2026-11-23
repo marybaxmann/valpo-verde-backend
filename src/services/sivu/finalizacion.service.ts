@@ -423,10 +423,13 @@ export function componerVariablesCalculo(
 }
 
 /**
- * dap_cm para el cálculo: el que registró la inspección, si lo registró;
- * si no, el vigente del árbol. null si no hay un número válido.
+ * tipo_hoja para el cálculo (CC-082): el del catálogo vinculado a la ficha si
+ * la especie no cambió; si no, el de la especie del catálogo con el mismo
+ * nombre científico (registrado en la inspección o vigente). Lo usan la
+ * finalización y el cierre de OT: al completar la OT, `trees` puede no tener
+ * aún el `species_id` que registró la inspección.
  */
-async function resolverTipoHoja(
+export async function resolverTipoHoja(
   token: string,
   versionArbol: VersionArbol | null,
   arbolVigente: Record<string, unknown>,
@@ -446,6 +449,10 @@ async function resolverTipoHoja(
   return candidatas.find(e => normalizar(e.especie_cientifica) === normalizado)?.tipo_hoja ?? null;
 }
 
+/**
+ * dap_cm para el cálculo: el que registró la inspección, si lo registró;
+ * si no, el vigente del árbol. null si no hay un número válido.
+ */
 export function resolverDapCm(versionArbol: VersionArbol | null, arbolVigente: Record<string, unknown> | null): number | null {
   return numeroDelArbol("dap_cm", versionArbol, arbolVigente);
 }

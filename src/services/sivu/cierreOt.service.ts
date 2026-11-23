@@ -27,7 +27,7 @@ import { AjusteVigente, AjustesEntrada, ensamblarResultadoVigente } from "../rul
 import { evaluarM05 } from "../rules/engine/m05-prioridad";
 import type { ClasificacionRiesgoCodigo, ClasificacionInfraestructuraCodigo } from "../rules/engine/catalogs";
 import { listarEvaluacionesVigentes } from "../../repositories/sivu/diagnostico.repository";
-import { componerVariablesCalculo, resolverDapCm, resolverDatosConsecuencia, resolverDatosLcr } from "./finalizacion.service";
+import { componerVariablesCalculo, resolverDapCm, resolverDatosConsecuencia, resolverDatosLcr, resolverTipoHoja } from "./finalizacion.service";
 
 /** Intentos ante SV068: la composición cambió entre la lectura y la escritura. */
 const INTENTOS_COMPLETAR = 2;
@@ -93,13 +93,17 @@ async function prepararEvaluaciones(workOrderId: string, projectId: string, acce
         obtenerVersionArbolDeInspeccion(accessToken, inspeccion.id),
         obtenerArbolVigente(accessToken, treeId),
       ]);
+      // CC-082: el species_id que registró la inspección pasa a `trees` en la misma
+      // transacción que completa la OT; sin resolverlo aquí, una palmera sin vínculo
+      // previo al catálogo se calcularía con las reglas de árboles.
+      const arbolParaCalculo = { ...arbolVigente, tipo_hoja: await resolverTipoHoja(accessToken, versionArbol, arbolVigente ?? {}) };
       const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
         ruleVersion: RULE_VERSION_OPERATIVA,
         variablesCalculo: componerVariablesCalculo(
           composicion.entradas_vigentes,
           {},
           resolverDapCm(versionArbol, arbolVigente),
-          resolverDatosLcr(versionArbol, arbolVigente),
+          resolverDatosLcr(versionArbol, arbolParaCalculo),
           resolverDatosConsecuencia(versionArbol, arbolVigente)
         ),
         ajustes: ajustesDeLaInspeccion(ajustes, inspeccion.id),
@@ -208,6 +212,7 @@ export async function anularInspeccionFinalizada(
         obtenerUltimaInspeccionValidaSin(inspeccion.tree_id, inspectionId),
         obtenerArbolVigente(accessToken, inspeccion.tree_id),
       ]);
+      const arbolParaCalculo = { ...arbolVigente, tipo_hoja: await resolverTipoHoja(accessToken, null, arbolVigente ?? {}) };
       const ajustes = ultimaValida ? await listarAjustesDeInspecciones([ultimaValida]) : [];
       const { entradas_vigentes: _entradas, ...resultado } = ensamblarResultadoVigente({
         ruleVersion: RULE_VERSION_OPERATIVA,
@@ -215,7 +220,7 @@ export async function anularInspeccionFinalizada(
           composicion.entradas_vigentes,
           {},
           resolverDapCm(null, arbolVigente),
-          resolverDatosLcr(null, arbolVigente),
+          resolverDatosLcr(null, arbolParaCalculo),
           resolverDatosConsecuencia(null, arbolVigente)
         ),
         ajustes: ultimaValida ? ajustesDeLaInspeccion(ajustes, ultimaValida) : {},
