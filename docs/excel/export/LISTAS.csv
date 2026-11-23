@@ -1,9 +1,9 @@
-Inspección,Mantenimiento,Evaluación inicial,Reevaluación,Evaluación_instrumental,Monitoreo,Poda,Riego,Descompactación,Manejo_fitosanitario,Tala_retiro,Otra_Intervención,Materialidad_infraestructura,Icono_aporte,Bloque_contenido
-Evaluación inicial,Riego,,Seguimiento,Tomografía_sónica,Fitosanitario,Sanitaria,Programado,Manual,Preventivo,Tala,,Baldosa,Sombra,Curiosidad
-Reevaluación,Poda,,Post_intervención,Resistografía,Estructural,Formación,Emergencia,Mecánica,Correctivo,Retiro_tocón,,Adoquín,Frescor,Aportes
-Evaluación instrumental,Descompactación,,,Otra,Vitalidad,Despeje,,,Retiro_residuos,,,Hormigón,Aves,Quién soy
-Monitoreo,Manejo fitosanitario,,,,,Reducción,,,,,,Asfalto,Polinizadores,Reconóceme
-Levantamiento,Tala_retiro,,,,,,,,,,,Otro,Flores,Mi año
-,Reparación_alcorque,,,,,,,,,,,No determinado,Siempreverde,Historia de la especie
-,Soporte_tutorado,,,,,,,,,,,,Hito,Consejo
-,Otra_Intervención,,,,,,,,,,,,Generaciones,General
+Inspección,Mantenimiento,Evaluación inicial,Reevaluación,Evaluación_instrumental,Monitoreo,Poda,Riego,Descompactación,Manejo_fitosanitario,Tala_retiro,Otra_Intervención,Materialidad_infraestructura,Icono_aporte,Bloque_contenido,Vista_foto
+Evaluación inicial,Riego,,Seguimiento,Tomografía_sónica,Fitosanitario,Sanitaria,Programado,Manual,Preventivo,Tala,,Baldosa,Sombra,Curiosidad,Árbol completo
+Reevaluación,Poda,,Post_intervención,Resistografía,Estructural,Formación,Emergencia,Mecánica,Correctivo,Retiro_tocón,,Adoquín,Frescor,Aportes,Base
+Evaluación instrumental,Descompactación,,,Otra,Vitalidad,Despeje,,,Retiro_residuos,,,Hormigón,Aves,Quién soy,Tronco
+Monitoreo,Manejo fitosanitario,,,,,Reducción,,,,,,Asfalto,Polinizadores,Reconóceme,Copa
+Levantamiento,Tala_retiro,,,,,,,,,,,Otro,Flores,Mi año,Detalle
+,Reparación_alcorque,,,,,,,,,,,No determinado,Siempreverde,Historia de la especie,
+,Soporte_tutorado,,,,,,,,,,,,Hito,Consejo,
+,Otra_Intervención,,,,,,,,,,,,Generaciones,General,

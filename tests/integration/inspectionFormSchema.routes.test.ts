@@ -40,6 +40,16 @@ it("metadatos del diccionario conservan tipo y unidad literales", async () => {
   expect(red).toMatchObject({tipo: "Categoría", tipo_entrada: "seleccion_multiple", unidad: null});
 });
 
+it("entrega el significado de cada campo (columna F del diccionario)", async () => {
+  auth.mockResolvedValue(fakeAuthUser({ id: MUNICIPAL_ID })); profile.mockResolvedValue(municipalProfileRow()); membership.mockResolvedValue({});
+  const res = await request(app).get(url).set("Authorization", `Bearer ${FAKE_TOKEN}`);
+  const cle = res.body.data.variables.find((x: any) => x.identificador === "exposicion_luminica_copa_cle");
+  expect(cle.definicion).toBe("Número de caras de la copa expuestas a luz directa según los criterios del protocolo.");
+  // Un campo sin fila propia en el diccionario no inventa ayuda.
+  const sinCopa = res.body.data.campos_arbol.find((x: any) => x.identificador === "copa_no_presenta");
+  expect(sinCopa).toMatchObject({ definicion: null });
+});
+
 describe("tipo de entrada y opciones (columnas G y H)", () => {
   const schema = construirInspectionFormSchema();
   const todos = [...schema.variables, ...schema.campos_arbol];

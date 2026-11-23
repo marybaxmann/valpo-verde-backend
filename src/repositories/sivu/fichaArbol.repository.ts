@@ -14,6 +14,7 @@ function lanzar(error: { message: string; code?: string }): never {
 export interface ArbolFichaRow {
   id: string;
   tree_code: string;
+  codigo_publico: string | null;
   project_id: string;
   sector_id: string;
   sector: string | null;
@@ -53,7 +54,7 @@ export const CAMPOS_MEDICION = [
   "clase_edad", "rango_edad_estimada_anios",
 ] as const;
 
-const ARBOL_COLUMNS = `id, tree_code, project_id, sector_id, ubicacion::geometry, estado_ciclo_vida, fecha_registro, vigente_desde_inspection_id, ${CAMPOS_MEDICION.join(", ")}`;
+const ARBOL_COLUMNS = `id, tree_code, codigo_publico, project_id, sector_id, ubicacion::geometry, estado_ciclo_vida, fecha_registro, vigente_desde_inspection_id, ${CAMPOS_MEDICION.join(", ")}`;
 
 export async function obtenerArbolFicha(accessToken: string, projectId: string, treeId: string): Promise<ArbolFichaRow | null> {
   const { data, error } = await createUserScopedClient(accessToken)

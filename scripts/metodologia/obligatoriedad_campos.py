@@ -211,9 +211,9 @@ TRADUCCIONES_CC056 = {
     ("ARBOLES", "fotografias_arbol"): {
         "i": "Obligatorio para finalizar la Evaluación inicial, la Reevaluación y el Levantamiento",
         "k": "En la inspección de Evaluación inicial, Reevaluación o Levantamiento mediante OT. "
-             "No aplica en la Evaluación instrumental; en el Monitoreo no es obligatoria.",
+             "En la Evaluación instrumental es opcional; en el Monitoreo no es obligatoria.",
         "exigido": True, "activacion": SIEMPRE, "exigencia": "fotos_d27",
-        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección; vistas informativas."},
+        "nota": "D-27: mínimo de dos fotografías válidas y distintas de esta inspección, excluida la vista Detalle."},
     # --- REGISTRO_EVALUACION ---
     ("REGISTRO_EVALUACION", "direccion_inclinacion"): {
         "i": "Condicional", "k": "angulo_inclinacion ≥ 15°", "exigido": True,
@@ -337,6 +337,8 @@ def main():
             "d": texto(row[3]), "h": texto(row[7]), "i": texto(row[8]),
             "j": texto(row[9]), "k": texto(row[10]),
             "tipoDato": texto(row[6]), "unidadValores": texto(row[7]),
+            # Columna F: se muestra como ayuda del campo en el formulario.
+            "definicion": texto(row[5]),
         })
     por_campo = {}
     for f in filas:
@@ -542,9 +544,15 @@ def generar_ts(exigidos, no_exigidos, filas, secciones, campos_seccion):
     for r in no_exigidos:
         lineas.append(entrada(r))
     lineas += ["];", ""]
-    lineas += ["/** Metadatos literales de DICCIONARIO_CAMPOS, columnas G y H. */", "export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipoDato: string; unidadValores: string }[] = ["]
+    lineas += [
+        "/**",
+        " * Metadatos literales de DICCIONARIO_CAMPOS: columnas G y H (tipo y unidad)",
+        " * y F («Definiciones o criterios aplicables»).",
+        " */",
+        "export const METADATOS_DICCIONARIO: readonly { hoja: string; campo: string; tipoDato: string; unidadValores: string; definicion: string }[] = [",
+    ]
     for f in filas:
-        lineas.append(entrada({k: f[k] for k in ("hoja", "campo", "tipoDato", "unidadValores")}))
+        lineas.append(entrada({k: f[k] for k in ("hoja", "campo", "tipoDato", "unidadValores", "definicion")}))
     lineas += ["] as const;", ""]
     lineas += ["/** Secciones del formulario (B16): orden de columnas de las hojas; propuesta = nombre por aprobar. */", "export const SECCIONES_FORMULARIO: readonly { codigo: string; etiqueta: string; orden: number; propuesta: boolean }[] = ["]
     for s in secciones:

@@ -113,8 +113,8 @@ IN-RAE-01,M04 Infraestructura,Red aérea,red_aerea_presente,red_aerea_presente =
 IN-RAE-02,M04 Infraestructura,Red aérea,tipo_red_aerea; cumplimiento_distancia_seguridad_bt_mt; dano_interferencia_red_aerea,"tipo_red_aerea incluye Eléctrica, cumplimiento_distancia_seguridad_bt_mt = Bajo la referencia y dano_interferencia_red_aerea = No",Moderada,2
 IN-RAE-03,M04 Infraestructura,Red aérea,tipo_red_aerea; cumplimiento_distancia_seguridad_bt_mt; dano_interferencia_red_aerea,"tipo_red_aerea incluye Eléctrica, cumplimiento_distancia_seguridad_bt_mt = Sobre la referencia y dano_interferencia_red_aerea = No",Leve,1
 IN-RAE-04,M04 Infraestructura,Red aérea,tipo_red_aerea; cumplimiento_distancia_seguridad_bt_mt; dano_interferencia_red_aerea,"tipo_red_aerea incluye Eléctrica, cumplimiento_distancia_seguridad_bt_mt = Sobre la referencia y dano_interferencia_red_aerea = Sí",Moderada,2
-IN-RAE-05,M04 Infraestructura,Red aérea,tipo_red_aerea; dano_interferencia_red_aerea,tipo_red_aerea no incluye Eléctrica y dano_interferencia_red_aerea = No,Leve,1
-IN-RAE-06,M04 Infraestructura,Red aérea,tipo_red_aerea; dano_interferencia_red_aerea,tipo_red_aerea no incluye Eléctrica y dano_interferencia_red_aerea = Sí,Moderada,2
+IN-RAE-05,M04 Infraestructura,Red aérea,tipo_red_aerea; dano_interferencia_red_aerea,tipo_red_aerea no incluye Eléctrica ni Función no determinada y dano_interferencia_red_aerea = No,Leve,1
+IN-RAE-06,M04 Infraestructura,Red aérea,tipo_red_aerea; dano_interferencia_red_aerea,tipo_red_aerea no incluye Eléctrica ni Función no determinada y dano_interferencia_red_aerea = Sí,Moderada,2
 IN-RAE-07,M04 Infraestructura,Red aérea,tipo_red_aerea; cumplimiento_distancia_seguridad_bt_mt; dano_interferencia_red_aerea,"tipo_red_aerea incluye Eléctrica, cumplimiento_distancia_seguridad_bt_mt = Bajo la referencia y dano_interferencia_red_aerea = Sí",Severa,3
 IN-RSU-01,M04 Infraestructura,Red subterránea,red_subterranea_presente,red_subterranea_presente = No,No aplica,Se excluye
 IN-RSU-02,M04 Infraestructura,Red subterránea,red_subterranea_presente,red_subterranea_presente = No determinado,No determinado,Se excluye
@@ -129,3 +129,4 @@ IN-SIT-02,Condición del sitio,Condición del sitio,obstaculos_crecimiento_radic
 IN-SIT-03,Condición del sitio,Condición del sitio,indicios_compactacion_superficial,indicios_compactacion_superficial = Sí,Moderada,Sin puntaje
 IN-SIT-04,Condición del sitio,Condición del sitio,suelo_sellado_impermeabilizado,suelo_sellado_impermeabilizado = Sí,Severa,Sin puntaje
 IN-SIT-05,Condición del sitio,Condición del sitio,suelo_sellado_impermeabilizado; indicios_compactacion_superficial; obstaculos_crecimiento_radicular,Se cumplen dos o más de IN-SIT-02 a 04,La categoría más severa,Sin puntaje
+IN-RAE-08,M04 Infraestructura,Red aérea,tipo_red_aerea,tipo_red_aerea incluye Función no determinada y no incluye Eléctrica. Marcar clasificación parcial con aviso si quedan componentes evaluados.,No determinado,Se excluye

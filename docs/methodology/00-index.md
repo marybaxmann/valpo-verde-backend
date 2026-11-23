@@ -19,15 +19,20 @@ No inferir ni completar metodología faltante.
 
 ## Versión vigente
 
-Versión vigente del paquete metodológico: **3.2.0** (`rule_version` **3.2**), publicada el 2026-11-21, tag `metodologia-v3.2.0` (CC-080). Versión anterior: 3.1.0, publicada el 2026-11-18, tag `metodologia-v3.1.0` (CC-077).
+Versión vigente del paquete metodológico: **3.2.1** (`rule_version` **3.2**), publicada el 2026-11-21, tag `metodologia-v3.2.1`. Versión anterior: 3.2.0, tag `metodologia-v3.2.0` (CC-080).
 
 **Activación en producción:** requiere confirmación de la autora. Este paquete no introduce migraciones. Las evaluaciones anteriores conservan su `rule_version` y no se recalculan automáticamente.
 
 - **Fuente única:** el Excel maestro `docs/excel/Base de Datos Valpo Verde.xlsx` (PR-002 v3.0). Su export de texto está en `docs/excel/export/`.
-- **Reglas vigentes:** todas las de REGLAS_INDICADORES (130), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0). 3.0.0 cambia la agregación de R01 a R03 (pisos y suma estructural) y de M04 (peor componente), y separa la condición fisiológica de copa y la condición del sitio (CC-071).
+- **Reglas vigentes:** todas las de REGLAS_INDICADORES (131), MATRICES_CALCULO y REGLAS_GENERALES de esta versión (PR-011 v3.0). 3.0.0 cambia la agregación de R01 a R03 (pisos y suma estructural) y de M04 (peor componente), y separa la condición fisiológica de copa y la condición del sitio (CC-071).
 - **INDICES** sigue en propuesta y no es implementable (CC-016; DM-09). Los índices de proporción de árboles nativos e introducidos no se adoptan en 2.0.0 (CC-039).
 - **Diagramas:** no forman parte del paquete (CC-030); son ilustraciones en `docs/excel/diagramas/` (imágenes, el `.drawio` de consolidación y `docs/excel/Diagrama actualizados.json`). Si difieren del Excel, manda el Excel.
 - **Documentos `01-roots-base.md` a `05-infrastructure.md` (v1.1)** y las secciones de este índice marcadas como reemplazadas son historial de la metodología textual previa; no se usan para implementar.
+
+### Cambios de 3.2.1
+
+- Sincronización documental de CC-043, CC-044, CC-045, CC-046, CC-050, CC-054, CC-055, CC-062, CC-067 y CC-073. Sin cambio de cálculo ni de rule_version.
+- CC-081: fotografías instrumentales opcionales con vistas Base, Tronco o Detalle. En inspecciones visuales sujetas a D-27, Detalle queda fuera del mínimo. La activación requiere la migración 043 y el backend correspondiente.
 
 ### Cambios de 3.2.0 (CC-080)
 
