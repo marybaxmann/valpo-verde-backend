@@ -7,7 +7,7 @@ import { getAuthUserByToken } from "../../src/repositories/auth.repository";
 import { findUserProfileById } from "../../src/repositories/userProfile.repository";
 import { findMembership } from "../../src/repositories/projectMember.repository";
 import { FAKE_TOKEN, MUNICIPAL_ID, fakeAuthUser, municipalProfileRow } from "../helpers/authFixtures";
-import { CAMPOS_EVALUACION_COMPLETA } from "../../src/schemas/sivu/alcanceInspeccion";
+import { CAMPOS_EVALUACION_COMPLETA, CAMPOS_EVALUACION_INSTRUMENTAL } from "../../src/schemas/sivu/alcanceInspeccion";
 import { construirInspectionFormSchema, CATALOGO_DE_CAMPO_FORMULARIO, dominioExcel } from "../../src/services/sivu/inspectionFormSchema.service";
 import { METADATOS_DICCIONARIO } from "../../src/schemas/sivu/completitudInspeccion";
 import { entradasVigentesDe } from "../../src/services/rules/engine/catalogs";
@@ -30,6 +30,12 @@ it("entrega alcance, condiciones y opciones vigentes al miembro", async () => {
   expect(res.body.data.campos_arbol.find((x: any) => x.identificador === "numero_fustes").condicion_activacion).toEqual({op:"igual", campo:"multifustal", valor:true});
   expect(res.body.data.variables.find((x: any) => x.identificador === "tipo_red_aerea").opciones).toContainEqual({codigo:"electrica", etiqueta:"Eléctrica"});
   expect(res.body.data.variables[0]).toMatchObject({ etiqueta_pendiente: false });
+});
+it("entrega las variables de la Evaluación instrumental (CC-040, CC-084) como subconjunto de variables", () => {
+  const e = construirInspectionFormSchema();
+  expect(e.campos_evaluacion_instrumental).toEqual([...CAMPOS_EVALUACION_INSTRUMENTAL]);
+  const ids = new Set(e.variables.map((x) => x.identificador));
+  expect(e.campos_evaluacion_instrumental.every((c) => ids.has(c))).toBe(true);
 });
 it("metadatos del diccionario conservan tipo y unidad literales", async () => {
   auth.mockResolvedValue(fakeAuthUser({ id: MUNICIPAL_ID })); profile.mockResolvedValue(municipalProfileRow()); membership.mockResolvedValue({});

@@ -1,6 +1,6 @@
 import { AuthenticatedUser } from "../../types/auth";
 import { assertProjectAccess } from "../authorization.service";
-import { camposPermitidosPorTipo, CATALOGO_SELECCION_MULTIPLE, CATALOGO_SELECCION_UNICA } from "../../schemas/sivu/alcanceInspeccion";
+import { CAMPOS_EVALUACION_INSTRUMENTAL, camposPermitidosPorTipo, CATALOGO_SELECCION_MULTIPLE, CATALOGO_SELECCION_UNICA } from "../../schemas/sivu/alcanceInspeccion";
 import {
   CAMPOS_NO_APLICAN_PALMERA,
   CAMPOS_NO_EXIGIDOS,
@@ -146,6 +146,10 @@ export function construirInspectionFormSchema() {
     secciones: SECCIONES_FORMULARIO.map(s => ({ codigo: s.codigo, etiqueta: s.etiqueta, orden: s.orden, propuesta: s.propuesta })),
     variables: ordenar(camposPermitidosPorTipo("evaluacion_inicial", null)!.map(id => campo("REGISTRO_EVALUACION", id))),
     campos_arbol: ordenar(Object.keys(camposArbolBaseSchema.shape).map(id => campo("ARBOLES", id))),
+    // Evaluación instrumental (D-196/D-197; CC-040, CC-084): qué variables
+    // registra (subconjunto de `variables`), para que el formulario no
+    // repita la lista del motor.
+    campos_evaluacion_instrumental: [...CAMPOS_EVALUACION_INSTRUMENTAL],
   };
 }
 
