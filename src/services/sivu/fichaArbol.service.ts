@@ -19,6 +19,7 @@ import { areaCopaArbol } from "../rules/indicadores/inventario";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { calcularCarbonoArbol, METODO_CARBONO } from "../rules/carbono/calculo";
 import { calcularCarbonoAereoTotalArbol, METODO_CARBONO_AEREO_TOTAL } from "../rules/carbono/carbonoAereoTotal";
+import { calcularCarbonoIntegradoArbol } from "../rules/carbono/carbonoIntegrado";
 import { descriptivosArbol } from "../rules/indicadores/descriptivos";
 import { calcularVariacionAereoTotalArbol, METODO_VARIACION_AEREO_TOTAL } from "../rules/carbono/variacionAereoTotal";
 import { LIMITACIONES, LIMITACIONES_AEREO_TOTAL } from "../rules/carbono/modelos";
@@ -195,6 +196,11 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     // Propuesta experimental (2026-11-21): variación anual proyectada del carbono aéreo total (con hojas), solo
     // para especies con carbono directo. Siempre simulación; no es secuestro leñoso ni captura fotosintética.
     variacion_anual_carbono_aereo_total: { ...calcularVariacionAereoTotalArbol(entradaSecuestro), metodo: METODO_VARIACION_AEREO_TOTAL },
+    // CC-087: carbono con el mejor modelo del árbol, el mismo que suma el proyecto (B19).
+    carbono_integrado: calcularCarbonoIntegradoArbol(
+      { ...entradaCarbono, tree_code: (fila.tree_code as string | null | undefined) ?? null },
+      new Date().toISOString()
+    ),
     // Propuesta experimental (2026-11-23): aportes foliares del árbol; null sin evaluación completa vigente.
     aportes_foliares: foliar
       ? {
