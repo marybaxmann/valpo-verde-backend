@@ -92,6 +92,8 @@ export async function infraestructuraProyecto(user: AuthenticatedUser, projectId
           ubicacion: coords ? { lng: coords[0], lat: coords[1] } : null,
         },
         infraestructura: resultado.infraestructura,
+        // La prioridad (M05) cruza el riesgo con la infraestructura: se entrega el riesgo para explicarla (2026-11-24).
+        riesgo: resultado.clasificacion_riesgo,
         prioridad: resultado.prioridad,
         prioridad_ajustada: resultado.prioridad_ajustada,
         componentes: componentes(vig.indicadores as Record<string, unknown> | null),
