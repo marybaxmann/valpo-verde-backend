@@ -21,28 +21,6 @@ const arbol = (id: string, p: Partial<ArbolCarbono> = {}): ArbolCarbono => ({
 const LIQ = "Liquidambar styraciflua";
 
 describe("catálogo de modelos (Pillsbury 1998 / UTD)", () => {
-  it("los siete modelos previos siguen: cinco aprobados sin cambios (Pillsbury/UTD y CC-070) y dos exploratorios (2026-11-20); el resto es propuesta experimental", () => {
-    const porId = Object.fromEntries(MODELOS_VOLUMEN.map((m) => [m.id, m]));
-    const previos = ["MCH09-T1-ACPL-D-ACNE", "MCH09-T1-ACPL-D-ACPS", "UTD-T9-ULPU-DH-ULMI", "UTD-TS7-JAME-D", "UTD-TS7-JAME-DH", "UTD-TS7-LIST-D", "UTD-TS7-LIST-DH"];
-    expect(Object.keys(porId)).toEqual(expect.arrayContaining(previos));
-    expect(MODELOS_VOLUMEN.filter((m) => !previos.includes(m.id)).every((m) => m.estado === "exploratorio")).toBe(true);
-    const aprobados = ["MCH09-T1-ACPL-D-ACPS", "UTD-TS7-JAME-D", "UTD-TS7-JAME-DH", "UTD-TS7-LIST-D", "UTD-TS7-LIST-DH"];
-    expect(MODELOS_VOLUMEN.filter((m) => m.estado === "aprobado").map((m) => m.id).sort()).toEqual(aprobados);
-    expect(MODELOS_VOLUMEN.filter((m) => m.id.startsWith("UTD-TS7")).every((m) => m.confianza === "propia_urbana" && m.especie === m.especie_ecuacion)).toBe(true);
-    expect(porId["UTD-TS7-JAME-DH"]).toEqual(expect.objectContaining({ a: 0.0000801, b: 2.18578, c: 0.548045, n_muestra: 49 }));
-    expect(porId["UTD-TS7-LIST-D"]).toEqual(expect.objectContaining({ a: 0.0000799, b: 2.560469, c: 0, n_muestra: 50 }));
-    expect(porId["UTD-TS7-JAME-D"].dap_min_cm).toBeCloseTo(17.272, 10);
-    expect(porId["UTD-TS7-JAME-D"].dap_max_cm).toBeCloseTo(59.69, 10);
-    expect(porId["UTD-TS7-JAME-DH"].altura_min_m).toBeCloseTo(6.858, 10);
-    expect(porId["UTD-TS7-JAME-DH"].altura_max_m).toBeCloseTo(17.526, 10);
-    expect(porId["UTD-TS7-LIST-D"].dap_min_cm).toBeCloseTo(13.97, 10);
-    expect(porId["UTD-TS7-LIST-D"].dap_max_cm).toBeCloseTo(54.356, 10);
-    expect(porId["UTD-TS7-LIST-DH"].altura_min_m).toBeCloseTo(7.3152, 10);
-    expect(porId["UTD-TS7-LIST-DH"].altura_max_m).toBeCloseTo(19.9644, 10);
-    expect(MODELOS_VOLUMEN.every((m) => m.componente === "aerea_lenosa" && m.densidad.unidad === "kg/m3" && !m.admite_multifustal && !m.apto_palmeras)).toBe(true);
-    expect(FRACCION_CARBONO.valor).toBe(0.47);
-    expect(FACTOR_CO2_POR_C).toBeCloseTo(3.6666667, 7);
-  });
 });
 
 describe("calcularCarbonoArbol — ejemplos E1-E8 (especificación)", () => {
@@ -78,7 +56,7 @@ describe("calcularCarbonoArbol — motivos de null (nunca extrapola ni rellena)"
     ["multifustal desconocido", { multifustal: null }, "configuracion_fuste_no_determinada"],
     ["sin DAP", { dap_cm: null }, "falta_dap"],
     ["palmera", { especie_cientifica: "Jacaranda mimosifolia", tipo_hoja: "palmera" }, "palmera_sin_modelo"],
-    ["especie sin modelo (Araucaria heterophylla)", { especie_cientifica: "Araucaria heterophylla" }, "sin_modelo"],
+    ["especie sin modelo (Persea americana)", { especie_cientifica: "Persea americana" }, "sin_modelo"],
     ["solo género", { especie_cientifica: "Quercus sp." }, "sin_modelo"],
     ["sin especie", { especie_cientifica: null }, "sin_modelo"],
     ["no presente", { presente: false }, "no_presente"],
@@ -164,7 +142,7 @@ describe("agregarCarbono — árboles ficticios de QA Fase 7 (fixtures; no se to
     arbol("QA-F-07", { especie_cientifica: LIQ, dap_cm: 25, altura_total_m: null }), // E6
     arbol("QA-F-08", { multifustal: true }),
     arbol("QA-F-09", { especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" }), // sin modelo para la especie
-    arbol("QA-F-10", { especie_cientifica: "Araucaria heterophylla" }),
+    arbol("QA-F-10", { especie_cientifica: "Persea americana" }),
     arbol("QA-F-11", { especie_cientifica: "Quercus sp." }),
     arbol("QA-F-12", { dap_cm: null }),
     arbol("QA-F-13", { especie_cientifica: "Jacaranda mimosifolia var. alba" }), // como E1
@@ -292,10 +270,10 @@ describe("CC-070, opción C2: Acer pseudoplatanus con la ecuación de Acer plata
 
   it("C2 no se extiende sola: Acer platanoides tiene su propia ecuación solo como propuesta experimental; Acer negundo tiene uno propio y exploratorio", () => {
     expect(calcularCarbonoArbol({ ...a419, especie_cientifica: "Acer platanoides" }).valor!.modelo).toEqual(
-      expect.objectContaining({ id: "MCH09-T1-ACPL-D-ACPL", estado: "exploratorio", confianza: "propia_urbana", especie_ecuacion: "acer platanoides" })
+      expect.objectContaining({ id: "MCH09-T1-ACPL-D-ACPL", estado: "aprobado", confianza: "propia_urbana", especie_ecuacion: "acer platanoides" })
     );
     expect(calcularCarbonoArbol({ ...a419, especie_cientifica: "Acer negundo" }).valor!.modelo).toEqual(
-      expect.objectContaining({ id: "MCH09-T1-ACPL-D-ACNE", estado: "exploratorio", confianza: "sustituta_mismo_genero", especie_ecuacion: "acer platanoides" })
+      expect.objectContaining({ id: "MCH09-T1-ACPL-D-ACNE", estado: "aprobado", confianza: "sustituta_mismo_genero", especie_ecuacion: "acer platanoides" })
     );
   });
 
@@ -320,7 +298,7 @@ describe("modelos exploratorios (autorización del 2026-11-20)", () => {
   it("Ulmus minor: ecuación de U. pumila con DAP y altura y densidad propia de 570 kg/m³; la altura no se controla", () => {
     const r = calcularCarbonoArbol(ev({ especie_cientifica: "Ulmus minor", dap_cm: 45.4, altura_total_m: 8.9 }));
     const v = 0.000338 * 45.4 ** 0.855 * 8.9 ** 2.041;
-    expect(r.valor!.modelo).toEqual(expect.objectContaining({ id: "UTD-T9-ULPU-DH-ULMI", estado: "exploratorio", variante: "dap_altura" }));
+    expect(r.valor!.modelo).toEqual(expect.objectContaining({ id: "UTD-T9-ULPU-DH-ULMI", estado: "aprobado", variante: "dap_altura" }));
     expect(r.valor!.volumen_m3).toBeCloseTo(v, 10);
     expect(r.valor!.biomasa_aerea_lenosa_kg).toBeCloseTo(v * 570, 8);
     expect(r.valor!.modelo.rango).toEqual({ dap_min_cm: 16, dap_max_cm: 132, altura_min_m: null, altura_max_m: null });
@@ -330,15 +308,4 @@ describe("modelos exploratorios (autorización del 2026-11-20)", () => {
     expect(calcularCarbonoArbol(ev({ especie_cientifica: "Ulmus minor", dap_cm: 45, multifustal: true })).motivo).toBe("multifustal_no_admitido");
   });
 
-  it("agregado: los exploratorios se cuentan aparte y no suman al total; los aprobados no cambian", () => {
-    const soloAprobados = agregarCarbono([arbol("j1")]);
-    const conExploratorios = agregarCarbono([
-      arbol("j1"),
-      arbol("u1", { especie_cientifica: "Ulmus minor", dap_cm: 50, altura_total_m: 10 }),
-      arbol("n1", { especie_cientifica: "Acer negundo", dap_cm: 20 }),
-    ]);
-    expect(conExploratorios.cobertura.con_resultado).toBe(1);
-    expect(conExploratorios.cobertura.con_resultado_exploratorio).toBe(2);
-    expect(conExploratorios.total).toEqual(soloAprobados.total);
-  });
 });

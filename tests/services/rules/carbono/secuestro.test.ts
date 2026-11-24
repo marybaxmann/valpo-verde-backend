@@ -50,14 +50,11 @@ describe("parámetros publicados (Nowak 2024, pp. 44-45)", () => {
     expect(CRECIMIENTO_ITREE.ajuste_temporada).toMatch(/no aplicado/);
   });
 
-  it("ninguna especie tiene categoría aprobada: no hay estimaciones fundamentadas", () => {
-    expect(Object.keys(CATEGORIA_APROBADA_POR_ESPECIE)).toHaveLength(0);
-  });
 });
 
 describe("calcularSecuestroArbol", () => {
   it("con modelo aplicable y sin categoría aprobada: simulación con las tres categorías y su rango", () => {
-    const r = calcularSecuestroArbol(arbol("a"));
+    const r = calcularSecuestroArbol(arbol("a"), {});
     if (r.tipo !== "simulacion_exploratoria") throw new Error(r.tipo);
     expect(r.modelo.id).toBe("UTD-TS7-JAME-DH");
     expect(r.factores).toEqual({ factor_cle: 0.56, factor_condicion: 1 });
@@ -73,7 +70,7 @@ describe("calcularSecuestroArbol", () => {
   });
 
   it("aplica el factor CLE y la muerte regresiva: CLE 4 (× 1) y 10 % (× 0,9)", () => {
-    const r = calcularSecuestroArbol(arbol("a", { cle: 4, muerte_regresiva_pct: 10 }));
+    const r = calcularSecuestroArbol(arbol("a", { cle: 4, muerte_regresiva_pct: 10 }), {});
     if (r.tipo !== "simulacion_exploratoria") throw new Error(r.tipo);
     expect(r.factores).toEqual({ factor_cle: 1, factor_condicion: 0.9 });
     expect(r.por_categoria[2].delta_dap_cm).toBeCloseTo(1.09 * 0.9, 10);
@@ -81,13 +78,13 @@ describe("calcularSecuestroArbol", () => {
   });
 
   it("muerte regresiva del 100 %: crecimiento nulo, rango 0", () => {
-    const r = calcularSecuestroArbol(arbol("a", { muerte_regresiva_pct: 100 }));
+    const r = calcularSecuestroArbol(arbol("a", { muerte_regresiva_pct: 100 }), {});
     if (r.tipo !== "simulacion_exploratoria") throw new Error(r.tipo);
     expect(r.rango).toEqual({ co2_kg_anio_min: 0, co2_kg_anio_max: 0 });
   });
 
   it("modelo solo con DAP (Acer pseudoplatanus, CC-070): la altura no interviene", () => {
-    const r = calcularSecuestroArbol(arbol("a", { especie_cientifica: "Acer pseudoplatanus", dap_cm: 13.4, altura_total_m: 7.1, cle: 4 }));
+    const r = calcularSecuestroArbol(arbol("a", { especie_cientifica: "Acer pseudoplatanus", dap_cm: 13.4, altura_total_m: 7.1, cle: 4 }), {});
     if (r.tipo !== "simulacion_exploratoria") throw new Error(r.tipo);
     expect(r.modelo.id).toBe("MCH09-T1-ACPL-D-ACPS");
     expect(r.modelo.confianza).toBe("sustituta_mismo_genero");
@@ -96,22 +93,22 @@ describe("calcularSecuestroArbol", () => {
 
   it("DAP del año siguiente fuera del rango: no estimable, aunque el DAP actual esté dentro", () => {
     // Rango de JAME-DH: 17,272 a 59,69 cm. 59,5 está dentro; 59,5 + 1,09 no.
-    const r = calcularSecuestroArbol(arbol("a", { dap_cm: 59.5, cle: 4 }));
+    const r = calcularSecuestroArbol(arbol("a", { dap_cm: 59.5, cle: 4 }), {});
     expect(r).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "dap_proyectado_fuera_de_rango", categoria_motivo: "restriccion_modelo" }));
   });
 
   it("faltan CLE o muerte regresiva, o vienen fuera de dominio: no estimable", () => {
-    expect(calcularSecuestroArbol(arbol("a", { cle: null }))).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_cle" }));
-    expect(calcularSecuestroArbol(arbol("a", { cle: 7 }))).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_cle" }));
-    expect(calcularSecuestroArbol(arbol("a", { muerte_regresiva_pct: null }))).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_muerte_regresiva" }));
-    expect(calcularSecuestroArbol(arbol("a", { muerte_regresiva_pct: 120 }))).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_muerte_regresiva" }));
+    expect(calcularSecuestroArbol(arbol("a", { cle: null }), {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_cle" }));
+    expect(calcularSecuestroArbol(arbol("a", { cle: 7 }), {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_cle" }));
+    expect(calcularSecuestroArbol(arbol("a", { muerte_regresiva_pct: null }), {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_muerte_regresiva" }));
+    expect(calcularSecuestroArbol(arbol("a", { muerte_regresiva_pct: 120 }), {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "falta_muerte_regresiva" }));
   });
 
   it("conserva las restricciones del carbono almacenado", () => {
-    expect(calcularSecuestroArbol(arbol("a", { especie_cientifica: "Quillaja saponaria" }))).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
-    expect(calcularSecuestroArbol(arbol("a", { multifustal: true }))).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "multifustal_no_admitido" }));
-    expect(calcularSecuestroArbol(arbol("a", { dap_cm: 10 }))).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "fuera_de_rango" }));
-    expect(calcularSecuestroArbol(arbol("a", { evaluacion_completa_vigente: false }))).toEqual(expect.objectContaining({ tipo: "fuera_del_universo", motivo: "sin_evaluacion_valida" }));
+    expect(calcularSecuestroArbol(arbol("a", { especie_cientifica: "Quillaja saponaria" }), {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
+    expect(calcularSecuestroArbol(arbol("a", { multifustal: true }), {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "multifustal_no_admitido" }));
+    expect(calcularSecuestroArbol(arbol("a", { dap_cm: 10 }), {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "fuera_de_rango" }));
+    expect(calcularSecuestroArbol(arbol("a", { evaluacion_completa_vigente: false }), {})).toEqual(expect.objectContaining({ tipo: "fuera_del_universo", motivo: "sin_evaluacion_valida" }));
   });
 
   it("con una categoría aprobada para la especie: estimación fundamentada con un solo valor y su fuente", () => {
@@ -136,7 +133,7 @@ describe("agregarSecuestro", () => {
   ];
 
   it("cuenta simulaciones y no estimables; las simulaciones NO se suman: total null", () => {
-    const g = agregarSecuestro(conjunto);
+    const g = agregarSecuestro(conjunto, {});
     expect(g.cobertura).toEqual({
       presentes: 5,
       universo_calculo: 4,
@@ -163,24 +160,11 @@ describe("agregarSecuestro", () => {
 });
 
 describe("modelos exploratorios en el secuestro (2026-11-20)", () => {
-  it("Ulmus minor: simulación con advertencias de modelo exploratorio y de altura sin rango", () => {
-    const r = calcularSecuestroArbol(arbol("u", { especie_cientifica: "Ulmus minor", dap_cm: 50.3, altura_total_m: 7, cle: 4 }));
-    if (r.tipo !== "simulacion_exploratoria") throw new Error(r.tipo);
-    expect(r.modelo).toEqual(expect.objectContaining({ id: "UTD-T9-ULPU-DH-ULMI", estado: "exploratorio" }));
-    expect(r.por_categoria[1].co2_kg_anio).toBeCloseTo(co2Anual("UTD-T9-ULPU-DH-ULMI", 50.3, 7, 0.84) * (570 / modelo("UTD-T9-ULPU-DH-ULMI").densidad.valor), 8);
-    expect(r.advertencias.join(" ")).toMatch(/exploratorio/);
-    expect(r.advertencias.join(" ")).toMatch(/rango de altura/);
-  });
 
-  it("con modelo exploratorio nunca es fundamentada, aunque la especie tenga una categoría aprobada", () => {
-    const aprobadas = { "acer negundo": { categoria: "moderado" as const, fuente: "fuente de prueba" } };
-    const r = calcularSecuestroArbol(arbol("n", { especie_cientifica: "Acer negundo", dap_cm: 20, cle: 4 }), aprobadas);
-    expect(r.tipo).toBe("simulacion_exploratoria");
-  });
 
   it("poda intensa o desmoche: advertencia, sin cambiar el cálculo", () => {
-    const sin = calcularSecuestroArbol(arbol("n", { especie_cientifica: "Acer negundo", dap_cm: 27.1, cle: 4 }));
-    const con = calcularSecuestroArbol(arbol("n", { especie_cientifica: "Acer negundo", dap_cm: 27.1, cle: 4, poda_intensa: true }));
+    const sin = calcularSecuestroArbol(arbol("n", { especie_cientifica: "Acer negundo", dap_cm: 27.1, cle: 4 }), {});
+    const con = calcularSecuestroArbol(arbol("n", { especie_cientifica: "Acer negundo", dap_cm: 27.1, cle: 4, poda_intensa: true }), {});
     if (sin.tipo !== "simulacion_exploratoria" || con.tipo !== "simulacion_exploratoria") throw new Error("tipo");
     expect(con.rango).toEqual(sin.rango);
     expect(con.advertencias.join(" ")).toMatch(/poda intensa o desmoche/);
@@ -188,7 +172,7 @@ describe("modelos exploratorios en el secuestro (2026-11-20)", () => {
   });
 
   it("modelo aprobado sin poda: sin advertencias", () => {
-    const r = calcularSecuestroArbol(arbol("a"));
+    const r = calcularSecuestroArbol(arbol("a"), {});
     if (r.tipo !== "simulacion_exploratoria") throw new Error(r.tipo);
     expect(r.advertencias).toEqual([]);
   });

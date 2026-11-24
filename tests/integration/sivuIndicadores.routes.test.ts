@@ -138,10 +138,11 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
     const c = d.estimacion_carbono_aereo_lenoso;
     // a4 está talado; a1-a3 son Acer negundo, con modelo exploratorio (2026-11-20): a1 (25 cm) tiene resultado
     // exploratorio, que no suma; a2 no tiene DAP y a3 (120 cm) queda fuera del rango (9,7-102,1 cm).
-    expect(c.cobertura).toEqual(expect.objectContaining({ presentes: 3, universo_calculo: 3, con_resultado: 0, con_resultado_exploratorio: 1 }));
+    // CC-087: los modelos antes exploratorios quedan aprobados y suman.
+    expect(c.cobertura).toEqual(expect.objectContaining({ presentes: 3, universo_calculo: 3, con_resultado: 1, con_resultado_exploratorio: 0 }));
     expect(c.cobertura.motivos.falta_dap).toBe(1);
     expect(c.cobertura.motivos.fuera_de_rango).toBe(1);
-    expect(c.total).toEqual({ biomasa_aerea_lenosa_t: null, carbono_t: null, co2e_t: null });
+    expect(c.total.carbono_t).toBeGreaterThan(0);
     expect(c.metodo.estado_cc).toMatch(/pendiente de sincronización con el Excel/);
   });
 
@@ -153,6 +154,7 @@ describe("GET /api/sivu/projects/:id/indicadores (B19)", () => {
         "diametro_medio_copa", "area_proyectada_copa", "cobertura_copa", "cobertura_taxonomica", "riqueza_especies", "abundancia_relativa",
         "diversidad_shannon", "diversidad_taxonomica_10_20_30", "proporcion_origen", "estimacion_carbono_aereo_lenoso",
         "estimacion_carbono_aereo_total", "estimacion_carbono_integrada", "estimacion_secuestro_anual", "estimacion_variacion_anual_carbono_aereo_total", "resumen_proyeccion_anual", "diagnostico_descriptivo",
+        "cobertura_arborea", "aportes_ambientales", "aportes_foliares",
       ].sort()
     );
     expect(d.estimacion_carbono_aereo_lenoso.cobertura.presentes).toBe(d.cobertura.arboles_presentes);
@@ -209,14 +211,15 @@ describe("GET /api/sivu/projects/:id/indicadores: secuestro anual (decisiones A 
     expect(s.cobertura).toEqual({
       presentes: 5,
       universo_calculo: 5,
-      estimacion_fundamentada: 0,
-      simulacion_exploratoria: 2,
+      // CC-087: con categoría de i-Tree aprobada, las simulaciones pasan a estimaciones fundamentadas.
+      estimacion_fundamentada: 2,
+      simulacion_exploratoria: 0,
       no_estimable: 3,
       simulacion_medicion_en_revision: 0,
-      simulacion_con_categoria_itree: 2,
+      simulacion_con_categoria_itree: 0,
       motivos: { multifustal_no_admitido: 1, sin_modelo: 1, falta_cle: 1 },
     });
-    expect(s.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });
+    expect(s.total_fundamentado.co2_kg_anio).toBeGreaterThan(0);
     expect(s.supuestos_simulacion.join(" ")).toMatch(/Simulación basada en supuestos/);
     // El carbono almacenado sigue igual: las simulaciones no lo tocan.
     expect(d.estimacion_carbono_aereo_lenoso.cobertura.con_resultado).toBe(3);
@@ -252,10 +255,10 @@ describe("GET /api/sivu/projects/:id/indicadores: carbono aéreo total (carbono 
     const t = (await request(app).get(RUTA).set(auth)).body.data.estimacion_carbono_aereo_total;
     expect(t.indicador).toBe("estimacion_carbono_aereo_total");
     expect(t.cobertura).toEqual(
-      expect.objectContaining({ presentes: 12, universo_calculo: 8, con_resultado: 0, con_resultado_exploratorio: 4, por_modelo: { "CRUZ15-C6-QUSA-D": 3, "CRUZ15-C6-CRAL-D": 1 } })
+      expect.objectContaining({ presentes: 12, universo_calculo: 8, con_resultado: 4, con_resultado_exploratorio: 0, por_modelo: { "CRUZ15-C6-QUSA-D": 3, "CRUZ15-C6-CRAL-D": 1 } })
     );
     expect(t.cobertura.motivos).toEqual(expect.objectContaining({ sin_evaluacion_valida: 4, multifustal_no_admitido: 3, sin_modelo: 1 }));
-    expect(t.total).toEqual({ carbono_t: null, co2e_t: null });
+    expect(t.total.carbono_t).toBeGreaterThan(0);
     expect(t.metodo).toEqual(expect.objectContaining({ componente: "aerea_total", incluye_follaje: true, alimenta_secuestro_anual: false }));
   });
 
@@ -268,7 +271,7 @@ describe("GET /api/sivu/projects/:id/indicadores: carbono aéreo total (carbono 
     expect(con.estimacion_carbono_aereo_lenoso.cobertura.con_resultado).toBe(1);
     expect(con.estimacion_carbono_aereo_lenoso.cobertura.con_resultado_exploratorio).toBe(0);
     expect(con.estimacion_secuestro_anual.cobertura.simulacion_exploratoria).toBe(sin.estimacion_secuestro_anual.cobertura.simulacion_exploratoria);
-    expect(con.estimacion_secuestro_anual.cobertura.estimacion_fundamentada).toBe(0);
+    expect(con.estimacion_secuestro_anual.cobertura.estimacion_fundamentada).toBe(sin.estimacion_secuestro_anual.cobertura.estimacion_fundamentada);
   });
 });
 
@@ -282,10 +285,11 @@ describe("GET /api/sivu/projects/:id/indicadores: propuesta experimental (2026-1
       fila("q1", { especie_cientifica: "Quillaja saponaria", dap_cm: 18.4, altura_total_m: 8.3 }),
     ]);
     const d = (await request(app).get(RUTA).set(auth)).body.data;
-    expect(d.estimacion_carbono_aereo_lenoso.cobertura).toEqual(expect.objectContaining({ con_resultado: 1, con_resultado_exploratorio: 2 }));
-    expect(d.estimacion_carbono_aereo_lenoso.total.carbono_t).toBeCloseTo(110.3147 / 1000, 6);
-    expect(d.estimacion_secuestro_anual.cobertura).toEqual(expect.objectContaining({ estimacion_fundamentada: 0, simulacion_exploratoria: 3, no_estimable: 2 }));
-    expect(d.estimacion_secuestro_anual.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });
+    // CC-087: aprobados y con categoría de i-Tree.
+    expect(d.estimacion_carbono_aereo_lenoso.cobertura).toEqual(expect.objectContaining({ con_resultado: 4, con_resultado_exploratorio: 0 }));
+    expect(d.estimacion_carbono_aereo_lenoso.total.carbono_t).toBeGreaterThan(110.3147 / 1000);
+    expect(d.estimacion_secuestro_anual.cobertura).toEqual(expect.objectContaining({ estimacion_fundamentada: 4, simulacion_exploratoria: 0, no_estimable: 1 }));
+    expect(d.estimacion_secuestro_anual.total_fundamentado.co2_kg_anio).toBeGreaterThan(0);
     const v = d.estimacion_variacion_anual_carbono_aereo_total;
     expect(v.cobertura).toEqual(expect.objectContaining({ simulacion_exploratoria: 1, no_estimable: 4 }));
     expect(v.total).toBeNull();

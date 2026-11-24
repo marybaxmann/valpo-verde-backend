@@ -35,6 +35,9 @@ export interface ArbolIndicadorRow {
   altura_primera_rama_m?: number | null;
   altura_base_copa_viva_m?: number | null;
   clase_edad?: string | null;
+  /** Propuesta experimental (cobertura arbórea, 2026-11-23): ubicación UTM 19S. */
+  utm_este?: number | null;
+  utm_norte?: number | null;
 }
 
 /** Árboles del proyecto con los valores vigentes que usan los indicadores, de a 1000. */
@@ -43,7 +46,7 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
   for (let desde = 0; ; desde += 1000) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("trees")
-      .select("id, tree_code, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, multifustal, dap_fustes_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta, altura_primera_rama_m, altura_base_copa_viva_m, clase_edad")
+      .select("id, tree_code, sector, especie_cientifica, species_id, species(especie_cientifica), dap_cm, multifustal, dap_fustes_cm, altura_total_m, diametro_copa_ns_m, diametro_copa_eo_m, diametro_copa_m, copa_no_presenta, altura_primera_rama_m, altura_base_copa_viva_m, clase_edad, utm_este, utm_norte")
       .eq("project_id", projectId)
       .order("id", { ascending: true })
       .range(desde, desde + 999);
@@ -68,6 +71,8 @@ export async function listarArbolesIndicadores(accessToken: string, projectId: s
         altura_primera_rama_m: aNumero(f.altura_primera_rama_m),
         altura_base_copa_viva_m: aNumero(f.altura_base_copa_viva_m),
         clase_edad: (f.clase_edad as string | null) ?? null,
+        utm_este: aNumero(f.utm_este),
+        utm_norte: aNumero(f.utm_norte),
       });
     }
     if (pagina.length < 1000) return filas;
@@ -92,12 +97,12 @@ export async function listarPresencia(accessToken: string, treeIds: string[]): P
 export async function listarRasgosEspecie(
   accessToken: string,
   treeIds: string[]
-): Promise<Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string; tipo_hoja: string | null }>> {
-  const salida: Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string; tipo_hoja: string | null }> = [];
+): Promise<Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string; tipo_hoja: string | null; persistencia_follaje?: string | null }>> {
+  const salida: Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string; tipo_hoja: string | null; persistencia_follaje?: string | null }> = [];
   for (let i = 0; i < treeIds.length; i += 150) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("v_species_traits")
-      .select("tree_id, genero, familia, origen_biogeografico, tipo_hoja")
+      .select("tree_id, genero, familia, origen_biogeografico, tipo_hoja, persistencia_follaje")
       .in("tree_id", treeIds.slice(i, i + 150));
     if (error) lanzar(error);
     salida.push(...((data ?? []) as typeof salida));

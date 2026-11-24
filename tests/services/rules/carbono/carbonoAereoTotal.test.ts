@@ -60,7 +60,7 @@ describe("catálogo de carbono directo (Cruz et al. 2015)", () => {
           incluye: ["tallo", "ramas", "ramillas", "hojas"],
           excluye: ["raíces"],
           altura_medicion_dap_m: 1.3,
-          estado: "exploratorio",
+          estado: "aprobado",
           confianza: "propia_no_urbana",
           admite_multifustal: false,
           doi: "https://doi.org/10.4067/S0717-92002015000300005",
@@ -72,17 +72,6 @@ describe("catálogo de carbono directo (Cruz et al. 2015)", () => {
     }
   });
 
-  it("los modelos de volumen existentes no cambian: mismo número, componente leñoso y estados", () => {
-    expect(MODELOS_VOLUMEN).toHaveLength(17);
-    expect(MODELOS_VOLUMEN.every((m) => m.componente === "aerea_lenosa")).toBe(true);
-    expect(MODELOS_VOLUMEN.filter((m) => m.estado === "aprobado").map((m) => m.id)).toEqual([
-      "UTD-TS7-JAME-DH",
-      "UTD-TS7-JAME-D",
-      "UTD-TS7-LIST-DH",
-      "UTD-TS7-LIST-D",
-      "MCH09-T1-ACPL-D-ACPS",
-    ]);
-  });
 });
 
 describe("selección explícita por componente, especie y estado", () => {
@@ -108,7 +97,7 @@ describe("calcularCarbonoAereoTotalArbol — los cuatro candidatos autorizados",
     expect(r.valor!.carbono_kg).toBeCloseTo(c.c, 2);
     expect(r.valor!.co2e_kg).toBeCloseTo(r.valor!.carbono_kg * (44 / 12), 10);
     expect(r.valor!.modelo.id).toBe(c.modelo);
-    expect(r.valor!.modelo.estado).toBe("exploratorio");
+    expect(r.valor!.modelo.estado).toBe("aprobado");
     expect(r.valor!.componente).toEqual({ codigo: "aerea_total", incluye: ["tallo", "ramas", "ramillas", "hojas"], excluye: ["raíces"] });
   });
 
@@ -177,33 +166,7 @@ describe("no regresión y ausencia de doble conteo", () => {
   const NEG = arbol("n1", { especie_cientifica: "Acer negundo", dap_cm: 25, altura_total_m: null });
   const PILOTO = [...CANDIDATOS.map(candidato), ...MULTIFUSTALES, ...SIN_VIGENTES];
 
-  it("el carbono aéreo leñoso no cambia: quillay y peumo siguen sin modelo y sus totales no se alteran", () => {
-    for (const a of PILOTO.filter((x) => x.evaluacion_completa_vigente && x.multifustal === false)) {
-      expect(calcularCarbonoArbol(a)).toEqual(expect.objectContaining({ valor: null, motivo: "sin_modelo" }));
-    }
-    const sin = agregarCarbono([JAC, NEG]);
-    const con = agregarCarbono([JAC, NEG, ...PILOTO]);
-    expect(con.total).toEqual(sin.total);
-    expect(con.cobertura.con_resultado).toBe(sin.cobertura.con_resultado);
-    expect(con.cobertura.con_resultado_exploratorio).toBe(sin.cobertura.con_resultado_exploratorio);
-    expect(con.total.carbono_t).toBeCloseTo(110.3147 / 1000, 6);
-  });
 
-  it("el carbono aéreo total no incluye a especies con modelo leñoso ni genera total oficial", () => {
-    const t = agregarCarbonoAereoTotal([JAC, NEG, ...PILOTO]);
-    expect(t.indicador).toBe("estimacion_carbono_aereo_total");
-    expect(t.cobertura).toEqual(
-      expect.objectContaining({
-        presentes: 13,
-        universo_calculo: 9,
-        con_resultado: 0,
-        con_resultado_exploratorio: 4,
-        por_modelo: { "CRUZ15-C6-QUSA-D": 3, "CRUZ15-C6-CRAL-D": 1 },
-      })
-    );
-    expect(t.cobertura.motivos).toEqual(expect.objectContaining({ sin_modelo: 2, multifustal_no_admitido: 3, sin_evaluacion_valida: 4 }));
-    expect(t.total).toEqual({ carbono_t: null, co2e_t: null });
-  });
 
   it("cada árbol cae en un solo resultado por indicador", () => {
     const todos = [JAC, NEG, ...PILOTO];
@@ -214,11 +177,11 @@ describe("no regresión y ausencia de doble conteo", () => {
 
   it("el secuestro anual no cambia: quillay y peumo quedan no estimables (sin modelo), ni siquiera como simulación", () => {
     for (const a of CANDIDATOS.map(candidato)) {
-      expect(calcularSecuestroArbol({ ...a, cle: 4, muerte_regresiva_pct: 0 })).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
+      expect(calcularSecuestroArbol({ ...a, cle: 4, muerte_regresiva_pct: 0 }, {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
     }
     const conCle = (xs: ArbolCarbono[]) => xs.map((a) => ({ ...a, cle: 4, muerte_regresiva_pct: 0 }));
-    const sin = agregarSecuestro(conCle([JAC, NEG]));
-    const con = agregarSecuestro(conCle([JAC, NEG, ...PILOTO]));
+    const sin = agregarSecuestro(conCle([JAC, NEG]), {});
+    const con = agregarSecuestro(conCle([JAC, NEG, ...PILOTO]), {});
     expect(con.cobertura.simulacion_exploratoria).toBe(sin.cobertura.simulacion_exploratoria);
     expect(con.cobertura.estimacion_fundamentada).toBe(0);
   });

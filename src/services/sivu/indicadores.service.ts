@@ -3,6 +3,8 @@ import { assertProjectAccess } from "../authorization.service";
 import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, listarVariablesCrecimiento, obtenerSuperficieProyecto } from "../../repositories/sivu/indicadores.repository";
 import { agregarSecuestro, MEDICIONES_EN_REVISION } from "../rules/carbono/secuestro";
 import { ArbolDescriptivo, diagnosticoDescriptivo } from "../rules/indicadores/descriptivos";
+import { coberturaArborea, resumenAportesAmbientales } from "../rules/indicadores/aportesAmbientales";
+import { agregarAportesFoliares } from "../rules/indicadores/aportesFoliares";
 import { CATALOGO } from "../rules/engine/catalogs";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
@@ -141,6 +143,75 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     tree_code: delAmbito.find((f) => f.id === a.id)?.tree_code ?? null,
   }));
 
+  // Propuesta experimental (2026-11-23): aportes ambientales del marco de Nowak (2024).
+  const porBarrio = barrio !== undefined;
+  const coberturaUnida = coberturaArborea(
+    delAmbito
+      .filter((f) => evaluadosIds.has(f.id))
+      .map((f) => ({
+        id: f.id,
+        utm_este: f.utm_este ?? null,
+        utm_norte: f.utm_norte ?? null,
+        diametro_copa_ns_m: f.diametro_copa_ns_m,
+        diametro_copa_eo_m: f.diametro_copa_eo_m,
+        copa_no_presenta: f.copa_no_presenta,
+      })),
+    superficie,
+    porBarrio
+  );
+  const carbonoIntegrado = agregarCarbonoIntegrado(
+    arbolesCarbono.map((a) => ({ ...a, tree_code: delAmbito.find((f) => f.id === a.id)?.tree_code ?? null }))
+  );
+  const secuestro = agregarSecuestro(arbolesSecuestro);
+  // Propuesta experimental (2026-11-23): área foliar, remoción de contaminantes e interceptación (i-Tree simplificado).
+  const aportesFoliares = agregarAportesFoliares(
+    delAmbito
+      .filter((f) => evaluadosIds.has(f.id))
+      .map((f) => {
+        const r = rasgoPorArbol.get(f.id);
+        return {
+          id: f.id,
+          tree_code: f.tree_code ?? null,
+          especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
+          tipo_hoja: r?.tipo_hoja ?? null,
+          persistencia_follaje: r?.persistencia_follaje ?? null,
+          genero: r?.genero ?? null,
+          altura_total_m: f.altura_total_m,
+          altura_base_copa_viva_m: f.altura_base_copa_viva_m ?? null,
+          altura_primera_rama_m: f.altura_primera_rama_m ?? null,
+          diametro_copa_ns_m: f.diametro_copa_ns_m,
+          diametro_copa_eo_m: f.diametro_copa_eo_m,
+          copa_no_presenta: f.copa_no_presenta,
+          muerte_regresiva_pct: crecimientoPorArbol.get(f.id)?.muerte_regresiva_pct ?? null,
+          copa_faltante_pct: crecimientoPorArbol.get(f.id)?.copa_faltante_pct ?? null,
+        };
+      })
+  );
+  const proyeccionAnual = resumirProyeccionAnual(arbolesSecuestro);
+  const aportesAmbientales = resumenAportesAmbientales({
+    foliares: aportesFoliares,
+    presentes: arbolesDescriptivos.map((a) => ({
+      especie: a.especie_cientifica !== null,
+      dap: a.dap_cm !== null,
+      altura: a.altura_total_m !== null,
+      condicion: a.muerte_regresiva_pct !== null || a.vitalidad !== null,
+    })),
+    cobertura: coberturaUnida,
+    carbono: {
+      aprobados: carbonoIntegrado.aprobados,
+      exploratorios: carbonoIntegrado.exploratorios,
+      no_estimables: carbonoIntegrado.no_estimables,
+      carbono_kg_aprobado: carbonoIntegrado.aereo.carbono_kg_aprobado,
+      carbono_kg_exploratorio: carbonoIntegrado.aereo.carbono_kg_exploratorio,
+    },
+    // Mismas cifras que la tarjeta «Secuestro anual»: una clase por árbol evaluado (leñoso o aéreo total).
+    secuestro: {
+      fundamentadas: proyeccionAnual.estimacion_fundamentada,
+      simulaciones: proyeccionAnual.con_proyeccion - proyeccionAnual.estimacion_fundamentada,
+      no_estimables: proyeccionAnual.no_estimable,
+    },
+  });
+
   return {
     fecha_consulta: fechaConsulta,
     ambito: { tipo: barrio === undefined ? ("proyecto" as const) : ("barrio" as const), barrio: barrio ?? null },
@@ -171,18 +242,22 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     // los modelos sean exploratorios; nunca se suma con el carbono aéreo leñoso.
     estimacion_carbono_aereo_total: agregarCarbonoAereoTotal(arbolesCarbono),
     // Propuesta experimental (Valej, 2026-11-22): mejor modelo por árbol, aéreo y total separados, con su traza.
-    estimacion_carbono_integrada: agregarCarbonoIntegrado(
-      arbolesCarbono.map((a) => ({ ...a, tree_code: delAmbito.find((f) => f.id === a.id)?.tree_code ?? null }))
-    ),
+    estimacion_carbono_integrada: carbonoIntegrado,
     // Secuestro anual (decisiones A a C, 2026-11-20): cobertura por tipo de resultado; el total suma solo
     // estimaciones fundamentadas, nunca simulaciones.
-    estimacion_secuestro_anual: agregarSecuestro(arbolesSecuestro),
+    estimacion_secuestro_anual: secuestro,
     // Propuesta experimental (2026-11-21): variación anual proyectada del carbono aéreo total (con hojas) de las
     // especies con carbono directo. Solo cobertura; no es secuestro leñoso ni captura fotosintética.
     estimacion_variacion_anual_carbono_aereo_total: agregarVariacionAereoTotal(arbolesSecuestro),
     // Propuesta experimental: una sola clase por árbol (secuestro leñoso, variación aérea total o no estimable).
-    resumen_proyeccion_anual: resumirProyeccionAnual(arbolesSecuestro),
+    resumen_proyeccion_anual: proyeccionAnual,
     // Propuesta experimental: indicadores descriptivos (no registrados en INDICES).
     diagnostico_descriptivo: diagnosticoDescriptivo(arbolesDescriptivos, MEDICIONES_EN_REVISION),
+    // Propuesta experimental (2026-11-23): cobertura arbórea sin contar dos veces las copas superpuestas.
+    cobertura_arborea: coberturaUnida,
+    // Propuesta experimental (2026-11-23): qué aporte del marco de Nowak (2024) se estima y qué falta.
+    aportes_ambientales: aportesAmbientales,
+    // Propuesta experimental (2026-11-23): detalle por árbol de área foliar, remoción e interceptación.
+    aportes_foliares: aportesFoliares,
   };
 }
