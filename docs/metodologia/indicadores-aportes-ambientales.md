@@ -117,7 +117,42 @@ La velocidad de crecimiento de cada especie es la que publica la base de especie
 
 ---
 
-## 4. Supuestos y límites que conviene conocer
+## 4. Cómo se obtuvo cada índice
+
+Todos salen de datos que SIVU ya registra en el inventario y en la evaluación del árbol. La columna «Fila» es la de la hoja INDICES del Excel maestro, donde está la definición oficial.
+
+### 4.1 Estructura y composición del arbolado
+
+| Índice | Datos que usa | Cómo se obtiene | Fuente | Fila |
+|---|---|---|---|---|
+| Número de árboles presentes | Presencia del árbol | Se cuenta cada árbol en pie una vez (incluye muertos en pie; excluye talados o retirados con OT aprobada). | Inventario de SIVU | 3 |
+| Densidad arbórea | Árboles presentes, superficie del sector | Árboles ÷ (m² del sector ÷ 10.000). Solo por proyecto. | Inventario de SIVU | 4 |
+| Riqueza de especies | Especie | Número de especies distintas. | Inventario de SIVU | 5 |
+| Abundancia relativa | Especie | Árboles de la especie ÷ árboles presentes × 100. | Inventario de SIVU | 6 |
+| Diversidad de Shannon (H′) | Especie | H′ = −Σ pᵢ · ln pᵢ, con pᵢ la proporción de cada especie. | Shannon (1948) | 7 |
+| Regla 10-20-30 | Especie, género, familia | Porcentaje de árboles del taxón más común, comparado con ≤ 10 % por especie, ≤ 20 % por género y ≤ 30 % por familia. | Santamour (1990) | 8 |
+| Proporción de nativos e introducidos | Origen de la especie (catálogo) | Árboles nativos o endémicos (o introducidos) ÷ árboles presentes × 100. | Catálogo de especies de SIVU | 9 y 10 |
+| Clases diamétricas | DAP | Árboles por tramos de 10 cm de DAP. | Inventario de SIVU | 11 |
+| Diámetro medio de copa | Diámetros de copa N-S y E-O | Promedio del diámetro de copa de cada árbol. | Inventario de SIVU | 12 |
+| Área de copa | Diámetros de copa N-S y E-O | Cada copa como elipse, π × (N-S/2) × (E-O/2); se suman. | Inventario de SIVU | 13 |
+
+### 4.2 Aportes ambientales (Nowak, 2024)
+
+| Índice | Datos que usa | Cómo se obtiene | Fuente | Fila |
+|---|---|---|---|---|
+| Cobertura arbórea | Diámetros de copa, ubicación, superficie del sector | Unión de las copas (la superposición cuenta una vez) ÷ superficie × 100. | Método propio de SIVU sobre el área de copa (fila 13); concepto de Nowak (2024) | 16 |
+| Carbono almacenado | Especie, DAP, altura | Mejor modelo por árbol: volumen × densidad × 0,47, carbono directo o biomasa × 0,47. | McPherson et al. (2016); Pillsbury et al. (1998); McHale et al. (2009); Cruz et al. (2015); Zhang et al. (2026); Zanne et al. (2009); Nowak (2024, ap. 10); IPCC (2006) | 14 |
+| Secuestro anual | Especie, DAP, altura, CLE, muerte regresiva | Carbono con el DAP del próximo año − carbono de hoy, en CO₂. | Nowak (2024, pp. 44-45) y los modelos del carbono almacenado | 15 |
+| Proyección de crecimiento | DAP, CLE, muerte regresiva | DAP + años × tasa de crecimiento ajustada, en tres escenarios. | Nowak (2024, pp. 44-45) | 17 |
+| Área foliar | Especie, altura de copa, diámetro de copa, copa faltante | Ecuación de Nowak (1996) con los ajustes de rango de i-Tree. | Nowak (1996), según Nowak (2024, pp. 22-24) | 20 |
+| Remoción de contaminantes | Área foliar, área de copa, follaje caduco o perenne | Hora a hora: concentración × velocidad de deposición × área de copa, sin lluvia. | Nowak et al. (2006); datos Open-Meteo (CAMS) 2025 | 22 |
+| Interceptación de lluvia | Área foliar, área de copa | Modelo de la copa como esponja: se llena con la lluvia y se vacía al evaporarse. | Hirabayashi (2013); datos Open-Meteo (ERA5) 2025 | 24 |
+
+### 4.3 Descripción del estado de los árboles
+
+Son resúmenes de lo que el inspector registra (altura, proporción de copa viva, clase de edad, condición de copa). No aplican ecuaciones ni están en la hoja INDICES: describen el arbolado, pero no son aportes ambientales.
+
+## 5. Supuestos y límites que conviene conocer
 
 - Las ecuaciones de biomasa y los parámetros de i-Tree se ajustaron sobre todo con árboles de EE. UU.; ninguna se calibró en Valparaíso.
 - La contaminación viene de un modelo (CAMS), no de una estación de monitoreo en la ciudad.
@@ -128,7 +163,7 @@ La velocidad de crecimiento de cada especie es la que publica la base de especie
 
 ---
 
-## 5. Bibliografía
+## 6. Bibliografía
 
 1. **Nowak, D. J. (2024).** *Understanding i-Tree: 2023 Summary of Programs and Methods.* USDA Forest Service, General Technical Report NRS-200-2023. https://doi.org/10.2737/NRS-GTR-200-2023. Área foliar (pp. 22-24), crecimiento (pp. 44-45), DAP de multifustales (p. 22) y apéndice 10 (ecuaciones de biomasa).
 2. **Nowak, D. J. (1996).** Estimating leaf area and leaf biomass of open-grown deciduous urban trees. *Forest Science*, 42(4), 504-507.
@@ -142,7 +177,9 @@ La velocidad de crecimiento de cada especie es la que publica la base de especie
 10. **Zanne, A. E. et al. (2009).** *Global Wood Density Database.* Dryad. https://doi.org/10.5061/dryad.234 (versión 2.2, Zenodo: https://zenodo.org/records/18262736).
 11. **Peper, P. J. y McPherson, E. G. (1998).** Comparison of five methods for estimating leaf area index of open-grown deciduous trees. *Journal of Arboriculture*, 24(2), 98.
 12. **IPCC (2006).** *Guidelines for National Greenhouse Gas Inventories*, vol. 4, cap. 4, tabla 4.3 (fracción de carbono 0,47).
-13. **Open-Meteo (2025).** Historical Weather API (ERA5, Copernicus/ECMWF) y Air Quality API (CAMS, Copernicus). Licencia CC BY 4.0. https://open-meteo.com
+13. **Shannon, C. E. (1948).** A Mathematical Theory of Communication. *Bell System Technical Journal*, 27, 379-423.
+14. **Santamour, F. S. (1990).** Trees for Urban Planting: Diversity, Uniformity, and Common Sense. *Proceedings of the 7th Conference of the Metropolitan Tree Improvement Alliance (METRIA)*, 7, 57-65.
+15. **Open-Meteo (2025).** Historical Weather API (ERA5, Copernicus/ECMWF) y Air Quality API (CAMS, Copernicus). Licencia CC BY 4.0. https://open-meteo.com
 
 ---
 
