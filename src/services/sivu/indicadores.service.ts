@@ -4,6 +4,7 @@ import { listarArbolesIndicadores, listarPresencia, listarRasgosEspecie, listarV
 import { agregarSecuestro, MEDICIONES_EN_REVISION } from "../rules/carbono/secuestro";
 import { ArbolDescriptivo, diagnosticoDescriptivo } from "../rules/indicadores/descriptivos";
 import { coberturaArborea, resumenAportesAmbientales } from "../rules/indicadores/aportesAmbientales";
+import { agregarAportesFoliares } from "../rules/indicadores/aportesFoliares";
 import { CATALOGO } from "../rules/engine/catalogs";
 import { arbolesConEvaluacionCompletaVigente } from "./habilitacionBiometrica";
 import { agregarCarbono, ArbolCarbono } from "../rules/carbono/calculo";
@@ -162,7 +163,31 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     arbolesCarbono.map((a) => ({ ...a, tree_code: delAmbito.find((f) => f.id === a.id)?.tree_code ?? null }))
   );
   const secuestro = agregarSecuestro(arbolesSecuestro);
+  // Propuesta experimental (2026-11-23): área foliar, remoción de contaminantes e interceptación (i-Tree simplificado).
+  const aportesFoliares = agregarAportesFoliares(
+    delAmbito
+      .filter((f) => evaluadosIds.has(f.id))
+      .map((f) => {
+        const r = rasgoPorArbol.get(f.id);
+        return {
+          id: f.id,
+          tree_code: f.tree_code ?? null,
+          especie_cientifica: f.especie_catalogo ?? f.especie_cientifica,
+          tipo_hoja: r?.tipo_hoja ?? null,
+          persistencia_follaje: r?.persistencia_follaje ?? null,
+          genero: r?.genero ?? null,
+          altura_total_m: f.altura_total_m,
+          altura_base_copa_viva_m: f.altura_base_copa_viva_m ?? null,
+          altura_primera_rama_m: f.altura_primera_rama_m ?? null,
+          diametro_copa_ns_m: f.diametro_copa_ns_m,
+          diametro_copa_eo_m: f.diametro_copa_eo_m,
+          copa_no_presenta: f.copa_no_presenta,
+          muerte_regresiva_pct: crecimientoPorArbol.get(f.id)?.muerte_regresiva_pct ?? null,
+        };
+      })
+  );
   const aportesAmbientales = resumenAportesAmbientales({
+    foliares: aportesFoliares,
     presentes: arbolesDescriptivos.map((a) => ({
       especie: a.especie_cientifica !== null,
       dap: a.dap_cm !== null,
@@ -229,5 +254,7 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     cobertura_arborea: coberturaUnida,
     // Propuesta experimental (2026-11-23): qué aporte del marco de Nowak (2024) se estima y qué falta.
     aportes_ambientales: aportesAmbientales,
+    // Propuesta experimental (2026-11-23): detalle por árbol de área foliar, remoción e interceptación.
+    aportes_foliares: aportesFoliares,
   };
 }

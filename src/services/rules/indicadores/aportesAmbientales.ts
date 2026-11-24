@@ -144,6 +144,13 @@ const fmt = (n: number, d = 1) => n.toLocaleString("es-CL", { minimumFractionDig
  * resultados ya calculados por los otros módulos: no recalcula nada.
  */
 export function resumenAportesAmbientales(entrada: {
+  /** Resultado de agregarAportesFoliares (opcional: sin él, contaminantes e interceptación quedan no estimables). */
+  foliares?: {
+    cobertura: { arboles: number; con_area_foliar: number };
+    area_foliar: { total_m2: number | null; lai_medio: number | null };
+    remocion_contaminantes: { total_kg: number | null; por_contaminante: Record<string, number | null> };
+    intercepcion_precipitaciones: { total_m3: number | null; porcentaje_interceptado: number | null; precipitacion_anual_mm: number };
+  };
   presentes: ArbolVariablesBasicas[];
   cobertura: ReturnType<typeof coberturaArborea>;
   carbono: { aprobados: number; exploratorios: number; no_estimables: number; carbono_kg_aprobado: number; carbono_kg_exploratorio: number };
@@ -165,6 +172,56 @@ export function resumenAportesAmbientales(entrada: {
   const c = entrada.cobertura;
   const k = entrada.carbono;
   const s = entrada.secuestro;
+  const f = entrada.foliares;
+  const hayFoliar = !!f && f.cobertura.con_area_foliar > 0;
+  const USA_FOLIAR = ["Especie y tipo de follaje", "Diámetros de copa", "Altura total y base de copa viva", "Condición: muerte regresiva"];
+  const remocion: AporteAmbiental = hayFoliar
+    ? {
+        codigo: "remocion_contaminantes",
+        nombre: "Remoción de contaminantes",
+        estado: "simulacion",
+        resultado: `${fmt(f!.remocion_contaminantes.total_kg ?? 0, 1)} kg/año entre O₃, NO₂, SO₂, PM10 y CO en ${f!.cobertura.con_area_foliar} árboles (${fmt(f!.area_foliar.total_m2 ?? 0, 0)} m² de hojas).`,
+        usa: [...USA_FOLIAR, "Concentraciones horarias 2025 (CAMS) y lluvia y radiación horarias (ERA5)"],
+        falta: [
+          ...faltaMedir,
+          "Concentraciones medidas en estaciones SINCA en lugar del modelo CAMS.",
+          "Velocidades de deposición horarias con viento y temperatura locales (i-Tree completo) y PM2,5.",
+          "Factor de sombra por especie y período sin hojas local.",
+        ],
+        fila_indices: "20",
+      }
+    : {
+        codigo: "remocion_contaminantes",
+        nombre: "Remoción de contaminantes",
+        estado: "no_estimable",
+        resultado: "No estimable con los datos registrados.",
+        usa: USA_FOLIAR,
+        falta: [AREA_FOLIAR, "Concentraciones horarias de contaminantes de Valparaíso.", "Meteorología horaria y parámetros de deposición."],
+        fila_indices: "20",
+      };
+  const intercepcion: AporteAmbiental = hayFoliar
+    ? {
+        codigo: "interceptacion_precipitaciones",
+        nombre: "Interceptación de precipitaciones",
+        estado: "simulacion",
+        resultado: `${fmt(f!.intercepcion_precipitaciones.total_m3 ?? 0, 1)} m³/año retenidos y evaporados por las copas (${fmt(f!.intercepcion_precipitaciones.porcentaje_interceptado ?? 0, 1)} % de la lluvia sobre ellas; ${fmt(f!.intercepcion_precipitaciones.precipitacion_anual_mm, 0)} mm en 2025).`,
+        usa: [...USA_FOLIAR, "Precipitación y evapotranspiración horarias 2025 (ERA5)"],
+        falta: [
+          ...faltaMedir,
+          "Precipitación medida en una estación local (DMC) en lugar del reanálisis.",
+          "Definir si se reporta la interceptación o la escorrentía evitada (INDICES fila 21); esta última requiere las superficies del suelo.",
+        ],
+        fila_indices: "21",
+      }
+    : {
+        codigo: "interceptacion_precipitaciones",
+        nombre: "Interceptación de precipitaciones",
+        estado: "no_estimable",
+        resultado: "No estimable con los datos registrados.",
+        usa: USA_FOLIAR,
+        falta: [AREA_FOLIAR, "Precipitación y meteorología horarias de Valparaíso.", "Definir si se reporta la interceptación o la escorrentía evitada (INDICES fila 21)."],
+        fila_indices: "21",
+      };
   const aportes: AporteAmbiental[] = [
     {
       codigo: "cobertura_arborea",
@@ -196,28 +253,8 @@ export function resumenAportesAmbientales(entrada: {
       falta: [...faltaMedir, "Tasa o categoría de crecimiento por especie con fuente verificada (INDICES fila 15)."],
       fila_indices: "15",
     },
-    {
-      codigo: "remocion_contaminantes",
-      nombre: "Remoción de contaminantes",
-      estado: "no_estimable",
-      resultado: "No estimable con los datos registrados.",
-      usa: ["Especie", "Dimensiones de copa", "Altura y base de copa viva", "Condición: copa faltante y CLE"],
-      falta: [AREA_FOLIAR, "Concentraciones horarias de contaminantes de Valparaíso.", "Meteorología horaria y parámetros de deposición."],
-      fila_indices: "20",
-    },
-    {
-      codigo: "interceptacion_precipitaciones",
-      nombre: "Interceptación de precipitaciones",
-      estado: "no_estimable",
-      resultado: "No estimable con los datos registrados.",
-      usa: ["Especie", "Dimensiones de copa", "Altura y base de copa viva", "Condición: copa faltante y CLE"],
-      falta: [
-        AREA_FOLIAR,
-        "Precipitación y meteorología horarias de Valparaíso.",
-        "Definir si se reporta la interceptación o la escorrentía evitada (INDICES fila 21).",
-      ],
-      fila_indices: "21",
-    },
+    remocion,
+    intercepcion,
   ];
   return {
     indicador: "aportes_ambientales" as const,

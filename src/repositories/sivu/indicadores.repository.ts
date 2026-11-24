@@ -97,12 +97,12 @@ export async function listarPresencia(accessToken: string, treeIds: string[]): P
 export async function listarRasgosEspecie(
   accessToken: string,
   treeIds: string[]
-): Promise<Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string; tipo_hoja: string | null }>> {
-  const salida: Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string; tipo_hoja: string | null }> = [];
+): Promise<Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string; tipo_hoja: string | null; persistencia_follaje?: string | null }>> {
+  const salida: Array<{ tree_id: string; genero: string | null; familia: string | null; origen_biogeografico: string; tipo_hoja: string | null; persistencia_follaje?: string | null }> = [];
   for (let i = 0; i < treeIds.length; i += 150) {
     const { data, error } = await createUserScopedClient(accessToken)
       .from("v_species_traits")
-      .select("tree_id, genero, familia, origen_biogeografico, tipo_hoja")
+      .select("tree_id, genero, familia, origen_biogeografico, tipo_hoja, persistencia_follaje")
       .in("tree_id", treeIds.slice(i, i + 150));
     if (error) lanzar(error);
     salida.push(...((data ?? []) as typeof salida));
