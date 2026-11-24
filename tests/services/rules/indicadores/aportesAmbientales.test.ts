@@ -97,7 +97,7 @@ describe("resumenAportesAmbientales (propuesta experimental)", () => {
   it("clasifica carbono y secuestro según los resultados recibidos", () => {
     expect(estado("cobertura_arborea")).toBe("calculado");
     expect(estado("carbono_almacenado")).toBe("calculado");
-    expect(estado("secuestro_carbono")).toBe("simulacion");
+    expect(estado("secuestro_carbono")).toBe("calculado");
   });
 
   it("cuenta las variables básicas y pide medir los árboles que no las tienen", () => {

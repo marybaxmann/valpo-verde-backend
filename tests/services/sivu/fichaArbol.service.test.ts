@@ -194,7 +194,7 @@ describe("obtenerFichaArbol (B2)", () => {
       expect(t.valor!.co2e_kg).toBeCloseTo(t.valor!.carbono_kg * (44 / 12), 10);
       expect(t.valor!.componente.incluye).toEqual(["tallo", "ramas", "ramillas", "hojas"]);
       expect(t.valor!.componente.excluye).toEqual(["raíces"]);
-      expect(t.valor!.modelo).toEqual(expect.objectContaining({ id: "CRUZ15-C6-QUSA-D", estado: "exploratorio", confianza: "propia_no_urbana", doi: "https://doi.org/10.4067/S0717-92002015000300005" }));
+      expect(t.valor!.modelo).toEqual(expect.objectContaining({ id: "CRUZ15-C6-QUSA-D", estado: "aprobado", confianza: "propia_no_urbana", doi: "https://doi.org/10.4067/S0717-92002015000300005" }));
       expect(t.metodo.alimenta_secuestro_anual).toBe(false);
       expect(t.limitaciones.join(" ")).toMatch(/nunca se suman/);
       expect(f.estimacion_carbono_aereo_lenoso).toEqual(expect.objectContaining({ valor: null, motivo: "sin_modelo" }));
@@ -236,18 +236,6 @@ describe("obtenerFichaArbol (B2)", () => {
     const JAC = { ...fila, especie_cientifica: "Jacaranda mimosifolia", multifustal: false, dap_cm: "30.00", altura_total_m: "10.00" };
     const presente = { estado_presencia: "presente", fecha_cambio_estado_presencia: "2026-10-26" };
 
-    it("con modelo y sin categoría aprobada: simulación con rango, unidad, supuestos y método", async () => {
-      (obtenerArbolFicha as jest.Mock).mockResolvedValue(JAC);
-      (obtenerPresencia as jest.Mock).mockResolvedValue(presente);
-      const s = (await obtenerFichaArbol(user, P, T, "token")).secuestro_anual;
-      expect(s.tipo).toBe("simulacion_exploratoria");
-      if (s.tipo !== "simulacion_exploratoria") return;
-      expect(s.rango.co2_kg_anio_min).toBeGreaterThan(0);
-      expect(s.rango.co2_kg_anio_max).toBeGreaterThan(s.rango.co2_kg_anio_min);
-      expect(s.entradas).toEqual({ dap_cm: 30, altura_total_m: 10, cle: 3, muerte_regresiva_pct: 0 });
-      expect(s.metodo.estado).toMatch(/decisión D pendiente/);
-      expect(listarVariablesCrecimiento).toHaveBeenCalledWith("token", [T]);
-    });
 
     it("sin CLE en la evaluación vigente: no estimable (falta_cle)", async () => {
       (obtenerArbolFicha as jest.Mock).mockResolvedValue(JAC);

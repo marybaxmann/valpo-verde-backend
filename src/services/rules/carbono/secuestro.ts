@@ -51,7 +51,7 @@ export type CodigoCategoria = (typeof CRECIMIENTO_ITREE.categorias)[number]["cod
  * ninguna especie del Piloto tiene una categoría con fuente verificada.
  * Clave: claveEspecie (género y epíteto en minúsculas).
  */
-export const CATEGORIA_APROBADA_POR_ESPECIE: Readonly<Record<string, { categoria: CodigoCategoria; fuente: string }>> = {};
+
 
 /**
  * PROPUESTA EXPERIMENTAL (2026-11-21): categoría de crecimiento que publica la
@@ -84,6 +84,17 @@ export const CATEGORIA_ITREE_REFERENCIA: Readonly<Record<string, CodigoCategoria
   "araucaria heterophylla": "rapido",
   "schinus molle": "rapido",
 };
+
+/**
+ * CC-087 (2026-11-23): el equipo aprueba la categoría de crecimiento de i-Tree
+ * (GrowthRate) de cada especie del Piloto que la tiene. Con ella el secuestro
+ * es «estimación fundamentada» y suma al total oficial. Sin categoría
+ * publicada (Cryptocarya alba, Beilschmiedia miersii) sigue el rango de tres
+ * escenarios.
+ */
+export const CATEGORIA_APROBADA_POR_ESPECIE: Readonly<Record<string, { categoria: CodigoCategoria; fuente: string }>> = Object.fromEntries(
+  Object.entries(CATEGORIA_ITREE_REFERENCIA).map(([k, v]) => [k, { categoria: v, fuente: `${FUENTE_CATEGORIA_ITREE}; aprobada por el equipo (CC-087, 2026-11-23)` }])
+);
 
 /** Referencia i-Tree de una especie, o null si i-Tree no publica categoría. */
 export function categoriaItreeReferencia(especie: string | null): { categoria: CodigoCategoria; fuente: string; estado: string } | null {

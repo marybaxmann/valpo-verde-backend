@@ -1,5 +1,5 @@
 /**
- * PROPUESTA EXPERIMENTAL (Valej, 2026-11-23) — no es metodología vigente.
+ * Metodología vigente desde el 2026-11-23 (CC-087, aprobada por el equipo).
  *
  * Proyección del DAP de un árbol con el crecimiento de i-Tree Eco (Nowak
  * 2024, pp. 44-45): tasa estandarizada de la categoría × factor por
@@ -27,7 +27,7 @@ export const MOTIVO_SIN_PROYECCION: Record<MotivoSinProyeccion, string> = {
 };
 
 export function proyeccionCrecimiento(a: { especie_cientifica: string | null; dap_cm: number | null; cle: number | null; muerte_regresiva_pct: number | null }) {
-  const base = { estado_metodologico: "propuesta experimental: escenarios, no una predicción", fuente: CRECIMIENTO_ITREE.fuente, supuestos: [...SUPUESTOS_PROYECCION] };
+  const base = { estado_metodologico: "vigente (CC-087, 2026-11-23): escenarios de crecimiento, no una predicción", fuente: CRECIMIENTO_ITREE.fuente, supuestos: [...SUPUESTOS_PROYECCION] };
   const sin = (motivo: MotivoSinProyeccion) => ({ ...base, valor: null, motivo, detalle_motivo: MOTIVO_SIN_PROYECCION[motivo] });
   if (a.dap_cm === null || !(a.dap_cm > 0)) return sin("falta_dap");
   const fCle = a.cle === null ? null : factorCle(a.cle);

@@ -1,5 +1,5 @@
 /**
- * PROPUESTA EXPERIMENTAL (Valej, 2026-11-23) — no es metodología vigente.
+ * Metodología vigente desde el 2026-11-23 (CC-087, aprobada por el equipo).
  *
  * Aportes ambientales del arbolado según el marco de Nowak (2024): cobertura
  * arbórea, almacenamiento y secuestro de carbono, remoción de contaminantes e
@@ -93,7 +93,7 @@ export function coberturaArborea(arboles: ArbolCopaUbicada[], superficieM2: numb
   const union = copas.length > 0 ? areaUnionCopas(copas) : null;
   const base = {
     unidad: "porcentaje" as const,
-    estado_metodologico: "propuesta experimental (2026-11-23): sin fila en INDICES",
+    estado_metodologico: "vigente (CC-087, 2026-11-23)",
     metodo:
       "Unión de las copas elípticas (ejes norte-sur y este-oeste, centradas en el árbol) medida en una grilla de 0,1 m; la superposición se cuenta una vez. Cobertura = área unida / superficie del proyecto × 100.",
     area_cubierta_m2: union,
@@ -179,7 +179,7 @@ export function resumenAportesAmbientales(entrada: {
     ? {
         codigo: "remocion_contaminantes",
         nombre: "Remoción de contaminantes",
-        estado: "simulacion",
+        estado: "calculado",
         resultado: `${fmt(f!.remocion_contaminantes.total_kg ?? 0, 1)} kg/año entre O₃, NO₂, SO₂, PM10 y CO en ${f!.cobertura.con_area_foliar} árboles (${fmt(f!.area_foliar.total_m2 ?? 0, 0)} m² de hojas).`,
         usa: [...USA_FOLIAR, "Concentraciones horarias 2025 (CAMS) y lluvia y radiación horarias (ERA5)"],
         falta: [
@@ -203,7 +203,7 @@ export function resumenAportesAmbientales(entrada: {
     ? {
         codigo: "interceptacion_precipitaciones",
         nombre: "Interceptación de precipitaciones",
-        estado: "simulacion",
+        estado: "calculado",
         resultado: `${fmt(f!.intercepcion_precipitaciones.total_m3 ?? 0, 1)} m³/año retenidos y evaporados por las copas (${fmt(f!.intercepcion_precipitaciones.porcentaje_interceptado ?? 0, 1)} % de la lluvia sobre ellas; ${fmt(f!.intercepcion_precipitaciones.precipitacion_anual_mm, 0)} mm en 2025).`,
         usa: [...USA_FOLIAR, "Precipitación y evapotranspiración horarias 2025 (ERA5)"],
         falta: [
@@ -232,13 +232,13 @@ export function resumenAportesAmbientales(entrada: {
           ? (c.motivo ?? "Sin datos.")
           : `${fmt(c.valor, 2)} % del proyecto (${fmt(c.area_cubierta_m2 ?? 0, 0)} m² cubiertos; ${fmt(c.superposicion_m2 ?? 0, 0)} m² de copas superpuestas contados una vez).`,
       usa: ["Diámetros de copa norte-sur y este-oeste", "Ubicación del árbol", "Superficie del proyecto"],
-      falta: [...faltaMedir, "Agregar la fila del indicador en INDICES (con autorización)."],
+      falta: [...faltaMedir],
       fila_indices: null,
     },
     {
       codigo: "carbono_almacenado",
       nombre: "Almacenamiento de carbono",
-      estado: k.aprobados > 0 ? "calculado" : k.exploratorios > 0 ? "simulacion" : "no_estimable",
+      estado: k.aprobados + k.exploratorios > 0 ? "calculado" : "no_estimable",
       resultado: `${k.aprobados} árboles con modelo aprobado (${fmt(k.carbono_kg_aprobado, 0)} kg C); ${k.exploratorios} con modelo exploratorio (${fmt(k.carbono_kg_exploratorio, 0)} kg C, no suma); ${k.no_estimables} no estimables.`,
       usa: ["Especie", "DAP (equivalente en multifustales)", "Altura total"],
       falta: [...faltaMedir, "Ecuaciones aprobadas para más especies (INDICES fila 14)."],
@@ -247,7 +247,7 @@ export function resumenAportesAmbientales(entrada: {
     {
       codigo: "secuestro_carbono",
       nombre: "Secuestro de carbono",
-      estado: s.fundamentadas > 0 ? "calculado" : s.simulaciones > 0 ? "simulacion" : "no_estimable",
+      estado: s.fundamentadas + s.simulaciones > 0 ? "calculado" : "no_estimable",
       resultado: `${s.fundamentadas} estimaciones fundamentadas; ${s.simulaciones} árboles con proyección simulada (crecimiento de i-Tree Eco; leñoso o aéreo total con hojas); ${s.no_estimables} no estimables.`,
       usa: ["Especie", "DAP", "Altura total", "Condición: muerte regresiva de copa", "Exposición lumínica de copa (CLE)"],
       falta: [...faltaMedir, "Tasa o categoría de crecimiento por especie con fuente verificada (INDICES fila 15)."],
@@ -258,7 +258,7 @@ export function resumenAportesAmbientales(entrada: {
   ];
   return {
     indicador: "aportes_ambientales" as const,
-    estado_metodologico: "propuesta experimental (Valej, 2026-11-23): no es metodología vigente",
+    estado_metodologico: "vigente (CC-087, 2026-11-23)",
     marco: "Nowak, D. J. (2024). Understanding i-Tree: 2023 Summary of Programs and Methods. USDA Forest Service, GTR NRS-200-2023.",
     variables_basicas: variables,
     aportes,

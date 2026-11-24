@@ -1,5 +1,5 @@
 /**
- * PROPUESTA EXPERIMENTAL (Valej, 2026-11-23) — no es metodología vigente.
+ * Metodología vigente desde el 2026-11-23 (CC-087, aprobada por el equipo).
  *
  * Área foliar, remoción de contaminantes e interceptación de precipitaciones
  * por árbol, con la lógica de i-Tree Eco (Nowak 2024) simplificada y con los
@@ -287,7 +287,7 @@ export function agregarAportesFoliares(arboles: ArbolFoliar[]) {
   };
   return {
     indicador: "aportes_foliares" as const,
-    estado_metodologico: "propuesta experimental (Valej, 2026-11-23): resultados exploratorios, no suman a totales oficiales",
+    estado_metodologico: "vigente (CC-087, 2026-11-23)",
     parametros: PARAMETROS_FOLIARES,
     cobertura: {
       arboles: filas.length,

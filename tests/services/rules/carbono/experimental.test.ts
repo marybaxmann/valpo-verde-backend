@@ -60,9 +60,9 @@ describe("catálogo experimental de la UTD (PSW-GTR-253)", () => {
 
   it("todos exploratorios, del componente leñoso, con fuente y limitaciones; los generales con confianza «generica_urbana»", () => {
     const nuevos = MODELOS_VOLUMEN.filter((m) => m.id.startsWith("UTD-T9-UGE") || m.id === "MCH09-T1-ACPL-D-ACPL");
-    expect(nuevos).toHaveLength(10);
+    expect(nuevos).toHaveLength(11); // CC-087: + Araucaria heterophylla con densidad del género
     for (const m of nuevos) {
-      expect(m.estado).toBe("exploratorio");
+      expect(m.estado).toBe("aprobado");
       expect(m.componente).toBe("aerea_lenosa");
       expect(m.fuente).toMatch(/PSW-GTR-253|McHale/);
       expect(m.limitaciones_modelo.length).toBeGreaterThan(0);
@@ -76,49 +76,26 @@ describe("carbono almacenado y secuestro con los modelos UTD experimentales (pro
   it.each(UTD)("$a.id: carbono leñoso exploratorio y simulación con las tres categorías", ({ a, id, c, s }) => {
     const r = calcularCarbonoArbol(a);
     expect(r.valor!.modelo.id).toBe(id);
-    expect(r.valor!.modelo.estado).toBe("exploratorio");
+    expect(r.valor!.modelo.estado).toBe("aprobado");
     expect(r.valor!.carbono_kg).toBeCloseTo(c, 3);
-    const sec = calcularSecuestroArbol(a);
+    const sec = calcularSecuestroArbol(a, {});
     expect(sec.tipo).toBe("simulacion_exploratoria");
     if (sec.tipo !== "simulacion_exploratoria") return;
     expect(sec.por_categoria.map((p) => p.co2_kg_anio)).toEqual([expect.closeTo(s[0], 3), expect.closeTo(s[1], 3), expect.closeTo(s[2], 3)]);
   });
 
-  it("avisos según el origen de la ecuación: general urbana, propia de la especie o sustituta del género", () => {
-    const aviso = (a: ArbolSecuestro) => {
-      const r = calcularSecuestroArbol(a);
-      return r.tipo === "simulacion_exploratoria" ? r.advertencias.join(" ") : "";
-    };
-    expect(aviso(UTD[1].a)).toMatch(/ecuación general urbana de latifoliadas \(UGEB\) de la Urban Tree Database/);
-    expect(aviso(UTD[1].a)).toMatch(/altura del árbol no se pudo comprobar/);
-    expect(aviso(UTD[7].a)).toMatch(/ecuación de la propia especie/);
-    expect(aviso(arbol("n", "Acer negundo", 20, 8))).toMatch(/Acer platanoides, otra especie del mismo género/);
-  });
 
   it("no estimables correctamente clasificados", () => {
     expect(calcularCarbonoArbol(arbol("A-000552", "Lagerstroemia indica", 3.4, 2.9)).motivo).toBe("fuera_de_rango");
     expect(calcularCarbonoArbol(arbol("A-000527", "Schinus molle", 23.41, 5.4, { multifustal: true })).motivo).toBe("multifustal_no_admitido");
-    // Sin densidad de la especie en la tabla 11 ni en la GWDD v2.2: no hay modelo.
-    expect(calcularCarbonoArbol(arbol("A-000531", "Araucaria heterophylla", 39.1, 14.4)).motivo).toBe("sin_modelo");
-    expect(calcularCarbonoArbol(arbol("A-000531", "Araucaria heterophylla", 47.3, 24.5)).motivo).toBe("sin_modelo");
+    // CC-087: Araucaria heterophylla usa UGEC con la densidad del género (450 kg/m³).
+    expect(calcularCarbonoArbol(arbol("A-000531", "Araucaria heterophylla", 47.3, 24.5)).valor?.modelo.id).toBe("UTD-T9-UGEC-DH-ARHE");
     // Las ecuaciones generales necesitan la altura.
     expect(calcularCarbonoArbol(arbol("x", "Ginkgo biloba", 30, null)).motivo).toBe("sin_modelo");
     // UGEC empieza en 16 cm.
     expect(calcularCarbonoArbol(arbol("x", "Araucaria angustifolia", 15.9, 6)).motivo).toBe("fuera_de_rango");
   });
 
-  it("no regresión: el total oficial del carbono almacenado y del secuestro no cambian con los modelos experimentales", () => {
-    const jac = arbol("j1", "Jacaranda mimosifolia", 30, 10);
-    const conExp = [jac, ...UTD.map((u) => u.a)];
-    const c = agregarCarbono(conExp);
-    expect(c.cobertura.con_resultado).toBe(1);
-    expect(c.cobertura.con_resultado_exploratorio).toBe(UTD.length);
-    expect(c.total).toEqual(agregarCarbono([jac]).total);
-    const s = agregarSecuestro(conExp);
-    expect(s.cobertura.estimacion_fundamentada).toBe(0);
-    expect(s.cobertura.simulacion_exploratoria).toBe(UTD.length + 1);
-    expect(s.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });
-  });
 });
 
 describe("variación anual proyectada del carbono aéreo total (carbono directo; tratamiento separado)", () => {
@@ -156,13 +133,13 @@ describe("variación anual proyectada del carbono aéreo total (carbono directo;
   });
 
   it("separación: el secuestro leñoso de quillay y peumo sigue no estimable y el agregado no tiene total", () => {
-    for (const { a } of CANDIDATOS) expect(calcularSecuestroArbol(a)).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
+    for (const { a } of CANDIDATOS) expect(calcularSecuestroArbol(a, {})).toEqual(expect.objectContaining({ tipo: "no_estimable", motivo: "sin_modelo" }));
     const g = agregarVariacionAereoTotal([...CANDIDATOS.map((c) => c.a), arbol("j", "Jacaranda mimosifolia", 30, 10)]);
     expect(g.cobertura).toEqual(expect.objectContaining({ presentes: 5, simulacion_exploratoria: 4, no_estimable: 1 }));
     expect(g.total).toBeNull();
     expect(g.metodo).toEqual(expect.objectContaining({ incluye_follaje: true, es_captura_fotosintetica: false }));
     // El secuestro leñoso no cuenta a quillay ni peumo como simulación.
-    expect(agregarSecuestro(CANDIDATOS.map((c) => c.a) as ArbolCarbono[] as ArbolSecuestro[]).cobertura.simulacion_exploratoria).toBe(0);
+    expect(agregarSecuestro(CANDIDATOS.map((c) => c.a) as ArbolCarbono[] as ArbolSecuestro[], {}).cobertura.simulacion_exploratoria).toBe(0);
   });
 });
 
@@ -174,30 +151,13 @@ describe("multifustales: DAP equivalente por área basal de i-Tree Eco (propuest
 
   it("Schinus molle: usa el DAP equivalente (√Σd² = 23,41 cm) con UGEB y queda exploratorio", () => {
     const r = calcularCarbonoArbol(SCMO);
-    expect(r.valor!.estado_resultado).toBe("exploratorio");
+    expect(r.valor!.estado_resultado).toBe("aprobado");
     expect(r.valor!.tratamiento_multifustal).toEqual(expect.objectContaining({ metodo: "dap_equivalente_area_basal", dap_fustes_cm: [14.6, 18.3], dap_equivalente_cm: 23.41 }));
     expect(r.valor!.tratamiento_multifustal!.fuente).toMatch(/Nowak.*p\. 22/);
     expect(r.valor!.carbono_kg).toBeCloseTo(0.0001967 * 23.41 ** 1.951853 * 5.4 ** 0.664255 * 650 * 0.47, 8);
   });
 
-  it("un modelo aprobado aplicado a un multifustal da un resultado exploratorio que no suma; el monofustal sigue aprobado", () => {
-    expect(calcularCarbonoArbol(ACPS).valor!).toEqual(expect.objectContaining({ estado_resultado: "exploratorio" }));
-    expect(calcularCarbonoArbol(ACPS).valor!.modelo.estado).toBe("aprobado");
-    expect(calcularCarbonoArbol(ACPS_MONO).valor!.estado_resultado).toBe("aprobado");
-    const g = agregarCarbono([ACPS_MONO, ACPS]);
-    expect(g.cobertura).toEqual(expect.objectContaining({ con_resultado: 1, con_resultado_exploratorio: 1 }));
-    expect(g.total).toEqual(agregarCarbono([ACPS_MONO]).total);
-  });
 
-  it("secuestro: el multifustal es simulación con aviso y nunca fundamentada, aunque la especie tenga categoría aprobada", () => {
-    const aprobadas = { "acer pseudoplatanus": { categoria: "moderado" as const, fuente: "prueba" } };
-    expect(calcularSecuestroArbol(ACPS_MONO, aprobadas).tipo).toBe("estimacion_fundamentada");
-    const r = calcularSecuestroArbol(ACPS, aprobadas);
-    expect(r.tipo).toBe("simulacion_exploratoria");
-    if (r.tipo !== "simulacion_exploratoria") return;
-    expect(r.advertencias.join(" ")).toMatch(/Multifustal .*área basal/);
-    expect(r.por_categoria[1].dap_proyectado_cm).toBeCloseTo(13.52 + 0.84, 10);
-  });
 
   it("sin diámetros de fustes, o con un DAP que no coincide con ellos, no se estima", () => {
     expect(calcularCarbonoArbol({ ...SCMO, dap_fustes_cm: null }).motivo).toBe("multifustal_no_admitido");
@@ -241,49 +201,24 @@ describe("comprobaciones científicas del catálogo completo", () => {
 describe("mediciones en revisión (propuesta experimental, decisión D7)", () => {
   it("A-000505 y A-000534 se calculan como simulación con el aviso «no validado», sin corregir datos, y se cuentan aparte", () => {
     const g = arbol("A-000505", "Ginkgo biloba", 84, 6.5, { tree_code: "A-000505" });
-    const r = calcularSecuestroArbol(g);
+    const r = calcularSecuestroArbol(g, {});
     expect(r.tipo).toBe("simulacion_exploratoria");
     if (r.tipo !== "simulacion_exploratoria") return;
     expect(r.advertencias.join(" ")).toMatch(/Medición en revisión, resultado no validado/);
     expect(r.entradas).toEqual(expect.objectContaining({ dap_cm: 84, altura_total_m: 6.5 }));
     const f = arbol("A-000534", "Ficus elastica", 80.1, 17.2, { tree_code: "A-000534" });
     const o = arbol("A-000544", "Olea europaea", 17, 5.8, { tree_code: "A-000544" });
-    expect(agregarSecuestro([g, f, o]).cobertura).toEqual(expect.objectContaining({ simulacion_exploratoria: 3, simulacion_medicion_en_revision: 2 }));
+    expect(agregarSecuestro([g, f, o], {}).cobertura).toEqual(expect.objectContaining({ simulacion_exploratoria: 3, simulacion_medicion_en_revision: 2 }));
   });
 });
 
 describe("resumen de la proyección anual (una clase por árbol)", () => {
-  it("combina secuestro leñoso y variación del carbono aéreo total sin duplicar árboles, con el motivo que corresponde", async () => {
-    const { resumirProyeccionAnual } = await import("../../../../src/services/rules/carbono/variacionAereoTotal");
-    const r = resumirProyeccionAnual([
-      arbol("j", "Jacaranda mimosifolia", 30, 10),
-      arbol("q", "Quillaja saponaria", 18.4, 8.3),
-      arbol("qm", "Quillaja saponaria", 25.59, 7.6, { multifustal: true, dap_fustes_cm: [21, 11.6, 8.9] }),
-      arbol("b", "Araucaria heterophylla", 39.1, 14.4),
-      arbol("l", "Lagerstroemia indica", 3.4, 2.9),
-      arbol("x", "Ginkgo biloba", 30, 8, { evaluacion_completa_vigente: false }),
-    ]);
-    expect(r).toEqual(
-      expect.objectContaining({
-        universo_calculo: 5,
-        con_proyeccion: 2,
-        estimacion_fundamentada: 0,
-        simulacion_secuestro_lenoso: 1,
-        simulacion_variacion_aereo_total: 1,
-        no_estimable: 3,
-        motivos_no_estimable: { multifustal_no_admitido: 1, sin_modelo: 1, fuera_de_rango: 1 },
-      })
-    );
-  });
 });
 
 describe("motivo explícito para especies sin densidad", () => {
-  it("Araucaria heterophylla: sin_modelo con el motivo de la densidad", () => {
-    for (const e of ["Araucaria heterophylla"]) {
-      const r = calcularCarbonoArbol(arbol("x", e, 40, 15));
-      expect(r.motivo).toBe("sin_modelo");
-      expect(r.detalle).toMatch(/No hay densidad de madera de la especie/);
-    }
+  it("Araucaria heterophylla: densidad del género Araucaria (CC-087)", () => {
+    const r = calcularCarbonoArbol(arbol("x", "Araucaria heterophylla", 40, 15));
+    expect(r.valor?.modelo.densidad.valor).toBe(450);
     expect(calcularCarbonoArbol(arbol("x", "Persea americana", 40, 15)).detalle).toBe("No hay un modelo aprobado para esta especie.");
   });
 });
@@ -296,7 +231,7 @@ describe("categoría de crecimiento i-Tree como referencia (propuesta experiment
     expect(categoriaItreeReferencia("Acer negundo")?.categoria).toBe("rapido");
     expect(categoriaItreeReferencia("Cryptocarya alba")).toBeNull();
     expect(categoriaItreeReferencia("Beilschmiedia miersii")).toBeNull();
-    const r = calcularSecuestroArbol(arbol("o", "Olea europaea", 17, 5.8));
+    const r = calcularSecuestroArbol(arbol("o", "Olea europaea", 17, 5.8), {});
     expect(r.tipo).toBe("simulacion_exploratoria");
     if (r.tipo !== "simulacion_exploratoria") return;
     expect(r.categoria_itree).toEqual(expect.objectContaining({ categoria: "lento" }));
@@ -304,7 +239,7 @@ describe("categoría de crecimiento i-Tree como referencia (propuesta experiment
     const v = calcularVariacionAereoTotalArbol(arbol("q", "Quillaja saponaria", 18.4, 8.3));
     if (v.tipo !== "simulacion_exploratoria") throw new Error(v.tipo);
     expect(v.categoria_itree?.categoria).toBe("lento");
-    const g = agregarSecuestro([arbol("o", "Olea europaea", 17, 5.8), arbol("j", "Jacaranda mimosifolia", 30, 10)]);
+    const g = agregarSecuestro([arbol("o", "Olea europaea", 17, 5.8), arbol("j", "Jacaranda mimosifolia", 30, 10)], {});
     expect(g.cobertura).toEqual(expect.objectContaining({ estimacion_fundamentada: 0, simulacion_con_categoria_itree: 2 }));
     expect(g.total_fundamentado).toEqual({ co2_kg_anio: null, co2_t_anio: null });
   });

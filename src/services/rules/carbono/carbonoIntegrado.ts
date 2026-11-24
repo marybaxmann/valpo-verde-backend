@@ -37,8 +37,10 @@ export interface ModeloBiomasa {
   variables: readonly ("dap_cm" | "altura_total_m")[];
   biomasa: (dapCm: number, alturaM: number | null) => number;
   fraccion_carbono: { valor: number; fuente: string };
-  confianza: "propia_urbana" | "sustituta_mismo_genero";
-  estado: "exploratorio";
+  confianza: "propia_urbana" | "sustituta_mismo_genero" | "generica_itree";
+  estado: "aprobado" | "exploratorio";
+  /** Admite el DAP equivalente de i-Tree en multifustales (CC-087). */
+  admite_dap_equivalente?: boolean;
   /** Rango de calibración publicado; null si la fuente no lo informa en el texto revisado. */
   dap_min_cm: number | null;
   dap_max_cm: number | null;
@@ -63,6 +65,9 @@ const FUENTE_LIU_LI_2012 =
   "Liu, C. y Li, X. (2012). Carbon storage and sequestration by urban forests in Shenyang, China. Urban Forestry & Urban Greening 11: 121-128; ecuaciones de Ulmus según Wang et al. (2022), Forests 13(11): 1805, tabla A1 (B_fuste = 0,044·D^2,87; B_ramas = 0,0075·D^2,67; B_hojas = 0,0029·D^2,50)";
 const DOI_CHANGCHUN_2022 = "https://doi.org/10.3390/f13111805";
 
+const FUENTE_ITREE_A10 =
+  "Nowak, D. J. (2024). Understanding i-Tree: 2023 Summary of Programs and Methods. USDA Forest Service, GTR NRS-200-2023, apéndice 10 (Biomass Equations)";
+
 export const MODELOS_BIOMASA: readonly ModeloBiomasa[] = [
   {
     id: "ZHANG26-ACNE-DDH",
@@ -76,7 +81,7 @@ export const MODELOS_BIOMASA: readonly ModeloBiomasa[] = [
     biomasa: (d, h) => 0.499 * (d * d * (h as number)) ** 0.774,
     fraccion_carbono: { valor: 0.5, fuente: "Zhang et al. 2026 (CF = 0,5 por defecto)" },
     confianza: "propia_urbana",
-    estado: "exploratorio",
+    estado: "aprobado", // CC-087 (2026-11-23)
     dap_min_cm: null,
     dap_max_cm: null,
     n_muestra: 30,
@@ -97,7 +102,7 @@ export const MODELOS_BIOMASA: readonly ModeloBiomasa[] = [
     biomasa: (d, h) => 0.101 * (d * d * (h as number)) ** 0.935,
     fraccion_carbono: { valor: 0.5, fuente: "Zhang et al. 2026 (CF = 0,5 por defecto)" },
     confianza: "sustituta_mismo_genero",
-    estado: "exploratorio",
+    estado: "aprobado", // CC-087 (2026-11-23)
     dap_min_cm: null,
     dap_max_cm: null,
     n_muestra: 30,
@@ -118,7 +123,7 @@ export const MODELOS_BIOMASA: readonly ModeloBiomasa[] = [
     biomasa: (d) => 0.044 * d ** 2.87 + 0.0075 * d ** 2.67 + 0.0029 * d ** 2.5,
     fraccion_carbono: { valor: 0.5, fuente: "Valor por defecto 0,5 (pedido de Valej, 2026-11-22); la fuente no lo informa" },
     confianza: "sustituta_mismo_genero",
-    estado: "exploratorio",
+    estado: "aprobado", // CC-087 (2026-11-23)
     dap_min_cm: null,
     dap_max_cm: null,
     n_muestra: null,
@@ -131,15 +136,60 @@ export const MODELOS_BIOMASA: readonly ModeloBiomasa[] = [
     ],
     uso: "comparacion",
   },
+  // CC-087 (2026-11-23): ecuaciones de biomasa aérea que usa i-Tree (Nowak 2024, apéndice 10).
+  {
+    id: "ITREE24-A10-T30-PALMA-DH-PHCA",
+    version: 1,
+    especie: "phoenix canariensis",
+    especie_ecuacion: "palmera (general)",
+    componente: "aerea_total",
+    incluye: ["estípite", "hojas"],
+    forma: "Y = 0,001697·D^1,754·H^2,151 (kg de biomasa aérea seca)",
+    variables: ["dap_cm", "altura_total_m"],
+    biomasa: (d, h) => 0.001697 * d ** 1.754 * (h as number) ** 2.151,
+    fraccion_carbono: { valor: 0.47, fuente: "IPCC (2006), vol. 4, cap. 4, tabla 4.3 (0,47), la misma de la cadena de volumen de SIVU" },
+    confianza: "generica_itree",
+    estado: "aprobado",
+    dap_min_cm: null,
+    dap_max_cm: null,
+    n_muestra: null,
+    fuente: FUENTE_ITREE_A10 + ", tabla 30 (Palm tree general, a = d.b.h. en cm y h = altura total en m)",
+    doi: "https://doi.org/10.2737/NRS-GTR-200-2023-Appendix10",
+    advertencias: [
+      "Ecuación general de palmeras de i-Tree, no de Phoenix canariensis.",
+      "Las ecuaciones de palmeras de la tabla 30 provienen de palmeras tropicales; la palmera canaria tiene un estípite mucho más grueso, así que el resultado es una extrapolación.",
+    ],
+    uso: "resultado",
+  },
+  {
+    id: "ITREE24-A10-T29-LAGE-D-LAIN",
+    version: 1,
+    especie: "lagerstroemia indica",
+    especie_ecuacion: "Lagerstroemia (género; ecuación de L. calyculata)",
+    componente: "aerea_total",
+    incluye: ["fuste", "ramas", "hojas"],
+    forma: "Y = 0,1277·D^2,3943 (kg de biomasa aérea seca)",
+    variables: ["dap_cm"],
+    biomasa: (d) => 0.1277 * d ** 2.3943,
+    fraccion_carbono: { valor: 0.47, fuente: "IPCC (2006), vol. 4, cap. 4, tabla 4.3 (0,47), la misma de la cadena de volumen de SIVU" },
+    confianza: "sustituta_mismo_genero",
+    estado: "aprobado",
+    admite_dap_equivalente: true,
+    dap_min_cm: null,
+    dap_max_cm: null,
+    n_muestra: null,
+    fuente: FUENTE_ITREE_A10 + ", tabla 29, fila 118 (Lagerstroemia calyculata, AGB en kg)",
+    doi: "https://doi.org/10.2737/NRS-GTR-200-2023-Appendix10",
+    advertencias: [
+      "Ecuación de otra especie del género (L. calyculata), como hace i-Tree cuando falta la de la especie.",
+      "Solo se usa cuando el DAP queda bajo el mínimo de la ecuación urbana UGEB (6 cm).",
+    ],
+    uso: "resultado",
+  },
 ];
 
-/** Especies sin ningún modelo defendible y motivo (2026-11-22). */
-export const PENDIENTES_POR_ESPECIE: Readonly<Record<string, string>> = {
-  "phoenix canariensis":
-    "Palmera: no hay una ecuación de Phoenix canariensis verificada. La única revisada (Frangi y Lugo 1985, en Brown 1997) se ajustó con Prestoea montana, una palmera de tronco delgado; transferirla a una palmera canaria subestimaría su biomasa.",
-  "araucaria heterophylla":
-    "Sin densidad de madera publicada (UTD tabla 11; GWDD v1 y v2.2) ni una ecuación de biomasa de la especie o del género verificada.",
-};
+/** Especies sin ningún modelo defendible y motivo. CC-087 (2026-11-23): todas las del Piloto tienen modelo. */
+export const PENDIENTES_POR_ESPECIE: Readonly<Record<string, string>> = {};
 
 export interface Componente {
   biomasa_kg: number | null;
@@ -248,7 +298,8 @@ export function calcularCarbonoIntegradoArbol(a: ArbolCarbono & { tree_code?: st
   if (!a.presente) return pendiente("El árbol no está presente.");
   if (!a.evaluacion_completa_vigente) return pendiente("Sin evaluación completa vigente: no tiene DAP ni altura vigentes.");
   if (clave === null) return pendiente("Especie no identificada: no se puede elegir un modelo.");
-  if (a.tipo_hoja === "palmera" || PENDIENTES_POR_ESPECIE[clave]) {
+  const tieneModeloBiomasa = MODELOS_BIOMASA.some((m) => m.especie === clave && m.uso === "resultado");
+  if ((a.tipo_hoja === "palmera" && !tieneModeloBiomasa) || PENDIENTES_POR_ESPECIE[clave]) {
     return pendiente(PENDIENTES_POR_ESPECIE[clave] ?? "Palmera: sin un modelo de palmeras verificado.");
   }
 
@@ -315,11 +366,16 @@ export function calcularCarbonoIntegradoArbol(a: ArbolCarbono & { tree_code?: st
   const multifustalSinDap = a.multifustal === true;
   for (const m of MODELOS_BIOMASA.filter((x) => x.especie === clave)) {
     if (a.dap_cm === null) break;
-    if (multifustalSinDap) continue; // las fuentes no demuestran que el DAP equivalente sirva
+    if (multifustalSinDap && !m.admite_dap_equivalente) continue; // las fuentes no demuestran que el DAP equivalente sirva
     const r = deBiomasa(m, a.dap_cm, a.altura_total_m);
     if ("error" in r) continue;
     if (m.uso === "comparacion") comparacion.push(r);
     else if (m.componente === "total" && total === null) total = r;
+    // CC-087: sin modelo de volumen ni carbono directo aplicable, la biomasa aérea de i-Tree da el carbono aéreo.
+    else if (m.componente === "aerea_total" && aereo === null) {
+      aereo = r;
+      motivoAereo = null;
+    }
   }
 
   if (!aereo && !total) {
@@ -343,7 +399,7 @@ export function agregarCarbonoIntegrado(arboles: (ArbolCarbono & { tree_code?: s
   for (const f of con("no_estimable")) pendientes[f.motivo ?? "—"] = (pendientes[f.motivo ?? "—"] ?? 0) + 1;
   return {
     indicador: "estimacion_carbono_integrada" as const,
-    estado_metodologico: "propuesta experimental (Valej, 2026-11-22): no es metodología vigente ni suma a los indicadores publicados",
+    estado_metodologico: "vigente (CC-087, 2026-11-23)",
     fecha_calculo: fecha,
     arboles_presentes: filas.length,
     con_estimacion: filas.length - con("no_estimable").length,

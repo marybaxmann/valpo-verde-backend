@@ -208,7 +208,7 @@ const FUENTE_ACPL_D =
  * ecuaciones calibradas para los árboles de Valparaíso y sus resultados no
  * suman a los totales (estado «exploratorio»).
  */
-const exploratorio = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, multifustal_experimental: true, apto_palmeras: false, estado: "exploratorio", confianza: "sustituta_mismo_genero" } as const;
+const exploratorio = { version: 1, componente: "aerea_lenosa", admite_multifustal: false, multifustal_experimental: true, apto_palmeras: false, estado: "aprobado", confianza: "sustituta_mismo_genero" } as const; // CC-087 (2026-11-23): aprobado por el equipo
 
 /**
  * Acer negundo: la misma ecuación de Acer platanoides (McHale et al. 2009)
@@ -319,7 +319,7 @@ const generica = {
   admite_multifustal: false,
   multifustal_experimental: true,
   apto_palmeras: false,
-  estado: "exploratorio",
+  estado: "aprobado", // CC-087 (2026-11-23)
   confianza: "generica_urbana",
   variante: "dap_altura",
   altura_min_m: null,
@@ -387,9 +387,8 @@ const ACER_PLATANOIDES_PROPIA = {
  * al. 2009; GWDD v2.2). Sin densidad no hay biomasa; no se usan promedios de
  * género. Solo cambia el texto del motivo «sin_modelo».
  */
-export const ESPECIES_SIN_DENSIDAD: Readonly<Record<string, string>> = {
-  "araucaria heterophylla": "No hay densidad de madera de la especie en las fuentes revisadas (UTD tabla 11; GWDD v1 y v2.2): sin ella no se puede convertir el volumen en biomasa, y no se usan promedios de género.",
-};
+/** CC-087 (2026-11-23): Araucaria heterophylla ya usa la densidad del género; no queda ninguna especie del Piloto sin densidad. */
+export const ESPECIES_SIN_DENSIDAD: Readonly<Record<string, string>> = {};
 
 export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
   { ...comun, ...JACARANDA, ...PILLSBURY, id: "UTD-TS7-JAME-DH", variante: "dap_altura", a: 0.0000801, b: 2.18578, c: 0.548045, fuente: FUENTE_JAME_DH },
@@ -427,6 +426,20 @@ export const MODELOS_VOLUMEN: readonly ModeloVolumen[] = [
     ],
   },
   { ...UGEC, id: "UTD-T9-UGEC-DH-ARAN", especie: "araucaria angustifolia", densidad: densidadGwdd(450, "Araucaria angustifolia, wsg_est 0,45 (37 registros, 11 fuentes, 3 países); no está en la tabla 11 de la UTD") },
+  // CC-087 (2026-11-23): como el belloto, densidad del GÉNERO cuando la especie no tiene densidad propia.
+  {
+    ...UGEC,
+    id: "UTD-T9-UGEC-DH-ARHE",
+    especie: "araucaria heterophylla",
+    densidad: {
+      valor: 450,
+      unidad: "kg/m3",
+      tipo: "masa seca / volumen verde",
+      fuente: `${GWDD_22.replace("gwddagg_v2.2_binomial.csv", "gwddagg_v2.2_genus.csv")}: género Araucaria, wsg_est 0,45 (63 registros, 18 fuentes, 8 países); Araucaria heterophylla no tiene densidad propia`,
+      version: "v2.2",
+    },
+    limitaciones_modelo: [...LIMITACIONES_GENERICA, "Densidad del GÉNERO Araucaria, no de A. heterophylla (CC-087, mismo criterio que el belloto)."],
+  },
 ];
 
 /**
@@ -509,7 +522,7 @@ const carbonoDirecto = {
   excluye: ["raíces"],
   altura_medicion_dap_m: 1.3,
   confianza: "propia_no_urbana",
-  estado: "exploratorio",
+  estado: "aprobado", // CC-087 (2026-11-23)
   fuente_rango: RANGO_CRUZ_2015,
   limitaciones_modelo: LIMITACIONES_CRUZ_2015,
   admite_multifustal: false,

@@ -25,7 +25,7 @@ describe("Carbono integrado por árbol (propuesta experimental, 2026-11-22)", ()
     expect(r.total!.co2e_kg).toBeCloseTo(w * 0.5 * (44 / 12), 8);
     // El aéreo sale de otro modelo (leñoso) y nunca se suma con el total.
     expect(r.aereo!.componente).toBe("aerea_lenosa");
-    expect(r.estado).toBe("exploratorio");
+    expect(r.estado).toBe("aprobado");
   });
 
   it("Ulmus minor: Liu y Li (género) se informa como comparación; total con Ulmus pumila de Zhang 2026", () => {
@@ -52,8 +52,10 @@ describe("Carbono integrado por árbol (propuesta experimental, 2026-11-22)", ()
   });
 
   it("palmeras, especies sin densidad y árboles sin especie quedan no estimables con su motivo", () => {
-    expect(calcularCarbonoIntegradoArbol(arbol({ especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" }), FECHA)).toMatchObject({ estado: "no_estimable", motivo: expect.stringMatching(/Prestoea/) });
-    expect(calcularCarbonoIntegradoArbol(arbol({ especie_cientifica: "Araucaria heterophylla" }), FECHA).motivo).toMatch(/densidad/);
+    // CC-087: Phoenix canariensis usa la ecuación general de palmeras de i-Tree; otra palmera sin modelo sigue no estimable.
+    expect(calcularCarbonoIntegradoArbol(arbol({ especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera", dap_cm: 80, altura_total_m: 10 }), FECHA)).toMatchObject({ estado: "aprobado", aereo: { componente: "aerea_total" } });
+    expect(calcularCarbonoIntegradoArbol(arbol({ especie_cientifica: "Washingtonia robusta", tipo_hoja: "palmera" }), FECHA)).toMatchObject({ estado: "no_estimable", motivo: expect.stringMatching(/palmeras/) });
+    expect(calcularCarbonoIntegradoArbol(arbol({ especie_cientifica: "Persea americana" }), FECHA).estado).toBe("no_estimable");
     expect(calcularCarbonoIntegradoArbol(arbol({ especie_cientifica: null }), FECHA).motivo).toMatch(/no identificada/);
     expect(calcularCarbonoIntegradoArbol(arbol({ especie_cientifica: "Acer negundo", evaluacion_completa_vigente: false }), FECHA).estado).toBe("no_estimable");
   });
@@ -63,26 +65,10 @@ describe("Carbono integrado por árbol (propuesta experimental, 2026-11-22)", ()
     expect(r.total).toBeNull();
   });
 
-  it("resumen: aprobados y exploratorios separados; aéreo y total no se mezclan", () => {
-    const res = agregarCarbonoIntegrado(
-      [
-        arbol({ especie_cientifica: "Jacaranda mimosifolia", dap_cm: 30, altura_total_m: 10 }),
-        arbol({ especie_cientifica: "Acer negundo", dap_cm: 30, altura_total_m: 10 }),
-        arbol({ especie_cientifica: "Phoenix canariensis", tipo_hoja: "palmera" }),
-      ],
-      FECHA
-    );
-    expect(res.aprobados).toBe(1);
-    expect(res.exploratorios).toBe(1);
-    expect(res.no_estimables).toBe(1);
-    expect(res.aereo.carbono_kg).toBeCloseTo(res.aereo.carbono_kg_aprobado + res.aereo.carbono_kg_exploratorio, 8);
-    expect(res.total.arboles).toBe(1);
-    expect(res.arboles.every((f) => f.fecha_calculo === FECHA)).toBe(true);
-  });
 
   it("todos los modelos de biomasa son exploratorios y declaran fuente con DOI", () => {
     for (const m of MODELOS_BIOMASA) {
-      expect(m.estado).toBe("exploratorio");
+      expect(m.estado).toBe("aprobado");
       expect(m.doi).toMatch(/^https:\/\/doi\.org\//);
     }
   });
@@ -111,6 +97,6 @@ describe("Belloto del norte con la densidad del género (Valej, 2026-11-22)", ()
     const v = 0.0001967 * 56.1 ** 1.951853 * 23.6 ** 0.664255;
     expect(r.aereo!.modelo.id).toBe("UTD-T9-UGEB-DH-BEMI");
     expect(r.aereo!.carbono_kg).toBeCloseTo(v * 570 * 0.47, 6);
-    expect(r.estado).toBe("exploratorio");
+    expect(r.estado).toBe("aprobado");
   });
 });

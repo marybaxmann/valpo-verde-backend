@@ -253,7 +253,8 @@ export function calcularCarbonoArbol(a: ArbolCarbono): ResultadoArbol {
         limitaciones_modelo: [...modelo.limitaciones_modelo],
       },
       entradas: { dap_cm: a.dap_cm, altura_total_m: modelo.variante === "dap_altura" ? a.altura_total_m : null, densidad_kg_m3: modelo.densidad.valor, fraccion_carbono: FRACCION_CARBONO.valor },
-      estado_resultado: tratamiento ? "exploratorio" : modelo.estado,
+      // CC-087 (2026-11-23): el DAP equivalente de multifustales queda aprobado.
+      estado_resultado: modelo.estado,
       tratamiento_multifustal: tratamiento,
     },
     categoria: null,

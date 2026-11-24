@@ -3506,3 +3506,15 @@ motivo)
 - Reemplaza PR-016 v7.0 por PR-016 v8.0 (solo cambia la regla de la paleta). Sin cambios en metodología, clasificaciones, datos ni cálculos.
 - Implementación: frontend PR #42 → `feature/fase7-maqueta-lab` (`29eec8f`), publicado en sivu.cl el 2026-11-22 con autorización de la responsable.
 
+
+### CC-087 — Aportes ambientales y carbono: modelos aprobados por el equipo (Nowak 2024)
+
+- Decisión de la autora e investigadora responsable SIVU junto con el equipo, 2026-11-23: pasan a metodología vigente los aportes ambientales del marco de Nowak (2024) y todos los modelos de carbono y secuestro que eran propuesta experimental.
+- **Cobertura arbórea** (nueva): unión de las copas elípticas (N-S × E-O, centradas en el árbol) sobre la superficie del proyecto; la superposición se cuenta una vez. No se calcula por barrio.
+- **Área foliar** (INDICES fila 18): Nowak (1996) según Nowak (2024, pp. 22-24): ln Y = −4,3309 + 0,2942·H + 0,7312·D + 5,7217·S − 0,0148·C, C = π·D·(H+D)/2; ajustes de rango de i-Tree; × (1 − copa faltante), o × (1 − muerte regresiva) sin ese dato; S = 0,83 (latifoliadas y pinos) o 0,91 (otras coníferas). Supuesto: LAI acotado a 18. Palmeras sin área foliar.
+- **Remoción de contaminantes** (fila 20): F = Vd × C hora a hora (Nowak et al. 2006) para O₃, NO₂, SO₂, PM10 y CO, sin deposición con lluvia; Vd escalada por LAI/6. Datos: Open-Meteo 2025 (CAMS y ERA5). Supuesto: caducifolias sin hojas de junio a agosto (índice de corteza 1,7).
+- **Interceptación de precipitaciones**: modelo de i-Tree Eco (Hirabayashi 2013, ec. 1-6) con precipitación y evapotranspiración horarias 2025 (ERA5). La escorrentía evitada (fila 21) sigue pendiente: requiere las superficies bajo la copa.
+- **Proyección de crecimiento** (nueva): DAP a 1, 5, 10 y 20 años con las tasas de i-Tree Eco × CLE × (1 − muerte regresiva), en los tres escenarios.
+- **Carbono almacenado** (fila 14): todos los modelos del catálogo quedan aprobados (UTD, McHale, Zhang 2026, Cruz 2015, densidades de la GWDD v2.2) y el DAP equivalente de i-Tree para multifustales. Nuevos: *Araucaria heterophylla* con UGEC y la densidad del género (0,45, GWDD v2.2); *Lagerstroemia* con la ecuación del género de i-Tree (Nowak 2024, apéndice 10, tabla 29) cuando el DAP queda bajo 6 cm; *Phoenix canariensis* con la ecuación general de palmeras de i-Tree (apéndice 10, tabla 30: Y = 0,001697·D^1,754·H^2,151), extrapolada. La tarjeta del proyecto usa el mejor modelo de cada árbol.
+- **Secuestro anual** (fila 15): se aprueba la categoría de crecimiento de i-Tree (GrowthRate) de cada especie del Piloto que la tiene; con ella el resultado es estimación fundamentada y suma al total. *Cryptocarya alba* y *Beilschmiedia miersii* (sin categoría) siguen con el rango de escenarios. Unidad de la API: kg CO₂/año (la fila 15 se actualiza a esa unidad).
+- Implementación: backend PR #117 y frontend PR #52. Filas de INDICES sincronizadas en el Excel maestro el 2026-11-23.
