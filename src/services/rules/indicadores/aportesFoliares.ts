@@ -16,8 +16,9 @@ export const PARAMETROS_FOLIARES = {
     ecuacion: "ln Y = −4,3309 + 0,2942·H + 0,7312·D + 5,7217·S − 0,0148·C;  C = π·D·(H + D)/2",
     variables: "Y área foliar (m²); H altura de copa (m); D diámetro medio de copa (m); S factor de sombra; C superficie externa de la copa (m²)",
     fuente:
-      "Nowak, D. J. (1996). Estimating leaf area and leaf biomass of open-grown deciduous urban trees. Forest Science 42(4): 504-507. Coeficientes según Peper y McPherson (1998), J. Arboric. 24(2): 98.",
-    rango: "H 1 a 12 m, D 1 a 14 m, H/D 0,5 a 2 (fuera de rango: ajuste de i-Tree, UFORE Methods)",
+      "Nowak (1996), Forest Science 42(4): 504-507, según Nowak, D. J. (2024). Understanding i-Tree: 2023 Summary of Programs and Methods. GTR NRS-200-2023, pp. 22-24 (ecuación, rangos y ajustes verificados en la fuente).",
+    rango: "H 1 a 12 m, D 1 a 14 m, H/D 0,5 a 2. Si H/D > 2: ecuación con H/D = 2 × (H/D)/2; si H/D < 0,5: ecuación con H/D = 0,5 × 0,5/(H/D); fuera de 1-12 m o 1-14 m: LAI del borde del rango × área de copa (Nowak 2024, nota 5)",
+    condicion: "× (1 − copa faltante); si no se registró, × (1 − muerte regresiva) (Nowak 2024, p. 24)",
     sin_factor_correccion: "No se aplica el factor de corrección logarítmica del original (no verificado): subestima levemente.",
   },
   /** Factor de sombra promedio de latifoliadas (Nowak 1996) y clase 0,91 para coníferas que no son pinos (UFORE Methods). */
@@ -74,40 +75,44 @@ export interface ArbolFoliar {
   diametro_copa_eo_m: number | null;
   copa_no_presenta: boolean | null;
   muerte_regresiva_pct: number | null;
+  /** Copa faltante (%) de la evaluación vigente: ajuste preferente de i-Tree (Nowak 2024, p. 24). */
+  copa_faltante_pct?: number | null;
 }
 
 const ecuacionNowak = (h: number, d: number, s: number) => Math.exp(-4.3309 + 0.2942 * h + 0.7312 * d + 5.7217 * s - 0.0148 * ((Math.PI * d * (h + d)) / 2));
 
 /**
- * Área foliar de copa abierta con los ajustes de rango de i-Tree:
- * - H/D fuera de 0,5 a 2: se reduce la altura o el ancho hasta el límite, se
- *   calcula y se escala de vuelta por volumen de copa (∝ D²·H);
- * - copa mayor que 12 m de alto o 14 m de ancho: se usa el LAI del árbol
- *   máximo con la misma proporción, aplicado al área de suelo de la copa.
+ * Área foliar de copa abierta con los ajustes de rango de i-Tree (Nowak
+ * 2024, nota 5):
+ * - H/D > 2: ecuación con el ancho real y H/D = 2, × (H/D)/2;
+ * - H/D < 0,5: ecuación con la altura real y H/D = 0,5, × 0,5/(H/D);
+ * - copa fuera de 1-12 m de alto o 1-14 m de ancho: LAI de la copa llevada
+ *   al borde del rango (misma proporción) × área de suelo de la copa.
  */
 export function areaFoliarCopaAbierta(h: number, d: number, s: number) {
   const ajustes: string[] = [];
   let hr = h;
   let dr = d;
+  let factor = 1;
   if (h / d > 2) {
     hr = 2 * d;
-    ajustes.push("altura de copa reducida a H/D = 2 y escalada por volumen");
+    factor = h / d / 2;
+    ajustes.push("H/D > 2: ecuación con H/D = 2 y escalada (i-Tree)");
   } else if (h / d < 0.5) {
     dr = 2 * h;
-    ajustes.push("ancho de copa reducido a H/D = 0,5 y escalado por volumen");
+    factor = 0.5 / (h / d);
+    ajustes.push("H/D < 0,5: ecuación con H/D = 0,5 y escalada (i-Tree)");
   }
-  const factorVolumen = (d * d * h) / (dr * dr * hr);
   let la: number;
-  if (hr > 12 || dr > 14) {
-    const f = Math.min(12 / hr, 14 / dr);
+  if (hr > 12 || dr > 14 || hr < 1 || dr < 1) {
+    const f = hr > 12 || dr > 14 ? Math.min(12 / hr, 14 / dr) : Math.max(1 / hr, 1 / dr);
     const lai = ecuacionNowak(f * hr, f * dr, s) / ((Math.PI * (f * dr) ** 2) / 4);
     la = lai * ((Math.PI * dr * dr) / 4);
-    ajustes.push("copa mayor que el rango: LAI del árbol máximo aplicado al área de copa");
+    ajustes.push("copa fuera del rango de la ecuación: LAI del borde del rango × área de copa (i-Tree)");
   } else {
     la = ecuacionNowak(hr, dr, s);
   }
-  if (hr < 1 || dr < 1) ajustes.push("copa menor que el rango de la ecuación (extrapolación)");
-  return { area_foliar_m2: la * factorVolumen, ajustes };
+  return { area_foliar_m2: la * factor, ajustes };
 }
 
 export type MotivoSinFoliar = "palmera" | "sin_copa" | "falta_copa" | "falta_altura_copa" | "copa_invalida";
@@ -151,11 +156,17 @@ export function areaFoliarArbol(a: ArbolFoliar): ResultadoFoliar {
   const r = areaFoliarCopaAbierta(h, d, s);
   const ajustes = [...r.ajustes];
   if (a.altura_base_copa_viva_m === null) ajustes.push("base de copa = altura de primera rama");
-  // Copa abierta reducida por la muerte regresiva (UFORE Methods: «adjusted downward based on crown leaf dieback»).
+  // Condición (Nowak 2024, p. 24): × (1 − copa faltante); si no se registró, × (1 − muerte regresiva).
   let la = r.area_foliar_m2;
-  if (a.muerte_regresiva_pct !== null && a.muerte_regresiva_pct > 0) {
+  const faltante = a.copa_faltante_pct ?? null;
+  if (faltante !== null) {
+    if (faltante > 0) {
+      la *= 1 - Math.min(100, faltante) / 100;
+      ajustes.push(`reducida ${faltante} % por copa faltante`);
+    }
+  } else if (a.muerte_regresiva_pct !== null && a.muerte_regresiva_pct > 0) {
     la *= 1 - Math.min(100, a.muerte_regresiva_pct) / 100;
-    ajustes.push(`reducida ${a.muerte_regresiva_pct} % por muerte regresiva`);
+    ajustes.push(`reducida ${a.muerte_regresiva_pct} % por muerte regresiva (sin dato de copa faltante)`);
   }
   const areaCopa = (Math.PI * a.diametro_copa_ns_m * a.diametro_copa_eo_m) / 4;
   const laiMax = PARAMETROS_FOLIARES.lai_maximo.valor;

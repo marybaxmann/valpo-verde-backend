@@ -31,10 +31,15 @@ describe("área foliar (Nowak 1996, propuesta experimental)", () => {
     expect(areaFoliarCopaAbierta(5, 6, 0.83).area_foliar_m2).toBeCloseTo(nowak(5, 6, 0.83), 10);
   });
 
-  it("H/D > 2: reduce la altura a 2·D y escala por volumen", () => {
+  it("H/D > 2: ecuación con H/D = 2 × (H/D)/2 (Nowak 2024)", () => {
     const r = areaFoliarCopaAbierta(9, 3, 0.83);
-    expect(r.area_foliar_m2).toBeCloseTo(nowak(6, 3, 0.83) * (9 / 6), 8);
+    expect(r.area_foliar_m2).toBeCloseTo(nowak(6, 3, 0.83) * (3 / 2), 8);
     expect(r.ajustes[0]).toMatch(/H\/D = 2/);
+  });
+
+  it("H/D < 0,5: ecuación con H/D = 0,5 × 0,5/(H/D) (Nowak 2024)", () => {
+    const r = areaFoliarCopaAbierta(2, 8, 0.83);
+    expect(r.area_foliar_m2).toBeCloseTo(nowak(2, 4, 0.83) * (0.5 / 0.25), 8);
   });
 
   it("copa mayor que el rango: LAI del árbol máximo sobre el área de copa", () => {
@@ -44,9 +49,10 @@ describe("área foliar (Nowak 1996, propuesta experimental)", () => {
     expect(r.area_foliar_m2).toBeCloseTo(lai * ((Math.PI * 16 * 16) / 4), 6);
   });
 
-  it("descuenta la muerte regresiva y usa 0,91 en coníferas que no son pinos", () => {
+  it("descuenta la copa faltante (o la muerte regresiva sin ese dato) y usa 0,91 en coníferas que no son pinos", () => {
     const sano = areaFoliarArbol(arbol()).area_foliar_m2!;
     expect(areaFoliarArbol(arbol({ muerte_regresiva_pct: 25 })).area_foliar_m2!).toBeCloseTo(sano * 0.75, 8);
+    expect(areaFoliarArbol(arbol({ muerte_regresiva_pct: 25, copa_faltante_pct: 10 })).area_foliar_m2!).toBeCloseTo(sano * 0.9, 8);
     expect(areaFoliarArbol(arbol({ tipo_hoja: "acicular", genero: "Araucaria" })).factor_sombra).toBe(0.91);
     expect(areaFoliarArbol(arbol({ tipo_hoja: "acicular", genero: "Pinus" })).factor_sombra).toBe(0.83);
   });

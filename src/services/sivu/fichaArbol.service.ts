@@ -23,6 +23,8 @@ import { descriptivosArbol } from "../rules/indicadores/descriptivos";
 import { calcularVariacionAereoTotalArbol, METODO_VARIACION_AEREO_TOTAL } from "../rules/carbono/variacionAereoTotal";
 import { LIMITACIONES, LIMITACIONES_AEREO_TOTAL } from "../rules/carbono/modelos";
 import { calcularSecuestroArbol, METODO_SECUESTRO } from "../rules/carbono/secuestro";
+import { agregarAportesFoliares, PARAMETROS_FOLIARES } from "../rules/indicadores/aportesFoliares";
+import { proyeccionCrecimiento } from "../rules/indicadores/proyeccionCrecimiento";
 import { listarVariablesCrecimiento } from "../../repositories/sivu/indicadores.repository";
 
 /**
@@ -154,6 +156,27 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
   };
   const secuestro = calcularSecuestroArbol(entradaSecuestro);
   const sinEspecie = fila.especie_cientifica === null;
+  // Propuesta experimental (2026-11-23): área foliar, remoción e interceptación de este árbol (mismo cálculo que B19).
+  const foliar = evaluacionCompletaVigente
+    ? agregarAportesFoliares([
+        {
+          id: treeId,
+          tree_code: (fila.tree_code as string | null | undefined) ?? null,
+          especie_cientifica: fila.especie_cientifica,
+          tipo_hoja: rasgos?.tipo_hoja ?? null,
+          persistencia_follaje: rasgos?.persistencia_follaje ?? null,
+          genero: rasgos?.genero ?? null,
+          altura_total_m: numero(fila.altura_total_m),
+          altura_base_copa_viva_m: numero(fila.altura_base_copa_viva_m),
+          altura_primera_rama_m: numero(fila.altura_primera_rama_m),
+          diametro_copa_ns_m: numero(fila.diametro_copa_ns_m),
+          diametro_copa_eo_m: numero(fila.diametro_copa_eo_m),
+          copa_no_presenta: (fila.copa_no_presenta as boolean | null | undefined) ?? null,
+          muerte_regresiva_pct: crecimiento[0]?.muerte_regresiva_pct ?? null,
+          copa_faltante_pct: crecimiento[0]?.copa_faltante_pct ?? null,
+        },
+      ])
+    : null;
 
   return {
     arbol: arbol(fila, evaluacionCompletaVigente),
@@ -172,6 +195,24 @@ export async function obtenerFichaArbol(user: AuthenticatedUser, projectId: stri
     // Propuesta experimental (2026-11-21): variación anual proyectada del carbono aéreo total (con hojas), solo
     // para especies con carbono directo. Siempre simulación; no es secuestro leñoso ni captura fotosintética.
     variacion_anual_carbono_aereo_total: { ...calcularVariacionAereoTotalArbol(entradaSecuestro), metodo: METODO_VARIACION_AEREO_TOTAL },
+    // Propuesta experimental (2026-11-23): aportes foliares del árbol; null sin evaluación completa vigente.
+    aportes_foliares: foliar
+      ? {
+          ...foliar.arboles[0],
+          parametros: PARAMETROS_FOLIARES,
+          concentracion_media_ug_m3: foliar.remocion_contaminantes.concentracion_media_ug_m3,
+          precipitacion_anual_mm: foliar.intercepcion_precipitaciones.precipitacion_anual_mm,
+        }
+      : null,
+    // Propuesta experimental (2026-11-23): escenarios de crecimiento del DAP (i-Tree Eco).
+    proyeccion_crecimiento: evaluacionCompletaVigente
+      ? proyeccionCrecimiento({
+          especie_cientifica: fila.especie_cientifica,
+          dap_cm: numero(fila.dap_cm),
+          cle: crecimiento[0]?.cle ?? null,
+          muerte_regresiva_pct: crecimiento[0]?.muerte_regresiva_pct ?? null,
+        })
+      : null,
     // Propuesta experimental: valores descriptivos del árbol (diferencias y cocientes de medidas registradas) y condición de copa registrada.
     descriptivos: descriptivosArbol({
       id: treeId,

@@ -183,9 +183,11 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
           diametro_copa_eo_m: f.diametro_copa_eo_m,
           copa_no_presenta: f.copa_no_presenta,
           muerte_regresiva_pct: crecimientoPorArbol.get(f.id)?.muerte_regresiva_pct ?? null,
+          copa_faltante_pct: crecimientoPorArbol.get(f.id)?.copa_faltante_pct ?? null,
         };
       })
   );
+  const proyeccionAnual = resumirProyeccionAnual(arbolesSecuestro);
   const aportesAmbientales = resumenAportesAmbientales({
     foliares: aportesFoliares,
     presentes: arbolesDescriptivos.map((a) => ({
@@ -202,10 +204,11 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
       carbono_kg_aprobado: carbonoIntegrado.aereo.carbono_kg_aprobado,
       carbono_kg_exploratorio: carbonoIntegrado.aereo.carbono_kg_exploratorio,
     },
+    // Mismas cifras que la tarjeta «Secuestro anual»: una clase por árbol evaluado (leñoso o aéreo total).
     secuestro: {
-      fundamentadas: secuestro.cobertura.estimacion_fundamentada,
-      simulaciones: secuestro.cobertura.simulacion_exploratoria,
-      no_estimables: secuestro.cobertura.no_estimable,
+      fundamentadas: proyeccionAnual.estimacion_fundamentada,
+      simulaciones: proyeccionAnual.con_proyeccion - proyeccionAnual.estimacion_fundamentada,
+      no_estimables: proyeccionAnual.no_estimable,
     },
   });
 
@@ -247,7 +250,7 @@ export async function indicadoresInventario(user: AuthenticatedUser, projectId: 
     // especies con carbono directo. Solo cobertura; no es secuestro leñoso ni captura fotosintética.
     estimacion_variacion_anual_carbono_aereo_total: agregarVariacionAereoTotal(arbolesSecuestro),
     // Propuesta experimental: una sola clase por árbol (secuestro leñoso, variación aérea total o no estimable).
-    resumen_proyeccion_anual: resumirProyeccionAnual(arbolesSecuestro),
+    resumen_proyeccion_anual: proyeccionAnual,
     // Propuesta experimental: indicadores descriptivos (no registrados en INDICES).
     diagnostico_descriptivo: diagnosticoDescriptivo(arbolesDescriptivos, MEDICIONES_EN_REVISION),
     // Propuesta experimental (2026-11-23): cobertura arbórea sin contar dos veces las copas superpuestas.

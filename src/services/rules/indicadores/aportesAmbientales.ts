@@ -248,7 +248,7 @@ export function resumenAportesAmbientales(entrada: {
       codigo: "secuestro_carbono",
       nombre: "Secuestro de carbono",
       estado: s.fundamentadas > 0 ? "calculado" : s.simulaciones > 0 ? "simulacion" : "no_estimable",
-      resultado: `${s.fundamentadas} estimaciones fundamentadas; ${s.simulaciones} simulaciones con el crecimiento de i-Tree Eco; ${s.no_estimables} no estimables.`,
+      resultado: `${s.fundamentadas} estimaciones fundamentadas; ${s.simulaciones} árboles con proyección simulada (crecimiento de i-Tree Eco; leñoso o aéreo total con hojas); ${s.no_estimables} no estimables.`,
       usa: ["Especie", "DAP", "Altura total", "Condición: muerte regresiva de copa", "Exposición lumínica de copa (CLE)"],
       falta: [...faltaMedir, "Tasa o categoría de crecimiento por especie con fuente verificada (INDICES fila 15)."],
       fila_indices: "15",
